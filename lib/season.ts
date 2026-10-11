@@ -1,7 +1,9 @@
 // ─── Which seasonal campaign the site is wearing ─────────────────────────────
 //
-// A super admin flips the site between the Valentine wishlist, the Halloween
-// drop and nothing at all from /admin/season. Everything seasonal — the running
+// A super admin flips the site between the Valentine wishlist, a seasonal
+// DROP (Halloween, or Navratri & Diwali — "festive") and nothing at all from
+// /admin/season. Each drop season has its own templates, sale and end date
+// (`DROPS` below); only the active mode's drop is ever shown. Everything seasonal — the running
 // bar under the navbar, the blog cards, the gallery teaser, the critters on the
 // home hero — reads the answer from here.
 //
@@ -19,11 +21,19 @@
 
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-export type SeasonMode = "valentine" | "halloween" | "off";
+/** The seasons that have a drop: their own templates, sale, strip and offer page. */
+export type DropId = "halloween" | "festive";
+export const DROP_IDS: readonly DropId[] = ["halloween", "festive"];
+export type SeasonMode = "valentine" | DropId | "off";
+
+export type DropSale = { enabled: boolean; percent: number; slugs: string[] };
 
 export type Season = {
   mode: SeasonMode;
-  sale: { enabled: boolean; percent: number; slugs: string[] };
+  /** The ACTIVE mode's drop sale (for "valentine"/"off" the server still sends Halloween's). */
+  sale: DropSale;
+  /** Every drop's settings — servers from before per-season drops leave this out. */
+  drops?: Partial<Record<DropId, DropSale>>;
 };
 
 export const HALLOWEEN_PATH = "/halloween-offer";
@@ -33,21 +43,83 @@ export const HALLOWEEN_ENDS_AT = Date.parse("2026-10-31T23:59:59+05:30");
 /** The template GIFs, served from the CDN. */
 export const HALLOWEEN_GIF = (file: string) => `https://cdn.subhsandesh.in/gifts-media/templates/_halloween/${file}`;
 
+export const FESTIVE_PATH = "/festive-offer";
+export const FESTIVE_SLUGS = ["dandiya-partner", "happy-diwali"] as const;
+/** Navratri & Diwali: the drop ends on Diwali night — Sunday 8 November 2026 — at the last minute, India time. */
+export const FESTIVE_ENDS_AT = Date.parse("2026-11-08T23:59:59+05:30");
+export const FESTIVE_PERCENT_DEFAULT = 30;
+/** The festive GIFs, served from the CDN (see .template-factory/festive/MEDIA.md). */
+export const FESTIVE_GIF = (file: string) => `https://cdn.subhsandesh.in/gifts-media/templates/_festive/${file}`;
+
+/** Per-drop facts the client owns (the server owns slugs and sale). */
+export const DROPS: Record<DropId, { label: string; path: string; slugs: readonly string[]; endsAt: number; endsLabel: string }> = {
+  halloween: { label: "Halloween drop", path: HALLOWEEN_PATH, slugs: HALLOWEEN_SLUGS, endsAt: HALLOWEEN_ENDS_AT, endsLabel: "31 Oct" },
+  festive: { label: "Navratri & Diwali drop", path: FESTIVE_PATH, slugs: FESTIVE_SLUGS, endsAt: FESTIVE_ENDS_AT, endsLabel: "Diwali night, 8 Nov" },
+};
+
+/**
+ * Names and art for drop templates that may not be in the registry yet (the
+ * festive templates ship on their own branches). Anything that shows a drop
+ * card uses the registry entry when present and this otherwise.
+ */
+export const DROP_TEMPLATE_FALLBACK: Record<string, { title: string; emoji: string; blurb: string; cover: string }> = {
+  "dandiya-partner": {
+    title: "Be My Dandiya Partner",
+    emoji: "🥢",
+    blurb: "Invite them to Garba nights — a dancing, twirling Navratri invitation they answer with a yes.",
+    cover: FESTIVE_GIF("dandiyapartyner.webp"),
+  },
+  "happy-diwali": {
+    title: "Happy Diwali",
+    emoji: "🪔",
+    blurb: "Light up their Diwali — diyas, rangoli and fireworks around your wishes and photos.",
+    cover: FESTIVE_GIF("happy-diwali-diya.webp"),
+  },
+};
+
+export function isDropMode(m: unknown): m is DropId {
+  return typeof m === "string" && (DROP_IDS as readonly string[]).includes(m);
+}
+
+/**
+ * One drop's sale as the server last described it: `drops[id]` when sent, else
+ * `sale` while that drop is the active mode, else null (unknown).
+ */
+export function dropSaleOf(s: Season | null | undefined, id: DropId): DropSale | null {
+  if (!s) return null;
+  return s.drops?.[id] ?? (s.mode === id ? s.sale : null);
+}
+
+/** The percent off a drop is selling at right now — 0 unless it is the active mode with its sale on. */
+export function livePercentOf(s: Season | null | undefined, id: DropId): number {
+  return s?.mode === id && s.sale.enabled ? s.sale.percent : 0;
+}
+
 /** What the client assumes when it cannot ask: the pre-season behaviour. */
 export const SEASON_FALLBACK: Season = { mode: "valentine", sale: { enabled: false, percent: 0, slugs: [] } };
 
-const MODES: readonly SeasonMode[] = ["valentine", "halloween", "off"];
+const MODES: readonly SeasonMode[] = ["valentine", ...DROP_IDS, "off"];
 
 /**
- * The slugs in the ACTIVE drop: `sale.slugs` while the mode is "halloween",
- * nothing otherwise. A drop template is reachable (its builder opens, it
- * publishes) even when /admin/templates hides it from the gallery; it still
- * stays out of every gallery listing. Mirrors `dropSlugs` in
+ * The slugs in the ACTIVE drop: `sale.slugs` while the mode is a drop season
+ * (halloween, festive), nothing otherwise. A drop template is reachable (its
+ * builder opens, it publishes) even when /admin/templates hides it from the
+ * gallery; it still stays out of every gallery listing. Mirrors `dropSlugs` in
  * server/src/config/seasonSale.ts, which enforces the same rule on publish.
  */
 export function dropSlugsOf(s: Season | null | undefined): string[] {
-  if (!s || s.mode !== "halloween") return [];
+  if (!s || !isDropMode(s.mode)) return [];
   return s.sale.slugs.map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+}
+
+function parseSale(raw: { enabled?: unknown; percent?: unknown; slugs?: unknown } | undefined): DropSale {
+  const pct = Math.round(Number(raw?.percent));
+  const slugs = Array.isArray(raw?.slugs) ? raw!.slugs.filter((s): s is string => typeof s === "string") : [];
+  return {
+    enabled: Boolean(raw?.enabled) && pct > 0,
+    percent: Number.isFinite(pct) ? Math.min(Math.max(pct, 0), 90) : 0,
+    slugs,
+  };
 }
 
 /** Accepts both `{ success, data: {...} }` and a bare body. Null when it is not a season. */
@@ -59,16 +131,17 @@ export function parseSeason(json: unknown): Season | null {
   if (!d || typeof d !== "object") return null;
   const mode = MODES.includes(d.mode as SeasonMode) ? (d.mode as SeasonMode) : null;
   if (!mode) return null;
-  const pct = Math.round(Number(d.sale?.percent));
-  const slugs = Array.isArray(d.sale?.slugs) ? d.sale!.slugs.filter((s): s is string => typeof s === "string") : [];
-  return {
-    mode,
-    sale: {
-      enabled: Boolean(d.sale?.enabled) && pct > 0,
-      percent: Number.isFinite(pct) ? Math.min(Math.max(pct, 0), 90) : 0,
-      slugs,
-    },
-  };
+  const out: Season = { mode, sale: parseSale(d.sale) };
+  const rawDrops = (d as { drops?: unknown }).drops;
+  if (rawDrops && typeof rawDrops === "object") {
+    const drops: Partial<Record<DropId, DropSale>> = {};
+    for (const id of DROP_IDS) {
+      const r = (rawDrops as Record<string, unknown>)[id];
+      if (r && typeof r === "object") drops[id] = parseSale(r as Parameters<typeof parseSale>[0]);
+    }
+    out.drops = drops;
+  }
+  return out;
 }
 
 // ── The client store ────────────────────────────────────────────────────────

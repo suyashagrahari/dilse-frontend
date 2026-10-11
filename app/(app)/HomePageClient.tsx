@@ -13,6 +13,7 @@ import SubhSandeshFooter from "./components/home/SubhSandeshFooter";
 import ActivityToast from "@/components/home/ActivityToast";
 import HydrateOnVisible from "@/components/HydrateOnVisible";
 import HalloweenOfferBar from "@/components/promo/HalloweenOfferBar";
+import FestiveOfferBar from "@/components/promo/FestiveOfferBar";
 
 // ── Everything below the fold hydrates on approach ──────────────────────────
 //
@@ -45,6 +46,7 @@ export default function HomePageClient() {
             from the server render (page.tsx), so it is in the first paint and
             moves nothing; home.css places it. */}
         <HalloweenOfferBar source="home-banner" className="hwb-home" />
+        <FestiveOfferBar source="home-banner" className="fsb-home" />
         <HeroSection />
         <HydrateOnVisible><ProblemSection /></HydrateOnVisible>
         <HydrateOnVisible><HowItWorksSection /></HydrateOnVisible>

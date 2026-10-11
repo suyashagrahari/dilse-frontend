@@ -9,17 +9,21 @@
 //   🎃 Halloween drop — the running strip under the navbar on home, blog and
 //      gallery, the Halloween card in blog posts, the gallery teaser, the
 //      critters on the home hero and blog, and /halloween-offer with the sale
+//   🪔 Navratri & Diwali drop — the festive twin: strip, blog card, gallery
+//      teaser, diyas/lanterns/fireworks on the hero and blog, /festive-offer
 //   ⏸  Off — no seasonal banners anywhere
 //
-// Plus the Halloween sale itself: on/off and the percent. The discount is real
-// — the server applies it to every price read for the two Halloween templates
-// (gallery, quote, publish gate, order) while the mode is Halloween and the sale
-// is on. Super admin only; the server refuses everyone else.
+// Each DROP season (Halloween, Navratri & Diwali) keeps its own sale — on/off
+// and the percent — and its own list of templates, edited under that season's
+// tab. Switching the mode never loses the other season's settings. The
+// discount is real: the server applies the ACTIVE mode's sale to every price
+// read for that drop's templates (gallery, quote, publish gate, order). Super
+// admin only; the server refuses everyone else.
 //
-// And which templates are IN the drop: any templates from the registry —
-// Halloween or not — picked from a searchable checklist and saved as
-// `saleSlugs`. The sale discounts exactly those, and /halloween-offer shows
-// exactly those as gallery cards.
+// Which templates are IN a drop: any templates from the registry picked from
+// a searchable checklist (plus the season's own templates even before they are
+// in the registry) and saved as that drop's `saleSlugs`. The sale discounts
+// exactly those, and the season's offer page shows exactly those as cards.
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -29,19 +33,30 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { refreshPricing } from "@/lib/pricing";
-import { HALLOWEEN_PATH, HALLOWEEN_SLUGS, setSeason, type SeasonMode } from "@/lib/season";
+import {
+  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVE_PERCENT_DEFAULT, isDropMode, setSeason, type DropId, type DropSale, type SeasonMode,
+} from "@/lib/season";
 import { GALLERY_BY_SLUG, GALLERY_LIST } from "@/lib/galleryRules";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
 import { A, AdminPage, Hero, HeroStat, Loading, Panel } from "../adminKit";
 
-const DEFAULT_DROP: string[] = [...HALLOWEEN_SLUGS];
+type Drop = { saleEnabled: boolean; salePercent: number; saleSlugs: string[] };
+type Draft = { saleOn: boolean; pct: string; slugs: string[] };
+
+/** Each drop's settings when the server has none: what the server defaults to. */
+const DROP_DEFAULT: Record<DropId, Drop> = {
+  halloween: { saleEnabled: true, salePercent: 49, saleSlugs: [...DROPS.halloween.slugs] },
+  festive: { saleEnabled: true, salePercent: FESTIVE_PERCENT_DEFAULT, saleSlugs: [...DROPS.festive.slugs] },
+};
+const DROP_UI: Record<DropId, { emoji: string; tab: string; reset: string }> = {
+  halloween: { emoji: "🎃", tab: "Halloween drop", reset: "Reset to the two Halloween templates" },
+  festive: { emoji: "🪔", tab: "Navratri & Diwali drop", reset: "Reset to the two festive templates" },
+};
 const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 type View = {
   mode: SeasonMode;
-  saleEnabled: boolean;
-  salePercent: number;
-  saleSlugs: string[];
+  drops: Record<DropId, Drop>;
   updatedAt: string | null;
   updatedBy: string | null;
 };
@@ -49,17 +64,32 @@ type View = {
 const MODES: { value: SeasonMode; emoji: string; label: string; note: string }[] = [
   { value: "valentine", emoji: "💘", label: "Valentine wishlist", note: "The wishlist banners on the blog and gallery, as before — they show while a countdown runs in Wishlist." },
   { value: "halloween", emoji: "🎃", label: "Halloween drop", note: "Running strip under the navbar on home, blog and gallery; Halloween card in posts; critters on the home hero and blog; the offer page." },
-  { value: "off", emoji: "⏸️", label: "Off", note: "No seasonal banners anywhere. The offer page still opens, without the sale." },
+  { value: "festive", emoji: "🪔", label: "Navratri & Diwali drop", note: "Festive strip, blog card and gallery teaser; diyas, lanterns, fireworks and the dandiya panda on the hero and blog; /festive-offer." },
+  { value: "off", emoji: "⏸️", label: "Off", note: "No seasonal banners anywhere. The offer pages still open, without the sale." },
 ];
 
 const QUICK = [25, 30, 40, 49];
 
-/** Accepts the flat admin shape and the public `{ mode, sale }` shape. */
+function readDrop(raw: unknown, fallback: Drop): Drop {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const pct = Number(o.salePercent ?? o.percent);
+  const slugs = Array.isArray(o.saleSlugs) ? o.saleSlugs : Array.isArray(o.slugs) ? o.slugs : null;
+  const on = o.saleEnabled ?? o.enabled;
+  return {
+    saleEnabled: typeof on === "boolean" ? on : fallback.saleEnabled,
+    salePercent: Number.isFinite(pct) && pct > 0 ? Math.round(pct) : fallback.salePercent,
+    saleSlugs: slugs && slugs.length ? slugs.filter((x): x is string => typeof x === "string") : [...fallback.saleSlugs],
+  };
+}
+
+/**
+ * Accepts the admin shape `{ mode, drops, saleEnabled… }`, the older flat admin
+ * shape (= the Halloween drop) and the public `{ mode, sale, drops }` shape.
+ */
 function parseView(json: unknown): View | null {
   const root = json as { data?: unknown } | null;
   const d = ((root && typeof root === "object" && root.data) || root) as Record<string, unknown> | null;
   if (!d || typeof d !== "object") return null;
-  const sale = (d.sale ?? {}) as Record<string, unknown>;
   const mode = d.mode as SeasonMode;
   if (!MODES.some((m) => m.value === mode)) return null;
   const by = d.updatedBy as unknown;
@@ -67,15 +97,22 @@ function parseView(json: unknown): View | null {
     typeof by === "string" ? by
       : by && typeof by === "object" ? String((by as Record<string, unknown>).email ?? (by as Record<string, unknown>).name ?? "")
         : typeof d.updatedByEmail === "string" ? d.updatedByEmail : null;
+  const rawDrops = (d.drops && typeof d.drops === "object" ? d.drops : {}) as Record<string, unknown>;
+  // Without `drops`, the flat fields (or `sale`) describe the drop of the active mode — Halloween's on older servers.
+  const flat = { saleEnabled: d.saleEnabled, salePercent: d.salePercent, saleSlugs: d.saleSlugs, ...(d.sale && typeof d.sale === "object" ? (d.sale as object) : {}) };
+  const flatFor: DropId = isDropMode(mode) ? mode : "halloween";
+  const drops = Object.fromEntries(
+    DROP_IDS.map((id) => [id, readDrop(rawDrops[id] ?? (id === flatFor && !d.drops ? flat : undefined), DROP_DEFAULT[id])]),
+  ) as Record<DropId, Drop>;
   return {
     mode,
-    saleEnabled: Boolean(d.saleEnabled ?? sale.enabled),
-    salePercent: Number(d.salePercent ?? sale.percent) || 0,
-    saleSlugs: (Array.isArray(d.saleSlugs) ? d.saleSlugs : Array.isArray(sale.slugs) ? sale.slugs : []) as string[],
+    drops,
     updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : null,
     updatedBy: byText || null,
   };
 }
+
+const toDraft = (d: Drop): Draft => ({ saleOn: d.saleEnabled, pct: String(d.salePercent || 30), slugs: d.saleSlugs.length ? [...d.saleSlugs] : [] });
 
 export default function AdminSeasonPage() {
   const router = useRouter();
@@ -83,9 +120,11 @@ export default function AdminSeasonPage() {
   const [allowed, setAllowed] = useState(false);
   const [view, setView] = useState<View | null>(null);
   const [mode, setMode] = useState<SeasonMode>("halloween");
-  const [saleOn, setSaleOn] = useState(true);
-  const [pct, setPct] = useState("49");
-  const [slugs, setSlugs] = useState<string[]>(DEFAULT_DROP);
+  /** Which drop's sale and templates the panels below edit. */
+  const [tab, setTab] = useState<DropId>("halloween");
+  const [drafts, setDrafts] = useState<Record<DropId, Draft>>(() =>
+    Object.fromEntries(DROP_IDS.map((id) => [id, toDraft(DROP_DEFAULT[id])])) as Record<DropId, Draft>,
+  );
   const [q, setQ] = useState("");
   const { tiers } = useTemplateMeta();
   const [busy, setBusy] = useState(false);
@@ -104,10 +143,23 @@ export default function AdminSeasonPage() {
   const adopt = useCallback((v: View) => {
     setView(v);
     setMode(v.mode);
-    setSaleOn(v.saleEnabled);
-    setPct(String(v.salePercent || 49));
-    setSlugs(v.saleSlugs.length ? v.saleSlugs : DEFAULT_DROP);
+    if (isDropMode(v.mode)) setTab(v.mode);
+    setDrafts(Object.fromEntries(DROP_IDS.map((id) => [id, toDraft(v.drops[id])])) as Record<DropId, Draft>);
   }, []);
+
+  // The current tab's draft, with setters that edit only that drop.
+  const draft = drafts[tab];
+  const { saleOn, pct, slugs } = draft;
+  const patchDraft = useCallback((p: Partial<Draft> | ((d: Draft) => Partial<Draft>)) => {
+    setDrafts((all) => ({ ...all, [tab]: { ...all[tab], ...(typeof p === "function" ? p(all[tab]) : p) } }));
+  }, [tab]);
+  const setSaleOn = (f: (v: boolean) => boolean) => patchDraft((d) => ({ saleOn: f(d.saleOn) }));
+  const setPct = (v: string) => patchDraft({ pct: v });
+  const setSlugs = (v: string[]) => patchDraft({ slugs: v });
+  const pickMode = (m: SeasonMode) => {
+    setMode(m);
+    if (isDropMode(m)) setTab(m);
+  };
 
   useEffect(() => {
     if (!allowed || !accessToken) return;
@@ -127,31 +179,51 @@ export default function AdminSeasonPage() {
     return () => { live = false; };
   }, [allowed, accessToken, adopt]);
 
-  const pctNum = Math.round(Number(pct));
+  const pctOf = (d: Draft) => Math.round(Number(d.pct));
+  const validDraft = (d: Draft) => { const n = pctOf(d); return Number.isFinite(n) && n >= 1 && n <= 90 && d.slugs.length > 0; };
+  const draftDirty = (id: DropId) => {
+    if (!view) return false;
+    const d = drafts[id], v = view.drops[id];
+    return d.saleOn !== v.saleEnabled || pctOf(d) !== v.salePercent || !sameSet(d.slugs, v.saleSlugs);
+  };
+  const pctNum = pctOf(draft);
   const pctValid = Number.isFinite(pctNum) && pctNum >= 1 && pctNum <= 90;
-  const slugsChanged = !!view && !sameSet(slugs, view.saleSlugs.length ? view.saleSlugs : DEFAULT_DROP);
-  const dirty = !!view && (mode !== view.mode || saleOn !== view.saleEnabled || (pctValid && pctNum !== view.salePercent) || slugsChanged);
+  const allValid = DROP_IDS.every((id) => validDraft(drafts[id]));
+  const dirty = !!view && (mode !== view.mode || DROP_IDS.some(draftDirty));
+  const defaults = DROP_DEFAULT[tab].saleSlugs;
+  const ui = DROP_UI[tab];
 
-  // The whole registry, Halloween first, then gallery order; searched by name or slug.
+  // The whole registry — this drop's own templates first (even before they are
+  // in the registry), then gallery order; searched by name or slug.
   const catalogue = useMemo(() => {
-    const hw = new Set<string>(HALLOWEEN_SLUGS);
-    return [...GALLERY_LIST]
-      .sort((a, b) => Number(hw.has(b.slug)) - Number(hw.has(a.slug)))
-      .map((t) => ({ slug: t.slug, title: t.title, emoji: t.emoji, ultra: Boolean(t.ultra), premium: isPremiumSlug(t.slug, tiers) }));
-  }, [tiers]);
+    const own = new Set<string>(defaults);
+    const listed = [...GALLERY_LIST]
+      .sort((a, b) => Number(own.has(b.slug)) - Number(own.has(a.slug)))
+      .map((t) => ({ slug: t.slug, title: t.title, emoji: t.emoji, ultra: Boolean(t.ultra), premium: isPremiumSlug(t.slug, tiers), soon: false }));
+    const missing = defaults
+      .filter((s) => !GALLERY_BY_SLUG.has(s))
+      .map((s) => ({ slug: s, title: DROP_TEMPLATE_FALLBACK[s]?.title ?? s, emoji: DROP_TEMPLATE_FALLBACK[s]?.emoji ?? "✨", ultra: false, premium: false, soon: true }));
+    return [...missing, ...listed];
+  }, [tiers, defaults]);
   const needle = q.trim().toLowerCase();
   const shown = needle ? catalogue.filter((t) => t.title.toLowerCase().includes(needle) || t.slug.includes(needle)) : catalogue;
-  const toggleSlug = (slug: string) => setSlugs((cur) => (cur.includes(slug) ? cur.filter((x) => x !== slug) : [...cur, slug]));
+  const toggleSlug = (slug: string) => patchDraft((d) => ({ slugs: d.slugs.includes(slug) ? d.slugs.filter((x) => x !== slug) : [...d.slugs, slug] }));
 
   const save = async () => {
-    if (!accessToken || busy || !pctValid || slugs.length === 0) return;
+    if (!accessToken || busy || !allValid) return;
     setBusy(true);
     setError(null);
     try {
       const res = await fetch(`${API_URL}/admin/super/season`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, saleEnabled: saleOn, salePercent: pctNum, saleSlugs: slugs }),
+        // Every drop's settings, so one save covers edits made under both tabs.
+        body: JSON.stringify({
+          mode,
+          drops: Object.fromEntries(
+            DROP_IDS.map((id) => [id, { saleEnabled: drafts[id].saleOn, salePercent: pctOf(drafts[id]), saleSlugs: drafts[id].slugs }]),
+          ),
+        }),
       });
       const json = await res.json().catch(() => null);
       const v = res.ok ? parseView(json) : null;
@@ -159,7 +231,12 @@ export default function AdminSeasonPage() {
       adopt(v);
       // This tab sees the change at once: the banners read the season store,
       // and the gallery/offer page read the (now discounted) pricing store.
-      setSeason({ mode: v.mode, sale: { enabled: v.saleEnabled && v.salePercent > 0, percent: v.salePercent, slugs: v.saleSlugs } });
+      const pub = (d: Drop): DropSale => ({ enabled: d.saleEnabled && d.salePercent > 0, percent: d.salePercent, slugs: d.saleSlugs });
+      setSeason({
+        mode: v.mode,
+        sale: pub(v.drops[isDropMode(v.mode) ? v.mode : "halloween"]),
+        drops: Object.fromEntries(DROP_IDS.map((id) => [id, pub(v.drops[id])])) as Record<DropId, DropSale>,
+      });
       void refreshPricing();
       setToast("Saved — live for visitors within a minute");
       setTimeout(() => setToast(null), 2800);
@@ -173,12 +250,13 @@ export default function AdminSeasonPage() {
   if (!allowed) return <Loading />;
 
   const liveMode = MODES.find((m) => m.value === view?.mode);
-  const saleLive = view?.mode === "halloween" && view.saleEnabled && view.salePercent > 0;
+  const activeDrop = view && isDropMode(view.mode) ? view.drops[view.mode] : null;
+  const saleLive = !!activeDrop && activeDrop.saleEnabled && activeDrop.salePercent > 0;
 
   return (
     <AdminPage
       title="Season & offers"
-      subtitle="What the whole site is wearing: the Valentine wishlist, the Halloween drop, or nothing seasonal. In Halloween mode the running strip shows under the navbar on home, blog and gallery, posts show the Halloween card, and the templates you put in the drop are sold at the sale percent — a real discount applied by the server at quote, publish and checkout."
+      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, or Navratri & Diwali), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates."
       icon={<Ghost size={18} />}
       width={1280}
     >
@@ -187,9 +265,9 @@ export default function AdminSeasonPage() {
         <div className="adk-hero-grid">
           <HeroStat label="Site is wearing" value={view ? `${liveMode?.emoji ?? ""} ${liveMode?.label ?? view.mode}` : "…"} />
           <HeroStat
-            label="Halloween sale"
-            value={view ? (saleLive ? `${view.salePercent}% off` : view.saleEnabled ? "Armed" : "Off") : "…"}
-            sub={view ? (saleLive ? `live on ${view.saleSlugs.length || 2} drop template${view.saleSlugs.length === 1 ? "" : "s"}` : view.saleEnabled ? "applies once mode is Halloween" : "full price") : undefined}
+            label="Live sale"
+            value={view ? (saleLive && activeDrop ? `${activeDrop.salePercent}% off` : activeDrop ? "Off" : "None") : "…"}
+            sub={view ? (activeDrop ? (saleLive ? `live on ${activeDrop.saleSlugs.length} drop template${activeDrop.saleSlugs.length === 1 ? "" : "s"}` : "drop at full price") : "no drop season is on") : undefined}
           />
           <HeroStat
             label="Last updated"
@@ -213,7 +291,7 @@ export default function AdminSeasonPage() {
                   role="radio"
                   aria-checked={mode === m.value}
                   className={`ssn-mode is-${m.value}${mode === m.value ? " on" : ""}`}
-                  onClick={() => setMode(m.value)}
+                  onClick={() => pickMode(m.value)}
                 >
                   <span className="ssn-mode-e" aria-hidden>{m.emoji}</span>
                   <b>{m.label}</b>
@@ -224,8 +302,28 @@ export default function AdminSeasonPage() {
             </div>
           </Panel>
 
+          <div className="ssn-tabs" role="tablist" aria-label="Which drop to edit">
+            {DROP_IDS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                className={`ssn-tab is-${id}${tab === id ? " on" : ""}`}
+                onClick={() => setTab(id)}
+              >
+                <span aria-hidden>{DROP_UI[id].emoji}</span> {DROP_UI[id].tab}
+                {view.mode === id && <i className="ssn-live ssn-live-in">LIVE</i>}
+                {draftDirty(id) && <i className="ssn-dot" title="Unsaved changes" />}
+              </button>
+            ))}
+            <span className="ssn-tabs-note">
+              {mode === tab ? "Editing the drop that is live once you save." : `Editing the ${DROP_UI[tab].tab} — it goes live only when the season above is “${DROP_UI[tab].tab}”.`}
+            </span>
+          </div>
+
           <Panel
-            title="Halloween sale"
+            title={`${ui.tab} · sale`}
             icon={<Percent size={15} color={A.goldDeep} />}
             note={`${slugs.length} template${slugs.length === 1 ? "" : "s"} in the drop`}
             delay={0.1}
@@ -234,7 +332,7 @@ export default function AdminSeasonPage() {
                 type="button"
                 role="switch"
                 aria-checked={saleOn}
-                aria-label={saleOn ? "Switch the Halloween sale off" : "Switch the Halloween sale on"}
+                aria-label={saleOn ? `Switch the ${ui.tab} sale off` : `Switch the ${ui.tab} sale on`}
                 className={`ssn-switch${saleOn ? " on" : ""}`}
                 onClick={() => setSaleOn((v) => !v)}
               >
@@ -267,34 +365,36 @@ export default function AdminSeasonPage() {
               {!pctValid && <p className="ssn-warn">Pick a percent from 1 to 90.</p>}
               <p className="ssn-help">
                 {saleOn
-                  ? mode === "halloween"
+                  ? mode === tab
                     ? `Every template in the drop sells at ${pctValid ? pctNum : "…"}% off, with the original price struck through on the paywall.`
-                    : "Armed — it takes effect when the mode is Halloween."
-                  : "Off — the Halloween drop still shows, at full price and without a percent."}
+                    : `Armed — it takes effect when the season is the ${ui.tab}.`
+                  : `Off — the ${ui.tab} still shows, at full price and without a percent.`}
               </p>
             </div>
           </Panel>
 
           <Panel
-            title="Templates in the drop"
+            title={`${ui.tab} · templates`}
             icon={<LayoutGrid size={15} color={A.goldDeep} />}
             note={`${slugs.length} selected`}
             delay={0.15}
             right={
-              <button type="button" className="ssn-reset" disabled={sameSet(slugs, DEFAULT_DROP)} onClick={() => setSlugs(DEFAULT_DROP)}>
-                <RotateCcw size={13} /> Reset to the two Halloween templates
+              <button type="button" className="ssn-reset" disabled={sameSet(slugs, defaults)} onClick={() => setSlugs([...defaults])}>
+                <RotateCcw size={13} /> {ui.reset}
               </button>
             }
           >
             <p className="ssn-help ssn-pick-help">
-              Any templates, Halloween or not. These are the cards on the offer page and the templates the sale discounts. At least one.
+              Any templates, seasonal or not. These are the cards on {DROPS[tab].path} and the templates its sale discounts. At least one.
             </p>
             <div className="ssn-chips" aria-label="Selected templates">
               {slugs.map((s) => {
                 const t = GALLERY_BY_SLUG.get(s);
+                const fb = DROP_TEMPLATE_FALLBACK[s];
                 return (
-                  <span key={s} className={`ssn-chip${t ? "" : " is-unknown"}`} title={t ? s : "Not in the registry — skipped on the site"}>
-                    {t ? t.title : s}
+                  <span key={s} className={`ssn-chip${t ? "" : fb ? " is-soon" : " is-unknown"}`}
+                    title={t ? s : fb ? `${s} — not in this build's registry yet; the offer page shows a placeholder card` : "Not in the registry — skipped on the site"}>
+                    {t ? t.title : fb ? fb.title : s}
                     <button type="button" aria-label={`Remove ${t?.title ?? s}`} onClick={() => toggleSlug(s)}><X size={12} /></button>
                   </span>
                 );
@@ -315,6 +415,7 @@ export default function AdminSeasonPage() {
                       <span className="ssn-row-e" aria-hidden>{t.emoji}</span>
                       <span className="ssn-row-t"><b>{t.title}</b><code>{t.slug}</code></span>
                       {(t.ultra || t.premium) && <i className="ssn-prem">{t.ultra ? "✦ Premium" : "Premium"}</i>}
+                      {t.soon && <i className="ssn-prem ssn-soon">Coming</i>}
                     </label>
                   </li>
                 );
@@ -325,12 +426,12 @@ export default function AdminSeasonPage() {
 
           <div className="ssn-bar">
             <div className="ssn-links">
-              <Link href={HALLOWEEN_PATH} target="_blank">Offer page <ExternalLink size={12} /></Link>
+              <Link href={DROPS[tab].path} target="_blank">{DROP_UI[tab].tab} page <ExternalLink size={12} /></Link>
               <Link href="/" target="_blank">Home <ExternalLink size={12} /></Link>
               <Link href="/blog" target="_blank">Blog <ExternalLink size={12} /></Link>
               <Link href="/templates" target="_blank">Gallery <ExternalLink size={12} /></Link>
             </div>
-            <button type="button" className="ssn-save" disabled={!dirty || busy || !pctValid || slugs.length === 0} onClick={save}>
+            <button type="button" className="ssn-save" disabled={!dirty || busy || !allValid} onClick={save}>
               {busy ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {dirty ? "Save changes" : "Saved"}
             </button>
           </div>
@@ -344,7 +445,8 @@ export default function AdminSeasonPage() {
 const SSN_CSS = `
 .ssn-err { margin: 12px 0; padding: 12px 14px; border-radius: 12px; color: #b3261e; background: #fff1ef; border: 1px solid rgba(179,38,30,.25); font: 500 13px/1.4 'Inter', sans-serif; }
 .ssn-modes { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
-@media (min-width: 720px) { .ssn-modes { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media (min-width: 720px) { .ssn-modes { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (min-width: 1100px) { .ssn-modes { grid-template-columns: repeat(4, minmax(0,1fr)); } }
 .ssn-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 14px 16px; border-radius: 16px; text-align: left; cursor: pointer;
   border: 1.5px solid rgba(61,12,17,.12); background: #fffdfb; color: #2a0a0e; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
 .ssn-mode:hover { transform: translateY(-1px); }
@@ -354,6 +456,19 @@ const SSN_CSS = `
 .ssn-mode.on { border-color: #3d0c11; box-shadow: 0 10px 24px -14px rgba(61,12,17,.6), inset 0 0 0 1px #3d0c11; }
 .ssn-mode.is-halloween.on { border-color: #5a4a7c; color: #f3eefe; background: linear-gradient(180deg, #2b2245, #17132a); box-shadow: 0 10px 24px -14px rgba(23,19,42,.8), inset 0 0 0 1px #b9a6f0; }
 .ssn-mode.is-halloween.on > span:not(.ssn-mode-e) { color: rgba(226,216,250,.75); }
+.ssn-mode.is-festive.on { border-color: #f4c95d; color: #fff7e8; background: radial-gradient(120% 90% at 85% 0%, rgba(255,176,32,.25), transparent 55%), linear-gradient(180deg, #232a66, #0d0f2e);
+  box-shadow: 0 10px 24px -14px rgba(13,15,46,.8), inset 0 0 0 1px #ffb020; }
+.ssn-mode.is-festive.on > span:not(.ssn-mode-e) { color: rgba(255,238,205,.78); }
+.ssn-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 2px; }
+.ssn-tab { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 999px; cursor: pointer;
+  border: 1.5px solid rgba(61,12,17,.14); background: #fffdfb; color: #2a0a0e; font: 700 13px/1 'Inter', sans-serif; }
+.ssn-tab.on.is-halloween { color: #f3eefe; border-color: #b9a6f0; background: linear-gradient(135deg, #17132a, #3b2f62); }
+.ssn-tab.on.is-festive { color: #fff7e8; border-color: #ffb020; background: linear-gradient(135deg, #0d0f2e, #2b3480); }
+.ssn-tab .ssn-live-in { position: static; padding: 3px 6px; font-size: 8.5px; }
+.ssn-dot { width: 7px; height: 7px; border-radius: 50%; background: #e3742a; }
+.ssn-tabs-note { flex: 1 1 260px; font: 500 12.5px/1.4 'Inter', sans-serif; color: #7f5f5f; }
+.ssn-chip.is-soon { background: linear-gradient(135deg, #1a1f52, #2b3480); box-shadow: inset 0 0 0 1px rgba(244,201,93,.5); }
+.ssn-soon { background: linear-gradient(135deg, #ffe3a3, #ffb020); }
 .ssn-mode.is-valentine.on { background: linear-gradient(180deg, #fff6f4, #ffe6e1); }
 .ssn-live { position: absolute; top: 12px; right: 12px; padding: 4px 7px; border-radius: 999px; font: 800 9px/1 'Inter', sans-serif; font-style: normal; letter-spacing: .12em; color: #fff; background: #1e7a4b; }
 .ssn-switch { position: relative; width: 46px; height: 26px; border: 0; border-radius: 999px; cursor: pointer; background: rgba(61,12,17,.18); transition: background .25s ease; }
