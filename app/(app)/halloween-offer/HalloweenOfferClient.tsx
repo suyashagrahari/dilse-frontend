@@ -28,6 +28,7 @@ import HauntedScene, { HS_CSS } from "./HauntedScene";
 import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { formatINR } from "@/config/templatePricing";
+import { useAppSelector } from "@/store/hooks";
 
 function Countdown() {
   const t = useNow();
@@ -87,6 +88,9 @@ export default function HalloweenOfferClient() {
         .sort((a, b) => a.p.finalPrice - b.p.finalPrice)[0]
     : undefined;
   const first = cheapest?.t ?? drop[0];
+  // Super admin / "All templates free": the gate lets them publish free, so the
+  // CTA does not quote a price they will never be charged.
+  const freeFor = useAppSelector((s) => s.auth.user?.publishesFree ?? null);
   const n = drop.length;
   const countWord = n === 1 ? "one" : n === 2 ? "two" : n === 3 ? "three" : n === 4 ? "four" : String(n);
 
@@ -125,7 +129,7 @@ export default function HalloweenOfferClient() {
               </a>
               {first && (
                 <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
-                  {cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
+                  {cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </WitchLink>
               )}
             </div>

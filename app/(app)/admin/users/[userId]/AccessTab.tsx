@@ -19,6 +19,8 @@ import { Loader2, Trash2, KeyRound, AlertTriangle } from "lucide-react";
 import { C } from "./types";
 import { Card, Empty } from "./ui";
 import { useToast } from "@/lib/toast/useToast";
+import FreeAccessToggle from "../../FreeAccessToggle";
+import type { ProfileUser } from "./types";
 
 interface Grant {
   slug: string;
@@ -32,9 +34,16 @@ interface Grant {
 export default function AccessTab({
   userId,
   hdr,
+  user,
+  accessToken,
+  onFreeAccess,
 }: {
   userId: string;
   hdr: () => Record<string, string>;
+  /** The profile's user, for the "All templates free" switch. */
+  user?: ProfileUser;
+  accessToken?: string | null;
+  onFreeAccess?: () => void;
 }) {
   const { pushToast } = useToast();
   const [grants, setGrants] = useState<Grant[]>([]);
@@ -81,7 +90,33 @@ export default function AccessTab({
     [busy, userId, hdr, pushToast]
   );
 
+  const fa = user?.freeAccess;
   return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
+    {user && (
+      <Card title="Free publishing">
+        <p style={{ margin: "0 0 10px", fontSize: 12.5, lineHeight: "18px", color: C.muted }}>
+          With this on, every priced template publishes free for this person — no paywall, no
+          points. Good for influencers and partners. Pages they already published stay live if you
+          switch it off.
+        </p>
+        <FreeAccessToggle
+          key={`${userId}:${!!fa?.enabled}`}
+          userId={userId}
+          enabled={!!fa?.enabled}
+          accessToken={accessToken}
+          onChange={() => onFreeAccess?.()}
+          disabledReason={user.role === "superadmin" ? "Super admins already publish free — see “Pay like a customer” on the Pricing page." : null}
+        />
+        {fa?.grantedByEmail && (
+          <p style={{ margin: "8px 0 0", fontSize: 11.5, color: C.muted, overflowWrap: "anywhere" }}>
+            {fa.enabled ? "Granted" : "Last granted"} by {fa.grantedByEmail}
+            {fa.grantedAt ? ` · ${new Date(fa.grantedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : ""}
+            {fa.note ? ` · “${fa.note}”` : ""}
+          </p>
+        )}
+      </Card>
+    )}
     <Card
       title="Early access"
       note={loading || error ? undefined : `${grants.length} grant${grants.length === 1 ? "" : "s"}`}
@@ -173,5 +208,6 @@ export default function AccessTab({
         </div>
       )}
     </Card>
+    </div>
   );
 }

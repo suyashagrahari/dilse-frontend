@@ -92,8 +92,20 @@ function SaleTag({ slug, soon }: { slug: string; soon: boolean }) {
 /** MRP struck through → the sale price · the percent, all as the API sent them; "Free" when unpriced. */
 function PriceLine({ slug, name }: { slug: string; name: string }) {
   const { pricingFor, settled } = useTemplatePricing();
+  // A super admin not paying like a customer, or an "All templates free" grant:
+  // the publish gate lets this person through free, so the card must not quote
+  // them a price. Display only — the server decides at publish.
+  const freeFor = useAppSelector((s) => s.auth.user?.publishesFree ?? null);
   if (!settled) return <span className="hdPrice is-skel" aria-hidden />;
   const p = pricingFor(slug);
+  if (!p.isFree && freeFor) {
+    return (
+      <span className="hdPrice" aria-label={`${name}: free for you`}>
+        <b>Free for you</b>
+        <span className="hdPriceNote">{freeFor === "super_admin" ? "· super admin" : "· gift from SubhSandesh"}</span>
+      </span>
+    );
+  }
   if (p.isFree) {
     return (
       <span className="hdPrice" aria-label={`${name}: free`}>
