@@ -3,6 +3,7 @@
 import React, { memo } from "react";
 import Link from "next/link";
 import { useWitchPortal, warmWitch, isHalloweenTemplateHref } from "@/components/promo/WitchPortal";
+import { useFestivePortal, isFestiveTemplateHref } from "@/components/promo/FestivePortal";
 import Image from "next/image";
 import { PlayCircle } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -47,6 +48,8 @@ const TemplateCard = memo(function TemplateCard({
   const pricing = pricingFor(template.slug);
   const openWitch = useWitchPortal();
   const witchy = isHalloweenTemplateHref(template.slug);
+  const openFestive = useFestivePortal();
+  const festive = isFestiveTemplateHref(template.slug);
 
   return (
     // ── WHY NO FRAMER-MOTION HERE ──────────────────────────────────────────────
@@ -75,6 +78,8 @@ const TemplateCard = memo(function TemplateCard({
           });
           // A Halloween template opens through the witch portal (Halloween mode only).
           if (witchy) openWitch(e, `/${template.slug}`);
+          // A festive drop template opens through the fireworks portal (festive mode only).
+          else if (festive) openFestive(e, `/${template.slug}`);
         }}
       >
         <div className="tplInner relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden">
