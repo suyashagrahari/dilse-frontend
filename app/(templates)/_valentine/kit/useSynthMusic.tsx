@@ -34,6 +34,8 @@ const MELODIES: Record<MelodyId, { root: number; bpm: number; wave: OscillatorTy
   // Halloween: a minor-key music box — A minor with a sneaky leading tone and a
   // tiptoeing E7, cute rather than scary.
   spooky: { root: 69, bpm: 80, wave: "triangle", bars: [[0, 3, 7, 12, 11, 7, 3, -1], [-4, 0, 3, 8, 7, 3, -1, -1], [-5, -1, 2, 8, 7, 2, -1, -1], [0, 3, 7, 6, 3, 0, -1, -1]] },
+  // Diwali: a warm major-pentatonic lilt (sa re ga pa dha), like temple bells at dusk.
+  diya: { root: 67, bpm: 76, wave: "sine", bars: [[0, 4, 7, 9, 12, 9, 7, -1], [2, 4, 7, 9, 7, 4, 2, -1], [-3, 0, 4, 7, 9, 7, 4, -1], [0, 2, 4, 7, 4, 2, 0, -1]] },
 };
 
 const freq = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);

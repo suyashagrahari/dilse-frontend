@@ -2487,6 +2487,103 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
+  // 8 November). Searchers want an "online Diwali card / Diwali wishes with
+  // photos" they can send on WhatsApp, and a good share is for a partner or
+  // family far away — the FAQs answer both. No rating, no price.
+  "happy-diwali": {
+    title: "Interactive Diwali Wishes Card with Photos & Music",
+    description:
+      "Send a Diwali card they can play: light a diya at their door, light a row of wish diyas, colour a rangoli, write with a sparkler, launch fireworks and open a box of mithai.",
+    category: "Festival",
+    emoji: "🪔",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy diwali card online",
+      "interactive diwali card",
+      "diwali wishes with photos",
+      "diwali ecard with music",
+      "personalised diwali greeting",
+      "send diwali wishes on whatsapp",
+      "happy diwali 2026",
+      "shubh deepavali wishes",
+      // ── ROMANTIC ──
+      "diwali wishes for girlfriend",
+      "diwali wishes for boyfriend",
+      "diwali wishes for husband",
+      "diwali wishes for wife",
+      "romantic diwali message",
+      "diwali surprise for long distance partner",
+      // ── FAMILY / FRIENDS ──
+      "diwali wishes for family",
+      "diwali wishes for parents",
+      "diwali wishes for best friend",
+      // ── THE PAGE ──
+      "light a diya online",
+      "online rangoli for diwali",
+      "virtual fireworks diwali",
+      "diwali card with our song",
+    ],
+
+    faqs: [
+      {
+        question: "How do I send an interactive Diwali card?",
+        answer:
+          "Open the Happy Diwali template, press Create and add their name and yours, a letter, up to six photos and a wish for each diya — or describe the two of you in a few lines and let the AI write it for you. Press Save to preview, then Publish and send the private link on WhatsApp, Instagram or by text. It opens in any phone or laptop browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They find a diya waiting at their door with a little tag from you and light it. Then they light a row of diyas, each one lifting one of your wishes; colour a rangoli until your initials glow in the middle; write their name in the air with a sparkler; light paper sky lanterns that hold your photos; launch fireworks until your letter appears in the glow; and open a box of mithai onto a Shubh Deepavali card signed by you.",
+      },
+      {
+        question: "Can I send it to family or a friend instead of a partner?",
+        answer:
+          "Yes. Choose who it is for — your love, family or a friend — and the default wishes, the blessing card and the reply change with it. Every line stays editable.",
+      },
+      {
+        question: "Can I add a Diwali song?",
+        answer:
+          "Yes. Paste a YouTube link (with an optional start time) and only the sound plays while they explore, or pick a Diwali favourite such as Happy Diwali, Aayee Hai Diwali or Deepavali Manayi Suhani. You can also keep the soft built-in festive melody. Music starts only after they light the first diya.",
+      },
+      {
+        question: "Does it work on any phone?",
+        answer:
+          "Yes. Every scene fits one screen on phones, tablets and laptops, and every interaction works with a simple tap. Motion is reduced automatically for anyone whose phone asks for less motion, and the fireworks are drawn by the page, so there is no noise or smoke.",
+      },
+      {
+        question: "When is Diwali 2026?",
+        answer:
+          "Diwali (Lakshmi Puja) falls on Sunday, 8 November 2026. Good moments to send the link are that evening, as the first diyas are lit, or at midnight going into the day; for someone far away, open it together on a video call. The page works on any date.",
+      },
+      {
+        question: "Can they keep it?",
+        answer:
+          "Yes. The Shubh Deepavali card at the end can be saved as a 1080×1920 image (Instagram Story size), and the link keeps working, so they can open it again any evening.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Send an Interactive Diwali Card",
+      description:
+        "Build a little Diwali night for someone — a diya at their door, your wishes, a rangoli, fireworks with your letter and a box of sweets — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Diwali page on SubhSandesh and press Create." },
+        { name: "Choose Who It's For", text: "Pick your love, family or a friend; the default wishes, blessing and reply follow the choice." },
+        { name: "Write the Wishes", text: "Add both names, the tag on the diya, a wish for each diya and the letter that appears in the fireworks — or let the AI write it from a short story." },
+        { name: "Add Photos and Music", text: "Upload up to six photos for the sky lanterns, then paste a YouTube song or pick a Diwali favourite." },
+        { name: "Finish the Night", text: "Set the initials for the rangoli, the word for the sparkler, their favourite sweet and your blessing." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on Diwali evening." },
+      ],
+    },
+  },
   // ── ✦ Premium twins (Stage 7, 2026-10-08) ─────────────────────────────────
   // Nine cinematic, several-scene versions of the Valentine-week days and
   // Halloween. Search intent is split from the $2 twin on purpose: the twin is

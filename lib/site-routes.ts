@@ -97,6 +97,7 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   // Halloween (/happy-halloween) is NOT listed here: it has a TEMPLATE_DATA entry
   // in lib/seo-data.ts (FAQs + HowTo), so sitemap.ts already emits it from
   // TEMPLATE_SEO — listing it twice would put a duplicate <loc> in the sitemap.
+  // Diwali (/happy-diwali) likewise: its TEMPLATE_DATA entry puts it in the sitemap.
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card
