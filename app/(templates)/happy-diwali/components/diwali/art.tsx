@@ -89,9 +89,9 @@ export function Door({ open, glow }: { open: number; glow: number }) {
           <stop offset="1" stopColor="#5A2810" />
         </linearGradient>
         <radialGradient id="dw-wall" cx="50%" cy="62%" r="62%">
-          <stop offset="0" stopColor="#2E3478" />
-          <stop offset=".7" stopColor="#222868" stopOpacity=".85" />
-          <stop offset="1" stopColor="#1A1F52" stopOpacity="0" />
+          <stop offset="0" stopColor="#7A1418" />
+          <stop offset=".7" stopColor="#5A0A0E" stopOpacity=".85" />
+          <stop offset="1" stopColor="#3A0709" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="dw-inside" cx="50%" cy="70%" r="70%">
           <stop offset="0" stopColor="#FFE9A8" />
@@ -107,15 +107,15 @@ export function Door({ open, glow }: { open: number; glow: number }) {
       {/* the inside: warm light once the door opens */}
       <path d="M62 272 L62 100 Q62 52 120 48 Q178 52 178 100 L178 272 Z" fill="url(#dw-inside)" opacity={0.25 + glow * 0.75} style={{ transition: "opacity 1.2s ease" }} />
       {/* fanlight in the arch */}
-      <path d="M62 92 Q62 52 120 48 Q178 52 178 92 Z" fill="#1A1F52" opacity={1 - glow * 0.7} style={{ transition: "opacity 1.2s ease" }} />
+      <path d="M62 92 Q62 52 120 48 Q178 52 178 92 Z" fill="#3A0709" opacity={1 - glow * 0.7} style={{ transition: "opacity 1.2s ease" }} />
       {[0, 1, 2, 3, 4].map((k) => (
         <path key={k} d={`M120 92 L${70 + k * 25} ${k === 2 ? 50 : 60 - Math.abs(k - 2) * -2}`} stroke="#C98A3A" strokeWidth="2" />
       ))}
       {leaf(-1)}
       {leaf(1)}
       {/* the step */}
-      <rect x="28" y="270" width="184" height="14" rx="3" fill="#4A3A78" />
-      <rect x="16" y="282" width="208" height="16" rx="3" fill="#3A2E66" />
+      <rect x="28" y="270" width="184" height="14" rx="3" fill="#8A3A2A" />
+      <rect x="16" y="282" width="208" height="16" rx="3" fill="#6A2A1E" />
       {/* a little toran over the arch */}
       <path d="M44 40 Q120 66 196 40" fill="none" stroke="#7A4A12" strokeWidth="1.4" />
       {Array.from({ length: 11 }, (_, k) => {

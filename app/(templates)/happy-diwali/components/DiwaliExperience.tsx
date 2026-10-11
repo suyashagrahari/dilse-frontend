@@ -7,9 +7,11 @@
 // along; each lifts a wish) → the rangoli (pick a colour, tap a ring; the
 // initials glow, the owner's rangoli GIF blooms) → the sparkler (swipe to
 // write their word in light) → sky lanterns (their photos, lit one by one;
-// skipped when there are none) → fireworks (tap the sky three times; the
-// letter rises in the glow, paged to fit) → the mithai box → the Shubh
-// Deepavali card + "Light a diya for someone".
+// skipped when there are none) → the crackers playground (pick crackers from
+// a tray, light them on the ground or in the sky; fireworks finales) → the
+// liffafa (a red-and-gold shagun envelope opens; the letter slides out into
+// diya light, paged to fit) → the mithai box → the Shubh Deepavali card +
+// "Light a diya for someone".
 //
 // Tiny diyas in the top-left corner light up scene by scene (tap an earlier one
 // to go back). Every scene is ONE screen; the way forward is always the same
@@ -28,9 +30,10 @@ import Atmosphere from "./diwali/Atmosphere";
 import DiyaRow from "./diwali/DiyaRow";
 import Doorstep from "./diwali/Doorstep";
 import Ending from "./diwali/Ending";
-import Fireworks from "./diwali/Fireworks";
+import Crackers from "./diwali/Crackers";
 import { dwDisplay } from "./diwali/fonts";
 import Lanterns from "./diwali/Lanterns";
+import Liffafa from "./diwali/Liffafa";
 import Mithai from "./diwali/Mithai";
 import Rangoli from "./diwali/Rangoli";
 import Sparkler, { WAND } from "./diwali/Sparkler";
@@ -47,8 +50,8 @@ const initialsOf = (a: string, b: string) => {
   return x && y ? `${x}+${y}` : x || y;
 };
 
-type Step = "door" | "diyas" | "rangoli" | "sparkler" | "lanterns" | "fireworks" | "mithai" | "ending";
-const ALL_STEPS: Step[] = ["door", "diyas", "rangoli", "sparkler", "lanterns", "fireworks", "mithai", "ending"];
+type Step = "door" | "diyas" | "rangoli" | "sparkler" | "lanterns" | "crackers" | "liffafa" | "mithai" | "ending";
+const ALL_STEPS: Step[] = ["door", "diyas", "rangoli", "sparkler", "lanterns", "crackers", "liffafa", "mithai", "ending"];
 
 const TONES = Object.keys(DIWALI_TONES) as DiwaliTone[];
 const MITHAI: DiwaliMithai[] = ["laddoo", "kaju-katli", "jalebi", "gulab-jamun", "barfi"];
@@ -132,9 +135,10 @@ export default function DiwaliExperience({ data, mode, react }: ExperienceProps)
           {step === "diyas" && screen("diyas", <DiyaRow wishes={wishes} sticker={sticker("d2-wishes", 60)} onNext={next} />)}
           {step === "rangoli" && screen("rangoli", <Rangoli initials={(clean(x.initials) || initialsOf(recipient, sender)).toUpperCase()} sticker={sticker("d3-rangoli", 48)} onNext={next} />)}
           {step === "sparkler" &&
-            screen("sparkler", <Sparkler word={sparkleWord} sticker={sticker("d4-sparkler", WAND)} nextLabel={hasPhotos ? "Light lanterns" : "Fireworks!"} onNext={next} />)}
+            screen("sparkler", <Sparkler word={sparkleWord} sticker={sticker("d4-sparkler", WAND)} nextLabel={hasPhotos ? "Light lanterns" : "Crackers time!"} onNext={next} />)}
           {step === "lanterns" && screen("lanterns", <Lanterns photos={data.photos} onNext={next} />)}
-          {step === "fireworks" && screen("fireworks", <Fireworks letter={data.letter || "Happy Diwali."} recipient={recipient} sender={sender} onNext={next} />)}
+          {step === "crackers" && screen("crackers", <Crackers onNext={next} />)}
+          {step === "liffafa" && screen("liffafa", <Liffafa letter={data.letter || "Happy Diwali."} recipient={recipient} sender={sender} onNext={next} />)}
           {step === "mithai" && screen("mithai", <Mithai kind={mithai} note={clean(x.mithaiNote) || T.mithaiNote} onNext={next} />)}
           {step === "ending" &&
             screen(
