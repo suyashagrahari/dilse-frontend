@@ -37,7 +37,7 @@ export default function HeroSection() {
   const goHalloween = useCallback(() => router.push(HALLOWEEN_PATH), [router]);
   const goDandiya = useCallback(() => router.push(DANDIYA_PATH), [router]);
   const goDiwali = useCallback(() => router.push(DIWALI_PATH), [router]);
-  const avoid = ".hero-btns, .hero-kicker, .hero-copy-pane h1, .hwb-wrap, .fsb-wrap";
+  const avoid = ".hero-btns, .hero-kicker, .hero-copy-pane h1, .hero-desc, .hero-stats, .hero-note, .hwb-wrap, .fsb-wrap";
   return (
     <section id="hero" className="hero-section" style={{
       background: '#f5ede6', display: 'flex', alignItems: 'center',

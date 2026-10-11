@@ -261,6 +261,11 @@ export default function CritterLayer({
       if (sent >= want) break;
       const p = plan(kind, r.width, r.height, oy, [...avoidBoxes, ...sameKind(kind)], ++seq.current);
       if (!p) continue;
+      // Phones and tablets: a season's planner may only check part of a lane
+      // (a rising column's faded ends, a spider's thread), which there is enough
+      // to cross the hero's stacked copy. The lane clips the creature, so the
+      // whole lane must miss every element to keep clear, or the slot is skipped.
+      if (vw < 1024 && !clearOf({ ...p.lane, top: p.lane.top - oy, bottom: p.lane.bottom - oy }, avoidBoxes, 4)) continue;
       sent++;
       live.current = [...live.current, p];
       // Show it only once the GIF is in hand, so it never appears half-loaded.
