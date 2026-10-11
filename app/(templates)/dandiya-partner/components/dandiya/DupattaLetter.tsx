@@ -1,82 +1,245 @@
 "use client";
 
-// Scene 6 — "A note tucked in the dupatta". The sender's letter on a cream
-// panel framed by a bandhani dupatta with a zari border and tassels. A long
-// letter is split into pages that fit the screen (never a scroll); she taps the
-// note (or "next fold") to turn to the next fold, and the pill appears on the
-// last one.
+// Scene 6 — "A note for you", tucked in the dupatta. The emotional high point.
+//
+// A bandhani odhni lies folded over the note, its two folds tied at the middle
+// with a mirror-work knot. She taps the knot (or pulls a fold) and the folds
+// lift away to show a letter on warm handmade paper: a zari border with little
+// corner flowers, a faint kalash watermark, a clay diya in the corner whose
+// light flickers across the page. The sender's words appear as if they are
+// being written, in an Indian hand (Kalam), and it is signed off with a tiny
+// pair of crossed dandiya sticks.
+//
+// A long letter is split into folds that are measured against the real page
+// (never a scroll, never tiny text): each fold turns like folded cloth, a row
+// of little mirrors shows where she is (tap one to go back), and the pill only
+// appears once the last fold has been written. Reduced motion: everything is
+// simply there, no writing, no flicker.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { haptic, useReducedMotion } from "../../../_valentine/kit";
-import { FONTS } from "../../../_valentine/theme";
+import { Diya } from "./art";
+import { DD_HAND, ddHand } from "./fonts";
 import { useDd, useNext } from "./stage";
-import { BANDHANI, DD, RoomTitle } from "./ui";
+import { BANDHANI, DD, Hint, MIRROR_ROW, RoomTitle } from "./ui";
 
-/** Characters that fit one fold, by the screen's height (the card is a fixed share of it). */
-function budget(h: number, w: number): number {
-  const base = h < 680 ? 250 : h < 780 ? 320 : h < 900 ? 420 : 560;
-  return w >= 1100 ? Math.round(base * 1.15) : base;
+/** Words and the spaces between them (newlines kept), so a page break never splits a word. */
+function tokenize(text: string): string[] {
+  return (
+    text
+      .replace(/\r/g, "")
+      .trim()
+      .match(/\S+|\s+/g) ?? []
+  );
 }
 
-/** Split into folds at paragraph, then sentence, then word boundaries. */
-function paginate(text: string, max: number): string[] {
-  const out: string[] = [];
-  let cur = "";
-  const push = () => {
-    if (cur.trim()) out.push(cur.trim());
-    cur = "";
-  };
-  const pieces = text.replace(/\r/g, "").split(/(\n\s*\n)/);
-  for (const piece of pieces) {
-    if (/^\n\s*\n$/.test(piece)) {
-      if (cur) cur += "\n\n";
-      continue;
+type Range = [number, number];
+
+/**
+ * Split the tokens into folds that fit the page, measured on a hidden twin of the page.
+ * The first fold carries "Dear …", the last the signature. A break prefers a paragraph or a
+ * sentence end in the last 40% of a fold.
+ */
+function measurePages(tokens: string[], fits: (s: number, e: number, first: boolean, last: boolean) => boolean): Range[] {
+  const n = tokens.length;
+  if (!n) return [[0, 0]];
+  const out: Range[] = [];
+  let s = 0;
+  for (let guard = 0; s < n && guard < 60; guard++) {
+    const first = out.length === 0;
+    if (fits(s, n, first, true)) {
+      out.push([s, n]);
+      break;
     }
-    const sentences = piece.match(/[^.!?…]+[.!?…]*\s*/g) ?? [piece];
-    for (const s of sentences) {
-      if ((cur + s).length <= max) {
-        cur += s;
-        continue;
+    let lo = s + 1;
+    let hi = n - 1;
+    let best = s + 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (fits(s, mid, first, false)) {
+        best = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
+    }
+    let e = best;
+    const floor = s + Math.ceil((best - s) * 0.72);
+    for (let k = best; k > floor; k--) {
+      const prev = tokens[k - 1] ?? "";
+      if (/\n/.test(tokens[k] ?? "") || /[.!?…]["')]*$/.test(prev)) {
+        e = k;
+        break;
       }
-      if (cur.trim()) push();
-      if (s.length <= max) {
-        cur = s;
-        continue;
+    }
+    out.push([s, e]);
+    s = e;
+    while (s < n && /^\s+$/.test(tokens[s])) s++;
+  }
+  // No orphan: a last fold holding a line or two shares the previous fold's words instead.
+  const k = out.length - 1;
+  if (k >= 1) {
+    const [ps, pe] = out[k - 1];
+    const [, le] = out[k];
+    if (le - pe < (pe - ps) * 0.3) {
+      const skip = (i: number) => {
+        while (i < n && /^\s+$/.test(tokens[i])) i++;
+        return i;
+      };
+      const ok = (e: number) => e > ps && e < le && fits(ps, e, k - 1 === 0, false) && fits(skip(e), le, false, true);
+      const target = ps + Math.round((le - ps) * 0.55);
+      let pick = -1;
+      for (let d = 0; d < (le - ps) * 0.3 && pick < 0; d++) {
+        for (const e of [target + d, target - d]) {
+          const prev = tokens[e - 1] ?? "";
+          if (pick < 0 && (/\n/.test(tokens[e] ?? "") || /[.!?…,]["')]*$/.test(prev)) && ok(e)) pick = e;
+        }
       }
-      for (const w of s.split(/(\s+)/)) {
-        if ((cur + w).length > max) push();
-        cur += w;
+      if (pick < 0 && ok(target)) pick = target;
+      if (pick > 0) {
+        out[k - 1] = [ps, pick];
+        out[k] = [skip(pick), le];
       }
     }
   }
-  push();
-  return out.length ? out : [text];
+  return out.length ? out : [[0, n]];
 }
+
+/** A deckled (hand-torn) paper edge, the same every render. */
+const DECKLE = (() => {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280) * 0.7;
+  const pts: string[] = [];
+  const N = 36;
+  for (let i = 0; i < N; i++) pts.push(`${((i / N) * 100).toFixed(2)}% ${rnd().toFixed(2)}%`);
+  for (let i = 0; i < N; i++) pts.push(`${(100 - rnd()).toFixed(2)}% ${((i / N) * 100).toFixed(2)}%`);
+  for (let i = 0; i < N; i++) pts.push(`${(100 - (i / N) * 100).toFixed(2)}% ${(100 - rnd()).toFixed(2)}%`);
+  for (let i = 0; i < N; i++) pts.push(`${rnd().toFixed(2)}% ${(100 - (i / N) * 100).toFixed(2)}%`);
+  return `polygon(${pts.join(",")})`;
+})();
 
 export default function DupattaLetter({ letter, recipient, sender, onNext }: { letter: string; recipient: string; sender: string; onNext: () => void }) {
   const reduced = useReducedMotion();
   const { cue } = useDd();
-  const [size, setSize] = useState({ h: 800, w: 390 });
-  useEffect(() => {
-    const on = () => setSize({ h: window.innerHeight, w: window.innerWidth });
-    on();
-    window.addEventListener("resize", on);
-    return () => window.removeEventListener("resize", on);
-  }, []);
-  const pages = useMemo(() => paginate(letter, budget(size.h, size.w)), [letter, size]);
+  const tokens = useMemo(() => tokenize(letter), [letter]);
+
+  // ── the folds, measured on the real page ──
+  const measureRef = useRef<HTMLDivElement | null>(null);
+  const mDear = useRef<HTMLParagraphElement | null>(null);
+  const mText = useRef<HTMLParagraphElement | null>(null);
+  const mSign = useRef<HTMLDivElement | null>(null);
+  const [pages, setPages] = useState<Range[]>(() => [[0, tokens.length]]);
+  const remeasure = useCallback(() => {
+    const box = measureRef.current;
+    const d = mDear.current;
+    const t = mText.current;
+    const g = mSign.current;
+    if (!box || !d || !t || !g || !box.clientHeight) return;
+    const fits = (s: number, e: number, first: boolean, last: boolean) => {
+      d.style.display = first ? "" : "none";
+      g.style.display = last ? "" : "none";
+      t.textContent = tokens.slice(s, e).join("");
+      return box.scrollHeight <= box.clientHeight + 1;
+    };
+    const next = measurePages(tokens, fits);
+    setPages((prev) => (prev.length === next.length && prev.every((r, k) => r[0] === next[k][0] && r[1] === next[k][1]) ? prev : next));
+  }, [tokens]);
+  useLayoutEffect(() => {
+    remeasure();
+    const box = measureRef.current;
+    let w = box?.clientWidth ?? 0;
+    let h = box?.clientHeight ?? 0;
+    const ro = new ResizeObserver(() => {
+      if (!box || (box.clientWidth === w && box.clientHeight === h)) return;
+      w = box.clientWidth;
+      h = box.clientHeight;
+      remeasure();
+    });
+    if (box) ro.observe(box);
+    // The hand font swaps in after first paint (it is only fetched once the page uses it): measure again
+    // when it has arrived, whatever order the loads finish in.
+    let live = true;
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+    const again = () => live && remeasure();
+    fonts?.ready.then(again);
+    Promise.all([fonts?.load(`400 20px ${ddHand.style.fontFamily}`), fonts?.load(`700 20px ${ddHand.style.fontFamily}`)])
+      .then(again)
+      .catch(() => {});
+    fonts?.addEventListener?.("loadingdone", again);
+    return () => {
+      live = false;
+      ro.disconnect();
+      fonts?.removeEventListener?.("loadingdone", again);
+    };
+  }, [remeasure]);
+
+  // ── untie, write, turn ──
+  const [open, setOpen] = useState(false);
   const [p, setP] = useState(0);
   const page = Math.min(p, pages.length - 1);
   const last = page >= pages.length - 1;
+  const [written, setWritten] = useState<Set<number>>(() => new Set());
+  const isWritten = reduced || written.has(page);
+  const markWritten = useCallback((k: number) => setWritten((w) => (w.has(k) ? w : new Set(w).add(k))), []);
 
-  const turn = () => {
-    if (last) return;
-    haptic(8);
-    cue("paper-rustle", { gain: 0.6 });
-    setP(page + 1);
+  const [s0, e0] = pages[page] ?? [0, tokens.length];
+  const pageTokens = tokens.slice(s0, e0);
+  const words = pageTokens.filter((tk) => /\S/.test(tk)).length;
+  const step = Math.max(24, Math.min(70, Math.round(2000 / Math.max(words, 1))));
+  const dearMs = page === 0 ? 420 : 0;
+  const writeMs = dearMs + words * step + 380;
+
+  // The words finish writing on their own (or at once when she taps the page mid-sentence).
+  useEffect(() => {
+    if (!open || isWritten) return;
+    const t = window.setTimeout(() => markWritten(page), writeMs + 450);
+    return () => window.clearTimeout(t);
+  }, [open, isWritten, page, writeMs, markWritten]);
+
+  const untie = () => {
+    if (open) return;
+    haptic([10, 30, 14]);
+    cue("paper-rustle", { gain: 0.7 });
+    cue("dd-bells", { gain: 0.5, at: 0.18 });
+    setOpen(true);
   };
 
-  useNext(last ? "See the invitation" : null, onNext, "sparkle");
+  const goTo = (k: number) => {
+    if (k === page || k < 0 || k >= pages.length) return;
+    haptic(8);
+    cue("page-turn", { gain: 0.55 });
+    setP(k);
+  };
+
+  const tapPaper = () => {
+    if (!open) return untie();
+    if (!isWritten) return markWritten(page);
+    if (!last) goTo(page + 1);
+  };
+
+  // pull a fold (either way) to untie it, too
+  const drag = useRef<{ y: number } | null>(null);
+  const onDown = (e: React.PointerEvent) => {
+    drag.current = { y: e.clientY };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    if (drag.current && Math.abs(e.clientY - drag.current.y) > 22) {
+      drag.current = null;
+      untie();
+    }
+  };
+
+  useNext(open && last && isWritten ? "Your invitation" : null, onNext, "sparkle");
+
+  let w = 0;
+  const body = pageTokens.map((tk, k) => {
+    if (!/\S/.test(tk)) return tk;
+    const delay = dearMs + w++ * step;
+    return (
+      <span key={k} className="dd-w" style={{ animationDelay: `${delay}ms` }}>
+        {tk}
+      </span>
+    );
+  });
 
   return (
     <>
@@ -84,50 +247,335 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
       <RoomTitle kicker="Tucked in the dupatta" title="A note for you" />
 
       <div className="dd-fill">
-        <div className="dd-dupatta">
-          <span className="dd-dupatta-tassels" aria-hidden />
-          <button type="button" className="dd-note" onClick={turn} disabled={last} aria-label={last ? undefined : "Next fold of the note"}>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={page}
-                className="dd-note-in"
-                initial={reduced ? false : { opacity: 0, rotateX: -12, y: 10 }}
-                animate={{ opacity: 1, rotateX: 0, y: 0 }}
-                exit={reduced ? undefined : { opacity: 0, y: -8 }}
-                transition={{ duration: 0.35 }}
-              >
-                {page === 0 && <p className="dd-note-dear">Dear {recipient},</p>}
-                <p className="dd-note-text">{pages[page]}</p>
-                {last && <p className="dd-note-sign">— {sender}</p>}
-              </motion.div>
-            </AnimatePresence>
-          </button>
+        <div className={`dd-odh${open ? " is-open" : ""}${reduced ? " is-still" : ""}`} data-dd-letter={open ? "open" : "folded"}>
+          <span className="dd-odh-tassels" aria-hidden />
+
+          <div className={`dd-paper${isWritten ? " is-written" : ""}${pages.length === 1 ? " is-single" : ""}`} onClick={tapPaper}>
+            <span className="dd-paper-glow" aria-hidden />
+            <Kalash className="dd-paper-mark" />
+            <span className="dd-paper-zari" aria-hidden>
+              <Corner style={{ left: -3, top: -3 }} />
+              <Corner style={{ right: -3, top: -3, transform: "scaleX(-1)" }} />
+              <Corner style={{ left: -3, bottom: -3, transform: "scaleY(-1)" }} />
+              <Corner style={{ right: -3, bottom: -3, transform: "scale(-1,-1)" }} />
+            </span>
+
+            {/* the page that is read */}
+            <div className="dd-page-box">
+              {open && (
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={page}
+                    className="dd-page"
+                    initial={reduced ? false : { opacity: 0, rotateX: -55, y: 18 }}
+                    animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                    exit={reduced ? undefined : { opacity: 0, rotateX: 62, y: -16 }}
+                    transition={{ duration: 0.34, ease: [0.3, 0.7, 0.2, 1] }}
+                    style={{ transformOrigin: "50% 0%" }}
+                  >
+                    {page === 0 && <p className="dd-dear">Dear {recipient},</p>}
+                    <p className="dd-text">{body}</p>
+                    {last && (
+                      <div
+                        className="dd-sign"
+                        style={{
+                          ["--d" as string]: isWritten ? "0ms" : `${writeMs - 300}ms`,
+                        }}
+                      >
+                        <span className="dd-sign-with">with love,</span>
+                        <span className="dd-sign-name">
+                          {sender}
+                          <SticksFlourish />
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              )}
+              {open && !reduced && <span key={`c${page}`} className="dd-crease" aria-hidden />}
+            </div>
+
+            {/* its invisible twin, for measuring the folds */}
+            <div ref={measureRef} className="dd-page-box dd-page-measure" aria-hidden>
+              <div className="dd-page">
+                <p ref={mDear} className="dd-dear">
+                  Dear {recipient},
+                </p>
+                <p ref={mText} className="dd-text" />
+                <div ref={mSign} className="dd-sign">
+                  <span className="dd-sign-with">with love,</span>
+                  <span className="dd-sign-name">
+                    {sender}
+                    <SticksFlourish />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="dd-paper-foot">
+              <span className="dd-paper-diya" aria-hidden>
+                <Diya lit size="100%" hue={DD.peacock} />
+              </span>
+              {open && !last && (
+                <button
+                  type="button"
+                  className={`dd-ear${isWritten ? "" : " is-waiting"}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isWritten) markWritten(page);
+                    goTo(page + 1);
+                  }}
+                >
+                  <span>Next fold</span>
+                  <i aria-hidden />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* the two folds of the odhni over the note, tied with a mirror knot */}
+          <div className="dd-folds" onClick={untie} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => (drag.current = null)} aria-hidden={open}>
+            <span className="dd-fold is-top" />
+            <span className="dd-fold is-bottom" />
+            <button
+              type="button"
+              className="dd-knot"
+              onClick={(e) => {
+                e.stopPropagation();
+                untie();
+              }}
+              tabIndex={open ? -1 : 0}
+              aria-label="Untie the dupatta and read the note"
+            >
+              <span className="dd-knot-mirror" />
+            </button>
+            <span className="dd-tag" aria-hidden>
+              For {recipient}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div style={{ flex: "none", minHeight: 30, display: "grid", placeItems: "center" }}>
-        {pages.length > 1 && (
-          <p style={{ margin: 0, font: `600 clamp(13px, 2dvh, 15px) ${FONTS.ui}`, color: DD.mist }}>
-            {last ? `Fold ${page + 1} of ${pages.length}` : `Fold ${page + 1} of ${pages.length} · tap the note for the next fold`}
-          </p>
-        )}
+      <div
+        style={{
+          flex: "none",
+          minHeight: 32,
+          display: "grid",
+          placeItems: "center",
+        }}
+      >
+        {!open ? (
+          <Hint>Tap the knot to untie the dupatta ✨</Hint>
+        ) : pages.length > 1 ? (
+          <span className="dd-beads" role="group" aria-label={`Fold ${page + 1} of ${pages.length}`}>
+            {pages.map((_, k) => (
+              <button
+                key={k}
+                type="button"
+                className={`dd-bead${k === page ? " is-here" : k < page ? " is-read" : ""}`}
+                aria-label={`Fold ${k + 1} of ${pages.length}`}
+                aria-current={k === page ? "step" : undefined}
+                onClick={() => {
+                  if (!isWritten) markWritten(page);
+                  goTo(k);
+                }}
+              >
+                <i />
+              </button>
+            ))}
+          </span>
+        ) : null}
       </div>
     </>
   );
 }
 
+/** A kalash — the pot of plenty with mango leaves and a coconut — as a faint watermark. */
+function Kalash({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 120 150" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M60 18 C48 18 44 30 46 38 C49 46 71 46 74 38 C76 30 72 18 60 18 Z" />
+      <path d="M60 18 C58 12 60 8 64 6" />
+      {[-56, -30, 0, 30, 56].map((a) => (
+        <path key={a} d="M60 44 C52 34 52 22 60 12 C68 22 68 34 60 44 Z" transform={`rotate(${a} 60 46) translate(0 ${Math.abs(a) / 6})`} />
+      ))}
+      <path d="M40 50 H80 L76 60 H44 Z" />
+      <path d="M44 60 C18 72 18 118 40 132 H80 C102 118 102 72 76 60" />
+      <path d="M30 86 H90 M28 98 H92" />
+      {[38, 50, 60, 70, 82].map((x) => (
+        <circle key={x} cx={x} cy="92" r="2" fill="currentColor" stroke="none" />
+      ))}
+      <path d="M52 112 L60 104 L68 112 L60 120 Z" />
+      <path d="M40 132 L36 142 H84 L80 132" />
+    </svg>
+  );
+}
+
+/** A little zari flower for the border's corners. */
+function Corner({ style }: { style?: CSSProperties }) {
+  return (
+    <svg className="dd-corner" viewBox="0 0 30 30" width="30" height="30" style={style} aria-hidden>
+      <path d="M3 27 V12 Q3 3 12 3 H27" fill="none" stroke="#B8862E" strokeWidth="1.6" />
+      <circle cx="10" cy="10" r="4.2" fill="#F6D27A" stroke="#B8862E" strokeWidth="1.2" />
+      <circle cx="10" cy="10" r="1.6" fill="#D7263D" />
+      {[0, 72, 144, 216, 288].map((a) => (
+        <ellipse key={a} cx="10" cy="3.6" rx="1.6" ry="2.4" fill="#E5489B" opacity=".75" transform={`rotate(${a} 10 10)`} />
+      ))}
+      <circle cx="20" cy="3" r="1.3" fill="#B8862E" />
+      <circle cx="3" cy="20" r="1.3" fill="#B8862E" />
+    </svg>
+  );
+}
+
+/** Two tiny crossed dandiya sticks with a gold spark, drawn after the name. */
+function SticksFlourish() {
+  return (
+    <svg className="dd-flourish" viewBox="0 0 48 28" aria-hidden>
+      <path className="dd-fl-a" d="M7 25 L32 4" stroke={DD.kumkum} strokeWidth="3.4" strokeLinecap="round" />
+      <path className="dd-fl-b" d="M16 4 L41 25" stroke={DD.peacock} strokeWidth="3.4" strokeLinecap="round" />
+      <path className="dd-fl-a" d="M7 25 L32 4" stroke={DD.gold} strokeWidth="3.4" strokeLinecap="round" strokeDasharray="2 5" />
+      <path className="dd-fl-b" d="M16 4 L41 25" stroke={DD.gold} strokeWidth="3.4" strokeLinecap="round" strokeDasharray="2 5" />
+      <path className="dd-fl-spark" d="M24.5 6 L25.6 9.4 L29 10.5 L25.6 11.6 L24.5 15 L23.4 11.6 L20 10.5 L23.4 9.4 Z" fill={DD.marigold} />
+    </svg>
+  );
+}
+
 const LETTER_CSS = `
-.dd-dupatta { position: relative; width: min(94cqw, calc(430px * var(--vw-s, 1))); height: min(100cqh, calc(620px * var(--vw-s, 1))); box-sizing: border-box; padding: 16px;
-  border-radius: 18px; background: ${BANDHANI}, linear-gradient(160deg, #E0324A, #A3132A 60%, #8E1022);
-  box-shadow: inset 0 0 0 4px #F6D27A, inset 0 0 0 6px #B8862E, 0 30px 60px -24px rgba(0,0,0,.85); transform: rotate(-1deg); }
-.dd-dupatta-tassels { position: absolute; left: 12px; right: 12px; bottom: -11px; height: 16px; pointer-events: none;
-  background: radial-gradient(circle at 50% 70%, #FFB627 0 4px, rgba(0,0,0,0) 4.5px) 0 0 / 18px 16px repeat-x; }
-.dd-note { position: relative; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; cursor: pointer; border-radius: 12px; text-align: left;
-  background: linear-gradient(180deg, #FFF9EC, #FFEFD0); box-shadow: inset 0 0 0 1.5px rgba(184,134,46,.5); perspective: 900px; overflow: hidden; }
-.dd-note:disabled { cursor: default; color: inherit; }
-.dd-note:focus-visible { outline: 3px solid #7FD8F2; outline-offset: 4px; }
-.dd-note-in { position: absolute; inset: 0; padding: clamp(14px, 3dvh, 26px) clamp(16px, 5cqw, 26px); display: flex; flex-direction: column; justify-content: center; gap: 10px; color: ${DD.maroon}; }
-.dd-note-dear { margin: 0; font: 700 clamp(22px, 3.6dvh, 30px) ${FONTS.script}; color: ${DD.kumkumDeep}; }
-.dd-note-text { margin: 0; font: 400 clamp(15.5px, 2.35dvh, 18.5px)/1.55 ${FONTS.serif}; white-space: pre-line; overflow-wrap: anywhere; }
-.dd-note-sign { margin: 0; align-self: flex-end; font: 700 clamp(20px, 3.2dvh, 26px) ${FONTS.script}; color: ${DD.kumkumDeep}; }
+/* The odhni: kumkum bandhani with a zari edge, a row of mirrors top and bottom, tassels below. */
+.dd-odh { position: relative; width: min(94cqw, calc(440px * var(--vw-s, 1))); height: min(100cqh, calc(640px * var(--vw-s, 1))); box-sizing: border-box;
+  padding: 18px 11px; border-radius: 16px; transform: rotate(-.8deg);
+  background: ${MIRROR_ROW.replace("0 50%", "0 3px")}, ${MIRROR_ROW.replace("0 50%", "0 calc(100% - 3px)")}, ${BANDHANI}, linear-gradient(160deg, #E0324A, #A3132A 60%, #8E1022);
+  box-shadow: inset 0 0 0 3px #F6D27A, inset 0 0 0 5px #B8862E, 0 30px 60px -24px rgba(0,0,0,.85), 0 0 60px -20px rgba(255,170,60,.35); }
+.dd-odh-tassels { position: absolute; left: 14px; right: 14px; bottom: -13px; height: 18px; pointer-events: none;
+  background: radial-gradient(ellipse 4px 6px at 50% 12px, #FFB627 0 98%, rgba(0,0,0,0) 100%) 0 0 / 18px 18px repeat-x,
+    linear-gradient(90deg, rgba(0,0,0,0) 8.2px, #F6D27A 8.2px 9.8px, rgba(0,0,0,0) 9.8px) 0 0 / 18px 8px repeat-x; }
+
+/* Handmade paper: fibres and specks, a warm centre, a deckled edge. */
+.dd-paper { position: relative; width: 100%; height: 100%; border-radius: 4px; overflow: hidden; cursor: default; color: #4A1220; text-align: left; isolation: isolate;
+  clip-path: ${DECKLE};
+  background:
+    radial-gradient(circle at 20% 30%, rgba(150,95,40,.16) 0 .9px, rgba(0,0,0,0) 1.5px) 0 0 / 23px 19px,
+    radial-gradient(circle at 70% 60%, rgba(140,80,30,.12) 0 1.1px, rgba(0,0,0,0) 1.9px) 0 0 / 31px 37px,
+    radial-gradient(ellipse 5px 1.2px at 40% 50%, rgba(170,110,50,.13) 0 98%, rgba(0,0,0,0) 100%) 0 0 / 41px 29px,
+    radial-gradient(ellipse 1.2px 6px at 60% 40%, rgba(170,110,50,.1) 0 98%, rgba(0,0,0,0) 100%) 0 0 / 53px 47px,
+    radial-gradient(110% 80% at 50% 38%, rgba(255,255,255,.6), rgba(255,255,255,0) 62%),
+    linear-gradient(172deg, #FFF8E6, #F6E0B4);
+  box-shadow: inset 0 0 30px rgba(160,100,30,.3), inset 0 0 3px rgba(120,70,20,.45); }
+.dd-odh.is-open .dd-paper:has(.dd-ear) { cursor: pointer; }
+/* the diya's light on the page, breathing like a flame */
+.dd-paper-glow { position: absolute; inset: 0; z-index: 0; pointer-events: none; will-change: opacity;
+  background: radial-gradient(85% 60% at 10% 100%, rgba(255,165,45,.5), rgba(255,170,50,.16) 42%, rgba(255,170,50,0) 78%);
+  animation: dd-flick 2.8s linear infinite; }
+@keyframes dd-flick { 0% { opacity: .78 } 9% { opacity: 1 } 17% { opacity: .84 } 31% { opacity: .96 } 44% { opacity: .72 } 52% { opacity: .92 } 68% { opacity: .8 } 81% { opacity: 1 } 100% { opacity: .78 } }
+.dd-paper-mark { position: absolute; z-index: 0; left: 50%; top: 50%; width: min(58%, 230px); height: auto; transform: translate(-50%, -54%); color: ${DD.kumkumDeep}; opacity: .075; pointer-events: none; }
+.dd-paper-zari { position: absolute; z-index: 1; inset: 9px; border-radius: 6px; pointer-events: none; border: 1.5px solid rgba(184,134,46,.85);
+  box-shadow: inset 0 0 0 3px rgba(255,248,230,.85), inset 0 0 0 4.5px rgba(214,165,55,.75); }
+.dd-corner { position: absolute; }
+
+/* the page: dear, the words, the signature — all in the Indian hand */
+.dd-page-box { position: absolute; z-index: 2; left: 0; right: 0; top: 0; bottom: 46px; box-sizing: border-box; overflow: hidden;
+  padding: clamp(20px, 3.6dvh, 32px) clamp(20px, 6cqw, 34px) 4px; perspective: 900px; }
+.dd-page-measure { visibility: hidden; pointer-events: none; z-index: -1; }
+.dd-page { display: flex; flex-direction: column; gap: clamp(6px, 1.2dvh, 12px); min-height: 100%; justify-content: flex-start; }
+.dd-paper.is-single .dd-page-box:not(.dd-page-measure) .dd-page { justify-content: center; }
+.dd-page-measure .dd-page { min-height: 0; }
+.dd-dear { margin: 0; font: 700 clamp(22px, 3.3dvh, 29px)/1.2 ${DD_HAND}; color: ${DD.kumkumDeep}; animation: dd-ink .5s ease-out both; }
+.dd-text { margin: 0; font: 400 clamp(17px, 2.45dvh, 21px)/1.6 ${DD_HAND}; white-space: pre-line; overflow-wrap: anywhere; color: #4A1220; }
+.dd-sign { display: grid; justify-items: end; gap: 0; margin-top: 2px; animation: dd-ink .6s ease-out var(--d, 0ms) both; }
+.dd-sign-with { font: 400 clamp(15px, 2.1dvh, 18px)/1.2 ${DD_HAND}; color: #7A3A2A; }
+.dd-sign-name { display: inline-flex; align-items: center; gap: 6px; font: 700 clamp(22px, 3.2dvh, 28px)/1.2 ${DD_HAND}; color: ${DD.kumkumDeep}; overflow-wrap: anywhere; }
+.dd-flourish { width: 40px; height: 24px; flex: none; overflow: visible; }
+.dd-flourish path { stroke-dashoffset: 0; }
+.dd-fl-a, .dd-fl-b { stroke-dasharray: 34; animation: dd-draw .5s ease-out calc(var(--d, 0ms) + .3s) both; }
+.dd-fl-b { animation-delay: calc(var(--d, 0ms) + .5s); }
+.dd-fl-a[stroke-dasharray="2 5"], .dd-fl-b[stroke-dasharray="2 5"] { stroke-dasharray: 2 5; animation: dd-fade .3s ease-out calc(var(--d, 0ms) + .8s) both; }
+@keyframes dd-fade { from { opacity: 0 } to { opacity: 1 } }
+.dd-fl-spark { transform-origin: 24.5px 10.5px; animation: dd-spark 1.6s ease-in-out .6s infinite alternate; }
+@keyframes dd-draw { from { stroke-dashoffset: 34 } to { stroke-dashoffset: 0 } }
+@keyframes dd-spark { from { transform: scale(.7) rotate(0) } to { transform: scale(1.15) rotate(45deg) } }
+/* "as if written": each word inks in after the one before */
+.dd-w { display: inline-block; max-width: 100%; opacity: 0; animation: dd-ink .42s ease-out both; }
+@keyframes dd-ink { from { opacity: 0; transform: translateY(.18em) } to { opacity: 1; transform: none } }
+.dd-paper.is-written .dd-w, .dd-paper.is-written .dd-sign, .dd-paper.is-written .dd-dear { animation: none; opacity: 1; }
+
+/* a fold's crease sweeping down the page as it turns */
+.dd-crease { position: absolute; left: 0; right: 0; top: 0; height: 40%; pointer-events: none; z-index: 3;
+  background: linear-gradient(180deg, rgba(120,60,10,0), rgba(120,60,10,.12) 45%, rgba(255,255,255,.5) 52%, rgba(255,255,255,0)); transform: translateY(-110%);
+  animation: dd-crease .7s ease-in-out .05s both; }
+@keyframes dd-crease { from { transform: translateY(-110%) } to { transform: translateY(260%) } }
+
+/* the paper's foot: the diya, the mirror beads, the folded corner */
+.dd-paper-foot { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; height: 46px; }
+.dd-paper-diya { position: absolute; left: 14px; bottom: 7px; width: 50px; filter: drop-shadow(0 0 10px rgba(255,182,39,.6)); }
+.dd-beads { display: flex; gap: 0; }
+.dd-bead { width: 28px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; }
+.dd-bead i { width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #FFFFFF, #C9D6F2 60%, #8D9EC6); box-shadow: 0 0 0 1.5px #B8862E; opacity: .55; transition: transform .3s ease, opacity .3s ease; }
+.dd-bead.is-read i { opacity: .9; }
+.dd-bead.is-here i { opacity: 1; transform: scale(1.4); box-shadow: 0 0 0 1.5px #B8862E, 0 0 8px 2px rgba(255,182,39,.7); }
+.dd-bead:focus-visible { outline: 2px solid #1590B8; outline-offset: -4px; border-radius: 8px; }
+.dd-ear { position: absolute; right: 0; bottom: 0; height: 46px; display: flex; align-items: center; gap: 6px; padding: 0 0 0 10px; border: 0; background: none; cursor: pointer;
+  font: 700 clamp(14px, 2dvh, 16px) ${DD_HAND}; color: ${DD.kumkumDeep}; -webkit-tap-highlight-color: transparent; transition: opacity .3s ease; }
+.dd-ear.is-waiting { opacity: .55; }
+.dd-ear i { width: 40px; height: 40px; align-self: flex-end; background: linear-gradient(135deg, rgba(0,0,0,0) 50%, #E3C48C 50%, #F3DDAE 78%, #E9CC94);
+  box-shadow: -3px -3px 6px -3px rgba(90,40,10,.35); border-top-left-radius: 6px; transform-origin: 100% 100%; animation: dd-ear 1.8s ease-in-out infinite alternate; }
+@keyframes dd-ear { from { transform: scale(.9) } to { transform: scale(1.08) } }
+.dd-ear:focus-visible { outline: 2px solid #1590B8; outline-offset: -3px; border-radius: 8px; }
+
+/* The folds of the odhni over the note, and the knot that ties them. */
+.dd-folds { position: absolute; z-index: 5; inset: 18px 11px; perspective: 1100px; touch-action: none; }
+.dd-folds { cursor: pointer; }
+.dd-odh.is-open .dd-folds { pointer-events: none; }
+.dd-fold { position: absolute; left: -2px; right: -2px; height: 50.6%; backface-visibility: hidden; will-change: transform;
+  background: radial-gradient(circle, rgba(246,210,122,.9) 0 2.4px, rgba(184,134,46,.9) 3px, rgba(0,0,0,0) 3.6px) 11px 11px / 44px 44px,
+    radial-gradient(circle, rgba(246,210,122,.55) 0 5px, rgba(246,210,122,0) 5.6px) 11px 11px / 44px 44px,
+    radial-gradient(circle, rgba(255,255,255,.95) 0 1.6px, rgba(0,0,0,0) 2.2px) 33px 33px / 44px 44px,
+    ${BANDHANI}, linear-gradient(180deg, #D42A42, #A3132A 70%, #8E1022);
+  transition: transform .8s cubic-bezier(.55,0,.25,1), opacity .35s ease .5s; }
+.dd-fold.is-top { top: 0; transform-origin: 50% 0; border-radius: 4px 4px 0 0;
+  box-shadow: inset 0 -16px 18px -12px rgba(40,0,6,.45), 0 6px 12px -6px rgba(40,0,6,.6); }
+.dd-fold.is-bottom { bottom: 0; transform-origin: 50% 100%; border-radius: 0 0 4px 4px; transition-delay: .08s, .58s;
+  box-shadow: inset 0 16px 18px -12px rgba(255,220,180,.25); }
+/* the seam: a zari band with mirrors and a fringe of tassels on the top fold's edge */
+.dd-fold.is-top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 26px;
+  background: ${MIRROR_ROW.replace("0 50%", "0 2px")}, linear-gradient(#F6D27A, #F6D27A) 0 0 / 100% 2px no-repeat,
+    radial-gradient(ellipse 3.5px 5px at 50% 21px, #FFB627 0 98%, rgba(0,0,0,0) 100%) 0 0 / 14px 26px repeat-x; }
+.dd-fold.is-bottom::before { content: ""; position: absolute; left: 0; right: 0; bottom: 14px; height: 2px; background: rgba(246,210,122,.6); }
+.dd-odh.is-open .dd-fold.is-top { transform: rotateX(118deg); opacity: 0; }
+.dd-odh.is-open .dd-fold.is-bottom { transform: rotateX(-118deg); opacity: 0; }
+.dd-knot { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: radial-gradient(circle, #8E1022 0 52%, #F6D27A 53% 58%, #B8862E 59% 62%, rgba(0,0,0,0) 63%),
+    repeating-conic-gradient(from 0deg, #FFB627 0 10deg, #D7263D 10deg 20deg);
+  -webkit-mask-image: radial-gradient(circle, #000 66%, rgba(0,0,0,0) 70%); mask-image: radial-gradient(circle, #000 66%, rgba(0,0,0,0) 70%);
+  filter: drop-shadow(0 6px 10px rgba(40,0,6,.55)); transition: transform .35s cubic-bezier(.5,0,.75,0), opacity .25s ease .1s;
+  animation: dd-knot 2.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+.dd-knot-mirror { position: absolute; inset: 25%; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #FFFFFF 0 14%, #E7EEFF 30%, #9FB3E8 75%, #7E8FB8);
+  box-shadow: 0 0 0 2px #F6D27A, 0 0 14px 2px rgba(255,236,170,.7); }
+.dd-knot-mirror::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(120deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 65%) -60px 0 / 60px 100% no-repeat; animation: dd-knot-glint 2.6s ease-in-out infinite; }
+@keyframes dd-knot { 0%, 100% { transform: scale(1) rotate(0) } 50% { transform: scale(1.07) rotate(8deg) } }
+@keyframes dd-knot-glint { 0%, 55% { background-position: -60px 0 } 100% { background-position: 80px 0 } }
+/* a little paper tag on a gold thread, swinging from the knot */
+.dd-tag { position: absolute; left: 50%; top: calc(50% + 50px); padding: 7px 16px 6px; border-radius: 4px; white-space: nowrap; max-width: 80%; overflow: hidden; text-overflow: ellipsis;
+  font: 700 clamp(16px, 2.4dvh, 20px)/1.1 ${DD_HAND}; color: ${DD.kumkumDeep}; background: linear-gradient(172deg, #FFF8E6, #F3DCAE);
+  box-shadow: 0 6px 12px -4px rgba(40,0,6,.6), inset 0 0 0 1.5px rgba(184,134,46,.6); transform-origin: 50% -14px; translate: -50% 0;
+  animation: dd-tag 2.6s ease-in-out infinite alternate; transition: opacity .25s ease, scale .3s ease; pointer-events: none; }
+.dd-tag::before { content: ""; position: absolute; left: 50%; top: -14px; width: 2px; height: 14px; margin-left: -1px; background: #F6D27A; }
+@keyframes dd-tag { from { rotate: -6deg } to { rotate: 4deg } }
+.dd-odh.is-open .dd-tag { opacity: 0; scale: .6; }
+.dd-knot:focus-visible { outline: 3px solid #7FD8F2; outline-offset: 4px; }
+.dd-odh.is-open .dd-knot { transform: scale(0) rotate(160deg); opacity: 0; animation: none; }
+
+.dd-odh.is-still .dd-fold, .dd-odh.is-still .dd-knot { transition: opacity .25s ease; }
+.dd-odh.is-still.is-open .dd-fold { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .dd-paper-glow, .dd-knot, .dd-knot-mirror::after, .dd-ear i, .dd-fl-spark, .dd-crease, .dd-tag { animation: none !important; }
+  .dd-w, .dd-sign, .dd-dear, .dd-fl-a, .dd-fl-b { animation: none !important; opacity: 1 !important; }
+}
+@media (min-width: 1100px) {
+  .dd-odh { padding: 22px 14px; }
+  .dd-folds { inset: 22px 14px; }
+  .dd-text { font-size: clamp(19px, 2.6dvh, 25px); }
+  .dd-dear { font-size: clamp(25px, 3.6dvh, 33px); }
+  .dd-sign-name { font-size: clamp(25px, 3.4dvh, 31px); }
+  .dd-page-box { padding-left: 44px; padding-right: 44px; }
+}
 `;

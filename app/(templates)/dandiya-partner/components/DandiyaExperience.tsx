@@ -19,7 +19,8 @@
 // Eight little diyas in the top-left corner light up step by step (tap an
 // earlier one to go back). Every scene is ONE screen; the way forward is always
 // the same marigold pill at the bottom (./dandiya/stage.tsx) and only her tap
-// moves on — a bandhani dupatta sweeps across as it does. Wide screens get the
+// moves on — two embroidered mandap curtains close, the sticks clash where they
+// meet, and they part on the next scene (the trail and replay use them too). Wide screens get the
 // whole night full-bleed (toran, fairy lights, kandils, the garba glow) with
 // the scene in a comfortable column. Reduced motion keeps every beat still.
 
@@ -36,7 +37,7 @@ import Atmosphere from "./dandiya/Atmosphere";
 import DupattaLetter from "./dandiya/DupattaLetter";
 import Ending from "./dandiya/Ending";
 import { Diya } from "./dandiya/art";
-import { ddDisplay, DD_DISPLAY } from "./dandiya/fonts";
+import { ddDisplay, ddHand, DD_DISPLAY } from "./dandiya/fonts";
 import GarbaCircle from "./dandiya/GarbaCircle";
 import Gate from "./dandiya/Gate";
 import Invitation from "./dandiya/Invitation";
@@ -44,7 +45,7 @@ import NineNights from "./dandiya/NineNights";
 import PickLook from "./dandiya/PickLook";
 import Question from "./dandiya/Question";
 import Rhythm from "./dandiya/Rhythm";
-import { DD_STAGE_CSS, DdStage, DiyaTrail, useNext } from "./dandiya/stage";
+import { DD_STAGE_CSS, DdStage, useDd, useNext } from "./dandiya/stage";
 import { DD, clean } from "./dandiya/ui";
 
 const day = getDay("dandiya-partner");
@@ -126,27 +127,29 @@ export default function DandiyaExperience({ data, mode, react }: ExperienceProps
     return s ? <Sticker key={`${id}-${round}`} slug={day.slug} slot={s} value={data.gifs[s.id]} size={size} alt="" /> : null;
   };
 
-  const screen = (key: string, children: ReactNode) => (
+  // Most scenes change behind the curtains (stage.tsx), so the new one is simply there when they part —
+  // settling from a breath of zoom as the light reaches it. The answer is the one change made in the open
+  // (her own tap on Yes / No, with the confetti): that room blooms in from the middle instead.
+  const screen = (key: string, children: ReactNode, bloom = false) => (
     <motion.section
       key={`${key}-${round}`}
       className="dd-scene"
       data-dd-scene={key}
-      initial={reduced ? false : { opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={reduced ? undefined : { opacity: 0, transition: { duration: 0.18 } }}
-      transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+      initial={reduced ? false : bloom ? { opacity: 0, scale: 0.86 } : { opacity: 0, scale: 1.04 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={reduced ? undefined : bloom ? { opacity: 0, scale: 1.06, transition: { duration: 0.22 } } : { opacity: 0, transition: { duration: 0.01 } }}
+      transition={bloom ? { type: "spring", stiffness: 170, damping: 18 } : { duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
     >
       {children}
     </motion.section>
   );
 
   return (
-    <DayRoot day={day} data={data} className={ddDisplay.variable} style={{ paddingBottom: 0 }} layout="full">
+    <DayRoot day={day} data={data} className={`${ddDisplay.variable} ${ddHand.variable}`} style={{ paddingBottom: 0 }} layout="full">
       <style>{DD_STAGE_CSS + DD_ART_CSS}</style>
       <Atmosphere warm={answered !== null} />
-      <DiyaTrail at={i} rooms={ROOMS} ending={step === "ending" || declined} onJump={jumpTo} />
 
-      <DdStage round={round}>
+      <DdStage round={round} trail={{ at: i, rooms: ROOMS, ending: step === "ending" || declined, onJump: jumpTo }}>
         <AnimatePresence mode="wait" initial={false}>
           {step === "gate" && screen("gate", <Gate recipient={recipient} sender={sender} openingLine={clean(x.openingLine)} sticker={sticker("d1-gate", 76)} onEnter={next} />)}
           {step === "nights" && screen("nights", <NineNights lines={nightLines} photos={data.photos.filter((p) => p && p.url)} onNext={next} />)}
@@ -160,8 +163,8 @@ export default function DandiyaExperience({ data, mode, react }: ExperienceProps
               <Invitation recipient={recipient} sender={sender} date={clean(x.eventDate)} time={clean(x.eventTime)} venue={clean(x.venue)} dressCode={clean(x.dressCode)} sticker={sticker("d4-invite", 58)} onNext={next} />,
             )}
           {step === "question" && answered === null && !declined && screen("question", <Question question={question} yesLabel={T.yes} noLines={T.noLines} rule={rule} onYes={sayYes} onNo={sayNo} />)}
-          {step === "question" && declined && screen("no", <NoRoom sender={sender} onReplay={replay} />)}
-          {step === "question" && answered !== null && screen("yes", <YesRoom recipient={recipient} yesLine={clean(x.yesLine)} dodges={answered} sticker={sticker("d5-yes", 150)} onNext={next} />)}
+          {step === "question" && declined && screen("no", <NoRoom sender={sender} onReplay={replay} />, true)}
+          {step === "question" && answered !== null && screen("yes", <YesRoom recipient={recipient} yesLine={clean(x.yesLine)} dodges={answered} sticker={sticker("d5-yes", 150)} onNext={next} />, true)}
           {step === "ending" &&
             screen(
               "ending",
@@ -191,7 +194,8 @@ function NoRoom({ sender, onReplay }: { sender: string; onReplay: () => void }) 
     const text = `Happy Navratri! 🪔 Thank you for the sweetest invitation, ${sender}. 💛`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
-  useNext("Send a wish", wish, "diya");
+  const { go } = useDd();
+  useNext("Send a wish", wish, "diya", false);
   return (
     <div className="dd-fill" style={{ alignContent: "center" }} data-dd-declined>
       <div className="dd-zoom" style={{ display: "grid", gap: "clamp(10px, 2dvh, 18px)", justifyItems: "center", maxWidth: 420 }}>
@@ -205,7 +209,7 @@ function NoRoom({ sender, onReplay }: { sender: string; onReplay: () => void }) 
           Thank you for opening {sender}&apos;s invitation. May all nine nights be bright for you.
         </p>
         <p style={{ margin: 0, font: `500 14px/1.4 ${FONTS.ui}`, color: VW.inkSoft }}>{sender} will know you answered, kindly.</p>
-        <button type="button" onClick={onReplay} style={{ marginTop: 4, minHeight: 44, padding: "0 18px", border: "1px solid rgba(246,210,122,.45)", borderRadius: 99, background: "rgba(255,247,232,.08)", color: VW.ink, font: `600 14px ${FONTS.ui}`, cursor: "pointer" }}>
+        <button type="button" onClick={() => go(onReplay)} style={{ marginTop: 4, minHeight: 44, padding: "0 18px", border: "1px solid rgba(246,210,122,.45)", borderRadius: 99, background: "rgba(255,247,232,.08)", color: VW.ink, font: `600 14px ${FONTS.ui}`, cursor: "pointer" }}>
           Watch it again ✨
         </button>
       </div>
