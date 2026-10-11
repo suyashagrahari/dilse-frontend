@@ -100,7 +100,7 @@ export const ADMIN_NAV_CSS = `
   .adm-nav { position: fixed; left: 0; right: 0; top: 0; z-index: 45; display: flex; justify-content: center;
     padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 0; pointer-events: none; }
   @media (min-width: 768px) { .adm-nav { top: 84px; padding: 0 clamp(20px, 5vw, 120px); } }
-  .adm-nav-bar { pointer-events: all; width: min(1180px, 100%); display: flex; align-items: center; gap: 6px;
+  .adm-nav-bar { pointer-events: all; width: min(1232px, 100%); display: flex; align-items: center; gap: 6px;
     background: rgba(255, 250, 244, 0.86); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(61,12,17,0.1); border-radius: 18px; padding: 5px;
     box-shadow: 0 10px 30px -18px rgba(61,12,17,0.45); }
