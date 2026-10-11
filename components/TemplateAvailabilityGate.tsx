@@ -29,6 +29,16 @@
 // sends somebody to the gallery to look for a template that is right there.
 // Only the expensive direction waits.
 //
+// ── HIDDEN FROM THE GALLERY IS NOT THE SAME AS CLOSED ───────────────────────
+//
+// A template in the active seasonal drop (the season's `sale.slugs` while the
+// mode is "halloween") opens here even when /admin/templates hides it from the
+// gallery — that is how the owner sells a template only through the drop. So
+// this refuses on `blocked` (hidden minus the drop), never on `hidden` alone.
+// The server enforces the same rule on create/publish (`isTemplateReachable`).
+// The season comes down with the HTML (the layout's `SeasonProvider`); before
+// refusing a hidden slug it is re-asked, like the hidden list itself.
+//
 // ── WHAT THIS DOES NOT TOUCH ────────────────────────────────────────────────
 //
 // Published pages. They live at `/[id]`, outside the `(templates)` group, so a
@@ -43,6 +53,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { verifyTemplateVisibility } from "@/lib/templateVisibility";
+import { loadSeason } from "@/lib/season";
 import { TemplateSkeleton } from "@/components/skeleton/Skeletons";
 
 /**
@@ -59,10 +70,19 @@ const NEVER_GATED = (path: string): boolean =>
 
 export function TemplateAvailabilityGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
-  const { hidden, resolved, confirmed } = useTemplateAccess();
+  const { hidden, drop, dropKnown, resolved, confirmed } = useTemplateAccess();
 
   const slug = pathname.split("/").filter(Boolean)[0] || "";
-  const blocked = !!slug && hidden.has(slug) && !NEVER_GATED(pathname);
+  // Hidden from the gallery (and not granted to this visitor)…
+  const unlisted = !!slug && hidden.has(slug) && !NEVER_GATED(pathname);
+  // …and not in the active drop either: only then is the builder closed.
+  const blocked = unlisted && !drop.has(slug);
+
+  // A hidden slug's fate rests on the season too, so make sure this page load
+  // has asked for it rather than trusting the copy baked into the HTML.
+  useEffect(() => {
+    if (unlisted && !dropKnown) void loadSeason();
+  }, [unlisted, dropKnown]);
 
   // Ask the server directly, once, and only when we are otherwise about to
   // refuse. Every other visitor to every other template pays nothing: the
@@ -91,7 +111,7 @@ export function TemplateAvailabilityGate({ children }: { children: React.ReactNo
   // Only reached when the slug IS hidden, so a visitor with no token and nobody
   // on a public template never sees this: `resolved` is true for them
   // immediately. See `useTemplateAccess`.
-  if (!resolved || !confirmed) return <TemplateSkeleton />;
+  if (!resolved || !confirmed || !dropKnown) return <TemplateSkeleton />;
 
   return (
     <main

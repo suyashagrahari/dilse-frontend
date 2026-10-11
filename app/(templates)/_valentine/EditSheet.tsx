@@ -469,8 +469,10 @@ function PremiumFieldsSection({ day, mf, set }: { day: DayConfig; mf: ValentineD
 /** On a $2 day: a quiet pointer to its ✦ Premium twin (only when that one is live here). */
 function PremiumUpsell({ slug }: { slug: string }) {
   const twin = premiumTwinOf(slug);
-  const { hidden } = useTemplateAccess();
-  if (!twin || hidden.has(twin)) return null;
+  // `blocked`, not `hidden`: a twin that only the seasonal drop opens is still
+  // somewhere this link can go.
+  const { blocked } = useTemplateAccess();
+  if (!twin || blocked.has(twin)) return null;
   return (
     <a className="vs-upsell" href={`/${twin}`}>
       <span className="vs-upsellK">✦ Premium</span>
