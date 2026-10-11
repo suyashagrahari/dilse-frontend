@@ -38,6 +38,18 @@ export const SEASON_FALLBACK: Season = { mode: "valentine", sale: { enabled: fal
 
 const MODES: readonly SeasonMode[] = ["valentine", "halloween", "off"];
 
+/**
+ * The slugs in the ACTIVE drop: `sale.slugs` while the mode is "halloween",
+ * nothing otherwise. A drop template is reachable (its builder opens, it
+ * publishes) even when /admin/templates hides it from the gallery; it still
+ * stays out of every gallery listing. Mirrors `dropSlugs` in
+ * server/src/config/seasonSale.ts, which enforces the same rule on publish.
+ */
+export function dropSlugsOf(s: Season | null | undefined): string[] {
+  if (!s || s.mode !== "halloween") return [];
+  return s.sale.slugs.map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+}
+
 /** Accepts both `{ success, data: {...} }` and a bare body. Null when it is not a season. */
 export function parseSeason(json: unknown): Season | null {
   const root = json as { data?: unknown } | null;

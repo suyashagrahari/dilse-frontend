@@ -15,6 +15,7 @@
 // behind it; the GIFs arrive after idle into sized boxes, so nothing shifts.
 // Every animation stops under reduced motion.
 
+import Link from "next/link";
 import { WitchLink } from "@/components/promo/WitchPortal";
 import { ArrowRight, Sparkles } from "lucide-react";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
@@ -122,11 +123,18 @@ export default function HalloweenOfferClient() {
           <div className="hwoGlass">
             {on && <Countdown />}
             <div className="hwoCtas">
-              <a href="#hwo-templates" className="hwoBtn primary">
-                <span aria-hidden>👻</span>
-                <span className="hwoBtnLong">See the {countWord} template{n === 1 ? "" : "s"}</span>
-                <span className="hwoBtnShort">See the drop</span>
-              </a>
+              {/* `drop` is what this visitor can open (see useDropTemplates), so
+                  the count never names a template the click cannot reach — and
+                  with nothing reachable (no drop running) there is no count. */}
+              {n > 0 ? (
+                <a href="#hwo-templates" className="hwoBtn primary">
+                  <span aria-hidden>👻</span>
+                  <span className="hwoBtnLong">See the {countWord} template{n === 1 ? "" : "s"}</span>
+                  <span className="hwoBtnShort">See the drop</span>
+                </a>
+              ) : (
+                <Link href="/templates" className="hwoBtn primary">Browse templates <ArrowRight size={16} aria-hidden /></Link>
+              )}
               {first && (
                 <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
                   {cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
