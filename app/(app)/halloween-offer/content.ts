@@ -12,8 +12,8 @@ export function halloweenFaqs(pct: number, upTo = false): { q: string; a: string
         : "The drop's templates are available at their regular price. Watch this page — when a Halloween sale is running, the discount is applied automatically when you publish.",
     },
     {
-      q: "Can I try it before I pay?",
-      a: "Yes. Open any template in the drop, write your letter, add photos and music, and preview the whole thing for free. You only pay when you publish the link you want to send.",
+      q: "Can I see it before I pay?",
+      a: "Yes. Open any template in the drop, write your letter, add photos and music, and preview every scene first. You pay once, at the sale price, when you publish the link you want to send.",
     },
     {
       q: "How scary is it?",

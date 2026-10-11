@@ -26,6 +26,8 @@ import { HALLOWEEN_ENDS_AT, HALLOWEEN_GIF } from "@/lib/season";
 import { halloweenFaqs } from "./content";
 import HauntedScene, { HS_CSS } from "./HauntedScene";
 import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
+import { useTemplatePricing } from "@/hooks/useTemplatePricing";
+import { formatINR } from "@/config/templatePricing";
 
 function Countdown() {
   const t = useNow();
@@ -75,7 +77,16 @@ export default function HalloweenOfferClient() {
   const upTo = Boolean(on && own?.upTo);
   const pctText = `${upTo ? "up to " : ""}${pct}%`;
   const faqs = halloweenFaqs(pct, upTo);
-  const first = drop[0];
+  // The paid entry point: the cheapest priced template in the drop, at the
+  // price the super admin set ("From ₹49"). Until prices land, a plain "Make yours".
+  const { pricingFor, settled } = useTemplatePricing();
+  const cheapest = settled
+    ? drop
+        .map((t) => ({ t, p: pricingFor(t.slug) }))
+        .filter(({ p }) => p && !p.isFree && p.finalPrice > 0)
+        .sort((a, b) => a.p.finalPrice - b.p.finalPrice)[0]
+    : undefined;
+  const first = cheapest?.t ?? drop[0];
   const n = drop.length;
   const countWord = n === 1 ? "one" : n === 2 ? "two" : n === 3 ? "three" : n === 4 ? "four" : String(n);
 
@@ -114,11 +125,11 @@ export default function HalloweenOfferClient() {
               </a>
               {first && (
                 <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
-                  Try one free <ArrowRight size={16} aria-hidden />
+                  {cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </WitchLink>
               )}
             </div>
-            <p className="hwoTrust"><Sparkles size={13} aria-hidden /> Free to try · pay only to publish · ready in 2 minutes</p>
+            <p className="hwoTrust"><Sparkles size={13} aria-hidden /> {pct ? `${pctText} off till 31 Oct · ` : ""}one-time payment · ready in 2 minutes</p>
           </div>
         </div>
       </section>
@@ -141,7 +152,7 @@ export default function HalloweenOfferClient() {
         <h2 id="hwo-how" className="hwoSecTitle">Three steps, <em>no tricks</em></h2>
         <ol className="hwoSteps">
           <li><span className="hwoStepIc">🎃</span><b>Pick your haunt</b><span>Any template in the drop — the ✦ Premium ones included.</span></li>
-          <li><span className="hwoStepIc">🕯️</span><b>Make it yours</b><span>Your letter, your photos, your song. Preview everything free.</span></li>
+          <li><span className="hwoStepIc">🕯️</span><b>Make it yours</b><span>Your letter, your photos, your song — see every scene before you publish.</span></li>
           <li><span className="hwoStepIc">💌</span><b>Send the link</b><span>Publish{pct ? ` at ${pctText} off` : ""} and share it — WhatsApp, Instagram or a QR code.</span></li>
         </ol>
       </section>
@@ -180,6 +191,7 @@ export default function HalloweenOfferClient() {
 }
 
 const HWO_CSS = `
+.hwoFrom { font-weight: 800; color: #ffb35c; margin-left: 2px; }
 .hwo { position: relative; min-height: 100vh; overflow-x: clip; color: ${HW.text}; padding: 0 0 110px;
   background: linear-gradient(180deg, ${HW.sky1} 0%, ${HW.sky2} 38%, #100c1e 100%); }
 .hwo em { font-style: italic; color: ${HW.pumpkin}; }
