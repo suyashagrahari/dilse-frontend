@@ -27,6 +27,7 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { refreshTemplateVisibility } from "@/lib/templateVisibility";
+import { purgeSiteCache } from "@/lib/siteCache";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
 import { Eye, EyeOff, Loader2, Check, RotateCcw, Globe, AlertTriangle, LayoutGrid, Search } from "lucide-react";
 import { A, AdminPage, Hero, HeroStat, ChipGroup, SearchBox, Loading, EmptyState, Tag } from "../adminKit";
@@ -124,6 +125,7 @@ export default function AdminTemplatesPage() {
         // an admin toggles a template on, clicks through to /templates, and it is
         // still missing — which reads as the switch not working.
         void refreshTemplateVisibility();
+      void purgeSiteCache();
         say(`${slug} is now ${live ? "live" : "hidden"}`);
       } catch (e) {
         say(e instanceof Error ? e.message : "Could not save");
@@ -152,6 +154,7 @@ export default function AdminTemplatesPage() {
           return next;
         });
         void refreshTemplateVisibility();
+      void purgeSiteCache();
         say(`${slug} follows the default again`);
       } catch (e) {
         say(e instanceof Error ? e.message : "Could not save");
@@ -184,6 +187,7 @@ export default function AdminTemplatesPage() {
       if (!json.success) throw new Error(json.error || "Failed");
       await load();
       void refreshTemplateVisibility();
+      void purgeSiteCache();
       say(`Pinned ${updates.length} templates to their current state`);
     } catch (e) {
       say(e instanceof Error ? e.message : "Could not save");
