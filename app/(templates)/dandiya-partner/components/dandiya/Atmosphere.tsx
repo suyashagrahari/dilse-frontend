@@ -68,13 +68,15 @@ function Mandala() {
   );
 }
 
-/** A tiny dancer silhouette with sticks raised (the horizon ring). */
+/** A tiny bear-dancer silhouette with sticks raised (the horizon ring): round ears, a twirling chaniya. */
 function Dancer({ i }: { i: number }) {
   const flip = i % 2 ? -1 : 1;
   return (
     <svg viewBox="0 0 40 60" width="100%" style={{ display: "block", transform: `scaleX(${flip})` }} aria-hidden>
-      <circle cx="20" cy="9" r="6" />
-      <path d="M14 18 Q20 15 26 18 L27 30 L36 54 Q20 60 4 54 L13 30 Z" />
+      <circle cx="13.5" cy="4.5" r="3.4" />
+      <circle cx="26.5" cy="4.5" r="3.4" />
+      <circle cx="20" cy="10.5" r="8" />
+      <path d="M13 18 Q20 15 27 18 L28 28 L37 54 Q20 60 3 54 L12 28 Z" />
       <path d="M14 20 L4 8 M26 20 L36 10" strokeWidth="3" strokeLinecap="round" />
       <path d="M1 5 L8 12 M33 7 L40 13" strokeWidth="2.4" strokeLinecap="round" stroke="#FFB627" />
     </svg>

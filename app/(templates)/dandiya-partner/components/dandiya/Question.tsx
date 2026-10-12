@@ -19,8 +19,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import type { AnswerRule } from "../../../_valentine/kit/answer";
 import { FONTS } from "../../../_valentine/theme";
+import { BearCouple } from "./bears";
 import { DD_DISPLAY } from "./fonts";
-import { DD_GIF, useDd } from "./stage";
+import { useDd } from "./stage";
 import { DD, RoomTitle } from "./ui";
 
 const SURRENDER_AT = 5;
@@ -173,8 +174,7 @@ export default function Question({
       <style>{Q_CSS}</style>
       <RoomTitle kicker="Nine nights · one question" title={<span style={{ font: "inherit" }}>{question}</span>} />
       <div className="dd-q-couple" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={DD_GIF.couple} alt="" width={500} height={500} decoding="async" />
+        <BearCouple size="100%" />
       </div>
 
       <div ref={arenaRef} className={`dd-q-arena${tired ? " is-settled" : ""}`} data-dd-answer-mode={rule.mode}>
@@ -274,8 +274,8 @@ export default function Question({
 }
 
 const Q_CSS = `
-.dd-q-couple { flex: none; width: clamp(110px, 21dvh, calc(190px * var(--vw-s, 1))); aspect-ratio: 1; display: grid; place-items: center; }
-.dd-q-couple img { width: 100%; height: 100%; object-fit: contain; animation: dd-q-sway 1.4s ease-in-out infinite alternate; transform-origin: 50% 90%; filter: drop-shadow(0 10px 18px rgba(30,0,2,.5)); }
+.dd-q-couple { flex: none; width: clamp(130px, 24dvh, calc(220px * var(--vw-s, 1))); aspect-ratio: 360 / 290; display: grid; place-items: center; }
+.dd-q-couple svg { width: 100%; height: 100%; object-fit: contain; animation: dd-q-sway 1.4s ease-in-out infinite alternate; transform-origin: 50% 90%; filter: drop-shadow(0 10px 18px rgba(30,0,2,.5)); }
 @keyframes dd-q-sway { from { transform: rotate(-4deg) } to { transform: rotate(4deg) translateY(-4px) } }
 .dd-q-arena { position: relative; flex: 1 1 0; min-height: 150px; width: 100%; max-width: calc(420px * var(--vw-s, 1)); max-height: 300px; }
 .dd-q-yes { position: absolute; left: 50%; top: 32%; min-width: 144px; max-width: calc(100% - 24px); min-height: 58px; padding: 14px 22px; border-radius: 999px; border: 0;
@@ -303,5 +303,5 @@ const Q_CSS = `
   background: linear-gradient(180deg, #FFE08A, #FFB627 50%, #F08A0C); box-shadow: 0 4px 0 #A8580A; }
 .dd-q-sure-no { min-height: 44px; padding: 0 18px; border: 0; background: none; cursor: pointer; font: 600 15px ${FONTS.ui}; color: #8A5A3A; text-decoration: underline; text-underline-offset: 3px; }
 .dd-q-sure-back:focus-visible, .dd-q-sure-no:focus-visible { outline: 3px solid ${DD.kumkum}; outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .dd-q-couple img { animation: none; } .dd-q-no { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .dd-q-couple svg { animation: none; } .dd-q-no { transition: none; } }
 `;
