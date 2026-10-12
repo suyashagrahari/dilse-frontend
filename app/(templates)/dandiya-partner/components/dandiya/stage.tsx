@@ -383,7 +383,7 @@ function PillIcon({ icon }: { icon: NextIcon }) {
     );
   const emoji: Record<Exclude<NextIcon, "diya" | "sticks">, string> = {
     heart: "💛",
-    dance: "💃",
+    dance: "🐼",
     sparkle: "✨",
     letter: "💌",
   };

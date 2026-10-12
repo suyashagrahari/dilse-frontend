@@ -49,7 +49,7 @@ export const DANDIYA_TONES: Record<
 > = {
   romantic: {
     question: "Will you be my Dandiya partner? 💛",
-    yes: "Yes, let's dance 💃",
+    yes: "Yes, let's dance 🥁",
     pass: "Official Dandiya Partner",
     reply: "YES! I'm your Dandiya partner 💛 Save me every single song.",
     noLines: ["oops, my sticks slipped", "wrong step, try again", "the dhol says YES", "nope, not in this circle", "*twirls away*"],
@@ -113,8 +113,8 @@ const F = (f: string) => `../_festive/${f}`;
 const GIFS: GifSlot[] = [
   { id: "d1-gate", label: "Hello", moment: "Peeking from behind the invitation", file: F("bubudubu-dandiya-playing.webp"), emoji: "🐼", anim: "wiggle" },
   { id: "d2-beat", label: "Clash buddy", moment: "Hops beside the dandiya clash game", file: F("bubudubu-dandiya-playing.webp"), emoji: "🐼", anim: "bounce" },
-  { id: "d3-garba", label: "Garba pair", moment: "Dancing in the middle of the garba circle", file: F("dandiyapartyner.webp"), emoji: "💃", anim: "float" },
-  { id: "d4-invite", label: "Invitation", moment: "On the invitation ticket", file: F("dandiyapartyner.webp"), emoji: "🪔", anim: "float" },
+  { id: "d3-garba", label: "Garba pair", moment: "Dancing in the middle of the garba circle", file: F("dandiya-bears.webp"), emoji: "🐼", anim: "float" },
+  { id: "d4-invite", label: "Invitation", moment: "On the invitation ticket", file: F("dandiya-bears.webp"), emoji: "🪔", anim: "float" },
   { id: "d5-yes", label: "We said YES", moment: "After they say YES", file: F("bubudubu-dandiya-playing.webp"), emoji: "💛", anim: "bounce" },
 ];
 

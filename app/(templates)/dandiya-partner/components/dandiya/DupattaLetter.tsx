@@ -1,10 +1,10 @@
 "use client";
 
-// Scene 6 — "A note for you", tucked in the dupatta. The emotional high point.
+// Scene 6 — "A note for you". The emotional high point.
 //
-// A bandhani odhni lies folded over the note, its two folds tied at the middle
-// with a mirror-work knot. She taps the knot (or pulls a fold) and the folds
-// lift away to show a letter on warm handmade paper: a zari border with little
+// A sealed ivory envelope waits (./LetterEnvelope.tsx): she taps the wax seal,
+// the flap lifts, the letter slides out, and it opens up inside a bandhani
+// odhni frame — a letter on warm handmade paper: a zari border with little
 // corner flowers, a faint kalash watermark, a clay diya in the corner whose
 // light flickers across the page. The sender's words appear as if they are
 // being written, in an Indian hand (Kalam), and it is signed off with a tiny
@@ -20,6 +20,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { AnimatePresence, motion } from "framer-motion";
 import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import { Diya } from "./art";
+import LetterEnvelope from "./LetterEnvelope";
 import { DD_HAND, ddHand } from "./fonts";
 import { useDd, useNext } from "./stage";
 import { BANDHANI, DD, Hint, MIRROR_ROW, RoomTitle } from "./ui";
@@ -173,7 +174,9 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
   }, [remeasure]);
 
   // ── untie, write, turn ──
-  const [open, setOpen] = useState(false);
+  // sealed → opening (seal splits, flap lifts, the letter slides out) → open (the full letter)
+  const [phase, setPhase] = useState<"sealed" | "opening" | "open">("sealed");
+  const open = phase === "open";
   const [p, setP] = useState(0);
   const page = Math.min(p, pages.length - 1);
   const last = page >= pages.length - 1;
@@ -196,12 +199,18 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
   }, [open, isWritten, page, writeMs, markWritten]);
 
   const untie = () => {
-    if (open) return;
+    if (phase !== "sealed") return;
     haptic([10, 30, 14]);
-    cue("paper-rustle", { gain: 0.7 });
-    cue("dd-bells", { gain: 0.5, at: 0.18 });
-    setOpen(true);
+    cue("dd-tak", { gain: 0.8 });
+    cue("paper-rustle", { gain: 0.7, at: 0.3 });
+    cue("dd-bells", { gain: 0.5, at: 0.9 });
+    setPhase("opening");
   };
+  useEffect(() => {
+    if (phase !== "opening") return;
+    const t = window.setTimeout(() => setPhase("open"), reduced ? 0 : 2300);
+    return () => window.clearTimeout(t);
+  }, [phase, reduced]);
 
   const goTo = (k: number) => {
     if (k === page || k < 0 || k >= pages.length) return;
@@ -214,18 +223,6 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
     if (!open) return untie();
     if (!isWritten) return markWritten(page);
     if (!last) goTo(page + 1);
-  };
-
-  // pull a fold (either way) to untie it, too
-  const drag = useRef<{ y: number } | null>(null);
-  const onDown = (e: React.PointerEvent) => {
-    drag.current = { y: e.clientY };
-  };
-  const onMove = (e: React.PointerEvent) => {
-    if (drag.current && Math.abs(e.clientY - drag.current.y) > 22) {
-      drag.current = null;
-      untie();
-    }
   };
 
   useNext(open && last && isWritten ? "Your invitation" : null, onNext, "sparkle");
@@ -244,10 +241,11 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
   return (
     <>
       <style>{LETTER_CSS}</style>
-      <RoomTitle kicker="Tucked in the dupatta" title="A note for you" />
+      <RoomTitle kicker="Sealed with love" title="A note for you" />
 
       <div className="dd-fill">
-        <div className={`dd-odh${open ? " is-open" : ""}${reduced ? " is-still" : ""}`} data-dd-letter={open ? "open" : "folded"}>
+        {phase !== "open" || !reduced ? <LetterEnvelope recipient={recipient} sender={sender} opening={phase !== "sealed"} gone={open} onOpen={untie} /> : null}
+        <div className={`dd-odh${open ? " is-open" : " is-hidden"}${reduced ? " is-still" : ""}`} data-dd-letter={open ? "open" : "folded"} aria-hidden={!open}>
           <span className="dd-odh-tassels" aria-hidden />
 
           <div className={`dd-paper${isWritten ? " is-written" : ""}${pages.length === 1 ? " is-single" : ""}`} onClick={tapPaper}>
@@ -333,26 +331,6 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
             </div>
           </div>
 
-          {/* the two folds of the odhni over the note, tied with a mirror knot */}
-          <div className="dd-folds" onClick={untie} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => (drag.current = null)} aria-hidden={open}>
-            <span className="dd-fold is-top" />
-            <span className="dd-fold is-bottom" />
-            <button
-              type="button"
-              className="dd-knot"
-              onClick={(e) => {
-                e.stopPropagation();
-                untie();
-              }}
-              tabIndex={open ? -1 : 0}
-              aria-label="Untie the dupatta and read the note"
-            >
-              <span className="dd-knot-mirror" />
-            </button>
-            <span className="dd-tag" aria-hidden>
-              For {recipient}
-            </span>
-          </div>
         </div>
       </div>
 
@@ -365,7 +343,7 @@ export default function DupattaLetter({ letter, recipient, sender, onNext }: { l
         }}
       >
         {!open ? (
-          <Hint>Tap the knot to untie the dupatta ✨</Hint>
+          phase === "sealed" ? <Hint>Tap the wax seal to open your letter 💌</Hint> : null
         ) : pages.length > 1 ? (
           <span className="dd-beads" role="group" aria-label={`Fold ${page + 1} of ${pages.length}`}>
             {pages.map((_, k) => (
@@ -521,58 +499,17 @@ const LETTER_CSS = `
 @keyframes dd-ear { from { transform: scale(.9) } to { transform: scale(1.08) } }
 .dd-ear:focus-visible { outline: 2px solid #1590B8; outline-offset: -3px; border-radius: 8px; }
 
-/* The folds of the odhni over the note, and the knot that ties them. */
-.dd-folds { position: absolute; z-index: 5; inset: 18px 11px; perspective: 1100px; touch-action: none; }
-.dd-folds { cursor: pointer; }
-.dd-odh.is-open .dd-folds { pointer-events: none; }
-.dd-fold { position: absolute; left: -2px; right: -2px; height: 50.6%; backface-visibility: hidden; will-change: transform;
-  background: radial-gradient(circle, rgba(246,210,122,.9) 0 2.4px, rgba(184,134,46,.9) 3px, rgba(0,0,0,0) 3.6px) 11px 11px / 44px 44px,
-    radial-gradient(circle, rgba(246,210,122,.55) 0 5px, rgba(246,210,122,0) 5.6px) 11px 11px / 44px 44px,
-    radial-gradient(circle, rgba(255,255,255,.95) 0 1.6px, rgba(0,0,0,0) 2.2px) 33px 33px / 44px 44px,
-    ${BANDHANI}, linear-gradient(180deg, #D42A42, #A3132A 70%, #8E1022);
-  transition: transform .8s cubic-bezier(.55,0,.25,1), opacity .35s ease .5s; }
-.dd-fold.is-top { top: 0; transform-origin: 50% 0; border-radius: 4px 4px 0 0;
-  box-shadow: inset 0 -16px 18px -12px rgba(40,0,6,.45), 0 6px 12px -6px rgba(40,0,6,.6); }
-.dd-fold.is-bottom { bottom: 0; transform-origin: 50% 100%; border-radius: 0 0 4px 4px; transition-delay: .08s, .58s;
-  box-shadow: inset 0 16px 18px -12px rgba(255,220,180,.25); }
-/* the seam: a zari band with mirrors and a fringe of tassels on the top fold's edge */
-.dd-fold.is-top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 26px;
-  background: ${MIRROR_ROW.replace("0 50%", "0 2px")}, linear-gradient(#F6D27A, #F6D27A) 0 0 / 100% 2px no-repeat,
-    radial-gradient(ellipse 3.5px 5px at 50% 21px, #FFB627 0 98%, rgba(0,0,0,0) 100%) 0 0 / 14px 26px repeat-x; }
-.dd-fold.is-bottom::before { content: ""; position: absolute; left: 0; right: 0; bottom: 14px; height: 2px; background: rgba(246,210,122,.6); }
-.dd-odh.is-open .dd-fold.is-top { transform: rotateX(118deg); opacity: 0; }
-.dd-odh.is-open .dd-fold.is-bottom { transform: rotateX(-118deg); opacity: 0; }
-.dd-knot { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
-  background: radial-gradient(circle, #8E1022 0 52%, #F6D27A 53% 58%, #B8862E 59% 62%, rgba(0,0,0,0) 63%),
-    repeating-conic-gradient(from 0deg, #FFB627 0 10deg, #D7263D 10deg 20deg);
-  -webkit-mask-image: radial-gradient(circle, #000 66%, rgba(0,0,0,0) 70%); mask-image: radial-gradient(circle, #000 66%, rgba(0,0,0,0) 70%);
-  filter: drop-shadow(0 6px 10px rgba(40,0,6,.55)); transition: transform .35s cubic-bezier(.5,0,.75,0), opacity .25s ease .1s;
-  animation: dd-knot 2.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
-.dd-knot-mirror { position: absolute; inset: 25%; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #FFFFFF 0 14%, #E7EEFF 30%, #9FB3E8 75%, #7E8FB8);
-  box-shadow: 0 0 0 2px #F6D27A, 0 0 14px 2px rgba(255,236,170,.7); }
-.dd-knot-mirror::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(120deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 65%) -60px 0 / 60px 100% no-repeat; animation: dd-knot-glint 2.6s ease-in-out infinite; }
-@keyframes dd-knot { 0%, 100% { transform: scale(1) rotate(0) } 50% { transform: scale(1.07) rotate(8deg) } }
-@keyframes dd-knot-glint { 0%, 55% { background-position: -60px 0 } 100% { background-position: 80px 0 } }
-/* a little paper tag on a gold thread, swinging from the knot */
-.dd-tag { position: absolute; left: 50%; top: calc(50% + 50px); padding: 7px 16px 6px; border-radius: 4px; white-space: nowrap; max-width: 80%; overflow: hidden; text-overflow: ellipsis;
-  font: 700 clamp(16px, 2.4dvh, 20px)/1.1 ${DD_HAND}; color: ${DD.kumkumDeep}; background: linear-gradient(172deg, #FFF8E6, #F3DCAE);
-  box-shadow: 0 6px 12px -4px rgba(40,0,6,.6), inset 0 0 0 1.5px rgba(184,134,46,.6); transform-origin: 50% -14px; translate: -50% 0;
-  animation: dd-tag 2.6s ease-in-out infinite alternate; transition: opacity .25s ease, scale .3s ease; pointer-events: none; }
-.dd-tag::before { content: ""; position: absolute; left: 50%; top: -14px; width: 2px; height: 14px; margin-left: -1px; background: #F6D27A; }
-@keyframes dd-tag { from { rotate: -6deg } to { rotate: 4deg } }
-.dd-odh.is-open .dd-tag { opacity: 0; scale: .6; }
-.dd-knot:focus-visible { outline: 3px solid #7FD8F2; outline-offset: 4px; }
-.dd-odh.is-open .dd-knot { transform: scale(0) rotate(160deg); opacity: 0; animation: none; }
+/* hidden behind the envelope until it opens, then it grows out of it */
+.dd-odh { grid-area: 1 / 1; transition: opacity .5s ease .1s, transform .65s cubic-bezier(.2,.85,.25,1.05); }
+.dd-odh.is-hidden { opacity: 0; transform: translateY(10%) scale(.62) rotate(-.8deg); pointer-events: none; visibility: hidden; transition: none; }
+.dd-odh.is-still { transition: none; }
 
-.dd-odh.is-still .dd-fold, .dd-odh.is-still .dd-knot { transition: opacity .25s ease; }
-.dd-odh.is-still.is-open .dd-fold { transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .dd-paper-glow, .dd-knot, .dd-knot-mirror::after, .dd-ear i, .dd-fl-spark, .dd-crease, .dd-tag { animation: none !important; }
+  .dd-paper-glow, .dd-ear i, .dd-fl-spark, .dd-crease { animation: none !important; }
   .dd-w, .dd-sign, .dd-dear, .dd-fl-a, .dd-fl-b { animation: none !important; opacity: 1 !important; }
 }
 @media (min-width: 1100px) {
   .dd-odh { padding: 22px 14px; }
-  .dd-folds { inset: 22px 14px; }
   .dd-text { font-size: clamp(19px, 2.6dvh, 25px); }
   .dd-dear { font-size: clamp(25px, 3.6dvh, 33px); }
   .dd-sign-name { font-size: clamp(25px, 3.4dvh, 31px); }

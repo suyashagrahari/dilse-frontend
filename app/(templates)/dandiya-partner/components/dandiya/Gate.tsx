@@ -164,6 +164,14 @@ export default function Gate({ recipient, sender, openingLine, sticker, onEnter 
             {/* the panda couple, peeking over the corner */}
             <div className="dd-lif-peek">{sticker}</div>
             <div className="dd-lif-back" />
+            <svg className="dd-lif-fshadow" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+              <defs>
+                <filter id="ddlifsh" x="-10%" y="-10%" width="120%" height="130%">
+                  <feGaussianBlur stdDeviation="2.2" />
+                </filter>
+              </defs>
+              <path d="M0 0 H100 L50 72 Z" transform="translate(0 4)" fill="rgba(30,0,4,.55)" filter="url(#ddlifsh)" />
+            </svg>
             <div className="dd-lif-flap" aria-hidden>
               <span className="dd-lif-flap-out" />
               <span className="dd-lif-flap-in" />
@@ -182,6 +190,13 @@ export default function Gate({ recipient, sender, openingLine, sticker, onEnter 
             <div className="dd-lif-front">
               <Paisley className="dd-lif-pz dd-lif-pz-l" />
               <Paisley className="dd-lif-pz dd-lif-pz-r" />
+              {/* the folded-in side flaps and bottom flap: soft shading and gold-stitched seams */}
+              <svg className="dd-lif-seams" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+                <path d="M0 0 L50 64 L0 100 Z" fill="rgba(40,0,6,.16)" />
+                <path d="M100 0 L50 64 L100 100 Z" fill="rgba(40,0,6,.24)" />
+                <path d="M0 100 L46 62 Q50 59 54 62 L100 100" fill="none" stroke={ZARI} strokeOpacity=".75" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+                <path d="M6 100 L46 67 Q50 64 54 67 L94 100" fill="none" stroke={ZARI} strokeOpacity=".45" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+              </svg>
               <span className="dd-lif-mirrors" aria-hidden />
               <span className="dd-lif-sheen" aria-hidden />
             </div>
@@ -288,12 +303,15 @@ const GATE_CSS = `
 .dd-lif-pz-r { right: 5%; transform: scaleX(-1); }
 
 /* the flap: two faces (embroidered outside, gold-lined inside) that lift back in 3D about the top edge */
-.dd-lif-flap { position: absolute; inset: 0; z-index: 3; transform-origin: 50% 0; transform-style: preserve-3d;
+.dd-lif-seams { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.dd-lif-fshadow { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; overflow: visible; pointer-events: none; transition: opacity .3s ease .3s; }
+.dd-lif.is-open .dd-lif-fshadow { opacity: 0; }
+.dd-lif-flap { position: absolute; inset: 0; z-index: 4; transform-origin: 50% 0; transform-style: preserve-3d;
   transform: perspective(900px) rotateX(0deg) scaleY(1); transition: transform .95s cubic-bezier(.3,.6,.25,1) .3s, z-index 0s .62s; will-change: transform; }
 .dd-lif-flap > span { position: absolute; inset: 0; border-radius: 12px 12px 0 0; clip-path: polygon(0 0, 100% 0, 50% 72%); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .dd-lif-flap-out { background:
     linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,0) 30%),
-    ${BANDHANI}, linear-gradient(180deg, #C9182A, #8A0D14); }
+    ${BANDHANI}, linear-gradient(180deg, #E0293C, #B3121B 60%, #9A0F19); }
 .dd-lif-flap-out::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 50% 72%, 50% 66%, 93% 2.5%, 7% 2.5%, 50% 66%, 50% 72%); background: ${ZARI}; }
 .dd-lif-flap-in { transform: rotateX(180deg); background: repeating-linear-gradient(45deg, #FFEFC8 0 6px, #F6D27A 6px 7px), #FFEFC8; }
 .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(178deg) scaleY(.48); z-index: 0; }
