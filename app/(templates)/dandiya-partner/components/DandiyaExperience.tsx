@@ -33,6 +33,7 @@ import { answerRuleOf } from "../../_valentine/kit/answer";
 import { FONTS, VW } from "../../_valentine/theme";
 import type { ExperienceProps, GifSlot } from "../../_valentine/types";
 import { DD_ART_CSS } from "./dandiya/art";
+import { BearCouple, DD_BEAR_CSS } from "./dandiya/bears";
 import Atmosphere from "./dandiya/Atmosphere";
 import DupattaLetter from "./dandiya/DupattaLetter";
 import Ending from "./dandiya/Ending";
@@ -53,6 +54,8 @@ const day = getDay("dandiya-partner");
 type Step = "gate" | "nights" | "rhythm" | "look" | "circle" | "letter" | "invite" | "question" | "ending";
 const STEPS: Step[] = ["gate", "nights", "rhythm", "look", "circle", "letter", "invite", "question", "ending"];
 const ROOMS = STEPS.length - 1;
+/** Slots whose default is the drawn bear couple rather than a GIF. */
+const BEAR_SLOTS = new Set(["d3-garba", "d4-invite"]);
 
 const TONES = Object.keys(DANDIYA_TONES) as DandiyaTone[];
 const isToneDefault = (q: string) => TONES.some((t) => DANDIYA_TONES[t].question === q);
@@ -124,6 +127,15 @@ export default function DandiyaExperience({ data, mode, react }: ExperienceProps
 
   const sticker = (id: string, size = 96): ReactNode => {
     const s: GifSlot | undefined = day.gifSlots.find((g) => g.id === id);
+    const v = (data.gifs[id] ?? "").trim();
+    // The dancing pair is drawn (the bear couple), unless the sender pasted their own GIF or hid it.
+    if (s && BEAR_SLOTS.has(id) && v !== "none" && !/^https:\/\//i.test(v)) {
+      return (
+        <span key={`${id}-${round}`} style={{ width: Math.round(size * 1.2), height: size, flex: "none", display: "inline-grid", placeItems: "center" }} aria-hidden>
+          <BearCouple size="100%" />
+        </span>
+      );
+    }
     return s ? <Sticker key={`${id}-${round}`} slug={day.slug} slot={s} value={data.gifs[s.id]} size={size} alt="" /> : null;
   };
 
@@ -146,7 +158,7 @@ export default function DandiyaExperience({ data, mode, react }: ExperienceProps
 
   return (
     <DayRoot day={day} data={data} className={`${ddDisplay.variable} ${ddHand.variable}`} style={{ paddingBottom: 0 }} layout="full">
-      <style>{DD_STAGE_CSS + DD_ART_CSS}</style>
+      <style>{DD_STAGE_CSS + DD_ART_CSS + DD_BEAR_CSS}</style>
       <Atmosphere warm={answered !== null} />
 
       <DdStage round={round} trail={{ at: i, rooms: ROOMS, ending: step === "ending" || declined, onJump: jumpTo }}>

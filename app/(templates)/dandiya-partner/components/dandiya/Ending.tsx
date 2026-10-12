@@ -16,6 +16,7 @@ import { DANDIYA_COLORS, type DandiyaColor } from "../../../_valentine/days/dand
 import type { DayConfig, ValentineDayData } from "../../../_valentine/types";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { CrossedSticks } from "./art";
+import { BearCouple } from "./bears";
 import { DD_DISPLAY } from "./fonts";
 import { DD_GIF, useDd, useNext } from "./stage";
 import { BANDHANI, DD, MIRROR_ROW, RoomTitle, navratriYear, prettyDate } from "./ui";
@@ -80,7 +81,7 @@ export default function Ending({
       items.push({ type: "rect", x: 307, y: 522, w: 466, h: 466, radius: 233, stroke: DD.gold, lineWidth: 10 });
     } else {
       items.push({ type: "rect", x: 315, y: 530, w: 450, h: 450, radius: 225, fill: DD.royal });
-      items.push({ type: "emoji", char: "💃", x: W / 2, y: 760, size: 220 });
+      items.push({ type: "emoji", char: "🐼", x: W / 2, y: 760, size: 220 });
     }
     items.push(
       { type: "text", text: `${recipient} × ${sender}`, x: W / 2, y: 1090, size: 84, face: "script", weight: 700, color: DD.maroon, maxWidth: 840, maxLines: 1 },
@@ -134,7 +135,7 @@ export default function Ending({
           <div className="dd-pass-body">
             <div className="dd-pass-photo">
               <span className="dd-pass-photo-in">
-                {photo ? <CroppedPhoto photo={photo} alt={`${recipient} and ${sender}`} /> : <span style={{ fontSize: 46 }} aria-hidden>💃</span>}
+                {photo ? <CroppedPhoto photo={photo} alt={`${recipient} and ${sender}`} /> : <BearCouple size="92%" />}
               </span>
             </div>
             <div style={{ display: "grid", gap: 4, minWidth: 0, textAlign: "left" }}>

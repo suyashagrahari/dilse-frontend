@@ -1,16 +1,17 @@
 "use client";
 
-// Scene 4 — "Pick your look". A chaniya-choli / kediyu flare stands on a
-// little stage; she taps a colour swatch and it twirls into that colour with a
-// burst of mirror sparkles. Then the sender's own colour slides in beside it:
-// "I'm in Peacock blue" + the sender's line (or "We match!").
+// Scene 4 — "Pick your look". A little panda in a chaniya choli dances on a
+// stage; she taps a colour swatch and the panda twirls into that colour with a
+// burst of mirror sparkles. Then the sender — a honey teddy in their own colour —
+// dances in beside it: "I'm in Peacock blue" + the sender's line (or "We match!").
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import { DANDIYA_COLORS, type DandiyaColor } from "../../../_valentine/days/dandiya-partner";
 import { FONTS } from "../../../_valentine/theme";
-import { Ghagra, Sparkle } from "./art";
+import { Sparkle } from "./art";
+import { Bear, DD_BEAR_CSS } from "./bears";
 import { DD_DISPLAY } from "./fonts";
 import { useDd, useNext } from "./stage";
 import { DD, Hint, RoomTitle } from "./ui";
@@ -39,7 +40,7 @@ export default function PickLook({ myColor, lookLine, sender, onPick, onNext }: 
 
   return (
     <>
-      <style>{LOOK_CSS}</style>
+      <style>{LOOK_CSS + DD_BEAR_CSS}</style>
       <RoomTitle kicker="Chaniya choli · kediyu" title="Pick your look" sub={pick ? undefined : "Which colour are you twirling in?"} />
 
       <div className="dd-fill">
@@ -52,7 +53,7 @@ export default function PickLook({ myColor, lookLine, sender, onPick, onNext }: 
               animate={reduced || twirl === 0 ? undefined : { rotateY: [0, 360, 720], scaleX: [1, 1.08, 1] }}
               transition={{ duration: 1.1, ease: [0.3, 0.7, 0.3, 1] }}
             >
-              <Ghagra base={pick ? c.base : "#B56A5A"} deep={pick ? c.deep : "#6E1E1A"} light={pick ? c.light : "#E3A58F"} size="100%" spin={twirl} />
+              <Bear kind="panda" outfit={pick ? c : { base: "#E8C9A4", deep: "#B58A5E", light: "#FFF1DC" }} />
             </motion.div>
             {/* mirror sparkles fly off the hem on every twirl */}
             {!reduced && twirl > 0 && (
@@ -72,7 +73,7 @@ export default function PickLook({ myColor, lookLine, sender, onPick, onNext }: 
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   transition={{ delay: reduced ? 0 : 0.7, type: "spring", stiffness: 200, damping: 16 }}
                 >
-                  <Ghagra base={mine.base} deep={mine.deep} light={mine.light} size="100%" />
+                  <Bear kind="teddy" outfit={mine} />
                   <span className="dd-look-tag">{sender}</span>
                 </motion.div>
               )}
@@ -112,12 +113,12 @@ export default function PickLook({ myColor, lookLine, sender, onPick, onNext }: 
 }
 
 const LOOK_CSS = `
-.dd-look { width: min(92cqw, 140cqh, calc(380px * var(--vw-s, 1))); aspect-ratio: 1.4; position: relative; }
+.dd-look { width: min(92cqw, 120cqh, calc(390px * var(--vw-s, 1))); aspect-ratio: 1.2; position: relative; }
 .dd-look-stage { position: absolute; inset: 0; perspective: 800px; }
 .dd-look-stage::after { content: ""; position: absolute; left: 6%; right: 6%; bottom: 0; height: 12%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255,182,39,.45), rgba(255,182,39,0)); }
-.dd-look-twirl { position: absolute; left: 2%; width: 60%; bottom: 7%; transform-style: preserve-3d; }
-.dd-look-mine { position: absolute; right: 1%; width: 34%; bottom: 7%; }
+.dd-look-twirl { position: absolute; left: 4%; width: 54%; bottom: 6%; transform-style: preserve-3d; }
+.dd-look-mine { position: absolute; right: 2%; width: 38%; bottom: 6%; }
 .dd-look-tag { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); padding: 2px 10px; border-radius: 99px; background: ${DD.cream}; color: ${DD.maroon};
   font: 700 11.5px ${FONTS.ui}; white-space: nowrap; max-width: 120%; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 0 0 2px #F6D27A; }
 .dd-look-sparks { position: absolute; left: 45%; bottom: 20%; width: 0; height: 0; pointer-events: none; }

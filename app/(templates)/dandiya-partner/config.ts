@@ -32,7 +32,7 @@ export const config: TemplatePageConfig = {
     cover: { subtitle: "you've been invited to a Dandiya night 🪔", ctaText: "Open", floatingEmojis: ["🪔", "🌼", "✨"] },
     letter: { headerEmoji: "🪔", title: "A note in the dupatta", greeting: "Hey you,", decorEmojis: ["🌼", "✨", "💛"] },
     final: {
-      headerEmoji: "💃",
+      headerEmoji: "🪔",
       title: "Happy Navratri",
       subtitle: "Made with love (and a lot of dhol)",
       wishes: ["Made just for you 💛", "Open it again any night 🌙", "Invite your own partner ✨"],
