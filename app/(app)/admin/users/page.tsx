@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { ROLE_META, RoleIcon, ProviderIcon } from "../adminIcons";
 import { AdminPage, Panel, Hero, ChipGroup, SearchBox, Loading, EmptyState, Tag, Num, rise } from "../adminKit";
+import TemplateSelect from "@/components/admin/TemplateSelect";
+import TemplateThumb from "../TemplateThumb";
 
 const ago=(d:Date)=>{
   const m=Math.max(0,Math.round((Date.now()-d.getTime())/60000));
@@ -28,8 +30,9 @@ interface UserItem {
   feedback?:{count:number;avg:number;templates:number}|null;
   templatePages?:number; templateLastAt?:string;
 }
-interface TplCount { type:string; label:string; users:number; pages:number }
-type DateMode = ""|"today"|"yesterday"|"week"|"custom";
+interface TplCount { type:string; label:string; slug?:string; users:number; pages:number }
+interface TplSummary { type:string; label:string; slug?:string; pages:number; users?:number; daily?:{date:string;pages:number;users:number}[] }
+type DateMode = ""|"today"|"yesterday"|"week"|"30d"|"90d"|"custom";
 
 // Days are Indian days: "today" at 11pm IST is still today, not tomorrow in UTC.
 const istDay=(offset=0)=>{
@@ -71,20 +74,28 @@ export default function AdminUsersPage(){
   const [pageDeleting,setPageDeleting]=useState<string|null>(null);
   const [dateMode,setDateMode]=useState<DateMode>("");
   const [customDay,setCustomDay]=useState("");
+  const [customTo,setCustomTo]=useState("");
   const [tpl,setTpl]=useState("");
   const [tplCounts,setTplCounts]=useState<TplCount[]>([]);
-  const [tplSummary,setTplSummary]=useState<{label:string;pages:number}|null>(null);
+  const [tplSummary,setTplSummary]=useState<TplSummary|null>(null);
 
   // The day range the chips and the calendar describe, as ?from=&to=.
   const range=((): {from:string;to:string}|null=>{
     if(dateMode==="today")return {from:istDay(),to:istDay()};
     if(dateMode==="yesterday")return {from:istDay(-1),to:istDay(-1)};
     if(dateMode==="week")return {from:istDay(-6),to:istDay()};
-    if(dateMode==="custom"&&customDay)return {from:customDay,to:customDay};
+    if(dateMode==="30d")return {from:istDay(-29),to:istDay()};
+    if(dateMode==="90d")return {from:istDay(-89),to:istDay()};
+    if(dateMode==="custom"&&customDay){
+      const to=customTo&&customTo>=customDay?customTo:customDay;
+      return {from:customDay,to};
+    }
     return null;
   })();
   const rangeFrom=range?.from??"", rangeTo=range?.to??"";
-  const rangeLabel=!range?"":dateMode==="today"?"today":dateMode==="yesterday"?"yesterday":dateMode==="week"?"in the last 7 days":`on ${prettyDay(range.from)}`;
+  const rangeLabel=!range?"":dateMode==="today"?"today":dateMode==="yesterday"?"yesterday":dateMode==="week"?"in the last 7 days"
+    :dateMode==="30d"?"in the last 30 days":dateMode==="90d"?"in the last 90 days"
+    :range.from===range.to?`on ${prettyDay(range.from)}`:`between ${prettyDay(range.from)} and ${prettyDay(range.to)}`;
 
   const hdr=useCallback(()=>({Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"}),[accessToken]);
 
@@ -224,6 +235,7 @@ export default function AdminUsersPage(){
       {/* What the filters add up to */}
       <Hero style={{padding:"13px 16px"}}>
         <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+          {tpl&&<TemplateThumb slug={tplSummary?.slug||activeTpl?.slug} templateType={tpl} label={tplSummary?.label||activeTpl?.label} size={44} radius={9} style={{transform:"rotate(-3deg)"}}/>}
           <div style={{fontSize:34,fontWeight:800,lineHeight:1,color:"#ffe3a3",fontFamily:"'Playfair Display',serif"}}>
             {loading&&!pg.total?"…":<Num value={pg.total}/>}
           </div>
@@ -235,13 +247,14 @@ export default function AdminUsersPage(){
                 : <>users in total</>}
           </div>
           {filtered&&(
-            <button type="button" onClick={()=>{setTpl("");setDateMode("");setCustomDay("");}}
+            <button type="button" onClick={()=>{setTpl("");setDateMode("");setCustomDay("");setCustomTo("");}}
               style={{flex:"none",display:"inline-flex",alignItems:"center",gap:4,height:30,padding:"0 11px",borderRadius:99,fontSize:11.5,fontWeight:800,cursor:"pointer",
                 background:"rgba(255,255,255,.12)",color:"#fff6e6",border:"1px solid rgba(255,227,163,.35)"}}>
               <X size={12}/> Clear
             </button>
           )}
         </div>
+        {tpl&&tplSummary?.daily&&tplSummary.daily.length>1&&<TplDays daily={tplSummary.daily}/>}
       </Hero>
 
       <Panel pad={12} delay={0.05} style={{marginBottom:12}}>
@@ -253,30 +266,32 @@ export default function AdminUsersPage(){
             <span className="u-lbl"><CalendarDays size={12}/> When</span>
             <div className="adk-chips" style={{flex:1}}>
               <ChipGroup<DateMode> id="u-when" value={dateMode} onChange={setDateMode} style={{overflow:"visible",padding:0,flex:"none"}}
-                options={[{value:"",label:"All time"},{value:"today",label:"Today"},{value:"yesterday",label:"Yesterday"},{value:"week",label:"Last 7 days"}]}/>
-              <label style={{...chip(dateMode==="custom"),position:"relative"}}>
+                options={[{value:"",label:"All time"},{value:"today",label:"Today"},{value:"yesterday",label:"Yesterday"},{value:"week",label:"7 days"},{value:"30d",label:"30 days"},{value:"90d",label:"90 days"}]}/>
+              <label style={{...chip(dateMode==="custom"),position:"relative"}} title="From this day">
                 <Calendar size={12}/>{dateMode==="custom"&&customDay?prettyDay(customDay):"Pick a day"}
                 <input type="date" max={istDay()} value={customDay}
-                  onChange={e=>{setCustomDay(e.target.value);setDateMode(e.target.value?"custom":"");}}
+                  onChange={e=>{setCustomDay(e.target.value);setDateMode(e.target.value?"custom":"");if(!e.target.value)setCustomTo("");}}
                   aria-label="Pick a day"
                   style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%"}}/>
               </label>
+              {dateMode==="custom"&&customDay&&(
+                <label style={{...chip(!!customTo&&customTo>customDay),position:"relative"}} title="Up to this day (optional)">
+                  to {customTo&&customTo>customDay?prettyDay(customTo):"…"}
+                  <input type="date" min={customDay} max={istDay()} value={customTo}
+                    onChange={e=>setCustomTo(e.target.value)}
+                    aria-label="Up to this day"
+                    style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%"}}/>
+                </label>
+              )}
             </div>
           </div>
 
           {/* Which template they made */}
           <div className="u-row">
             <span className="u-lbl"><LayoutTemplate size={12}/> Template</span>
-            <select value={tpl} onChange={e=>setTpl(e.target.value)} aria-label="Filter by template" className="adk-input"
-              style={{flex:"1 1 200px",minWidth:0,maxWidth:380,height:34,padding:"0 10px",fontSize:12.5,fontWeight:700,
-                background:tpl?`${g}14`:"#fff",borderColor:tpl?g:undefined}}>
-              <option value="">Any template</option>
-              {tplCounts.map(t=>(
-                <option key={t.type} value={t.type} disabled={!t.users&&t.type!==tpl}>
-                  {t.label} · {t.users} {t.users===1?"user":"users"}
-                </option>
-              ))}
-            </select>
+            {/* Every template, busiest first, each with how many people made one in the chosen days */}
+            <TemplateSelect value={tpl} onChange={setTpl} allLabel="Any template" width={300}
+              options={tplCounts.map(t=>({templateType:t.type,label:`${t.label} · ${t.users} ${t.users===1?"user":"users"}${t.pages>t.users?` · ${t.pages} pages`:""}`}))}/>
           </div>
 
           {/* Role + status */}
@@ -485,5 +500,27 @@ export default function AdminUsersPage(){
         )}
       </AnimatePresence>
     </AdminPage>
+  );
+}
+
+/** "On which days" for one template: a bar per IST day, pages made that day. */
+function TplDays({daily}:{daily:{date:string;pages:number;users:number}[]}){
+  const max=Math.max(1,...daily.map(d=>d.pages));
+  const dense=daily.length>45;
+  return(
+    <div style={{marginTop:12}}>
+      <div style={{display:"flex",alignItems:"flex-end",gap:dense?1:3,height:54}}>
+        {daily.map(d=>(
+          <div key={d.date} title={`${prettyDay(d.date)} · ${d.users} ${d.users===1?"person":"people"} · ${d.pages} ${d.pages===1?"page":"pages"}`}
+            style={{flex:1,minWidth:0,height:d.pages?`${Math.max(10,(d.pages/max)*100)}%`:3,borderRadius:dense?1:4,
+              background:d.pages?"linear-gradient(180deg,#ffe3a3,#c9a84c)":"rgba(255,236,210,.18)",transition:"height .4s"}}/>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:5,fontSize:10,fontWeight:700,color:"rgba(255,236,210,.7)"}}>
+        <span>{prettyDay(daily[0].date)}</span>
+        <span>busiest: {(()=>{const b=daily.reduce((m,d)=>d.pages>m.pages?d:m,daily[0]);return b.pages?`${prettyDay(b.date)} · ${b.users} ${b.users===1?"person":"people"}`:"—";})()}</span>
+        <span>{prettyDay(daily[daily.length-1].date)}</span>
+      </div>
+    </div>
   );
 }

@@ -215,6 +215,11 @@ export function ProfileStyles() {
         transition: transform .18s, border-color .18s, box-shadow .18s;
       }
       .sa-tpl:hover { transform: translateY(-2px); border-color: rgba(201,168,76,0.55); box-shadow: 0 12px 26px -16px rgba(61,12,17,.45); }
+      .sa-tpl-cover { position: relative; border-bottom: 1px solid ${A.edge}; background: #3d0c11; }
+      .sa-tpl-cover::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(180deg, rgba(42,10,14,0) 55%, rgba(42,10,14,.55)); }
+      .sa-tpl-cover-d { position: absolute; right: 8px; bottom: 7px; z-index: 1; padding: 2px 8px; border-radius: 99px;
+        font-size: 10.5px; font-weight: 800; color: #fff6e6; background: rgba(42,10,14,.55); backdrop-filter: blur(4px); }
       .sa-tpl-h {
         display: flex; align-items: center; gap: 7px; padding: 8px 11px;
         background: linear-gradient(180deg,#fdf9f4,#f8efe4);
