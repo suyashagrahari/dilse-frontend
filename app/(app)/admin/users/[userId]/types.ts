@@ -9,8 +9,13 @@ export interface ProfileUser {
   avatar?: string;
   provider: string;
   role: string;
-  status?: "active" | "suspended" | "banned";
+  status?: "active" | "suspended" | "banned" | "closed";
   statusReason?: string;
+  /** Set when a super admin closed the account at the user's request. */
+  closedAt?: string | null;
+  closureReason?: string | null;
+  /** "hide" is reversible (Reinstate); "delete" removed every page and anonymised the account. */
+  closureMode?: "hide" | "delete" | null;
   suspendedUntil?: string;
   points: number;
   totalPointsEarned: number;
@@ -106,4 +111,5 @@ export const STATUS_COLOR: Record<string, string> = {
   active: "#3aa76d",
   suspended: "#a8823a",
   banned: "#a13540",
+  closed: "#6b6470",
 };

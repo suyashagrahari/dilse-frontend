@@ -243,7 +243,8 @@ export function StatTile({
 }: {
   icon: ReactNode;
   label: string;
-  value: number | string;
+  /** A number counts up; anything else (a formatted ₹ amount) renders as given. */
+  value: number | ReactNode;
   sub?: ReactNode;
   accent?: string;
   delay?: number;

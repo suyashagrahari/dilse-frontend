@@ -8,7 +8,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ShieldAlert, UserCog, UserRound, LayoutDashboard, LayoutGrid, FileText,
-  Coins, KeyRound, History, TriangleAlert, CalendarDays,
+  Coins, KeyRound, History, TriangleAlert, CalendarDays, Receipt,
 } from "lucide-react";
 import { C, STATUS_COLOR, type ProfileData } from "./types";
 import { ProfileStyles, Skeleton, Empty, Pill, Btn, Dialog, fmtAgo } from "./ui";
@@ -21,16 +21,20 @@ import PointsTab from "./PointsTab";
 import ActivityTab from "./ActivityTab";
 import DangerTab from "./DangerTab";
 import AccessTab from "./AccessTab";
+import BillingTab from "./BillingTab";
 import { useToast } from "@/lib/toast/useToast";
 
-const TABS = ["Overview", "Pages", "Drafts", "Points", "Access", "Activity", "Danger Zone"] as const;
+const TABS = ["Overview", "Billing", "Pages", "Drafts", "Points", "Access", "Activity", "Danger Zone"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_ICON: Record<Tab, typeof UserCog> = {
-  Overview: LayoutDashboard, Pages: LayoutGrid, Drafts: FileText, Points: Coins,
+  Overview: LayoutDashboard, Billing: Receipt, Pages: LayoutGrid, Drafts: FileText, Points: Coins,
   Access: KeyRound, Activity: History, "Danger Zone": TriangleAlert,
 };
 
-const ABOUT = "Everything about one account — pages, points, access and the audit trail. Role changes live on the Overview tab; suspensions and deletions behind Danger Zone.";
+/** "Danger Zone" ⇄ "danger-zone" — the tab's name in `?tab=`. */
+const tabSlug = (t: Tab) => t.toLowerCase().replace(/\s+/g, "-");
+
+const ABOUT = "Everything about one account — billing, pages, points, access and the audit trail. Role changes live on the Overview tab; payments and billing statements on Billing; suspensions and account closure behind Danger Zone.";
 
 export default function AdminUserProfilePage() {
   return (
@@ -89,6 +93,24 @@ function ProfileInner() {
     if (superAdmin) load();
     else setLoading(false);
   }, [load, superAdmin]);
+
+  // `?tab=billing` (the Revenue page links here that way) opens that tab, and
+  // switching tabs keeps the URL in step so a refresh or a pasted link lands on
+  // the same one. Read in an effect, not `useSearchParams`, for the reason
+  // given in admin/drafts/page.tsx.
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get("tab");
+    const hit = TABS.find((t) => tabSlug(t) === want);
+    if (hit) setTab(hit);
+  }, []);
+
+  const pickTab = (t: Tab) => {
+    setTab(t);
+    const p = new URLSearchParams(window.location.search);
+    if (t === "Overview") p.delete("tab"); else p.set("tab", tabSlug(t));
+    const qs = p.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+  };
 
   const startImpersonation = async () => {
     setImpBusy(true);
@@ -204,6 +226,13 @@ function ProfileInner() {
                   <CalendarDays size={11} /> Joined {fmtAgo(user.createdAt)}
                 </span>
               </div>
+              {status === "closed" && (
+                <div style={{ color: "#e4d6dc", fontSize: 12, marginTop: 4, overflowWrap: "anywhere" }}>
+                  Closed{user.closedAt ? ` ${fmtAgo(user.closedAt)}` : ""}
+                  {user.closureMode === "delete" ? " · pages permanently deleted" : user.closureMode === "hide" ? " · everything hidden (reversible)" : ""}
+                  {user.closureReason ? ` · “${user.closureReason}”` : ""}
+                </div>
+              )}
               {user.statusReason && (
                 <div style={{ color: "#f0b7bd", fontSize: 12, marginTop: 4, overflowWrap: "anywhere" }}>Reason: {user.statusReason}</div>
               )}
@@ -256,7 +285,7 @@ function ProfileInner() {
                 data-on={on ? "1" : "0"}
                 data-danger={t === "Danger Zone" ? "1" : "0"}
                 onClick={(e) => {
-                  setTab(t);
+                  pickTab(t);
                   // Keep the chosen tab in view when the bar scrolls sideways on a phone.
                   e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
                 }}
@@ -284,6 +313,7 @@ function ProfileInner() {
             style={{ minWidth: 0 }}
           >
             {tab === "Overview" && <OverviewTab data={data} hdr={hdr} reload={load} />}
+            {tab === "Billing" && <BillingTab userId={String(userId)} hdr={hdr} />}
             {tab === "Pages" && <PagesTab data={data} hdr={hdr} reload={load} />}
             {tab === "Drafts" && (
               <DraftsTab userId={String(userId)} userEmail={user.email} hdr={hdr} />
