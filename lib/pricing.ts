@@ -99,7 +99,9 @@ function load(fresh = false): Promise<void> {
   inFlight = (async () => {
     try {
       const res = await fetch(`${API_URL}/payment/pricing`, {
-        cache: fresh ? "no-store" : "default",
+        // "no-cache", not "default": the browser may keep its copy but must check
+        // it with the API first, so a visitor never reads a minutes-old answer.
+        cache: fresh ? "no-store" : "no-cache",
         headers: IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : undefined,
       });
       const parsed = res.ok ? parse(await res.json()) : null;

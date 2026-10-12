@@ -109,7 +109,9 @@ function load(fresh = false): Promise<void> {
         ? `${API_URL}/template-visibility?t=${Date.now()}`
         : `${API_URL}/template-visibility`;
       const res = await fetch(url, {
-        cache: fresh ? "no-store" : "default",
+        // "no-cache", not "default": the browser may keep its copy but must check
+        // it with the API first, so a visitor never reads a minutes-old answer.
+        cache: fresh ? "no-store" : "no-cache",
         headers: IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : undefined,
       });
       const json = await res.json();
@@ -194,7 +196,11 @@ export function seedTemplateVisibility(list: readonly string[]): void {
 
 export function subscribeTemplateVisibility(listener: Listener): () => void {
   listeners.add(listener);
-  void load();
+  // Once per page load, check the list baked into the HTML against the API.
+  // The HTML can be older than the visit (see `verifyTemplateVisibility`), and
+  // a gallery that only corrects itself on a refusal showed last season's
+  // cards until a reload.
+  void verifyTemplateVisibility();
   return () => {
     listeners.delete(listener);
   };

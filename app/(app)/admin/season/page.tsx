@@ -45,6 +45,7 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { refreshPricing } from "@/lib/pricing";
+import { purgeSiteCache } from "@/lib/siteCache";
 import {
   DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVAL_PERCENT_DEFAULT, isDropMode, loadSeason, type DropId, type SeasonMode,
 } from "@/lib/season";
@@ -312,7 +313,8 @@ export default function AdminSeasonPage() {
       // and the gallery/offer page read the (now discounted) pricing store.
       void loadSeason(true);
       void refreshPricing();
-      setToast("Saved — live for visitors within a minute");
+      void purgeSiteCache();
+      setToast("Saved — live for visitors now");
       setTimeout(() => setToast(null), 2800);
     } catch (e) {
       setError((e as Error).message);
