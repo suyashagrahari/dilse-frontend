@@ -28,7 +28,7 @@ function load(fresh = false): Promise<void> {
   if (inflight && !fresh) return inflight;
   inflight = (async () => {
     try {
-      const res = await fetch(`${API_URL}/template-meta`, { cache: fresh ? "no-store" : "default" });
+      const res = await fetch(`${API_URL}/template-meta`, { cache: fresh ? "no-store" : "no-cache" });
       const json = await res.json();
       if (json?.success && json.data) {
         meta = {

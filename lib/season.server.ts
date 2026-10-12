@@ -38,12 +38,13 @@ import { cache } from "react";
 import { preload } from "react-dom";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { parseSeason, type Season } from "@/lib/season";
+import { SITE_CONFIG_TAG } from "@/lib/siteCache";
 
 async function fetchSeason(revalidate: number): Promise<Season | null> {
   if (!API_URL) return null;
   try {
     const res = await fetch(`${API_URL}/season`, {
-      next: { revalidate },
+      next: { revalidate, tags: [SITE_CONFIG_TAG] },
       headers: IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : undefined,
     });
     if (!res.ok) return null;

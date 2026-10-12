@@ -11,6 +11,7 @@
 
 import { cache } from "react";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { SITE_CONFIG_TAG } from "@/lib/siteCache";
 
 /**
  * The hidden slugs, or `null` if we could not find out.
@@ -38,7 +39,7 @@ export const getHiddenTemplatesServer = cache(async (): Promise<string[] | null>
   if (!API_URL) return null;
   try {
     const res = await fetch(`${API_URL}/template-visibility`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: [SITE_CONFIG_TAG] },
       headers: IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : undefined,
     });
     if (!res.ok) return null;
