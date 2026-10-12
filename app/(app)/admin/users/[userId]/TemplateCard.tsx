@@ -9,6 +9,7 @@ import {
 import { C, type ProfilePage } from "./types";
 import { Btn, Pill, CopyBtn, fmtShort } from "./ui";
 import { useToast } from "@/lib/toast/useToast";
+import TemplateThumb from "../../TemplateThumb";
 
 /**
  * One template the user made.
@@ -66,6 +67,12 @@ export default function TemplateCard({
 
   return (
     <div className="sa-tpl" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
+      {/* The template's own cover, so a grid of pages reads at a glance. */}
+      <div className="sa-tpl-cover">
+        <TemplateThumb slug={page.editorRoute} templateType={page.templateType} label={page.templateLabel} size="100%" ratio={0.46} radius={0}
+          style={{ boxShadow: "none" }} />
+        <span className="sa-tpl-cover-d">{fmtShort(page.createdAt)}</span>
+      </div>
       <div className="sa-tpl-h">
         <h4 className="sa-tpl-name">{page.templateLabel}</h4>
         <Pill text={page.isPublished ? "Live" : "Draft"} color={page.isPublished ? C.ok : C.muted} />

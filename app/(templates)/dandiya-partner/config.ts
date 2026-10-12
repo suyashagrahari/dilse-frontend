@@ -3,7 +3,8 @@ import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
 // Gallery card. The cover is the Dandiya night poster
-// (source: media-src/templates/dandiya-partner/cover-poster.webp — upload it
+// (source: media-src/templates/dandiya-partner/cover-poster-v2.webp, the red
+// kumkum-and-gold poster — a new name because the old URL is cached immutable; upload it
 // with `cd server && npm run upload:template-media -- --only=dandiya-partner`).
 export const config: TemplatePageConfig = {
   slug: "dandiya-partner",
@@ -12,7 +13,7 @@ export const config: TemplatePageConfig = {
   title: "Be My Dandiya Partner — a Navratri invitation",
   description:
     "Invite them to a Dandiya night: light nine diyas, clash the sticks on the dhol beat, twirl in your colour, and ask “Will you be my Dandiya partner?”",
-  coverImage: templateMedia("dandiya-partner", "cover-poster.webp"),
+  coverImage: templateMedia("dandiya-partner", "cover-poster-v2.webp"),
   emoji: "🪔",
   color: "from-amber-400 to-rose-700",
   previewText: "you've been invited to a Dandiya night 🪔",
