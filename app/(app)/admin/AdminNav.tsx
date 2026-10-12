@@ -17,13 +17,14 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BarChart3, Users, MessageSquare, Star, FileText, Mail, LayoutTemplate,
-  IndianRupee, KeyRound, Repeat, Crown, Megaphone, Heart, BadgePercent, Ghost,
+  IndianRupee, KeyRound, Repeat, Crown, Megaphone, Heart, BadgePercent, Ghost, BadgeIndianRupee,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { isSuperAdmin } from "@/lib/roles";
 
 const ITEMS = [
   { href: "/admin/analytics", label: "Analytics", Icon: BarChart3, superOnly: false },
+  { href: "/admin/revenue", label: "Revenue", Icon: BadgeIndianRupee, superOnly: true },
   { href: "/admin/users", label: "Users", Icon: Users, superOnly: false },
   { href: "/admin/contacts", label: "Contacts", Icon: MessageSquare, superOnly: false },
   { href: "/admin/feedback", label: "Feedback", Icon: Star, superOnly: true },
