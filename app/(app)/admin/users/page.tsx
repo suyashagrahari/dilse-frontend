@@ -52,7 +52,7 @@ const g="#c9a84c";
 const gD="#8b5a2b";
 const bg="#3d0c11";
 const RC:Record<string,string>={superadmin:"#b3261e",admin:g,member:gD,normal:tM};
-const SC:Record<string,string>={active:"#1e7a4b",suspended:gD,banned:"#b3261e"};
+const SC:Record<string,string>={active:"#1e7a4b",suspended:gD,banned:"#b3261e",closed:"#6b6470"};
 
 export default function AdminUsersPage(){
   const router=useRouter();
@@ -172,7 +172,8 @@ export default function AdminUsersPage(){
   };
 
   // Only rendered when the account is NOT active: a pill on every row would be
-  // noise, and the whole point is that a suspended or banned account stands out.
+  // noise, and the whole point is that a suspended, banned or closed account
+  // stands out.
   const StatusPill=({status}:{status?:string})=>{
     if(!status||status==="active")return null;
     return(
@@ -284,7 +285,7 @@ export default function AdminUsersPage(){
               options={["","normal","member","admin","superadmin"].map(r=>({value:r,label:r?<span style={{textTransform:"capitalize"}}>{r}</span>:"All roles",tone:r?RC[r]:undefined}))}/>
             <span style={{flex:"none",width:1,height:20,background:cB}}/>
             <ChipGroup id="u-status" value={sf} onChange={setSf} style={{overflow:"visible",padding:0,flex:"none"}}
-              options={["","active","suspended","banned"].map(st=>({value:st,label:st?<span style={{textTransform:"capitalize"}}>{st}</span>:"Any status",tone:SC[st]}))}/>
+              options={["","active","suspended","banned","closed"].map(st=>({value:st,label:st?<span style={{textTransform:"capitalize"}}>{st}</span>:"Any status",tone:SC[st]}))}/>
           </div>
         </div>
       </Panel>
