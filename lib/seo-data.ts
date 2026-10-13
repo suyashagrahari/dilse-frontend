@@ -2758,6 +2758,92 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Miss You — an evergreen long-distance "I miss you" on the Valentine engine
+  // (✦ premium). Distinct from the older "missyou-gf" letter: this one is the
+  // interactive LDR page (map + km, countdown, open-when letters, a hug across
+  // the map, a boarding pass), so its keywords lean on long distance and the
+  // boyfriend side rather than repeating missyou-gf's. No rating, no price.
+  "miss-you": {
+    title: "I Miss You Page for Long Distance Love — Map, Countdown & Open-When Letters",
+    description:
+      "Tell them you miss them the cute way: an incoming love call, your two cities on a map with the km apart, a countdown to the day you meet, open-when letters, a hug across the map and a “See you soon” boarding pass.",
+    category: "Miss You",
+    emoji: "🥹",
+
+    keywords: [
+      // ── PRIMARY ──
+      "i miss you website",
+      "long distance relationship website",
+      "miss you page for boyfriend",
+      "long distance gift online",
+      "interactive miss you message",
+      "open when letters online",
+      "countdown until i see you",
+      "distance between us map gift",
+      // ── WHO IT'S FOR ──
+      "miss you message for long distance boyfriend",
+      "ldr surprise for girlfriend",
+      "miss you for best friend",
+      "cute way to say i miss you",
+      "tumhari yaad aa rahi hai message",
+      // ── THE PAGE ──
+      "see you soon boarding pass",
+      "virtual hug link",
+      "miss you page with photos and music",
+      "video call tonight question",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make an I miss you page for my long-distance partner?",
+        answer:
+          "Open the Miss You template, press Create and add their name and yours, your two cities, the day you'll meet (if you know it), the little things you miss, a few open-when letters, your letter and up to six photos. Or describe your story in a few lines and let the AI write it. Pick one of four looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "Their phone 'rings' with a call from you and they slide to answer. Then a map draws a dotted route between your two cities and counts the kilometres — until they fold the map down to 0 km. They see a live countdown to the day you meet, pull glowing notes out of a jar of things you miss about them, flip through your photos, open your open-when envelopes, unfold a paper plane into your letter and hold a button to send a hug across the map. It ends with a question like “Video call tonight?” and a See-you-soon boarding pass they can download.",
+      },
+      {
+        question: "Do I have to know the distance in kilometres?",
+        answer:
+          "No. Type your two cities and the page works out the distance for most big cities in India and abroad. If you're in different time zones it also shows both of your local times. You can still type the exact kilometres yourself.",
+      },
+      {
+        question: "What if we don't have a date to meet yet?",
+        answer:
+          "Leave the date empty and the countdown says “soon” instead of a number, and the boarding pass reads “Soon 💗”. Add a date later and republish; the same link updates.",
+      },
+      {
+        question: "Can they say no to the question?",
+        answer:
+          "You choose. By default the No button gets shy and runs away until it turns into a second Yes. Or let them answer honestly: after four or five tries No turns into “Not tonight 🌙”, which they can press. Either way you get an email with their answer.",
+      },
+      {
+        question: "Can I add a song?",
+        answer:
+          "Yes. It starts with The Night We Met, or tap a suggestion such as Raataan Lambiyan, Channa Mereya, Agar Tum Saath Ho, A Thousand Miles or Here Without You, or paste any YouTube link. Music starts on their first tap.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose who you're missing — your love, your crush or your best friend — and the question, the reply and the boarding pass change with it. Every line stays editable, and you can lock the page with a password.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an I Miss You Page for Long Distance",
+      description: "Build a long-distance page — your cities on a map, a countdown, open-when letters and a boarding pass — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Miss You page on SubhSandesh and press Create." },
+        { name: "Pick a Look and Who It's For", text: "Choose Midnight Stars, Sunset Peach, Cloud Lilac or Moonlight Mint, and your love, your crush or your bestie." },
+        { name: "Add Your Cities and the Date", text: "Type both cities (the km are worked out for you) and the day you'll see them, if you know it." },
+        { name: "Fill the Jar and the Envelopes", text: "Write the little things you miss and a few open-when letters, your letter and photos — or let the AI write them." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or

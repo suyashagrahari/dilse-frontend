@@ -125,6 +125,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "dandiya-partner":      { emoji: "🪔", label: "Dandiya invitation" },
   sorry:                  { emoji: "🥺", label: "Sorry page" },
   "happy-birthday":       { emoji: "🎂", label: "Birthday surprise" },
+  "miss-you":             { emoji: "🥹", label: "Miss You page" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
@@ -159,6 +160,10 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "happy-birthday": (r, s) => ({
     title: `🎂 ${r}, someone made you a birthday surprise`,
     description: `${s} wrapped something up for you. Untie the ribbon and make a wish 🎈`,
+  }),
+  "miss-you": (r, s) => ({
+    title: `🥹 ${r}, someone misses you a lot`,
+    description: `${s} is calling from far away… pick up, there's a map, a countdown and a boarding pass inside 💗`,
   }),
   sorry: (r, s) => ({
     title: `🥺 ${r}, someone is very, very sorry`,

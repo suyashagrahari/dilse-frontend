@@ -18,6 +18,7 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   sorry: { emoji: "🥺", gradient: ["#FFB3C7", "#FF6F91"], label: "A cute sorry page" },
   // Happy Birthday: strawberry frosting, the surprise wording.
   "happy-birthday": { emoji: "🎂", gradient: ["#FFB3C8", "#EE5583"], label: "A birthday surprise" },
+  "miss-you": { emoji: "🥹", gradient: ["#3A3480", "#FF7EAE"], label: "Someone misses you" },
   // Happy Diwali: navy night → diya gold, the teaser wording (lib/seo.ts TEASER_PREVIEW).
   "happy-diwali": { emoji: "🪔", gradient: ["#4A0A0D", "#F6A821"], label: "A diya at your door" },
 };
