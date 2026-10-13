@@ -55,7 +55,7 @@ export default function MusicPicker({
   const id = value.musicYoutubeId;
   const known = id ? suggestionFor(id, suggestions) : null;
   const songTitle = known?.title ?? (music?.mode === "youtube" && music.title ? music.title : "Your YouTube song");
-  const modes = track ? [{ value: "track" as const, emoji: "🎼", label: track.title, hint: "Made for this template" }, ...MODES] : MODES;
+  const modes = track ? [{ value: "track" as const, emoji: "🎼", label: track.title, hint: track.hint ?? "Made for this template" }, ...MODES] : MODES;
   const listening = !!music?.playing && music.mode === (value.musicMode === "youtube" && !id ? "melody" : value.musicMode);
 
   const applyLink = (raw: string) => {
@@ -104,7 +104,7 @@ export default function MusicPicker({
       {value.musicMode === "track" && track && (
         <div className="vmp-panel">
           <p className="vs-hint" style={{ margin: 0 }}>
-            <b>{track.title}</b> loops softly from their first tap — made for this page. They can mute it any time.
+            <b>{track.title}</b>{track.hint ? ` (${track.artist ?? track.hint})` : ""} loops softly from their first tap{track.hint ? "" : " — made for this page"}. They can mute it any time.
           </p>
           {listenBtn("▶ Listen")}
         </div>

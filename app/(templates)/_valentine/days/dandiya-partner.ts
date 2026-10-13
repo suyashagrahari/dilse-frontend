@@ -13,7 +13,7 @@
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
-import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
+import { defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "dandiya-partner" as const;
 
@@ -94,18 +94,21 @@ export const DEFAULT_NIGHT_LINES: readonly string[] = [
 ];
 
 /**
- * One-tap garba and dandiya songs. Official uploads (label channels), every id
- * checked against YouTube's oEmbed on 2026-10-11. Audio only: the video never
- * shows (music.audioOnly below).
+ * One-tap garba and dandiya songs; the sender can also paste any YouTube link.
+ * Official label uploads, every id checked with YouTube oEmbed and the embed
+ * player (playable off-site) on 2026-10-14. Audio only (music.audioOnly).
+ * The first is the default: Chogada's lyric upload (840M plays) starts on the
+ * beat, with no dialogue intro.
  */
 export const DANDIYA_SONGS: readonly SongSuggestion[] = [
-  { id: "yr7JFNsz5dU", title: "Chogada", artist: "Darshan Raval · Loveyatri" },
-  { id: "3X7x4Ye-tqo", title: "Nagada Sang Dhol", artist: "Shreya Ghoshal · Ram-Leela" },
-  { id: "Gx_Rqsq1DIw", title: "Shubhaarambh", artist: "Amit Trivedi · Kai Po Che" },
+  { id: "asYxxtiWUyw", title: "Chogada", artist: "Darshan Raval · Loveyatri" },
   { id: "Jh_VKJAEnUY", title: "Dholida", artist: "Gangubai Kathiawadi" },
-  { id: "gE3XkDXpB74", title: "Udi Udi Jaye", artist: "Sukhwinder Singh · Raees" },
-  { id: "i0_m90T04uw", title: "Kamariya", artist: "Darshan Raval · Mitron" },
+  { id: "3X7x4Ye-tqo", title: "Nagada Sang Dhol", artist: "Shreya Ghoshal · Ram-Leela" },
+  { id: "Tfjoyp0g5HA", title: "Dholi Taaro", artist: "Hum Dil De Chuke Sanam" },
+  { id: "WQfdwsPao9E", title: "Udi Udi Jaye", artist: "Sukhwinder Singh · Raees" },
+  { id: "Gx_Rqsq1DIw", title: "Shubhaarambh", artist: "Amit Trivedi · Kai Po Che" },
   { id: "fqP5pTPvqZ8", title: "Rangtaari", artist: "Yo Yo Honey Singh · Loveyatri" },
+  { id: "i0_m90T04uw", title: "Kamariya", artist: "Darshan Raval · Mitron" },
   { id: "13cHnQ1Suj8", title: "Radhe Radhe", artist: "Meet Bros · Dream Girl" },
 ];
 
@@ -138,7 +141,10 @@ export const dandiyaDay: DayConfig<DandiyaExtras> = {
     // One 40px play/stop icon bottom-left, beside the Next pill.
     compact: true,
     suggestions: DANDIYA_SONGS,
-    suggestionsNote: "garba & dandiya favourites · tap to use",
+    suggestionsNote: "garba & dandiya favourites · tap one, or paste any YouTube link",
+    // A quiet garba bed under the page's own sounds — the stick clacks, the
+    // dhol game and the clash taps have to come through over the song.
+    volume: 0.35,
   },
   extras: [
     {
@@ -248,7 +254,11 @@ export const dandiyaDay: DayConfig<DandiyaExtras> = {
       ["us, every Navratri", "Nine nights a year will never be enough."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    ...MUSIC_DEMO,
+    // A real garba song from the first tap, not the synth melody.
+    music: true,
+    musicMode: "youtube",
+    musicYoutubeId: DANDIYA_SONGS[0].id,
+    musicStart: 0,
     endLine: "Save every song for me this Navratri 💛",
     extras: {
       tone: "romantic",

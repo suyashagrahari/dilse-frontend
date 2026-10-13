@@ -21,7 +21,7 @@
 import type { DayConfig, GifSlot } from "../types";
 import type { DayTheme } from "../theme";
 import type { SongSuggestion } from "../music/youtube";
-import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
+import { TRACK_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "sorry" as const;
 
@@ -206,17 +206,35 @@ export const DEFAULT_COUPONS: readonly SorryCoupon[] = [
   { title: "I listen, no phone 📵", line: "One whole evening, just you and me, talking." },
 ];
 
-/** Soft, sorry-to-you songs (official uploads; every id checked with YouTube oEmbed on 2026-10-13). */
+/**
+ * English apology songs, one tap each in the form; the sender can still paste
+ * any YouTube link. Official uploads — every id checked with YouTube oEmbed
+ * and the embed player (playable off-site) on 2026-10-14. Audio only.
+ */
 export const SORRY_SONGS: readonly SongSuggestion[] = [
-  { id: "ilNt2bikxDI", title: "Jo Tum Mere Ho", artist: "Anuv Jain" },
-  { id: "Umqb9KENgmk", title: "Tum Hi Ho", artist: "Arijit Singh · Aashiqui 2" },
   { id: "fRh_vgS2dFE", title: "Sorry", artist: "Justin Bieber" },
-  { id: "Ov0YGGSY6gY", title: "Kaun Tujhe", artist: "Palak Muchhal · M.S. Dhoni" },
-  { id: "ElZfdU54Cp8", title: "Apna Bana Le", artist: "Arijit Singh · Bhediya" },
-  { id: "Cb6wuzOurPc", title: "Tum Se Hi", artist: "Mohit Chauhan · Jab We Met" },
-  { id: "NwFVSclD_uc", title: "I Love You So", artist: "The Walters" },
-  { id: "GxldQ9eX2wo", title: "Until I Found You", artist: "Stephen Sanchez" },
+  { id: "ZSM3w1v-A_Y", title: "Apologize", artist: "Timbaland ft. OneRepublic" },
+  { id: "ekzHIouo8Q4", title: "When I Was Your Man", artist: "Bruno Mars" },
+  { id: "1A0MPWseJIE", title: "Hard to Say I'm Sorry", artist: "Chicago" },
+  { id: "c3nScN89Klo", title: "Sorry Seems to Be the Hardest Word", artist: "Elton John" },
+  { id: "zABLecsR5UE", title: "Someone You Loved", artist: "Lewis Capaldi" },
+  { id: "QUwxKWT6m7U", title: "Back to December", artist: "Taylor Swift" },
+  { id: "ShZ978fBl6Y", title: "You Are the Reason", artist: "Calum Scott" },
+  { id: "KtlgYxa6BMU", title: "The Night We Met", artist: "Lord Huron" },
+  { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
 ];
+
+/**
+ * The page's own song (music mode "track"): the same English recording the
+ * Apology template opens with, from our CDN, so it starts on her first tap
+ * with no YouTube player to wait for. The YouTube songs above are the swaps.
+ */
+export const SORRY_TRACK = {
+  url: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/a-thousand-years.mp3",
+  title: "A Thousand Years",
+  artist: "Christina Perri",
+  hint: "Christina Perri · plays first",
+} as const;
 
 const GIFS: GifSlot[] = [
   { id: "s1-gate", label: "Hello 🥺", moment: "Peeking out of the sorry envelope", file: "s1-gate.webp", emoji: "🥺", anim: "wiggle" },
@@ -242,8 +260,9 @@ export const sorryDay: DayConfig<SorryExtras> = {
   music: {
     audioOnly: true,
     compact: true,
+    track: SORRY_TRACK,
     suggestions: SORRY_SONGS,
-    suggestionsNote: "soft, sorry-to-you songs · tap to use",
+    suggestionsNote: "English sorry songs · tap one, or paste any YouTube link",
   },
   extras: [
     {
@@ -342,7 +361,7 @@ export const sorryDay: DayConfig<SorryExtras> = {
       ["us, always", "Still my favourite person. Even when I mess up."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    ...MUSIC_DEMO,
+    ...TRACK_DEMO,
     endLine: "No more fights we don't hug out. Promise 🤞",
     extras: {
       palette: "babyPink",
