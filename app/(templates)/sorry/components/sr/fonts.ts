@@ -8,12 +8,14 @@
 //
 // Self-hosted by next/font, swap so a first visit never shows blank text, and
 // only downloaded where this page renders. UI text stays Fredoka (the engine's).
-import { Gochi_Hand, Sour_Gummy } from "next/font/google";
+import localFont from "next/font/local";
 
-export const srDisplay = Sour_Gummy({
-  subsets: ["latin"],
+export const srDisplay = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/sour-gummy-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../../../assets/fonts/sour-gummy-800-normal.woff2", weight: "800", style: "normal" },
+  ],
   // The same two weights the other Sour Gummy pages load, so the files are shared.
-  weight: ["600", "800"],
   variable: "--font-sr-display",
   display: "swap",
   preload: false,
@@ -21,9 +23,10 @@ export const srDisplay = Sour_Gummy({
 
 export const SR_DISPLAY = "var(--font-sr-display), var(--font-fredoka), 'Fredoka', system-ui, sans-serif";
 
-export const srHand = Gochi_Hand({
-  subsets: ["latin"],
-  weight: "400",
+export const srHand = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/gochi-hand-400-normal.woff2", weight: "400", style: "normal" },
+  ],
   variable: "--font-sr-hand",
   display: "swap",
   preload: false,
