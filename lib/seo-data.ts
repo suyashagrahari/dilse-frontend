@@ -2666,6 +2666,93 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Will You Be Mine? — an evergreen proposal page on the Valentine engine
+  // (✦ premium). Searchers want a "will you be my girlfriend website" /
+  // "cute proposal page" they can send as a link; the FAQs answer how it works,
+  // whether it suits a crush or a marriage proposal, and whether they can say
+  // no. No rating, no price.
+  "will-you-be-mine": {
+    title: "Will You Be My Girlfriend? Cute Proposal Website Maker",
+    description:
+      "Ask them the cute way: a velvet ring box, your story on a heart path, reasons you fell as a star constellation, a love quiz, your letter and “Will you be mine?” with a No that runs away — in four romantic looks.",
+    category: "Love",
+    emoji: "💍",
+
+    keywords: [
+      // ── PRIMARY ──
+      "will you be my girlfriend website",
+      "will you be mine page",
+      "proposal website for girlfriend",
+      "cute proposal page",
+      "interactive proposal link",
+      "will you be my boyfriend website",
+      "propose online with a link",
+      "yes no proposal page",
+      // ── WHO IT'S FOR ──
+      "how to propose to your crush",
+      "cute ways to ask someone out",
+      "how to ask her to be your girlfriend",
+      "marriage proposal website",
+      "propose day message for crush",
+      "shaadi karoge proposal",
+      // ── THE PAGE ──
+      "proposal page with photos and music",
+      "no button runs away proposal",
+      "reasons why I love you stars",
+      "officially mine certificate",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a “Will you be my girlfriend?” page?",
+        answer:
+          "Open the Will You Be Mine template, press Create and add their name and yours, a few chapters of your story, the reasons you fell for them, a three-question love quiz, your promise, your letter and up to six photos. Or describe your story in a few lines and let the AI write it. Pick one of four looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They tap a velvet ring box open (it's empty — the ring comes at the end), walk a little heart path through your story, connect stars into a heart constellation where every star is a reason you fell for them, take a love quiz with a rigged love meter, swipe your photos and open your love letter. Then they hold a heart until it fills, the ring box opens with your promise, and they get the big question. Saying yes sets off fireworks and an Officially Mine certificate they can download.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "You choose. By default the No button gets shy and runs away while the Yes button grows, and after five tries No turns into a second Yes. Or give them an honest way out: after four or five tries No becomes “Let me think about it 🤍”, which they can press. Either way you get an email with their answer.",
+      },
+      {
+        question: "Is it only for a girlfriend?",
+        answer:
+          "No. Choose what you're asking — be my girlfriend, be my boyfriend, marry me, or go out with me for a crush — and the question, the Yes button, the certificate and their reply change with it. Every line stays editable, so you can write your own question too.",
+      },
+      {
+        question: "Can I change the colours?",
+        answer:
+          "Yes. Pick Rose Gold, Cherry Blossom, Starry Night or Ivory Lace and the whole page — background, ring box, stars, quiz and certificate — changes to that look.",
+      },
+      {
+        question: "Can I add our song?",
+        answer:
+          "Yes. It plays Perfect by Ed Sheeran by default from their first tap. You can pick another proposal favourite such as Marry You, All of Me, Kesariya, Raataan Lambiyan or Tum Se Hi, or paste any YouTube link with an optional start time; only the sound plays.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Ask Someone to Be Yours with a Cute Proposal Page",
+      description: "Build a proposal page — your story, the reasons you fell, a love quiz, a promise and “Will you be mine?” — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Will You Be Mine page on SubhSandesh and press Create." },
+        { name: "Pick a Look and What You're Asking", text: "Choose one of four looks, then be my girlfriend, be my boyfriend, marry me or go out with me." },
+        { name: "Tell Your Story", text: "Add the chapters of your story, the reasons you fell for them and a little quiz of inside jokes — or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Write your letter and your promise, add up to six photos, and keep Perfect or pick another song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for the yes." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or
