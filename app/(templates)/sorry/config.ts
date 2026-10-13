@@ -8,7 +8,7 @@ import { templateMedia } from "@/lib/templateMedia";
 export const config: TemplatePageConfig = {
   slug: "sorry",
   type: "sorry",
-  category: "sorry",
+  category: "gf",
   title: "I'm Sorry — a cute forgive-me page",
   description:
     "Say sorry the cute way: a sealed envelope, a “how upset are you?” bear, guilt bubbles they pop, a pinky promise, make-it-up coupons and “Forgive me?” with a No that runs away. Six pastel looks.",
