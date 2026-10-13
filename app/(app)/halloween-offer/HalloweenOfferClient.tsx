@@ -29,7 +29,7 @@ import HauntedScene, { HS_CSS } from "./HauntedScene";
 import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
 import { useDropFree } from "@/hooks/useDropFree";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
-import { formatINR } from "@/config/templatePricing";
+import { formatPrice } from "@/config/templatePricing";
 import { useAppSelector } from "@/store/hooks";
 
 function Countdown() {
@@ -144,7 +144,7 @@ export default function HalloweenOfferClient() {
               )}
               {first && (
                 <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
-                  {free ? <>Make yours · <b className="hwoFrom">free</b></> : cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
+                  {free ? <>Make yours · <b className="hwoFrom">free</b></> : cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatPrice(cheapest.p)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </WitchLink>
               )}
             </div>

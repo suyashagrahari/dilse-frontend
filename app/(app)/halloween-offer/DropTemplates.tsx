@@ -29,7 +29,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFavorites, toggleFavoriteAsync } from "@/store/favoritesSlice";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
-import { formatINR } from "@/config/templatePricing";
+import { formatPrice } from "@/config/templatePricing";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
 import { GALLERY_BY_SLUG, GALLERY_LIST, isComingSoon, rankRooms } from "@/lib/galleryRules";
 import { HALLOWEEN_SLUGS } from "@/lib/season";
@@ -120,10 +120,10 @@ function PriceLine({ slug, name }: { slug: string; name: string }) {
   }
   const struck = p.mrp > p.finalPrice;
   return (
-    <span className="hdPrice" aria-label={struck ? `${name}: was ${formatINR(p.mrp)}, now ${formatINR(p.finalPrice)}${p.discountPercent > 0 ? `, ${p.discountPercent}% off` : ""}` : `${name}: ${formatINR(p.finalPrice)}`}>
-      {struck && <s>{formatINR(p.mrp)}</s>}
+    <span className="hdPrice" aria-label={struck ? `${name}: was ${formatPrice(p, "mrp")}, now ${formatPrice(p)}${p.discountPercent > 0 ? `, ${p.discountPercent}% off` : ""}` : `${name}: ${formatPrice(p)}`}>
+      {struck && <s>{formatPrice(p, "mrp")}</s>}
       {struck && <span className="hdArrow" aria-hidden>→</span>}
-      <b>{formatINR(p.finalPrice)}</b>
+      <b>{formatPrice(p)}</b>
       {struck && p.discountPercent > 0 && <span className="hdOff">· {p.discountPercent}% off</span>}
     </span>
   );
