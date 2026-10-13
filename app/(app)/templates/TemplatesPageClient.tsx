@@ -404,8 +404,10 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
     (selectedType === "all" || t.type === selectedType) && (!q || t.title.toLowerCase().includes(q));
   const matchCategory = (t: TemplateListItem) => selectedCategory === "all" || t.category === selectedCategory;
 
-  // ✦ Premium-tier (ultra) templates live in BOTH rooms: the main grid (gold card) and the Premium tab.
-  const inTab = (t: TemplateListItem, which: GalleryTab) => Boolean(t.ultra) || (which === "premium") === Boolean(t.premium);
+  // ✦ Premium-tier (ultra) templates live in BOTH rooms — the main grid (gold card) and the Premium
+  // tab — until a super admin pins one to a single room in /admin/premium (a tier row).
+  const inTab = (t: TemplateListItem, which: GalleryTab) =>
+    (Boolean(t.ultra) && !(t.slug in tiers)) || (which === "premium") === Boolean(t.premium);
   const tabBase = visible.filter((t) => inTab(t, tab) && matchBase(t));
   const filtered = tabBase.filter(matchCategory);
   const otherTab: GalleryTab = tab === "premium" ? "freemium" : "premium";

@@ -10,6 +10,10 @@
 // Storage is `TemplateTier` on the server: one row per template whose tier a
 // super admin changed. Moving a template BACK to its code default deletes the
 // row rather than pinning it, so the row list stays a list of real decisions.
+//
+// ✦ templates (ULTRA_PREMIUM_SLUGS) default to BOTH rooms — the main grid with a
+// gold card and the Premium tab. A row pins one to a single room (premium:true
+// = Premium tab only, false = main grid only); "both rooms" deletes the row.
 // Pricing is a separate screen (/admin/pricing) — this page never charges.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -18,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
-import { templateList, webpageTemplateList } from "@/data/template-registry";
+import { ULTRA_PREMIUM_SLUGS, templateList, webpageTemplateList } from "@/data/template-registry";
 import { isPremiumSlug, refreshTemplateMeta } from "@/lib/templateMeta";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
 import { Crown, Layers, ArrowRight, ArrowLeft, RotateCcw, Loader2, Sparkles, Globe, GripVertical } from "lucide-react";
@@ -85,12 +89,16 @@ export default function PremiumStudioPage() {
 
   /** Move one template to a lane. Optimistic; rolls back on failure. */
   const move = useCallback(
-    async function run(slug: string, toVault: boolean, opts?: { quiet?: boolean }): Promise<void> {
+    async function run(slug: string, toVault: boolean, opts?: { quiet?: boolean; reset?: boolean }): Promise<void> {
       const tiers = tiersRef.current;
-      if (busyRef.current || isPremiumSlug(slug, tiers) === toVault) return;
+      const ultra = ULTRA_PREMIUM_SLUGS.has(slug);
+      const pinned = slug in tiers;
+      if (busyRef.current) return;
+      if (opts?.reset ? !pinned : (!ultra || pinned) && isPremiumSlug(slug, tiers) === toVault) return;
       busyRef.current = slug;
       const before = tiers;
-      const toDefault = isPremiumSlug(slug, {}) === toVault;
+      // An ✦ template's default is "both rooms", so pinning it either way is a real row.
+      const toDefault = opts?.reset || (!ultra && isPremiumSlug(slug, {}) === toVault);
       const next = { ...tiers };
       if (toDefault) delete next[slug]; else next[slug] = toVault;
       tiersRef.current = next;
@@ -108,7 +116,12 @@ export default function PremiumStudioPage() {
         void refreshTemplateMeta();
         if (!opts?.quiet) {
           const title = CATALOGUE.find((t) => t.slug === slug)?.title ?? slug;
-          say(toVault ? `👑 ${title} is now Premium` : `${title} moved to Everyday`, () => void run(slug, !toVault, { quiet: true }));
+          if (ultra) {
+            const undo = () => void (pinned ? run(slug, before[slug], { quiet: true }) : run(slug, toVault, { quiet: true, reset: true }));
+            say(toDefault ? `✦ ${title} is back in both rooms` : toVault ? `👑 ${title} is now Premium only` : `${title} is now Everyday only`, undo);
+          } else {
+            say(toVault ? `👑 ${title} is now Premium` : `${title} moved to Everyday`, () => void run(slug, !toVault, { quiet: true }));
+          }
         }
       } catch (e) {
         tiersRef.current = before;
@@ -155,6 +168,8 @@ export default function PremiumStudioPage() {
   const card = (t: (typeof CATALOGUE)[number], i: number, inVault: boolean) => {
     const img = t.coverImage ? (coverSrcSet(t.coverImage) ? coverSmall(t.coverImage) : t.coverImage) : null;
     const moved = t.slug in tiers;
+    const ultra = ULTRA_PREMIUM_SLUGS.has(t.slug);
+    const both = ultra && !moved;
     return (
       <motion.div
         key={t.slug}
@@ -179,7 +194,7 @@ export default function PremiumStudioPage() {
           <div className="ps-title">{t.title}</div>
           <div className="ps-slug">/{t.slug}</div>
           <div className="ps-tags">
-            {moved ? <span className="ps-tag ps-tag--moved">moved by you</span> : <span className="ps-tag">default</span>}
+            {both ? <span className="ps-tag ps-tag--both">✦ both rooms</span> : moved ? <span className="ps-tag ps-tag--moved">moved by you</span> : <span className="ps-tag">default</span>}
           </div>
         </div>
         <div className="ps-actions">
@@ -193,9 +208,20 @@ export default function PremiumStudioPage() {
           >
             {busy === t.slug ? <Loader2 size={13} className="animate-spin" /> : inVault ? <><ArrowLeft size={13} /> Everyday</> : <>Premium <ArrowRight size={13} /></>}
           </button>
+          {both && (
+            <button type="button" className="ps-reset" disabled={busy === t.slug} onClick={() => void move(t.slug, false)} title="Show it in the main grid only, not the Premium tab">
+              Everyday only
+            </button>
+          )}
           {moved && (
-            <button type="button" className="ps-reset" disabled={busy === t.slug} onClick={() => void move(t.slug, !inVault)} title="Back to its default collection">
-              <RotateCcw size={11} /> default
+            <button
+              type="button"
+              className="ps-reset"
+              disabled={busy === t.slug}
+              onClick={() => void (ultra ? move(t.slug, inVault, { reset: true }) : move(t.slug, !inVault))}
+              title={ultra ? "Back to both rooms: the main grid and the Premium tab" : "Back to its default collection"}
+            >
+              <RotateCcw size={11} /> {ultra ? "both rooms" : "default"}
             </button>
           )}
         </div>
@@ -375,6 +401,8 @@ const PS_CSS = `
   .ps-tags { margin-top: 4px; }
   .ps-tag { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: rgba(61,12,17,.06); color: ${A.muted}; }
   .ps-card[data-vault="1"] .ps-tag { background: rgba(255,255,255,.07); color: rgba(246,236,217,.6); }
+  .ps-tag--both { background: rgba(201,168,76,.14) !important; color: ${A.goldDeep} !important; }
+  .ps-card[data-vault="1"] .ps-tag--both { color: #f5d77e !important; }
   .ps-tag--moved { background: rgba(201,168,76,.18) !important; color: ${A.goldDeep} !important; }
   .ps-card[data-vault="1"] .ps-tag--moved { color: #f5d77e !important; }
   .ps-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
