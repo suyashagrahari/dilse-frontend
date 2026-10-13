@@ -15,6 +15,7 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 import { SeasonProvider } from "@/hooks/useSeason";
 import { getSeasonServer } from "@/lib/season.server";
+import { getDropFreeServer } from "@/lib/pricing.server";
 import { offerPercentOf } from "@/lib/season";
 import HalloweenOfferClient from "./HalloweenOfferClient";
 import { halloweenFaqs } from "./content";
@@ -25,12 +26,16 @@ import { halloweenFaqs } from "./content";
 const salePct = (s: Awaited<ReturnType<typeof getSeasonServer>>) => offerPercentOf(s, "halloween");
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pct = salePct(await getSeasonServer());
+  const season = await getSeasonServer();
+  const free = await getDropFreeServer(season, "halloween");
+  const pct = free ? 0 : salePct(season);
   return buildMeta({
-    title: pct
+    title: free
+      ? "Halloween Drop — Free Spooky Love Letter Templates | SubhSandesh"
+      : pct
       ? `Halloween Drop — ${pct}% Off Spooky Love Letter Templates | SubhSandesh`
       : "Halloween Drop — Spooky Love Letter Templates | SubhSandesh",
-    description: `Ask “Will you be my boo?” with a tiny haunted house or a boo-tiful night: cute-spooky Halloween love letter pages with your photos, music and letter.${pct ? ` ${pct}% off till 31 October.` : ""}`,
+    description: `Ask “Will you be my boo?” with a tiny haunted house or a boo-tiful night: cute-spooky Halloween love letter pages with your photos, music and letter.${free ? " Free till 31 October." : pct ? ` ${pct}% off till 31 October.` : ""}`,
     alternates: { canonical: `${SITE_URL}/halloween-offer` },
     keywords: ["halloween love letter", "will you be my boo", "halloween gift for girlfriend", "halloween card online", "spooky love message", "halloween offer"],
   });
@@ -38,7 +43,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HalloweenOfferPage() {
   const season = await getSeasonServer();
-  const pct = salePct(season);
+  const free = await getDropFreeServer(season, "halloween");
+  const pct = free ? 0 : salePct(season);
   return (
     <SeasonProvider season={season}>
       <BreadcrumbJsonLd
@@ -47,7 +53,7 @@ export default async function HalloweenOfferPage() {
           { name: "Halloween Drop", url: `${SITE_URL}/halloween-offer` },
         ]}
       />
-      <FAQJsonLd faqs={halloweenFaqs(pct).map((f) => ({ question: f.q, answer: f.a }))} />
+      <FAQJsonLd faqs={halloweenFaqs(pct, false, free).map((f) => ({ question: f.q, answer: f.a }))} />
       <HalloweenOfferClient />
     </SeasonProvider>
   );

@@ -26,6 +26,7 @@ import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import { useHalloweenBarDismissed, useSeason } from "@/hooks/useSeason";
 import { useNow, countdown, pad2 } from "@/hooks/usePromo";
+import { useDropFree } from "@/hooks/useDropFree";
 import { dismissHalloweenBar, DROPS, type FestivalId } from "@/lib/season";
 import { Burst, Dandiya, Diya, Lantern, Marigold, Mirror } from "./festivalArt";
 import { FT, ftVars } from "./festivalTheme";
@@ -40,42 +41,50 @@ export function dropClock(endsAt: number, t: number): string | null {
 
 type Copy = {
   tag: ReactNode;
-  items: (pct: number, ended: boolean) => ReactNode[];
-  label: (pct: number) => string;
+  items: (pct: number, ended: boolean, free: boolean) => ReactNode[];
+  label: (pct: number, free: boolean) => string;
   hide: string;
 };
 
 const COPY: Record<FestivalId, Copy> = {
   dandiya: {
     tag: <Mirror size={17} />,
-    items: (pct, ended) => [
-      pct
+    items: (pct, ended, free) => [
+      free
+        ? <><Mirror size={17} /> NAVRATRI DANDIYA DROP · <b className="fsb-hot">FREE</b></>
+        : pct
         ? <><Mirror size={17} /> NAVRATRI DANDIYA DROP · <b className="fsb-hot">{pct}% OFF</b></>
         : <><Mirror size={17} /> THE NAVRATRI DANDIYA DROP is here</>,
       <><Dandiya size={18} /> Be my Dandiya partner?</>,
       <><Marigold size={15} /> Ask them before the dhol starts</>,
       ended ? <>🥁 The garba goes on — open the drop</> : <><Mirror size={15} /> Ends Dussehra, 20 Oct</>,
-      <><Marigold size={15} /> Try it free · pay only when you publish</>,
+      free ? <><Marigold size={15} /> Free to make &amp; send · no payment</> : <><Marigold size={15} /> Try it free · pay only when you publish</>,
     ],
-    label: (pct) =>
-      pct
+    label: (pct, free) =>
+      free
+        ? "Navratri Dandiya drop: the Dandiya partner invitation is free, ends Dussehra, 20 October. See it."
+        : pct
         ? `Navratri Dandiya drop: ${pct}% off the Dandiya partner invitation, ends Dussehra, 20 October. See the offer.`
         : "The Navratri Dandiya drop: invite your Dandiya partner. See it.",
     hide: "Hide the Dandiya offer",
   },
   diwali: {
     tag: <Diya size={18} />,
-    items: (pct, ended) => [
-      pct
+    items: (pct, ended, free) => [
+      free
+        ? <><Diya size={18} /> THE DIWALI DROP · <b className="fsb-hot">FREE</b></>
+        : pct
         ? <><Diya size={18} /> THE DIWALI DROP · <b className="fsb-hot">{pct}% OFF</b></>
         : <><Diya size={18} /> THE DIWALI DROP is here</>,
       <><Lantern size={14} /> Light up their Diwali</>,
       <><Marigold size={15} /> Diyas, rangoli &amp; fireworks — with your photos</>,
       ended ? <>🪔 The lights are still on — open the drop</> : <><Diya size={16} /> Ends Diwali night, 8 Nov</>,
-      <><Marigold size={15} /> Try it free · pay only when you publish</>,
+      free ? <><Marigold size={15} /> Free to make &amp; send · no payment</> : <><Marigold size={15} /> Try it free · pay only when you publish</>,
     ],
-    label: (pct) =>
-      pct
+    label: (pct, free) =>
+      free
+        ? "Diwali drop: the Diwali wishes are free, ends Diwali night, 8 November. See it."
+        : pct
         ? `Diwali drop: ${pct}% off the Diwali wishes, ends Diwali night, 8 November. See the offer.`
         : "The Diwali drop: send a Diwali wish they light up themselves. See it.",
     hide: "Hide the Diwali offer",
@@ -86,6 +95,7 @@ export default function FestivalOfferBar({ kind, source, className = "" }: { kin
   const season = useSeason();
   const dismissed = useHalloweenBarDismissed();
   const t = useNow();
+  const free = useDropFree(kind);
   if (season?.mode !== kind || dismissed) return null;
 
   const pct = season.sale.enabled ? season.sale.percent : 0;
@@ -94,7 +104,7 @@ export default function FestivalOfferBar({ kind, source, className = "" }: { kin
   const ended = !!t && !clock;
   const copy = COPY[kind];
   const T = FT[kind];
-  const items = copy.items(pct, ended);
+  const items = copy.items(pct, ended, free);
   const group = (hidden: boolean) => (
     <span className="fsb-group" aria-hidden={hidden || undefined}>
       {items.map((s, i) => (
@@ -107,7 +117,7 @@ export default function FestivalOfferBar({ kind, source, className = "" }: { kin
     <div className={`fsb-wrap fsb-k-${kind} ${className}`} data-src={source} style={ftVars(kind)}>
       <style>{FSB_CSS}</style>
       <span className="fsb-edge" aria-hidden />
-      <Link href={drop.path} className="fsb" aria-label={copy.label(pct)} prefetch={false}>
+      <Link href={drop.path} className="fsb" aria-label={copy.label(pct, free)} prefetch={false}>
         <span className="fsb-sky" aria-hidden />
         <span className="fsb-rim" aria-hidden />
         <span className="fsb-glow" aria-hidden />
@@ -125,7 +135,7 @@ export default function FestivalOfferBar({ kind, source, className = "" }: { kin
         )}
         <span className="fsb-tag">
           <span className="fsb-tag-ic" aria-hidden>{copy.tag}</span>
-          {pct ? <>{pct}%<span className="fsb-tag-off">&nbsp;OFF</span></> : "NEW"}
+          {free ? "FREE" : pct ? <>{pct}%<span className="fsb-tag-off">&nbsp;OFF</span></> : "NEW"}
         </span>
         {kind === "dandiya" && <span className="fsb-sticks" aria-hidden><Dandiya size={24} /></span>}
         <span className="fsb-track">

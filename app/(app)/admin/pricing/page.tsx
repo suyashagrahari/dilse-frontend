@@ -43,6 +43,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { derivePricing, formatINR } from "@/config/templatePricing";
 import { refreshPricing } from "@/lib/pricing";
+import { purgeSiteCache } from "@/lib/siteCache";
 import { isPremiumSlug } from "@/lib/templateMeta";
 import { UNPRICEABLE } from "./UNPRICEABLE";
 import IntlPricingPanel from "./IntlPricingPanel";
@@ -301,6 +302,7 @@ export default function AdminPricingPage() {
         // super admin saves a price, clicks through to /templates, and sees the
         // old badge — which reads as the save not working.
         void refreshPricing();
+        void purgeSiteCache();
 
         say(d.paid ? `${slug} is now ${formatINR(Number(d.rupees))}` : `${slug} is now free`);
       } catch (e) {
@@ -328,6 +330,7 @@ export default function AdminPricingPage() {
         setRows((p) => { const n = { ...p }; delete n[slug]; return n; });
         setDraft(slug, FREE_DRAFT);
         void refreshPricing();
+        void purgeSiteCache();
         say(`${slug} is free again`);
       } catch (e) {
         say(e instanceof Error ? e.message : "Could not clear");
@@ -378,6 +381,7 @@ export default function AdminPricingPage() {
         const json = await res.json();
         if (!json.success) throw new Error(json.error || "Failed to apply");
         void refreshPricing();
+        void purgeSiteCache();
         await load();
         const room = bulk.room === "premium" ? "Premium" : "Normal";
         say(mode === "free" ? `All ${updates.length} ${room} templates are free` : `${updates.length} ${room} templates now ${formatINR(Number(bulk.rupees))}`);

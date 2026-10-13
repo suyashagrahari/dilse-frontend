@@ -2,18 +2,21 @@
 // and the client page. Plain data, so a server component can read it. Which
 // templates are in the drop is the season's `sale.slugs` (see ./DropTemplates).
 
-export function halloweenFaqs(pct: number, upTo = false): { q: string; a: string }[] {
+export function halloweenFaqs(pct: number, upTo = false, free = false): { q: string; a: string }[] {
   const off = `${upTo ? "up to " : ""}${pct}%`;
   return [
-    {
+    free ? {
+      q: "Is it really free?",
+      a: "Yes. The Halloween templates are free to make and send until 31 October, 11:59 pm India time — no payment, no code.",
+    } : {
       q: pct ? `Is it really ${off} off?` : "Is there a Halloween discount?",
       a: pct
         ? `Yes. ${upTo ? "Templates in the drop are" : "Every template in the drop is"} ${off} off until 31 October, 11:59 pm India time. The sale price is what you pay when you publish — nothing to apply, no code.`
         : "The drop's templates are available at their regular price. Watch this page — when a Halloween sale is running, the discount is applied automatically when you publish.",
     },
     {
-      q: "Can I see it before I pay?",
-      a: "Yes. Open any template in the drop, write your letter, add photos and music, and preview every scene first. You pay once, at the sale price, when you publish the link you want to send.",
+      q: free ? "Can I see it before I send it?" : "Can I see it before I pay?",
+      a: `Yes. Open any template in the drop, write your letter, add photos and music, and preview every scene first. ${free ? "Then publish the link you want to send — it costs nothing." : "You pay once, at the sale price, when you publish the link you want to send."}`,
     },
     {
       q: "How scary is it?",
