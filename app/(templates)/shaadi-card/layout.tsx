@@ -1,11 +1,27 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
-import { Cinzel, Dancing_Script, Lora } from "next/font/google";
+import localFont from "next/font/local";
 
-const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-cinzel" });
-const dancing = Dancing_Script({ subsets: ["latin"], weight: ["700"], variable: "--font-dancing" });
-const lora = Lora({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-lora" });
+const cinzel = localFont({
+  src: [
+    { path: "../../../assets/fonts/cinzel-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/cinzel-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
+  variable: "--font-cinzel" });
+const dancing = localFont({
+  src: [
+    { path: "../../../assets/fonts/dancing-script-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-dancing" });
+const lora = localFont({
+  src: [
+    { path: "../../../assets/fonts/lora-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/lora-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
+  variable: "--font-lora" });
 
 const SLUG = "shaadi-card";
 const tpl = TEMPLATE_SEO[SLUG];

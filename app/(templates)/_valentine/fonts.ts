@@ -4,20 +4,28 @@
 // for a love letter whose whole look is the script. These are self-hosted by
 // next/font, only downloaded where a Valentine page renders them, and mounted
 // as CSS variables by DayRoot / EditSheet (`VW_FONT_VARS`).
-import { Dancing_Script, Playfair_Display } from "next/font/google";
+import localFont from "next/font/local";
 
-export const vwScript = Dancing_Script({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+export const vwScript = localFont({
+  src: [
+    { path: "../../../assets/fonts/dancing-script-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/dancing-script-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-vw-script",
   display: "swap",
   preload: false,
 });
 
-export const vwSerif = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  style: ["normal", "italic"],
+export const vwSerif = localFont({
+  src: [
+    { path: "../../../assets/fonts/playfair-display-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../../../assets/fonts/playfair-display-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../../../assets/fonts/playfair-display-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../../../assets/fonts/playfair-display-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/playfair-display-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/playfair-display-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-vw-serif",
   display: "swap",
   preload: false,

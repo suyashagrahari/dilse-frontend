@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Dancing_Script, Cinzel, Lora, Fredoka, Inter, Playfair_Display, Outfit, Tinos, Courier_Prime, Tiro_Devanagari_Hindi, Oswald } from "next/font/google";
+import localFont from "next/font/local";
 import Providers from "@/components/Providers";
 import { OrganizationJsonLd, WebAppJsonLd } from "@/components/JsonLd";
 import { buildMeta, SITE_URL } from "@/lib/seo";
@@ -46,9 +46,11 @@ const FONTS_HREF =
 //
 // The three above-the-fold families keep their preload, and keep
 // display: "optional" — see the note further down on why that matters for CLS.
-const dancingScript = Dancing_Script({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const dancingScript = localFont({
+  src: [
+    { path: "../assets/fonts/dancing-script-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/dancing-script-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-script",
   display: "optional",
   // Not on the landing's critical path — see the note above.
@@ -56,25 +58,34 @@ const dancingScript = Dancing_Script({
 });
 
 // Shaadi-card template fonts (also needed in share viewer page)
-const dancingScriptAlt = Dancing_Script({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const dancingScriptAlt = localFont({
+  src: [
+    { path: "../assets/fonts/dancing-script-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/dancing-script-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-dancing",
   display: "optional",
   // Not on the landing's critical path — see the note above.
   preload: false,
 });
-const cinzel = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+const cinzel = localFont({
+  src: [
+    { path: "../assets/fonts/cinzel-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/cinzel-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/cinzel-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-cinzel",
   display: "swap",
   // Not on the landing's critical path — see the note above.
   preload: false,
 });
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const lora = localFont({
+  src: [
+    { path: "../assets/fonts/lora-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/lora-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-lora",
   display: "optional",
   // Not on the landing's critical path — see the note above.
@@ -82,9 +93,13 @@ const lora = Lora({
 });
 
 // Apology Dashboard template fonts (display + body)
-const fredoka = Fredoka({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const fredoka = localFont({
+  src: [
+    { path: "../assets/fonts/fredoka-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/fredoka-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/fredoka-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/fonts/fredoka-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-fredoka",
   display: "swap",
   // Not on the landing's critical path — see the note above.
@@ -94,9 +109,12 @@ const fredoka = Fredoka({
 // renders the hero description and most landing text. "optional" here is what
 // stops the hero body text from re-wrapping when Inter swaps in. Inter's metric
 // fallback is near-identical (system sans), so there is effectively no visual cost.
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const inter = localFont({
+  src: [
+    { path: "../assets/fonts/inter-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/inter-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/inter-600-normal.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "optional",
   preload: false,
@@ -115,16 +133,33 @@ const inter = Inter({
 // metric-matched fallback and only upgrades to the real font if it loads almost
 // instantly or is already cached, so it never swaps mid-view: zero layout shift,
 // LCP stays fast. Fast connections and repeat visitors still get Playfair/Outfit.
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  style: ["normal", "italic"],
+const playfair = localFont({
+  src: [
+    { path: "../assets/fonts/playfair-display-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../assets/fonts/playfair-display-500-italic.woff2", weight: "500", style: "italic" },
+    { path: "../assets/fonts/playfair-display-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../assets/fonts/playfair-display-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../assets/fonts/playfair-display-800-italic.woff2", weight: "800", style: "italic" },
+    { path: "../assets/fonts/playfair-display-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/playfair-display-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/playfair-display-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/fonts/playfair-display-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../assets/fonts/playfair-display-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-playfair",
   display: "optional",
 });
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+const outfit = localFont({
+  src: [
+    { path: "../assets/fonts/outfit-300-normal.woff2", weight: "300", style: "normal" },
+    { path: "../assets/fonts/outfit-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/outfit-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/outfit-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../assets/fonts/outfit-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../assets/fonts/outfit-800-normal.woff2", weight: "800", style: "normal" },
+    { path: "../assets/fonts/outfit-900-normal.woff2", weight: "900", style: "normal" },
+  ],
   variable: "--font-outfit",
   display: "optional",
   preload: false,
@@ -139,19 +174,26 @@ const outfit = Outfit({
 // and "optional" can decline to load the face at all — the export would then
 // silently fall back and look nothing like the screen. They render inside a
 // template route, never the landing hero, so no LCP/CLS cost is incurred.
-const tinos = Tinos({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
+const tinos = localFont({
+  src: [
+    { path: "../assets/fonts/tinos-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../assets/fonts/tinos-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../assets/fonts/tinos-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/tinos-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-tinos",
   display: "swap",
   // Not on the landing's critical path — see the note above.
   preload: false,
 });
-const courierPrime = Courier_Prime({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
+const courierPrime = localFont({
+  src: [
+    { path: "../assets/fonts/courier-prime-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../assets/fonts/courier-prime-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../assets/fonts/courier-prime-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/courier-prime-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-courier-prime",
   display: "swap",
   // Not on the landing's critical path — see the note above.
@@ -161,10 +203,12 @@ const courierPrime = Courier_Prime({
 // Self-hosted rather than reusing the async Noto Serif Devanagari in FONTS_HREF,
 // because that stylesheet is injected at runtime and is not guaranteed to be
 // resolved by the time html-to-image captures.
-const tiroDevanagari = Tiro_Devanagari_Hindi({
-  subsets: ["devanagari", "latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
+const tiroDevanagari = localFont({
+  src: [
+    { path: "../assets/fonts/tiro-devanagari-hindi-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../assets/fonts/tiro-devanagari-hindi-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-tiro-devanagari",
   display: "swap",
   // Not on the landing's critical path — see the note above.
@@ -175,9 +219,12 @@ const tiroDevanagari = Tiro_Devanagari_Hindi({
 // reads as a web app; a genuinely condensed face reads as something stamped
 // onto sheet metal. Same "swap" reasoning as the faces above — it appears in
 // the exported coupon.
-const oswald = Oswald({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const oswald = localFont({
+  src: [
+    { path: "../assets/fonts/oswald-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/oswald-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/oswald-600-normal.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-oswald",
   display: "swap",
   // Not on the landing's critical path — see the note above.

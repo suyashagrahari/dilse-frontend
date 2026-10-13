@@ -2,11 +2,12 @@
 // the swing of a Navratri poster. Self-hosted by next/font, swap so a first
 // visit never shows blank headings, and only downloaded where this page
 // renders. Body text stays Fredoka (the engine's UI face).
-import { Kalam, Yatra_One } from "next/font/google";
+import localFont from "next/font/local";
 
-export const ddDisplay = Yatra_One({
-  subsets: ["latin"],
-  weight: "400",
+export const ddDisplay = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/yatra-one-400-normal.woff2", weight: "400", style: "normal" },
+  ],
   variable: "--font-dd-display",
   display: "swap",
   preload: false,
@@ -17,9 +18,11 @@ export const DD_DISPLAY = "var(--font-dd-display), var(--font-fredoka), 'Fredoka
 
 // The letter's hand: Kalam — an Indian handwriting face (drawn for Devanagari
 // and Latin), warm and easy to read at length. Only the letter scene uses it.
-export const ddHand = Kalam({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+export const ddHand = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/kalam-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../../../assets/fonts/kalam-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-dd-hand",
   display: "swap",
   preload: false,

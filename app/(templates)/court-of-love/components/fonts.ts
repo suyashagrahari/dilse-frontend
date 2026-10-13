@@ -7,20 +7,24 @@
 //
 // Display serif (Instrument Serif) and the UI grotesk (Bricolage) come from the
 // love kit's DATE_FONT_VARS.
-import { Caveat, Courier_Prime } from "next/font/google";
+import localFont from "next/font/local";
 
 import { DATE_FONT_VARS } from "../../date-invitation/components/fonts";
 
-const courierPrime = Courier_Prime({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const courierPrime = localFont({
+  src: [
+    { path: "../../../../assets/fonts/courier-prime-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../../assets/fonts/courier-prime-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-court-mono",
   display: "swap",
 });
 
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
+const caveat = localFont({
+  src: [
+    { path: "../../../../assets/fonts/caveat-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../../assets/fonts/caveat-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-caveat",
   display: "swap",
 });

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Dancing_Script, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
@@ -8,24 +8,39 @@ import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJs
 // layout and the real face only upgrades if it loads near-instantly. This warm
 // "paper letter" pairing (elegant serif display + handwritten script) is what the
 // recipient sees; consumed as CSS vars by components/missyou.css.
-const serifDisplay = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+const serifDisplay = localFont({
+  src: [
+    { path: "../../../assets/fonts/cormorant-garamond-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../../../assets/fonts/cormorant-garamond-500-italic.woff2", weight: "500", style: "italic" },
+    { path: "../../../assets/fonts/cormorant-garamond-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../../../assets/fonts/cormorant-garamond-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../../../assets/fonts/cormorant-garamond-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/cormorant-garamond-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/cormorant-garamond-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/cormorant-garamond-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
   variable: "--font-serif-display",
   display: "optional",
 });
-const script = Dancing_Script({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const script = localFont({
+  src: [
+    { path: "../../../assets/fonts/dancing-script-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/dancing-script-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/dancing-script-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-script",
   display: "optional",
 });
 // Inter is also the app body font — keep "optional" to match the root layout and
 // avoid re-introducing a font-display:swap @font-face for the shared Inter family.
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const inter = localFont({
+  src: [
+    { path: "../../../assets/fonts/inter-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/inter-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/inter-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/inter-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "optional",
 });

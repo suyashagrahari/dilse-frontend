@@ -1,13 +1,41 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
-import { Cinzel, Great_Vibes, DM_Sans, Lora, Playfair_Display } from "next/font/google";
+import localFont from "next/font/local";
 
-const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-cinzel" });
-const greatVibes = Great_Vibes({ subsets: ["latin"], weight: ["400"], variable: "--font-great-vibes" });
-const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-dm-sans" });
-const lora = Lora({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-lora" });
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-playfair" });
+const cinzel = localFont({
+  src: [
+    { path: "../../../assets/fonts/cinzel-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/cinzel-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
+  variable: "--font-cinzel" });
+const greatVibes = localFont({
+  src: [
+    { path: "../../../assets/fonts/great-vibes-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-great-vibes" });
+const dmSans = localFont({
+  src: [
+    { path: "../../../assets/fonts/dm-sans-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/dm-sans-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/dm-sans-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-dm-sans" });
+const lora = localFont({
+  src: [
+    { path: "../../../assets/fonts/lora-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/lora-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
+  variable: "--font-lora" });
+const playfair = localFont({
+  src: [
+    { path: "../../../assets/fonts/playfair-display-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/playfair-display-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  adjustFontFallback: "Times New Roman",
+  variable: "--font-playfair" });
 
 const SLUG = "christian-wedding";
 const tpl = TEMPLATE_SEO[SLUG];

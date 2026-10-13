@@ -2,11 +2,12 @@
 // (no dripping-blood faces; the brand is spooky-sweet). Self-hosted by
 // next/font, swap so a first visit never shows blank headings, and only
 // downloaded where the Halloween page renders. Body text stays Fredoka.
-import { Chewy } from "next/font/google";
+import localFont from "next/font/local";
 
-export const hwDisplay = Chewy({
-  subsets: ["latin"],
-  weight: "400",
+export const hwDisplay = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/chewy-400-normal.woff2", weight: "400", style: "normal" },
+  ],
   variable: "--font-hw-display",
   display: "swap",
   preload: false,
