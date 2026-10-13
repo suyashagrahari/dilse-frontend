@@ -20,6 +20,7 @@
 
 import Link from "next/link";
 import { useSeason } from "@/hooks/useSeason";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useNow, countdown, pad2 } from "@/hooks/usePromo";
 import { DROPS, FESTIVE_GIF, type FestivalId } from "@/lib/season";
 import { Bandhanwar, Burst, Dandiya, Dhol, Diya, Marigold, Mirror, Rangoli } from "./festivalArt";
@@ -72,6 +73,7 @@ const COPY: Record<FestivalId, { tag: (live: boolean) => string; title: string; 
 export default function FestivalOfferCard({ kind, className = "" }: { kind: FestivalId; className?: string }) {
   const season = useSeason();
   const t = useNow();
+  const free = useDropFree(kind);
   if (season?.mode !== kind) return null;
 
   const drop = DROPS[kind];
@@ -88,7 +90,7 @@ export default function FestivalOfferCard({ kind, className = "" }: { kind: Fest
   ];
 
   return (
-    <aside className={`foc foc-k-${kind} ${className}`} style={ftVars(kind)} aria-label={copy.aria(pct)}>
+    <aside className={`foc foc-k-${kind} ${className}`} style={ftVars(kind)} aria-label={free ? `${DROPS[kind].label}: free` : copy.aria(pct)}>
       <style>{FOC_CSS}</style>
       {kind === "dandiya" ? (
         <>
@@ -122,14 +124,16 @@ export default function FestivalOfferCard({ kind, className = "" }: { kind: Fest
         <span className="foc-tag">
           {kind === "dandiya" && <Mirror size={14} />} {copy.tag(live)}
         </span>
-        {pct ? (
+        {free ? (
+          <p className="foc-pct is-free"><b>FREE</b></p>
+        ) : pct ? (
           <p className="foc-pct"><b>{pct}%</b><span>OFF</span></p>
         ) : (
           <p className="foc-title">{copy.title}</p>
         )}
         <p className="foc-sub">
           {copy.sub}
-          {pct ? " Try it free; the sale price is applied when you publish." : " Try it free and publish when you love it."}
+          {free ? " Free to make and send — no payment, ever." : pct ? " Try it free; the sale price is applied when you publish." : " Try it free and publish when you love it."}
         </p>
         {live && (
           <div className="foc-clock" role="timer" aria-label={t ? `Ends in ${c.d} days ${c.h} hours ${c.m} minutes` : copy.clockAria}>
@@ -205,6 +209,7 @@ const FOC_CSS = `
 .foc-pct { margin: 14px 0 10px; display: flex; align-items: flex-start; justify-content: center; gap: 6px; line-height: .9; }
 .foc-pct b { font: 700 78px/0.9 'Playfair Display', serif; background: linear-gradient(180deg, #fff6dc 14%, var(--ft-cta) 55%, var(--ft-cta-deep) 85%); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 4px 22px var(--ft-glow)); padding: .1em .04em .2em; margin: -.1em -.04em -.2em; }
+.foc-pct.is-free b { font-size: 66px; letter-spacing: .02em; }
 .foc-pct span { margin-top: 10px; font: 800 18px/1 'Inter', sans-serif; letter-spacing: .14em; color: var(--ft-gold-soft); }
 .foc-title { margin: 16px 0 10px; font: 700 38px/1.05 'Playfair Display', serif; color: var(--ft-gold-soft); text-shadow: 0 4px 24px var(--ft-glow); }
 .foc-sub { max-width: 31rem; margin: 6px auto 0; font: 400 14px/1.55 'Inter', sans-serif; color: var(--ft-muted); }

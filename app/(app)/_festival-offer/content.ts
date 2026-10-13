@@ -10,19 +10,22 @@ export const ENDS_TEXT: Record<FestivalId, string> = {
   diwali: "Diwali night, 8 November",
 };
 
-export function festivalFaqs(kind: FestivalId, pct: number, upTo = false): { q: string; a: string }[] {
+export function festivalFaqs(kind: FestivalId, pct: number, upTo = false, free = false): { q: string; a: string }[] {
   const off = `${upTo ? "up to " : ""}${pct}%`;
   const ends = ENDS_TEXT[kind];
   const day = kind === "dandiya" ? "Tuesday" : "Sunday";
-  const sale = {
+  const sale = free ? {
+    q: "Is it really free?",
+    a: `Yes. ${kind === "dandiya" ? "The Dandiya partner invitation is" : "The Diwali wishes are"} free to make and send until ${ends}, 11:59 pm India time — no payment, no code.`,
+  } : {
     q: pct ? `Is it really ${off} off?` : kind === "dandiya" ? "Is there a Navratri discount?" : "Is there a Diwali discount?",
     a: pct
       ? `Yes. ${upTo ? "Templates in the drop are" : "Every template in the drop is"} ${off} off until ${ends}, 11:59 pm India time. The sale price is what you pay when you publish — no code to apply.`
       : "The drop's templates are available at their regular price. When a festival sale is running, the discount is applied automatically when you publish.",
   };
   const preview = {
-    q: "Can I see it before I pay?",
-    a: "Yes. Open the template, write your words (AI can help), add photos and a song, and preview every scene first. You pay once, at the sale price, when you publish the link you want to send.",
+    q: free ? "Can I see it before I send it?" : "Can I see it before I pay?",
+    a: `Yes. Open the template, write your words (AI can help), add photos and a song, and preview every scene first. ${free ? "Then publish the link you want to send — it costs nothing." : "You pay once, at the sale price, when you publish the link you want to send."}`,
   };
   const phone = {
     q: "Will it work on their phone?",

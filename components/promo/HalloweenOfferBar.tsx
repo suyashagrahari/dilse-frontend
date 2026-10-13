@@ -26,6 +26,7 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 import { useHalloweenBarDismissed, useSeason } from "@/hooks/useSeason";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useNow, countdown, pad2 } from "@/hooks/usePromo";
 import { dismissHalloweenBar, HALLOWEEN_ENDS_AT, HALLOWEEN_PATH } from "@/lib/season";
 import { Bat, Ghost, Pumpkin, Spider } from "./halloweenArt";
@@ -43,19 +44,22 @@ export default function HalloweenOfferBar({ source, className = "" }: { source: 
   const season = useSeason();
   const dismissed = useHalloweenBarDismissed();
   const t = useNow();
+  const free = useDropFree("halloween");
   if (season?.mode !== "halloween" || dismissed) return null;
 
   const pct = season.sale.enabled ? season.sale.percent : 0;
   const clock = halloweenClock(t);
   const ended = !!t && !clock;
   const items = [
-    pct
+    free
+      ? <><Pumpkin size={17} /> HALLOWEEN DROP · <b className="hwb-hot">FREE</b> the spookiest love letters</>
+      : pct
       ? <><Pumpkin size={17} /> HALLOWEEN DROP · <b className="hwb-hot">{pct}% OFF</b> the spookiest love letters</>
       : <><Pumpkin size={17} /> THE HALLOWEEN DROP is here — the spookiest love letters</>,
     <><Ghost size={15} /> Two haunted templates: The Little Haunted House &amp; Boo-tiful Night</>,
     <><Bat size={22} /> Ask “Will you be my boo?” with a glowing pumpkin</>,
     ended ? <>🕯️ Still haunting — open the drop</> : <>🕸️ Ends 31 Oct, midnight</>,
-    <><Spider size={15} /> Try it free · pay only when you publish</>,
+    free ? <><Spider size={15} /> Free to make &amp; send · no payment</> : <><Spider size={15} /> Try it free · pay only when you publish</>,
   ];
   const group = (hidden: boolean) => (
     <span className="hwb-group" aria-hidden={hidden || undefined}>
@@ -64,7 +68,9 @@ export default function HalloweenOfferBar({ source, className = "" }: { source: 
       ))}
     </span>
   );
-  const label = pct
+  const label = free
+    ? "Halloween drop: the two Halloween templates are free, ends 31 October. See them."
+    : pct
     ? `Halloween drop: ${pct}% off the two Halloween templates, ends 31 October. See the offer.`
     : "The Halloween drop: two new Halloween templates. See them.";
 
@@ -83,7 +89,7 @@ export default function HalloweenOfferBar({ source, className = "" }: { source: 
         </span>
         <span className="hwb-tag">
           <span className="hwb-tag-ic" aria-hidden>🎃</span>
-          {pct ? <>{pct}%<span className="hwb-tag-off">&nbsp;OFF</span></> : "NEW"}
+          {free ? "FREE" : pct ? <>{pct}%<span className="hwb-tag-off">&nbsp;OFF</span></> : "NEW"}
         </span>
         <span className="hwb-spider" aria-hidden><i /><Spider size={15} /></span>
         <span className="hwb-track">

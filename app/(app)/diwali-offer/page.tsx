@@ -15,6 +15,7 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 import { SeasonProvider } from "@/hooks/useSeason";
 import { getSeasonServer } from "@/lib/season.server";
+import { getDropFreeServer } from "@/lib/pricing.server";
 import { DIWALI_PATH, offerPercentOf } from "@/lib/season";
 import FestivalOfferClient from "../_festival-offer/FestivalOfferClient";
 import { festivalFaqs } from "../_festival-offer/content";
@@ -22,12 +23,16 @@ import { festivalFaqs } from "../_festival-offer/content";
 // Server-written, so the same for every visitor: the percent the drop is offered
 // at to whichever side wears it (`offerPercentOf`); the page shows this visitor's own.
 export async function generateMetadata(): Promise<Metadata> {
-  const pct = offerPercentOf(await getSeasonServer(), "diwali");
+  const season = await getSeasonServer();
+  const free = await getDropFreeServer(season, "diwali");
+  const pct = free ? 0 : offerPercentOf(season, "diwali");
   return buildMeta({
-    title: pct
+    title: free
+      ? "Diwali Drop — Free Happy Diwali Wishes Online | SubhSandesh"
+      : pct
       ? `Diwali Drop — ${pct}% Off Happy Diwali Wishes Online | SubhSandesh`
       : "Diwali Drop — Happy Diwali Wishes Card Online | SubhSandesh",
-    description: `Send a Diwali wish they light up themselves — diyas, rangoli, crackers they can burst, with your photos, music and words.${pct ? ` ${pct}% off till Diwali night, 8 November.` : ""}`,
+    description: `Send a Diwali wish they light up themselves — diyas, rangoli, crackers they can burst, with your photos, music and words.${free ? " Free till Diwali night, 8 November." : pct ? ` ${pct}% off till Diwali night, 8 November.` : ""}`,
     alternates: { canonical: `${SITE_URL}${DIWALI_PATH}` },
     keywords: [
       "happy diwali wishes online",
@@ -42,7 +47,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DiwaliOfferPage() {
   const season = await getSeasonServer();
-  const pct = offerPercentOf(season, "diwali");
+  const free = await getDropFreeServer(season, "diwali");
+  const pct = free ? 0 : offerPercentOf(season, "diwali");
   return (
     <SeasonProvider season={season}>
       <BreadcrumbJsonLd
@@ -51,7 +57,7 @@ export default async function DiwaliOfferPage() {
           { name: "Diwali Drop", url: `${SITE_URL}${DIWALI_PATH}` },
         ]}
       />
-      <FAQJsonLd faqs={festivalFaqs("diwali", pct).map((f) => ({ question: f.q, answer: f.a }))} />
+      <FAQJsonLd faqs={festivalFaqs("diwali", pct, false, free).map((f) => ({ question: f.q, answer: f.a }))} />
       <FestivalOfferClient kind="diwali" />
     </SeasonProvider>
   );

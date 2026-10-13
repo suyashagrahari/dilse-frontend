@@ -10,6 +10,7 @@
 
 import { WitchLink } from "@/components/promo/WitchPortal";
 import { ArrowRight } from "lucide-react";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useSeason } from "@/hooks/useSeason";
 import { HALLOWEEN_GIF, HALLOWEEN_PATH } from "@/lib/season";
 import { HW, HW_SKY } from "@/components/promo/halloweenTheme";
@@ -49,6 +50,7 @@ function House() {
 
 export default function HalloweenTeaser() {
   const season = useSeason();
+  const free = useDropFree("halloween");
   const pct = season?.mode === "halloween" && season.sale.enabled ? season.sale.percent : 0;
   return (
     <section className="htz" aria-label="The Halloween drop">
@@ -56,9 +58,9 @@ export default function HalloweenTeaser() {
       <Web className="htzWeb l" />
       <Web className="htzWeb r" />
       <WitchLink href={HALLOWEEN_PATH} className="htzLink" prefetch={false}
-        aria-label={pct ? `The Halloween drop — ${pct}% off spooky love letter templates` : "The Halloween drop — spooky love letter templates"}>
+        aria-label={free ? "The Halloween drop — free spooky love letter templates" : pct ? `The Halloween drop — ${pct}% off spooky love letter templates` : "The Halloween drop — spooky love letter templates"}>
         <div className="htzBody">
-          <span className="htzBadge">🎃 Halloween drop{pct ? ` · ${pct}% off` : ""}</span>
+          <span className="htzBadge">🎃 Halloween drop{free ? " · free" : pct ? ` · ${pct}% off` : ""}</span>
           <h2 className="htzTitle">Will you be <em>my boo?</em></h2>
           <p className="htzSub">A tiny haunted house and a boo-tiful night — spooky-cute love letters, only till 31 October.</p>
           <ul className="htzPerks" aria-label="Included">
@@ -71,12 +73,12 @@ export default function HalloweenTeaser() {
           <House />
           <span className="htzFog" />
           <IdleGif src={HALLOWEEN_GIF("ghost-running.webp")} width={220} height={220} className="htzGhost" />
-          <span className="htzSeal">{pct ? <><b>{pct}<small>%</small></b><i>OFF</i></> : <><b>NEW</b><i>DROP</i></>}</span>
+          <span className="htzSeal">{free ? <><b>FREE</b><i>DROP</i></> : pct ? <><b>{pct}<small>%</small></b><i>OFF</i></> : <><b>NEW</b><i>DROP</i></>}</span>
         </div>
 
         {/* Phones: one slim row. */}
         <span className="htzMini">
-          <span className="htzMiniSeal">{pct ? <><b>{pct}%</b><i>OFF</i></> : <><b>🎃</b><i>NEW</i></>}</span>
+          <span className="htzMiniSeal">{free ? <><b>FREE</b><i>DROP</i></> : pct ? <><b>{pct}%</b><i>OFF</i></> : <><b>🎃</b><i>NEW</i></>}</span>
           <span className="htzMiniText">
             <span className="htzMiniKick">🦇 Halloween drop</span>
             <span className="htzMiniTitle">Spooky <em>love letters</em></span>

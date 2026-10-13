@@ -15,6 +15,7 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 import { SeasonProvider } from "@/hooks/useSeason";
 import { getSeasonServer } from "@/lib/season.server";
+import { getDropFreeServer } from "@/lib/pricing.server";
 import { DANDIYA_PATH, offerPercentOf } from "@/lib/season";
 import FestivalOfferClient from "../_festival-offer/FestivalOfferClient";
 import { festivalFaqs } from "../_festival-offer/content";
@@ -22,12 +23,16 @@ import { festivalFaqs } from "../_festival-offer/content";
 // Server-written, so the same for every visitor: the percent the drop is offered
 // at to whichever side wears it (`offerPercentOf`); the page shows this visitor's own.
 export async function generateMetadata(): Promise<Metadata> {
-  const pct = offerPercentOf(await getSeasonServer(), "dandiya");
+  const season = await getSeasonServer();
+  const free = await getDropFreeServer(season, "dandiya");
+  const pct = free ? 0 : offerPercentOf(season, "dandiya");
   return buildMeta({
-    title: pct
+    title: free
+      ? "Navratri Dandiya Drop — Free Be My Dandiya Partner Invitation | SubhSandesh"
+      : pct
       ? `Navratri Dandiya Drop — ${pct}% Off the Be My Dandiya Partner Invitation | SubhSandesh`
       : "Navratri Dandiya Drop — Be My Dandiya Partner Invitation Online | SubhSandesh",
-    description: `Ask “Will you be my Dandiya partner?” with a twirling, dancing Navratri invitation — your photos, your song, your words, answered with a tap.${pct ? ` ${pct}% off till Dussehra, 20 October.` : ""}`,
+    description: `Ask “Will you be my Dandiya partner?” with a twirling, dancing Navratri invitation — your photos, your song, your words, answered with a tap.${free ? " Free till Dussehra, 20 October." : pct ? ` ${pct}% off till Dussehra, 20 October.` : ""}`,
     alternates: { canonical: `${SITE_URL}${DANDIYA_PATH}` },
     keywords: [
       "dandiya partner invitation",
@@ -42,7 +47,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DandiyaOfferPage() {
   const season = await getSeasonServer();
-  const pct = offerPercentOf(season, "dandiya");
+  const free = await getDropFreeServer(season, "dandiya");
+  const pct = free ? 0 : offerPercentOf(season, "dandiya");
   return (
     <SeasonProvider season={season}>
       <BreadcrumbJsonLd
@@ -51,7 +57,7 @@ export default async function DandiyaOfferPage() {
           { name: "Navratri Dandiya Drop", url: `${SITE_URL}${DANDIYA_PATH}` },
         ]}
       />
-      <FAQJsonLd faqs={festivalFaqs("dandiya", pct).map((f) => ({ question: f.q, answer: f.a }))} />
+      <FAQJsonLd faqs={festivalFaqs("dandiya", pct, false, free).map((f) => ({ question: f.q, answer: f.a }))} />
       <FestivalOfferClient kind="dandiya" />
     </SeasonProvider>
   );
