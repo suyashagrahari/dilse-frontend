@@ -44,7 +44,8 @@ import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { derivePricing, formatINR } from "@/config/templatePricing";
 import { refreshPricing } from "@/lib/pricing";
 import { purgeSiteCache } from "@/lib/siteCache";
-import { isPremiumSlug } from "@/lib/templateMeta";
+import { isPremiumRoom } from "@/lib/templateMeta";
+import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
 import { UNPRICEABLE } from "./UNPRICEABLE";
 import IntlPricingPanel from "./IntlPricingPanel";
 import SuperAdminPaysCard from "./SuperAdminPaysCard";
@@ -342,7 +343,7 @@ export default function AdminPricingPage() {
   );
 
   const isPaid = useCallback((slug: string) => Boolean(rows[slug] && !rows[slug].isFree), [rows]);
-  const isPremium = useCallback((slug: string) => isPremiumSlug(slug, tiers), [tiers]);
+  const isPremium = useCallback((slug: string) => isPremiumRoom(slug, tiers), [tiers]);
 
   const bulkTargets = useMemo(
     () => CATALOGUE.filter((t) => !UNPRICEABLE[t.slug] && isPremium(t.slug) === (room === "premium")),
@@ -419,7 +420,7 @@ export default function AdminPricingPage() {
   const premStats = roomStats(true);
   const cur = room === "premium" ? premStats : normalStats;
 
-  const inRoom = (slug: string) => isPremiumSlug(slug, tiers) === (room === "premium");
+  const inRoom = (slug: string) => isPremiumRoom(slug, tiers) === (room === "premium");
   const roomList = CATALOGUE.filter((t) => inRoom(t.slug));
   const paidCount = roomList.filter((t) => !UNPRICEABLE[t.slug] && isPaid(t.slug)).length;
   const blockedCount = roomList.filter((t) => UNPRICEABLE[t.slug]).length;
@@ -625,7 +626,14 @@ export default function AdminPricingPage() {
               >
                 {/* Head: identity + free/paid */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                  <span className="ap-emoji" aria-hidden>{t.emoji}</span>
+                  <span className="ap-emoji" aria-hidden>
+                    {t.coverImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coverSrcSet(t.coverImage) ? coverSmall(t.coverImage) : t.coverImage} alt="" loading="lazy" decoding="async" />
+                    ) : (
+                      t.emoji
+                    )}
+                  </span>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div className="ap-name">{t.title}</div>
                     <div className="ap-slug">
@@ -855,7 +863,8 @@ const AP_CSS = `
   .ap-card:hover { box-shadow: 0 12px 26px -16px rgba(61,12,17,.4); }
   .ap-card[data-blocked="1"] { background: #f9f4ef; opacity: .85; }
   .ap-card[data-dirty="1"] { border-color: ${A.gold}; box-shadow: 0 0 0 1.5px rgba(201,168,76,.35) inset; }
-  .ap-emoji { width: 36px; height: 36px; flex: none; border-radius: 11px; display: grid; place-items: center; font-size: 19px; background: rgba(201,168,76,.13); }
+  .ap-emoji { width: 52px; height: 52px; flex: none; border-radius: 13px; display: grid; place-items: center; font-size: 22px; background: rgba(201,168,76,.13); overflow: hidden; box-shadow: 0 0 0 1px rgba(61,12,17,.08); }
+  .ap-emoji img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .ap-name { font-size: 13.5px; font-weight: 800; color: ${A.ink}; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ap-slug { font-size: 11px; color: ${A.muted}; font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ap-prov { font-size: 11px; color: ${A.muted}; flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; }
