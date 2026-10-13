@@ -102,7 +102,6 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   eid:           { emoji: "🌙", label: "Eid Mubarak" },
   holi:          { emoji: "🌈", label: "Holi" },
   missyou:       { emoji: "💭", label: "Miss You" },
-  sorry:         { emoji: "🥺", label: "Sorry" },
   love:          { emoji: "💕", label: "Love" },
   shaadi:        { emoji: "💍", label: "Wedding" },
   // Without this entry a forwarded rakhi link previews as "🎁 Gift for Ananya
@@ -124,6 +123,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "happy-valentines-day": { emoji: "💘", label: "Valentine's Day" },
   "happy-halloween":      { emoji: "🎃", label: "Halloween" },
   "dandiya-partner":      { emoji: "🪔", label: "Dandiya invitation" },
+  sorry:                  { emoji: "🥺", label: "Sorry page" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
@@ -155,6 +155,10 @@ const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day", "happy-k
 
 /** Templates with their own teaser preview (the brief's delivery plan). */
 const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
+  sorry: (r, s) => ({
+    title: `🥺 ${r}, someone is very, very sorry`,
+    description: `${s} made you something. Please open it before you stay mad 💗`,
+  }),
   "dandiya-partner": (r, s) => ({
     title: `🪔 ${r}, you've been invited to a Dandiya night`,
     description: `${s} saved you a spot in the garba circle. Bring your sticks ✨`,

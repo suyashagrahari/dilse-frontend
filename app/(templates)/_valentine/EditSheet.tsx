@@ -666,7 +666,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
               <span className="vs-headArt" aria-hidden>{day.emoji}</span>
               <span className="vs-headEmoji" aria-hidden>{day.emoji}</span>
               <div className="vs-headTx">
-                <p className="vs-kicker">{day.name} · {day.month.slice(0, 3)} {day.date}<span className="vs-kickDone"> · {doneCount} of {counted.length} done</span></p>
+                <p className="vs-kicker">{day.name}{day.date ? ` · ${day.month.slice(0, 3)} ${day.date}` : ""}<span className="vs-kickDone"> · {doneCount} of {counted.length} done</span></p>
                 <h2 className="vs-title" id={`${titleId}-t`}>{c.sheetTitle}</h2>
                 <p className="vs-sub">{c.sheetSub}</p>
               </div>

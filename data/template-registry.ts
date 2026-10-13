@@ -63,6 +63,7 @@ import { config as kissDayCfg } from "@/app/(templates)/happy-kiss-day/config";
 import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-day/config";
 import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config";
 import { config as dandiyaPartnerCfg } from "@/app/(templates)/dandiya-partner/config";
+import { config as sorryCfg } from "@/app/(templates)/sorry/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -89,6 +90,11 @@ const allConfigs = [
   //    releases it in /admin/templates. Move it to the dated-festival tail
   //    once Navratri is over. ────────────────────────────────────────────────
   dandiyaPartnerCfg,
+
+  // ── I'm Sorry — evergreen, ✦ premium (ULTRA_PREMIUM_SLUGS: gold card in the
+  //    main grid and in the Premium tab; the price is set in /admin/pricing).
+  //    Ships hidden on the apex (server DEFAULT_HIDDEN) until released. ─────
+  sorryCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -211,6 +217,7 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "happy-kiss-day-premium",
   "happy-valentines-day-premium",
   "happy-halloween-premium",
+  "sorry",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
