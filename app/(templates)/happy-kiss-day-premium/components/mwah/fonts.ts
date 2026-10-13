@@ -3,10 +3,19 @@
 // shared Fredoka UI face (already in the repo, research §C2 pairing 6):
 //   Cherry Bomb One  short, bubbly display words ("Mwah!", "Kiss me?")
 //   Shantell Sans    handwriting that stays legible: names, captions, the letter
-import { Cherry_Bomb_One, Shantell_Sans } from "next/font/google";
+import localFont from "next/font/local";
 
-const bomb = Cherry_Bomb_One({ subsets: ["latin"], weight: "400", variable: "--font-km-display", display: "swap", preload: false });
-const hand = Shantell_Sans({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-km-hand", display: "swap", preload: false });
+const bomb = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/cherry-bomb-one-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-km-display", display: "swap", preload: false });
+const hand = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/shantell-sans-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../../../assets/fonts/shantell-sans-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-km-hand", display: "swap", preload: false });
 
 export const KM_FONT_VARS = `${bomb.variable} ${hand.variable}`;
 export const DISPLAY = "var(--font-km-display), 'Cherry Bomb One', var(--font-fredoka), system-ui, sans-serif";

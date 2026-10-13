@@ -3,11 +3,26 @@
 //   • Grandstander — round, bouncy headings
 //   • Patrick Hand — handwriting: names, captions, his speech bubbles, the letter
 //   • Nunito — everything people read in the UI
-import { Grandstander, Nunito, Patrick_Hand } from "next/font/google";
+import localFont from "next/font/local";
 
-export const thDisplay = Grandstander({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-th-display", display: "swap", preload: false });
-export const thHand = Patrick_Hand({ subsets: ["latin"], weight: "400", variable: "--font-th-hand", display: "swap", preload: false });
-export const thBody = Nunito({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-th-body", display: "swap", preload: false });
+export const thDisplay = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/grandstander-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../../../../../assets/fonts/grandstander-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-th-display", display: "swap", preload: false });
+export const thHand = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/patrick-hand-400-normal.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-th-hand", display: "swap", preload: false });
+export const thBody = localFont({
+  src: [
+    { path: "../../../../../assets/fonts/nunito-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../../../assets/fonts/nunito-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../../../../../assets/fonts/nunito-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-th-body", display: "swap", preload: false });
 
 export const TH_FONT_VARS = `${thDisplay.variable} ${thHand.variable} ${thBody.variable}`;
 

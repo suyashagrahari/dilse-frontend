@@ -1,13 +1,26 @@
 import type { Metadata } from "next";
-import { Fredoka, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE_URL } from "@/lib/seo";
 
-const fredoka = Fredoka({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-fredoka", display: "swap" });
+const fredoka = localFont({
+  src: [
+    { path: "../../../assets/fonts/fredoka-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/fredoka-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/fredoka-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/fredoka-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-fredoka", display: "swap" });
 // display "optional" (not "swap") to match the root layout's Inter — otherwise
 // this duplicate Inter @font-face re-introduces font-display:swap for the shared
 // "Inter" family and reintroduces the landing hero's font-swap CLS. Inter is a
 // plain UI sans-serif so there is no visual cost to optional.
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-inter", display: "optional" });
+const inter = localFont({
+  src: [
+    { path: "../../../assets/fonts/inter-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/inter-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/inter-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-inter", display: "optional" });
 
 const SLUG = "apology-dashboard";
 const TITLE = "Apology Dashboard — A Cute Interactive Sorry";

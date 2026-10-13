@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Baloo_2, Caveat, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 import { media } from "@/lib/templateMedia";
@@ -8,21 +8,32 @@ import { media } from "@/lib/templateMedia";
 // swap never blocks the above-the-fold hero copy. This chunky rounded display +
 // handwritten script pairing is the gen-z "sticker" look the recipient sees;
 // consumed as CSS vars by components/bouquet.css.
-const balooDisplay = Baloo_2({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+const balooDisplay = localFont({
+  src: [
+    { path: "../../../assets/fonts/baloo-2-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/baloo-2-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/baloo-2-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../../../assets/fonts/baloo-2-800-normal.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-bq-display",
   display: "optional",
 });
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const caveat = localFont({
+  src: [
+    { path: "../../../assets/fonts/caveat-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/caveat-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/caveat-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-bq-script",
   display: "optional",
 });
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const inter = localFont({
+  src: [
+    { path: "../../../assets/fonts/inter-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/inter-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/inter-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/inter-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "optional",
 });
