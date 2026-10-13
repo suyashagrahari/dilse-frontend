@@ -206,8 +206,12 @@ function Flap({ recipient }: { recipient: string }) {
             <circle cx="14" cy="14" r="1.2" fill="#B8781E" />
           </pattern>
         </defs>
-        <path d="M0 0 H290 L152 116 Q145 121 138 116 Z" fill="url(#dw-lf-liner)" />
-        <path d="M0 0 H290 L152 116 Q145 121 138 116 Z" fill="none" stroke="#B3121B" strokeWidth="3" />
+        {/* Pre-mirrored: this face is turned over (rotateX 180° about its centre), which flips it top-to-bottom;
+            drawn upside down, the flap's own turn about the top edge lands it on the hinge pointing up. */}
+        <g transform="translate(0 120) scale(1 -1)">
+          <path d="M0 0 H290 L152 116 Q145 121 138 116 Z" fill="url(#dw-lf-liner)" />
+          <path d="M0 0 H290 L152 116 Q145 121 138 116 Z" fill="none" stroke="#B3121B" strokeWidth="3" />
+        </g>
       </svg>
       <p className="dw-lf-foil">
         Shubh Deepavali
