@@ -7,6 +7,7 @@ import { templateList } from "@/data/template-registry";
 import TrendingShowcase from "./TrendingShowcase";
 import { useWishlist } from "@/hooks/useWishlist";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useSeason, useSeasonPending } from "@/hooks/useSeason";
 import { DANDIYA_PATH, DIWALI_PATH, HALLOWEEN_PATH } from "@/lib/season";
 import HalloweenCritters from "@/components/promo/HalloweenCritters";
@@ -38,6 +39,8 @@ export default function HeroSection() {
   const halloween = season?.mode === "halloween";
   const dandiya = season?.mode === "dandiya";
   const diwali = season?.mode === "diwali";
+  // A drop the super admin made free (/admin/pricing) says FREE, not a percent.
+  const dropFree = useDropFree(dandiya ? "dandiya" : diwali ? "diwali" : "halloween") && (halloween || dandiya || diwali);
   const dropPct = (halloween || dandiya || diwali) && season.sale.enabled ? season.sale.percent : 0;
   const goHalloween = useCallback(() => router.push(HALLOWEEN_PATH), [router]);
   const goDandiya = useCallback(() => router.push(DANDIYA_PATH), [router]);
@@ -151,10 +154,10 @@ export default function HeroSection() {
                   whileTap={{ scale: 0.97 }}
                   onClick={goHalloween}
                   className="hero-wish hero-boo"
-                  aria-label={dropPct ? `The Halloween drop — ${dropPct}% off` : "The Halloween drop"}>
+                  aria-label={dropFree ? "The Halloween drop — free" : dropPct ? `The Halloween drop — ${dropPct}% off` : "The Halloween drop"}>
                   <span className="hero-wish-h" aria-hidden>🎃</span>
                   HALLOWEEN DROP
-                  {dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
+                  {dropFree ? <span className="hero-wish-off">FREE</span> : dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
                 </motion.button>
               ) : dandiya ? (
                 <motion.button
@@ -162,11 +165,11 @@ export default function HeroSection() {
                   whileTap={{ scale: 0.97 }}
                   onClick={goDandiya}
                   className="hero-wish hero-dandiya"
-                  aria-label={dropPct ? `The Navratri Dandiya drop — ${dropPct}% off` : "The Navratri Dandiya drop"}>
+                  aria-label={dropFree ? "The Navratri Dandiya drop — free" : dropPct ? `The Navratri Dandiya drop — ${dropPct}% off` : "The Navratri Dandiya drop"}>
                   <span className="hero-dd-sticks" aria-hidden><Dandiya size={20} /></span>
                   <span className="hero-fest-s">DANDIYA DROP</span>
                   <span className="hero-fest-l">NAVRATRI DANDIYA DROP</span>
-                  {dropPct > 0 && <span className="hero-wish-off"><Mirror size={11} /> {dropPct}% OFF</span>}
+                  {dropFree ? <span className="hero-wish-off"><Mirror size={11} /> FREE</span> : dropPct > 0 && <span className="hero-wish-off"><Mirror size={11} /> {dropPct}% OFF</span>}
                 </motion.button>
               ) : diwali ? (
                 <motion.button
@@ -174,10 +177,10 @@ export default function HeroSection() {
                   whileTap={{ scale: 0.97 }}
                   onClick={goDiwali}
                   className="hero-wish hero-diwali"
-                  aria-label={dropPct ? `The Diwali drop — ${dropPct}% off` : "The Diwali drop"}>
+                  aria-label={dropFree ? "The Diwali drop — free" : dropPct ? `The Diwali drop — ${dropPct}% off` : "The Diwali drop"}>
                   <span className="hero-fest-d" aria-hidden><Diya size={18} /></span>
                   DIWALI DROP
-                  {dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
+                  {dropFree ? <span className="hero-wish-off">FREE</span> : dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
                 </motion.button>
               ) : season?.mode === "valentine" ? (
                 // The Valentine's week wishlist — joining happens on its page.

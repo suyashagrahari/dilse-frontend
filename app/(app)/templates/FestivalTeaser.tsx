@@ -16,6 +16,7 @@
 // Opens /dandiya-offer or /diwali-offer through that festival's portal.
 
 import { ArrowRight } from "lucide-react";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useSeason } from "@/hooks/useSeason";
 import { DROPS, FESTIVE_GIF, type FestivalId } from "@/lib/season";
 import { FT, ftVars } from "@/components/promo/festivalTheme";
@@ -146,6 +147,7 @@ const COPY: Record<FestivalId, { aria: (pct: number) => string; badge: string; t
 
 export default function FestivalTeaser({ kind }: { kind: FestivalId }) {
   const season = useSeason();
+  const free = useDropFree(kind);
   const pct = season?.mode === kind && season.sale.enabled ? season.sale.percent : 0;
   const T = FT[kind];
   const c = COPY[kind];
@@ -160,9 +162,9 @@ export default function FestivalTeaser({ kind }: { kind: FestivalId }) {
           <Toran className="ftzToran r" />
         </>
       )}
-      <FestivalLink href={DROPS[kind].path} className="ftzLink" prefetch={false} aria-label={c.aria(pct)}>
+      <FestivalLink href={DROPS[kind].path} className="ftzLink" prefetch={false} aria-label={free ? `${c.badge} — free` : c.aria(pct)}>
         <div className="ftzBody">
-          <span className="ftzBadge">{kind === "dandiya" ? <Mirror size={13} /> : "🪔"} {c.badge}{pct ? ` · ${pct}% off` : ""}</span>
+          <span className="ftzBadge">{kind === "dandiya" ? <Mirror size={13} /> : "🪔"} {c.badge}{free ? " · free" : pct ? ` · ${pct}% off` : ""}</span>
           <h2 className="ftzTitle">{c.title}</h2>
           <p className="ftzSub">{c.sub}</p>
           <ul className="ftzPerks" aria-label="Included">
@@ -188,12 +190,12 @@ export default function FestivalTeaser({ kind }: { kind: FestivalId }) {
               <IdleGif src={FESTIVE_GIF("happy-diwali-diya.webp")} width={90} height={100} className="ftzCouple" />
             </>
           )}
-          <span className="ftzSeal">{pct ? <><b>{pct}<small>%</small></b><i>OFF</i></> : <><b>NEW</b><i>DROP</i></>}</span>
+          <span className="ftzSeal">{free ? <><b>FREE</b><i>DROP</i></> : pct ? <><b>{pct}<small>%</small></b><i>OFF</i></> : <><b>NEW</b><i>DROP</i></>}</span>
         </div>
 
         {/* Phones: one slim row. */}
         <span className="ftzMini">
-          <span className="ftzMiniSeal">{pct ? <><b>{pct}%</b><i>OFF</i></> : <><b>{kind === "dandiya" ? "🥢" : "🪔"}</b><i>NEW</i></>}</span>
+          <span className="ftzMiniSeal">{free ? <><b>FREE</b><i>DROP</i></> : pct ? <><b>{pct}%</b><i>OFF</i></> : <><b>{kind === "dandiya" ? "🥢" : "🪔"}</b><i>NEW</i></>}</span>
           <span className="ftzMiniText">
             <span className="ftzMiniKick">{c.miniKick}</span>
             <span className="ftzMiniTitle">{c.miniTitle}</span>

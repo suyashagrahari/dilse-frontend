@@ -12,6 +12,7 @@
 
 import Link from "next/link";
 import { useSeason } from "@/hooks/useSeason";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useNow, countdown, pad2 } from "@/hooks/usePromo";
 import { HALLOWEEN_ENDS_AT, HALLOWEEN_GIF, HALLOWEEN_PATH } from "@/lib/season";
 import { CornerWeb, Spider } from "./halloweenArt";
@@ -22,6 +23,7 @@ import IdleGif from "./IdleGif";
 export default function HalloweenOfferCard({ className = "" }: { className?: string }) {
   const season = useSeason();
   const t = useNow();
+  const free = useDropFree("halloween");
   if (season?.mode !== "halloween") return null;
 
   const pct = season.sale.enabled ? season.sale.percent : 0;
@@ -35,7 +37,7 @@ export default function HalloweenOfferCard({ className = "" }: { className?: str
   ];
 
   return (
-    <aside className={`hoc ${className}`} aria-label={pct ? `Halloween drop: ${pct}% off` : "The Halloween drop"}>
+    <aside className={`hoc ${className}`} aria-label={free ? "Halloween drop: free" : pct ? `Halloween drop: ${pct}% off` : "The Halloween drop"}>
       <style>{HOC_CSS}</style>
       <span className="hoc-moon" aria-hidden />
       <span className="hoc-orb hoc-orb1" aria-hidden />
@@ -50,14 +52,16 @@ export default function HalloweenOfferCard({ className = "" }: { className?: str
 
       <div className="hoc-glass">
         <span className="hoc-tag">🎃 HALLOWEEN DROP · {live ? "ENDS 31 OCT" : "STILL HAUNTING"}</span>
-        {pct ? (
+        {free ? (
+          <p className="hoc-pct is-free"><b>FREE</b></p>
+        ) : pct ? (
           <p className="hoc-pct"><b>{pct}%</b><span>OFF</span></p>
         ) : (
           <p className="hoc-title">The Halloween Drop</p>
         )}
         <p className="hoc-sub">
           Two spooky-cute love letters — <b>The Little Haunted House</b> and <b>Boo-tiful Night ✦ Premium</b>.
-          {pct ? " Try them free; the sale price is applied when you publish." : " Try them free and publish when you love it."}
+          {free ? " Free to make and send — no payment, ever." : pct ? " Try them free; the sale price is applied when you publish." : " Try them free and publish when you love it."}
         </p>
         {live && (
           <div className="hoc-clock" role="timer" aria-label={t ? `Ends in ${c.d} days ${c.h} hours ${c.m} minutes` : "Ends 31 October"}>
@@ -118,6 +122,7 @@ const HOC_CSS = `
   filter: drop-shadow(0 4px 22px rgba(255,154,60,.55));
   /* clip-text paints only the padding box; pad past the .9 line box so no glyph is cut */
   padding: .1em .04em .2em; margin: -.1em -.04em -.2em; }
+.hoc-pct.is-free b { font-size: 66px; letter-spacing: .02em; }
 .hoc-pct span { margin-top: 10px; font: 800 18px/1 'Inter', sans-serif; letter-spacing: .14em; color: ${HW.lilac}; }
 .hoc-title { margin: 16px 0 10px; font: 700 40px/1 'Playfair Display', serif; color: #ffd9a0; text-shadow: 0 4px 24px rgba(255,154,60,.5); }
 .hoc-sub { max-width: 31rem; margin: 6px auto 0; font: 400 14px/1.55 'Inter', sans-serif; color: ${HW.muted}; }

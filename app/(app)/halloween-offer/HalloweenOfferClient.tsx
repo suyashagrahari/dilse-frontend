@@ -27,6 +27,7 @@ import { dropSaleOf, HALLOWEEN_ENDS_AT, HALLOWEEN_GIF } from "@/lib/season";
 import { halloweenFaqs } from "./content";
 import HauntedScene, { HS_CSS } from "./HauntedScene";
 import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { formatINR } from "@/config/templatePricing";
 import { useAppSelector } from "@/store/hooks";
@@ -77,10 +78,12 @@ export default function HalloweenOfferClient() {
   // drop carries its own discount (from /payment/pricing) — then that one, or
   // "up to" the largest when they differ. Never computed here.
   const own = useDropDiscount(drop);
-  const pct = on ? (own?.pct ?? seasonPct) : 0;
-  const upTo = Boolean(on && own?.upTo);
+  // Every template in the drop made free on /admin/pricing: say FREE, not a percent.
+  const free = useDropFree("halloween");
+  const pct = free ? 0 : on ? (own?.pct ?? seasonPct) : 0;
+  const upTo = Boolean(!free && on && own?.upTo);
   const pctText = `${upTo ? "up to " : ""}${pct}%`;
-  const faqs = halloweenFaqs(pct, upTo);
+  const faqs = halloweenFaqs(pct, upTo, free);
   // The paid entry point: the cheapest priced template in the drop, at the
   // price the super admin set ("From ₹49"). Until prices land, a plain "Make yours".
   const { pricingFor, settled } = useTemplatePricing();
@@ -108,7 +111,9 @@ export default function HalloweenOfferClient() {
           <span className="hwoKick"><SmallBat /> {on ? <>Halloween drop<span className="hwoKickX"> · till 31 Oct</span></> : "The Halloween collection"} <SmallBat /></span>
           <h1 id="hwo-title" className="hwoTitle">
             <span className="hwoTitleA">Halloween Drop</span>
-            {pct ? (
+            {free ? (
+              <span className="hwoTitleB"><span className="hwoPct">FREE</span></span>
+            ) : pct ? (
               <span className="hwoTitleB">{upTo && <small className="hwoUpTo">up to</small>}<span className="hwoPct">{pct}%</span><small>OFF</small></span>
             ) : (
               <span className="hwoTitleC">Will you be my boo?</span>
@@ -116,7 +121,7 @@ export default function HalloweenOfferClient() {
           </h1>
           <p className="hwoSub hwoSubLong">
             Spooky-cute love letters for the one who makes your heart go <em>boo</em> — with your photos, your song and your
-            letter.{pct ? " The sale price is applied automatically when you publish." : ""}
+            letter.{free ? " Free to make and send — no payment." : pct ? " The sale price is applied automatically when you publish." : ""}
           </p>
           {/* Phones get the one-breath version, so the haunted house fits on the first screen. */}
           <p className="hwoSub hwoSubShort">
@@ -139,11 +144,11 @@ export default function HalloweenOfferClient() {
               )}
               {first && (
                 <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
-                  {cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
+                  {free ? <>Make yours · <b className="hwoFrom">free</b></> : cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </WitchLink>
               )}
             </div>
-            <p className="hwoTrust"><Sparkles size={13} aria-hidden /> {pct ? `${pctText} off till 31 Oct · ` : ""}one-time payment · ready in 2 minutes</p>
+            <p className="hwoTrust"><Sparkles size={13} aria-hidden /> {free ? "Free to make & send · no payment · ready in 2 minutes" : <>{pct ? `${pctText} off till 31 Oct · ` : ""}one-time payment · ready in 2 minutes</>}</p>
           </div>
         </div>
       </section>
@@ -155,7 +160,7 @@ export default function HalloweenOfferClient() {
         </h2>
         <p className="hwoSecSub">
           Pick one, write your letter (AI can help), add photos and a song, and send them one link.
-          {pct ? (upTo ? ` Templates here are up to ${pct}% off till 31 October.` : ` Every template here is ${pct}% off till 31 October.`) : ""}
+          {free ? ` ${n === 1 ? "It is" : "Every template here is"} free to make and send till 31 October.` : pct ? (upTo ? ` Templates here are up to ${pct}% off till 31 October.` : ` Every template here is ${pct}% off till 31 October.`) : ""}
         </p>
         <div className="hwoFrame">
           <DropTemplates slugs={slugs} />

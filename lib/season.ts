@@ -133,6 +133,23 @@ export function dropSaleOf(s: Season | null | undefined, id: DropId): DropSale |
   return s.drops?.[id] ?? (s.mode === id ? s.sale : null);
 }
 
+/** The templates that make up drop `id`: the admin's pick, else the built-in list. */
+export function dropSlugsFor(s: Season | null | undefined, id: DropId): readonly string[] {
+  const chosen = dropSaleOf(s, id)?.slugs;
+  return chosen && chosen.length ? chosen : DROPS[id].slugs;
+}
+
+/**
+ * Every template of the drop has an EXPLICIT free price (/payment/pricing).
+ * An absent slug also reads as free there — but so does a failed fetch or a
+ * template not built yet, and neither should turn a banner into a FREE claim.
+ * A free decision made in /admin/pricing is always written as an explicit row.
+ */
+export function isDropFree(prices: Readonly<Record<string, { isFree: boolean } | undefined>>, slugs: readonly string[]): boolean {
+  const listed = slugs.map((x) => prices[String(x).trim().toLowerCase()]).filter((p): p is { isFree: boolean } => !!p);
+  return listed.length > 0 && listed.every((p) => p.isFree);
+}
+
 /** The percent off a drop is selling at right now — 0 unless it is the active mode with its sale on. */
 export function livePercentOf(s: Season | null | undefined, id: DropId): number {
   return s?.mode === id && s.sale.enabled ? s.sale.percent : 0;

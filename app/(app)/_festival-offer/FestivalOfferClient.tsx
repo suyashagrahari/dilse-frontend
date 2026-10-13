@@ -37,6 +37,7 @@ import { festivalFaqs, ENDS_TEXT } from "./content";
 import DandiyaScene, { DANDIYA_SCENE_CSS } from "./DandiyaScene";
 import DiwaliScene, { DIWALI_SCENE_CSS } from "./DiwaliScene";
 import FestivalDropTemplates, { useFestivalDropDiscount, useFestivalDropTemplates } from "./FestivalDropTemplates";
+import { useDropFree } from "@/hooks/useDropFree";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { formatINR } from "@/config/templatePricing";
 import { useAppSelector } from "@/store/hooks";
@@ -149,10 +150,12 @@ export default function FestivalOfferClient({ kind }: { kind: FestivalId }) {
   // drop carries its own discount (from /payment/pricing) — then that one, or
   // "up to" the largest when they differ. Never computed here.
   const own = useFestivalDropDiscount(drop);
-  const pct = on ? (own?.pct ?? seasonPct) : 0;
-  const upTo = Boolean(on && own?.upTo);
+  // Every template in the drop made free on /admin/pricing: say FREE, not a percent.
+  const free = useDropFree(kind);
+  const pct = free ? 0 : on ? (own?.pct ?? seasonPct) : 0;
+  const upTo = Boolean(!free && on && own?.upTo);
   const pctText = `${upTo ? "up to " : ""}${pct}%`;
-  const faqs = festivalFaqs(kind, pct, upTo);
+  const faqs = festivalFaqs(kind, pct, upTo, free);
   // The paid entry point: the cheapest priced template in the drop ("From ₹139").
   const { pricingFor, settled } = useTemplatePricing();
   const cheapest = settled
@@ -179,14 +182,16 @@ export default function FestivalOfferClient({ kind }: { kind: FestivalId }) {
           <span className="fvoKick">{c.icon(16)} {on ? <>{c.kick}<span className="fvoKickX">{c.kickShort}</span></> : kind === "dandiya" ? "The Navratri collection" : "The Diwali collection"} {c.icon(16)}</span>
           <h1 id="fvo-title" className="fvoTitle">
             <span className="fvoTitleA">{c.titleA}</span>
-            {pct ? (
+            {free ? (
+              <span className="fvoTitleB"><span className="fvoPct">FREE</span></span>
+            ) : pct ? (
               <span className="fvoTitleB">{upTo && <small className="fvoUpTo">up to</small>}<span className="fvoPct">{pct}%</span><small>OFF</small></span>
             ) : (
               <span className="fvoTitleC">{c.titleC}</span>
             )}
           </h1>
           <p className="fvoSub fvoSubLong">
-            {c.subLong}{pct ? " The sale price is applied automatically when you publish." : ""}
+            {c.subLong}{free ? " Free to make and send — no payment." : pct ? " The sale price is applied automatically when you publish." : ""}
           </p>
           {/* Phones get the one-breath version, so the scene fits on the first screen. */}
           <p className="fvoSub fvoSubShort">{c.subShort}</p>
@@ -204,11 +209,11 @@ export default function FestivalOfferClient({ kind }: { kind: FestivalId }) {
               )}
               {first && (
                 <FestivalLink href={`/${first.slug}`} className="fvoBtn ghost" prefetch={false}>
-                  {cheapest && freeFor ? <>Make yours · <b className="fvoFrom">free for you</b></> : cheapest ? <>From <b className="fvoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
+                  {free ? <>Make yours · <b className="fvoFrom">free</b></> : cheapest && freeFor ? <>Make yours · <b className="fvoFrom">free for you</b></> : cheapest ? <>From <b className="fvoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </FestivalLink>
               )}
             </div>
-            <p className="fvoTrust"><Sparkles size={13} aria-hidden /> {pct ? `${pctText} off ${c.trustTail} · ` : ""}one-time payment · ready in 2 minutes</p>
+            <p className="fvoTrust"><Sparkles size={13} aria-hidden /> {free ? "Free to make & send · no payment · ready in 2 minutes" : <>{pct ? `${pctText} off ${c.trustTail} · ` : ""}one-time payment · ready in 2 minutes</>}</p>
           </div>
         </div>
       </section>
@@ -218,7 +223,7 @@ export default function FestivalOfferClient({ kind }: { kind: FestivalId }) {
         <h2 id="fvo-two" className="fvoSecTitle">{c.secTitle(n)}</h2>
         <p className="fvoSecSub">
           {c.secSub}
-          {pct ? (upTo ? ` Templates here are up to ${pct}% off ${c.trustTail}.` : ` ${n === 1 ? "It is" : "Every template here is"} ${pct}% off ${c.trustTail}.`) : ""}
+          {free ? ` ${n === 1 ? "It is" : "Every template here is"} free to make and send ${c.trustTail}.` : pct ? (upTo ? ` Templates here are up to ${pct}% off ${c.trustTail}.` : ` ${n === 1 ? "It is" : "Every template here is"} ${pct}% off ${c.trustTail}.`) : ""}
         </p>
         <div className="fvoFrame">
           <FestivalDropTemplates kind={kind} slugs={slugs} />
