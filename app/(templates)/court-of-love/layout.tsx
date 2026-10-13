@@ -1,26 +1,35 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Caveat, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE_URL } from "@/lib/seo";
 
 // SubhSandesh theme faces. Inter uses display "optional" (not "swap") to match the
 // root layout's Inter — otherwise this duplicate @font-face re-introduces
 // font-display:swap for the shared "Inter" family and brings back the landing
 // hero's font-swap CLS.
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const spaceGrotesk = localFont({
+  src: [
+    { path: "../../../assets/fonts/space-grotesk-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/space-grotesk-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/space-grotesk-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-space-grotesk",
   display: "swap",
 });
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
+const caveat = localFont({
+  src: [
+    { path: "../../../assets/fonts/caveat-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/caveat-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-caveat",
   display: "swap",
 });
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const inter = localFont({
+  src: [
+    { path: "../../../assets/fonts/inter-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/inter-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/inter-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../assets/fonts/inter-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "optional",
 });

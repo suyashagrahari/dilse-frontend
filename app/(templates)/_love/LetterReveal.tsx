@@ -20,7 +20,7 @@
 // to the row) or down, so it can never cover the yes button. Animations are
 // transform/opacity only; prefers-reduced-motion skips the intros and fades.
 
-import { Caveat } from "next/font/google";
+import localFont from "next/font/local";
 import CallReveal from "./reveals/CallReveal";
 import CatchReveal from "./reveals/CatchReveal";
 import ProfileReveal from "./reveals/ProfileReveal";
@@ -44,7 +44,12 @@ import {
   type TouchEvent as ReactTouchEvent,
 } from "react";
 
-const hand = Caveat({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-lr-hand", display: "swap", preload: false });
+const hand = localFont({
+  src: [
+    { path: "../../../assets/fonts/caveat-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../assets/fonts/caveat-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-lr-hand", display: "swap", preload: false });
 
 export type LetterVariant = "app" | "watch" | "recharge" | "product" | "us" | "loveflix" | "call" | "catch" | "profile" | "searched" | "streak" | "rewind";
 

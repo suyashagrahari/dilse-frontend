@@ -8,15 +8,21 @@
 // heart with a play triangle cut out of it). No one else's logo, arcs or
 // year-in-review wordmark appears anywhere.
 
-import { Figtree } from "next/font/google";
+import localFont from "next/font/local";
 import type { CSSProperties } from "react";
 import { cropStyle, photoCrop } from "../../dedication/components/types";
 import { hash32 } from "@/lib/seededRandom";
 import type { LovePhoto } from "./types";
 
-export const figtree = Figtree({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+export const figtree = localFont({
+  src: [
+    { path: "../../../../assets/fonts/figtree-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../../assets/fonts/figtree-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../../../assets/fonts/figtree-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../../../assets/fonts/figtree-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../../../../assets/fonts/figtree-800-normal.woff2", weight: "800", style: "normal" },
+    { path: "../../../../assets/fonts/figtree-900-normal.woff2", weight: "900", style: "normal" },
+  ],
   variable: "--font-rw",
   display: "swap",
   preload: false,
