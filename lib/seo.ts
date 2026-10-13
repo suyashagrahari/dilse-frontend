@@ -124,6 +124,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "happy-halloween":      { emoji: "🎃", label: "Halloween" },
   "dandiya-partner":      { emoji: "🪔", label: "Dandiya invitation" },
   sorry:                  { emoji: "🥺", label: "Sorry page" },
+  "miss-you":             { emoji: "🥹", label: "Miss You page" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
@@ -155,6 +156,10 @@ const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day", "happy-k
 
 /** Templates with their own teaser preview (the brief's delivery plan). */
 const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
+  "miss-you": (r, s) => ({
+    title: `🥹 ${r}, someone misses you a lot`,
+    description: `${s} is calling from far away… pick up, there's a map, a countdown and a boarding pass inside 💗`,
+  }),
   sorry: (r, s) => ({
     title: `🥺 ${r}, someone is very, very sorry`,
     description: `${s} made you something. Please open it before you stay mad 💗`,
