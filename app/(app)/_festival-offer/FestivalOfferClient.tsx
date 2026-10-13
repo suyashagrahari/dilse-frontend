@@ -39,7 +39,7 @@ import DiwaliScene, { DIWALI_SCENE_CSS } from "./DiwaliScene";
 import FestivalDropTemplates, { useFestivalDropDiscount, useFestivalDropTemplates } from "./FestivalDropTemplates";
 import { useDropFree } from "@/hooks/useDropFree";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
-import { formatINR } from "@/config/templatePricing";
+import { formatPrice } from "@/config/templatePricing";
 import { useAppSelector } from "@/store/hooks";
 
 type Copy = {
@@ -209,7 +209,7 @@ export default function FestivalOfferClient({ kind }: { kind: FestivalId }) {
               )}
               {first && (
                 <FestivalLink href={`/${first.slug}`} className="fvoBtn ghost" prefetch={false}>
-                  {free ? <>Make yours · <b className="fvoFrom">free</b></> : cheapest && freeFor ? <>Make yours · <b className="fvoFrom">free for you</b></> : cheapest ? <>From <b className="fvoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
+                  {free ? <>Make yours · <b className="fvoFrom">free</b></> : cheapest && freeFor ? <>Make yours · <b className="fvoFrom">free for you</b></> : cheapest ? <>From <b className="fvoFrom">{formatPrice(cheapest.p)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </FestivalLink>
               )}
             </div>

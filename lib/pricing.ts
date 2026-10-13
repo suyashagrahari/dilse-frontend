@@ -87,6 +87,11 @@ function parse(json: unknown): PricingMap | null {
       savings:         Number(r.savings) || 0,
       discountPercent: Number(r.discountPercent) || 0,
       pointsCost:      Number(r.pointsCost) || 0,
+      // The visitor's own currency, for display only (formatPrice). Anything
+      // unexpected falls back to INR, the fields above.
+      ...(r.currency === "USD" && Number(r.displayFinal) > 0
+        ? { currency: "USD" as const, displayFinal: Number(r.displayFinal), displayMrp: Number(r.displayMrp) || Number(r.displayFinal) }
+        : { currency: "INR" as const }),
     };
   }
   return out;

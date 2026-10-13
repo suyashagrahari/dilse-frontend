@@ -36,6 +36,14 @@ export interface ResolvedPricing {
   pointsCost: number;
   /** International price in cents set by a super admin; null = derived from INR. */
   usdPriceCents?: number | null;
+  /**
+   * What a price badge shows THIS visitor (from /payment/pricing): the currency
+   * checkout will charge them in, and the amounts in it (major units). Abroad,
+   * with international pricing on, that is USD. Absent → INR, the fields above.
+   */
+  currency?: "INR" | "USD";
+  displayFinal?: number;
+  displayMrp?: number;
 }
 
 export interface PricingRow {
@@ -98,4 +106,17 @@ export function freePricing(slug: string): ResolvedPricing {
  */
 export function formatINR(rupees: number): string {
   return "₹" + Math.round(rupees).toLocaleString("en-IN");
+}
+
+/**
+ * A template's price as this visitor will pay it: "₹149" in India, "$1.99"
+ * abroad (see `currency` above). `which` picks the sale price or the
+ * struck-through one.
+ */
+export function formatPrice(p: ResolvedPricing, which: "final" | "mrp" = "final"): string {
+  if (p.currency === "USD") {
+    const v = which === "final" ? p.displayFinal : p.displayMrp;
+    if (typeof v === "number" && v > 0) return "$" + v.toFixed(2);
+  }
+  return formatINR(which === "final" ? p.finalPrice : p.mrp);
 }
