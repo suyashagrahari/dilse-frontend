@@ -78,7 +78,10 @@ function useYouTubeEngine({
   host,
   onFail,
   songs,
+  gain = 1,
 }: {
+  /** DayConfig.music.volume: this template's loudness, 0–1 of the usual level. */
+  gain?: number;
   videoId: string;
   startAt: number;
   autoStart: boolean;
@@ -96,6 +99,10 @@ function useYouTubeEngine({
   const blockTimer = useRef<number | null>(null);
   const stateRef = useRef<number>(YT_STATE.UNSTARTED);
   const levelRef = useRef(1);
+  const fullRef = useRef(TARGET_VOLUME * gain);
+  useEffect(() => {
+    fullRef.current = TARGET_VOLUME * gain;
+  }, [gain]);
   const duckedPaused = useRef(false);
   const startRef = useRef(startAt);
   const failRef = useRef(onFail);
@@ -137,7 +144,7 @@ function useYouTubeEngine({
     if (!p) return;
     const steps = Math.max(1, Math.round(ms / 90));
     let i = 0;
-    const start = from ?? levelRef.current * TARGET_VOLUME;
+    const start = from ?? levelRef.current * fullRef.current;
     fadeRef.current = window.setInterval(() => {
       i += 1;
       const v = Math.round(start + ((to - start) * i) / steps);
@@ -178,7 +185,7 @@ function useYouTubeEngine({
     }, BLOCKED_AFTER_MS);
     // A gentle fade-in rather than a song slamming in mid-chorus (not on iOS:
     // volume is read-only there, the premium gate's sting masks the entry).
-    if (!ios) rampVolume(Math.round(levelRef.current * TARGET_VOLUME), 1200, 0);
+    if (!ios) rampVolume(Math.round(levelRef.current * fullRef.current), 1200, 0);
   }, [ios, rampVolume]);
 
   const pause = useCallback(() => {
@@ -393,7 +400,7 @@ function useYouTubeEngine({
     (level: number, ms = 800) => {
       levelRef.current = Math.min(1, Math.max(0, level));
       if (ios) return;
-      rampVolume(Math.round(levelRef.current * TARGET_VOLUME), ms);
+      rampVolume(Math.round(levelRef.current * fullRef.current), ms);
     },
     [ios, rampVolume],
   );
@@ -411,7 +418,7 @@ function useYouTubeEngine({
         }
         return;
       }
-      rampVolume(Math.round(Math.min(1, Math.max(0, level)) * TARGET_VOLUME), ms);
+      rampVolume(Math.round(Math.min(1, Math.max(0, level)) * fullRef.current), ms);
     },
     [ios, rampVolume],
   );
@@ -428,7 +435,7 @@ function useYouTubeEngine({
         }
         return;
       }
-      rampVolume(Math.round(levelRef.current * TARGET_VOLUME), ms);
+      rampVolume(Math.round(levelRef.current * fullRef.current), ms);
     },
     [ios, rampVolume],
   );
@@ -457,8 +464,12 @@ interface TrackEngine extends Omit<YouTubeEngine, "title"> {
   el: () => HTMLAudioElement | null;
 }
 
-function useTrackEngine({ url, autoStart }: { url: string; autoStart: boolean }): TrackEngine {
+function useTrackEngine({ url, autoStart, gain = 1 }: { url: string; autoStart: boolean; gain?: number }): TrackEngine {
   const elRef = useRef<HTMLAudioElement | null>(null);
+  const fullRef = useRef(TRACK_VOLUME * gain);
+  useEffect(() => {
+    fullRef.current = TRACK_VOLUME * gain;
+  }, [gain]);
   const userOff = useRef(false);
   const resumeOnShow = useRef(false);
   const duckedPaused = useRef(false);
@@ -510,7 +521,7 @@ function useTrackEngine({ url, autoStart }: { url: string; autoStart: boolean })
         if ((err as { name?: string })?.name === "NotAllowedError" && !userOff.current) setBlocked(true);
       });
     }
-    if (!ios) ramp(levelRef.current * TRACK_VOLUME, 900, 0);
+    if (!ios) ramp(levelRef.current * fullRef.current, 900, 0);
   }, [ios, ramp]);
 
   const pause = useCallback(() => {
@@ -627,7 +638,7 @@ function useTrackEngine({ url, autoStart }: { url: string; autoStart: boolean })
     (level: number, ms = 800) => {
       levelRef.current = Math.min(1, Math.max(0, level));
       if (ios) return;
-      ramp(levelRef.current * TRACK_VOLUME, ms);
+      ramp(levelRef.current * fullRef.current, ms);
     },
     [ios, ramp],
   );
@@ -642,7 +653,7 @@ function useTrackEngine({ url, autoStart }: { url: string; autoStart: boolean })
         }
         return;
       }
-      ramp(Math.min(1, Math.max(0, level)) * levelRef.current * TRACK_VOLUME, ms);
+      ramp(Math.min(1, Math.max(0, level)) * levelRef.current * fullRef.current, ms);
     },
     [ios, ramp],
   );
@@ -655,7 +666,7 @@ function useTrackEngine({ url, autoStart }: { url: string; autoStart: boolean })
         }
         return;
       }
-      ramp(levelRef.current * TRACK_VOLUME, ms);
+      ramp(levelRef.current * fullRef.current, ms);
     },
     [ios, ramp],
   );
@@ -1345,6 +1356,7 @@ export function DayMusicProvider({
   chip,
   track,
   compact = false,
+  volume = 1,
   children,
 }: {
   settings: DayMusicSettings;
@@ -1367,6 +1379,8 @@ export function DayMusicProvider({
   track?: DayTrack;
   /** DayConfig.music.compact: one 40px play/stop icon instead of the card / chip / melody button. */
   compact?: boolean;
+  /** DayConfig.music.volume: 0–1 of the usual loudness, for a page whose own sounds must carry over the song. */
+  volume?: number;
   children: ReactNode;
 }) {
   const requested = settings.musicMode;
@@ -1378,9 +1392,10 @@ export function DayMusicProvider({
 
   const host = useRef<HTMLDivElement | null>(null);
   const onFail = useCallback((id: string) => setFailedId(id), []);
-  const synth = useSynthEngine({ melody, enabled: mode === "melody", autoStart });
-  const yt = useYouTubeEngine({ videoId: mode === "youtube" ? ytId : "", startAt: settings.musicStart, autoStart, host, onFail, songs });
-  const tr = useTrackEngine({ url: mode === "track" && track ? track.url : "", autoStart });
+  const gain = Math.min(1, Math.max(0.05, volume));
+  const synth = useSynthEngine({ melody, enabled: mode === "melody", autoStart, volume: 0.5 * gain });
+  const yt = useYouTubeEngine({ videoId: mode === "youtube" ? ytId : "", startAt: settings.musicStart, autoStart, host, onFail, songs, gain });
+  const tr = useTrackEngine({ url: mode === "track" && track ? track.url : "", autoStart, gain });
 
   const [toggles, setToggles] = useState(0);
   const registerToggle = useCallback(() => {

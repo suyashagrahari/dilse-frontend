@@ -228,6 +228,12 @@ export interface DayMusicConfig {
    * musicMode is "track" keeps it (withDemoSong never swaps it for YouTube).
    */
   track?: DayTrack;
+  /**
+   * How loud the song plays, 0–1 of the usual level (default 1). For a page
+   * whose own sounds have to carry over it — Dandiya's stick clacks sit on a
+   * quiet garba bed. iOS ignores media volume, so there it is full level.
+   */
+  volume?: number;
 }
 
 export interface DayTrack {
@@ -236,6 +242,8 @@ export interface DayTrack {
   /** Shown in the now-playing chip / radio card and the picker. */
   title: string;
   artist?: string;
+  /** The picker card's second line (default "Made for this template") — for a track that is a known song. */
+  hint?: string;
 }
 
 export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as const;
