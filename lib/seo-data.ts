@@ -2666,6 +2666,98 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Happy Birthday — an evergreen birthday surprise on the Valentine engine
+  // (✦ premium). Searchers want a "birthday website for girlfriend /
+  // boyfriend" they can send as a link, with candles to blow and their
+  // photos; the FAQs answer how it works, the mic, and who it suits. No
+  // rating, no price.
+  "happy-birthday": {
+    title: "Birthday Surprise Website for Girlfriend or Boyfriend — Blow the Candles",
+    description:
+      "Make a birthday surprise page they play: untie the gift ribbon, light and blow out the candles (even with the mic), cut the cake, pop balloons of reasons you love them, unwrap coupons and crown them Birthday Queen or King.",
+    category: "Birthday",
+    emoji: "🎂",
+
+    keywords: [
+      // ── PRIMARY ──
+      "birthday website for girlfriend",
+      "birthday surprise website",
+      "interactive birthday card online",
+      "birthday surprise for boyfriend online",
+      "blow out the candles online",
+      "virtual birthday cake with candles",
+      "happy birthday link for whatsapp",
+      "birthday wishes page with photos",
+      // ── WHO IT'S FOR ──
+      "birthday surprise for girlfriend",
+      "birthday surprise for wife",
+      "romantic birthday wishes for boyfriend",
+      "birthday surprise for best friend",
+      "long distance birthday surprise",
+      "happy birthday jaan",
+      // ── THE PAGE ──
+      "reasons I love you birthday",
+      "birthday coupons for girlfriend",
+      "birthday queen certificate",
+      "birthday page with music",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a birthday surprise website for my girlfriend or boyfriend?",
+        answer:
+          "Open the Happy Birthday template, press Create and add their name and yours, the number on the cake, five things you love about them, a birthday letter, up to six photos and a few birthday coupons. Or describe them in a few lines and let the AI write it. Pick one of four cake colours, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They tug a bow to untie a wrapped gift, tap to light five candles on a cake with their name piped on it, make a wish and blow them out, swipe to cut the cake (the first slice comes with your note), pop balloons that each hold a reason you love them, swipe through your photos on a string of fairy lights, open your birthday card and unwrap coupons to claim one. Then you ask \"Birthday date with me?\" — and it ends with a Birthday Queen or King crown certificate they can download.",
+      },
+      {
+        question: "Can they really blow out the candles?",
+        answer:
+          "Yes. After making a wish they can hold the Blow button, or tap \"really blow\" and blow into the phone's microphone — the flames lean and go out. The mic is only used on that screen, only if they allow it, and nothing is recorded or sent anywhere.",
+      },
+      {
+        question: "Will I know if they said yes?",
+        answer:
+          "Yes. The No button runs away when they reach for it, and when they say yes they can pick when — tonight, this weekend, or you plan it. You get an email with their answer and their pick, and you see it when you open your own link.",
+      },
+      {
+        question: "Can I change the colours?",
+        answer:
+          "Yes. Pick Strawberry Cake, Funfetti Vanilla, Lavender Frosting or Mint Macaron and the whole page — background, cake, balloons, gifts and the crown certificate — changes to that flavour.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose whose birthday it is — your love, your crush or your best friend — and the question, the letter's sign-off and the reply change with it. You can crown them Birthday Queen, King or Star. Every line stays editable.",
+      },
+      {
+        question: "Can I add a song?",
+        answer:
+          "Yes. It starts with Best Day of My Life, or pick a favourite such as Birthday by Katy Perry, Baar Baar Din Ye Aaye, Tum Jiyo Hazaron Saal, Raataan Lambiyan or Kesariya, or paste any YouTube link with an optional start time. Only the sound plays, and music starts on their first tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Birthday Surprise Website for Your Partner",
+      description: "Build a birthday page — candles to blow, a cake to cut, reasons you love them, coupons and a crown — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Birthday page on SubhSandesh and press Create." },
+        { name: "Pick a Cake and a Crown", text: "Choose one of four cake colours, whose birthday it is, and Birthday Queen, King or Star." },
+        { name: "Say What You Love", text: "Add your wish, the note with the first slice and five things you love about them — or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Add your birthday letter, up to six photos and a few birthday coupons, then pick a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or
