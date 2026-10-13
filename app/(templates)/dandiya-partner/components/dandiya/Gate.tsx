@@ -192,8 +192,8 @@ export default function Gate({ recipient, sender, openingLine, sticker, onEnter 
               <Paisley className="dd-lif-pz dd-lif-pz-r" />
               {/* the folded-in side flaps and bottom flap: soft shading and gold-stitched seams */}
               <svg className="dd-lif-seams" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-                <path d="M0 0 L50 64 L0 100 Z" fill="rgba(40,0,6,.16)" />
-                <path d="M100 0 L50 64 L100 100 Z" fill="rgba(40,0,6,.24)" />
+                <path d="M0 0 L50 64 L0 100 Z" fill="rgba(40,0,6,.1)" />
+                <path d="M100 0 L50 64 L100 100 Z" fill="rgba(40,0,6,.16)" />
                 <path d="M0 100 L46 62 Q50 59 54 62 L100 100" fill="none" stroke={ZARI} strokeOpacity=".75" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
                 <path d="M6 100 L46 67 Q50 64 54 67 L94 100" fill="none" stroke={ZARI} strokeOpacity=".45" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
               </svg>
@@ -273,7 +273,7 @@ const GATE_CSS = `
   background: linear-gradient(180deg, #FFF9EC, #FFEBC2); box-shadow: 0 0 0 3px ${ZARI} inset, 0 0 0 6px #FFF4DE inset, 0 0 0 7px #B8862E inset, 0 10px 24px -10px rgba(40,0,0,.6);
   display: grid; align-content: start; justify-items: center; padding: 9% 8% 0; box-sizing: border-box; text-align: center; color: ${DD.maroon};
   transform: translateY(0); transition: transform 1.05s cubic-bezier(.2,.85,.25,1.08) .95s; will-change: transform; overflow: hidden; }
-.dd-lif.is-open .dd-lif-card { transform: translateY(-50%); }
+.dd-lif.is-open .dd-lif-card { transform: translateY(-92%); }
 .dd-lif:not(.is-open) .dd-lif-card > p, .dd-lif:not(.is-open) .dd-lif-card > div { visibility: hidden; }
 .dd-lif-bloom { position: absolute; inset: -40%; pointer-events: none; opacity: 0;
   background: radial-gradient(closest-side, rgba(255,255,255,.95), rgba(255,236,170,.6) 40%, rgba(255,214,120,0) 75%); }
@@ -284,13 +284,14 @@ const GATE_CSS = `
 .dd-lif-s { margin: 4px 0 0; font: 700 clamp(15px, 5cqw, 20px) ${FONTS.script}; color: ${DD.kumkumDeep}; overflow-wrap: anywhere; }
 .dd-lif-diyas { display: flex; gap: 6px; align-items: end; margin-top: 4px; }
 
-/* the front pocket: sindoor silk, bandhani, a double zari border, cut in a V at the top */
-.dd-lif-front { z-index: 2; clip-path: polygon(0 0, 50% 62%, 100% 0, 100% 100%, 0 100%);
+/* the front pocket: sindoor silk, bandhani, a double zari border. Its mouth is the straight top edge,
+   like a real envelope; the folded flaps are drawn on it (.dd-lif-seams), the bottom one peaking UP. */
+.dd-lif-front { z-index: 2;
   background:
     linear-gradient(${ZARI}, ${ZARI}) 0 calc(100% - 9px) / 100% 2px no-repeat,
     linear-gradient(${ZARI}, ${ZARI}) 0 calc(100% - 26px) / 100% 1px no-repeat,
     ${BANDHANI}, ${SILK}; }
-.dd-lif-front::before { content: ""; position: absolute; inset: 0; clip-path: polygon(0 0, 50% 62%, 100% 0, 100% 4%, 50% 66%, 0 4%); background: ${ZARI}; }
+.dd-lif-front::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 12px 12px 0 0; background: ${ZARI}; }
 .dd-lif-mirrors { position: absolute; left: 0; right: 0; bottom: 11px; height: 14px; background: ${MIRROR_ROW}; }
 .dd-lif-mirrors::after { content: ""; position: absolute; inset: -3px 0; mix-blend-mode: screen;
   background: linear-gradient(90deg, transparent 0, rgba(255,255,255,.95) 50%, transparent 100%) calc(50% + var(--tx, 0) * 160px) 0 / 70px 100% no-repeat;
@@ -313,8 +314,30 @@ const GATE_CSS = `
     linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,0) 30%),
     ${BANDHANI}, linear-gradient(180deg, #E0293C, #B3121B 60%, #9A0F19); }
 .dd-lif-flap-out::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 50% 72%, 50% 66%, 93% 2.5%, 7% 2.5%, 50% 66%, 50% 72%); background: ${ZARI}; }
-.dd-lif-flap-in { transform: rotateX(180deg); background: repeating-linear-gradient(45deg, #FFEFC8 0 6px, #F6D27A 6px 7px), #FFEFC8; }
-.dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(178deg) scaleY(.48); z-index: 0; }
+/* The lining is turned over (rotateX 180° about its centre) so it shows once the flap is open, and that
+   turn mirrors it top-to-bottom. So its triangle is cut pre-mirrored (base at the bottom): after the flap's
+   own turn about the top edge it sits ON the hinge, pointing up, instead of floating above it upside down. */
+.dd-lif-flap > .dd-lif-flap-in { transform: rotateX(180deg); border-radius: 0 0 12px 12px; clip-path: polygon(0 100%, 100% 100%, 50% 28%);
+  background: linear-gradient(0deg, rgba(92,10,18,.4), rgba(92,10,18,0) 22%), repeating-linear-gradient(45deg, #FFEFC8 0 6px, #F6D27A 6px 7px), #FFEFC8; }
+.dd-lif-flap-in::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 100%, 100% 100%, 50% 28%, 50% 34%, 93% 97.5%, 7% 97.5%, 50% 34%, 50% 28%); background: ${ZARI}; }
+.dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(1.15); z-index: 0; }
+/* Wide screens: the card's title fits on one line, so it needs less lift to show everything, and the
+   title above the envelope sits closer — rise less and keep the open flap a little lower. */
+@media (min-width: 640px) {
+  .dd-lif.is-open .dd-lif-card { transform: translateY(-66%); }
+  .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(.95); }
+}
+/* Short wide screens (a laptop): the title sits right above the envelope — keep the open flap under it. */
+@media (min-width: 640px) and (max-height: 960px) {
+  .dd-lif.is-open .dd-lif-card { transform: translateY(-62%); }
+  .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(.74); }
+}
+/* Very short wide screens: no room above, room below — the envelope settles a little lower as it opens. */
+@media (min-width: 640px) and (max-height: 840px) {
+  .dd-lif-tilt { transition: transform .25s ease-out, translate .9s cubic-bezier(.3,.6,.25,1) .5s; }
+  .dd-lif.is-open .dd-lif-tilt { translate: 0 5%; }
+  .dd-lif.is-open .dd-lif-card { transform: translateY(-66%); }
+}
 
 
 /* the wax seal — the button */
