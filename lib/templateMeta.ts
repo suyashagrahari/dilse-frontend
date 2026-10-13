@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/config";
-import { PREMIUM_SLUGS } from "@/data/template-registry";
+import { PREMIUM_SLUGS, ULTRA_PREMIUM_SLUGS } from "@/data/template-registry";
 
 export interface TemplateMeta {
   /** Super-admin overrides only: slug → premium. */
@@ -64,6 +64,16 @@ export function useTemplateMeta(): TemplateMeta {
 /** Is this template premium, after super-admin overrides? */
 export function isPremiumSlug(slug: string, tiers: Record<string, boolean>): boolean {
   return Object.prototype.hasOwnProperty.call(tiers, slug) ? Boolean(tiers[slug]) : PREMIUM_SLUGS.has(slug);
+}
+
+/**
+ * Which pricing room a template belongs to. Like `isPremiumSlug`, except a ✦
+ * template (ULTRA_PREMIUM_SLUGS) that nobody pinned counts as Premium: it sits
+ * in the Premium tab (and the main grid with a gold card), so pricing it next
+ * to the everyday $2 templates hid it from whoever went looking under Premium.
+ */
+export function isPremiumRoom(slug: string, tiers: Record<string, boolean>): boolean {
+  return Object.prototype.hasOwnProperty.call(tiers, slug) ? Boolean(tiers[slug]) : PREMIUM_SLUGS.has(slug) || ULTRA_PREMIUM_SLUGS.has(slug);
 }
 
 /** The five rank badges, #1 first. */
