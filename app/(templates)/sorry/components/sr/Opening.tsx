@@ -13,7 +13,7 @@ import { FONTS } from "../../../_valentine/theme";
 import { HeartSeal, MochiBear } from "./art";
 import { SR_DISPLAY, SR_HAND } from "./fonts";
 import { useNext, useSr } from "./stage";
-import { Head } from "./ui";
+import { Head, SrScroll } from "./ui";
 
 const TAPS = 3;
 
@@ -303,16 +303,23 @@ export function Bubbles({ reasons, sticker, onNext }: { reasons: readonly string
       <Head kicker="Pop them, one by one" title="Why I'm sorry" sub={all ? "Every single one is true." : `${popped.length} of ${list.length} popped`} />
       <div className="sr-fill">
         {all ? (
-          <motion.ul className="sr-reasons" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 220, damping: 22 }}>
-            <li className="sr-reasons-gif" aria-hidden>
+          <motion.div className="sr-reasons" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 220, damping: 22 }}>
+            <div className="sr-reasons-gif" aria-hidden>
               {sticker}
-            </li>
-            {list.map((r, k) => (
-              <li key={k} style={{ animationDelay: `${k * 90}ms` }}>
-                <span aria-hidden>🫧</span> {r}
-              </li>
-            ))}
-          </motion.ul>
+            </div>
+            <SrScroll className="sr-reasons-scroll" label="Why I'm sorry">
+              <ol className="sr-reasons-list">
+                {list.map((r, k) => (
+                  <li key={k} style={{ animationDelay: `${120 + k * 90}ms` }}>
+                    <span className="sr-reasons-n" aria-hidden>
+                      {k + 1}
+                    </span>
+                    <span className="sr-reasons-t">{r}</span>
+                  </li>
+                ))}
+              </ol>
+            </SrScroll>
+          </motion.div>
         ) : (
         <div className="sr-bubs">
           <div className="sr-bubs-mid">{sticker}</div>
@@ -364,10 +371,17 @@ const BUB_CSS = `
 .sr-bubble.is-popped { animation: sr-burst .38s ease-out forwards; pointer-events: none; }
 @keyframes sr-burst { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1 } 60% { transform: translate(-50%, -50%) scale(1.35); opacity: .6 } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0 } }
 .sr-bubble:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 3px; }
-.sr-reasons { list-style: none; margin: 0; padding: 0; width: min(100%, 400px); max-height: 100cqh; overflow-y: auto; display: grid; gap: 8px; align-content: center; }
-.sr-reasons li { margin: 0; box-sizing: border-box; padding: 9px 14px; border-radius: 16px; background: var(--vw-paper); box-shadow: 0 0 0 2px var(--vw-edge); text-align: left;
-  font: 400 clamp(16px, 2.4dvh, 19px)/1.3 ${SR_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; animation: sr-li-in .4s cubic-bezier(.3,1.4,.5,1) both; }
-.sr-reasons li.sr-reasons-gif { background: none; box-shadow: none; padding: 0; display: grid; place-items: center; }
+/* All popped: the sticker stays pinned on top, the reasons scroll beneath it. */
+.sr-reasons { width: min(100%, 400px); height: 100%; max-height: 100cqh; display: flex; flex-direction: column; align-items: stretch; gap: clamp(8px, 1.4dvh, 12px); min-height: 0; }
+.sr-reasons-gif { flex: none; display: grid; place-items: center; padding-top: 4px; }
+.sr-reasons-gif .sr-stk img { width: clamp(72px, 15dvh, 104px) !important; height: auto !important; }
+.sr-reasons-scroll { flex: 1 1 auto; align-self: stretch; }
+.sr-reasons-list { list-style: none; margin: 0; padding: 4px 2px 10px; display: grid; gap: 9px; }
+.sr-reasons-list li { margin: 0; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 14px 10px 10px; border-radius: 18px;
+  background: var(--vw-paper); box-shadow: 0 0 0 2px var(--vw-edge), 0 8px 16px -12px color-mix(in srgb, var(--sr-deep) 55%, transparent); text-align: left; animation: sr-li-in .4s cubic-bezier(.3,1.4,.5,1) both; }
+.sr-reasons-n { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #FFFFFF; font: 800 13px ${SR_DISPLAY};
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--vw-accent) 70%, #FFFFFF), var(--vw-accent) 60%, var(--sr-deep)); box-shadow: inset 0 0 0 2px rgba(255,255,255,.6); }
+.sr-reasons-t { font: 400 clamp(16px, 2.4dvh, 19px)/1.3 ${SR_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; padding-top: 1px; }
 @keyframes sr-li-in { from { opacity: 0; transform: translateY(10px) scale(.96) } to { opacity: 1; transform: none } }
 .sr-reason[hidden] { display: none; }
 .sr-reason { flex: none; min-height: clamp(70px, 11dvh, 96px); width: 100%; max-width: 400px; display: grid; place-items: center; }

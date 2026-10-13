@@ -166,7 +166,7 @@ export default function SorryExperience({ data, mode, react }: ExperienceProps) 
     <DayRoot day={themed} data={data} className={`${srDisplay.variable} ${srHand.variable}`} style={{ paddingBottom: 0, ...paletteVars(palette) }} layout="full">
       <style>{SR_STAGE_CSS + SR_UI_CSS + SR_ART_CSS}</style>
       {/* The engine's music button sits outside DayRoot (no --vw-* vars there): paint it in this palette. */}
-      <style>{`body .vm-icon-btn { background: radial-gradient(circle at 50% 38%, ${palette.theme.accent}, ${palette.theme.accentDeep} 72%); }`}</style>
+      <style>{`body .vm-icon-btn { background: radial-gradient(circle at 50% 38%, ${palette.theme.accent}, ${palette.theme.accentDeep} 72%); } html::-webkit-scrollbar-thumb { background: ${palette.theme.accent}; } html::-webkit-scrollbar-track { background: ${palette.blush}; } html { scrollbar-color: ${palette.theme.accent} ${palette.blush}; }`}</style>
       <Atmosphere hearts={palette.hearts} warm={answered !== null} />
 
       <SrStage round={round} trail={{ at: i, rooms, ending: step === "ending" || declined, onJump: jumpTo }}>
