@@ -213,7 +213,10 @@ function ProfileInner() {
 
             <div className="sa-id">
               <h1 className="sa-name" title={user.name}>{user.name}</h1>
-              <div className="sa-email" title={user.email}>{user.email}</div>
+              <div className="sa-email" title={user.emailReleased ? `${user.email} — released when the account was closed; the person can sign up again with it` : user.email}>
+                {user.email}
+                {user.emailReleased && <span style={{ opacity: 0.75, fontSize: "0.85em" }}> · email released</span>}
+              </div>
               <div className="sa-hero-pills">
                 <Pill text={status} color={STATUS_COLOR[status] || C.muted} solid />
                 <span

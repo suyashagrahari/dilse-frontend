@@ -6,6 +6,8 @@ export interface ProfileUser {
   _id: string;
   name: string;
   email: string;
+  /** Closed account whose email was released so the owner could start a new account. */
+  emailReleased?: boolean;
   avatar?: string;
   provider: string;
   role: string;
