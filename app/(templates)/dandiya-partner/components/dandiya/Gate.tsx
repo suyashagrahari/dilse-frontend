@@ -273,7 +273,16 @@ const GATE_CSS = `
   background: linear-gradient(180deg, #FFF9EC, #FFEBC2); box-shadow: 0 0 0 3px ${ZARI} inset, 0 0 0 6px #FFF4DE inset, 0 0 0 7px #B8862E inset, 0 10px 24px -10px rgba(40,0,0,.6);
   display: grid; align-content: start; justify-items: center; padding: 9% 8% 0; box-sizing: border-box; text-align: center; color: ${DD.maroon};
   transform: translateY(0); transition: transform 1.05s cubic-bezier(.2,.85,.25,1.08) .95s; will-change: transform; overflow: hidden; }
-.dd-lif.is-open .dd-lif-card { transform: translateY(-92%); }
+/* Opening: the card slides up out of the pocket, then comes FORWARD and settles over the envelope's
+   front, so the opened flap stands as a whole triangle above it — an envelope with its roof up — and
+   every line of the card is in the clear. z-index steps from behind the pocket (1) to in front (7). */
+.dd-lif.is-open .dd-lif-card { transition: none; animation: dd-lif-out 1.6s cubic-bezier(.3,.7,.25,1) .95s both; }
+@keyframes dd-lif-out {
+  0% { transform: translateY(0); z-index: 1; }
+  42% { transform: translateY(-48%) scale(.97); z-index: 1; }
+  43% { z-index: 7; }
+  100% { transform: translateY(-2%) scale(1.03); z-index: 7; }
+}
 .dd-lif:not(.is-open) .dd-lif-card > p, .dd-lif:not(.is-open) .dd-lif-card > div { visibility: hidden; }
 .dd-lif-bloom { position: absolute; inset: -40%; pointer-events: none; opacity: 0;
   background: radial-gradient(closest-side, rgba(255,255,255,.95), rgba(255,236,170,.6) 40%, rgba(255,214,120,0) 75%); }
@@ -320,23 +329,13 @@ const GATE_CSS = `
 .dd-lif-flap > .dd-lif-flap-in { transform: rotateX(180deg); border-radius: 0 0 12px 12px; clip-path: polygon(0 100%, 100% 100%, 50% 28%);
   background: linear-gradient(0deg, rgba(92,10,18,.4), rgba(92,10,18,0) 22%), repeating-linear-gradient(45deg, #FFEFC8 0 6px, #F6D27A 6px 7px), #FFEFC8; }
 .dd-lif-flap-in::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 100%, 100% 100%, 50% 28%, 50% 34%, 93% 97.5%, 7% 97.5%, 50% 34%, 50% 28%); background: ${ZARI}; }
-.dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(1.15); z-index: 0; }
-/* Wide screens: the card's title fits on one line, so it needs less lift to show everything, and the
-   title above the envelope sits closer — rise less and keep the open flap a little lower. */
-@media (min-width: 640px) {
-  .dd-lif.is-open .dd-lif-card { transform: translateY(-66%); }
-  .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(.95); }
-}
-/* Short wide screens (a laptop): the title sits right above the envelope — keep the open flap under it. */
+.dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg); z-index: 0; }
+/* Short wide screens (a laptop): the title sits right above the envelope — a lower roof stays under it. */
 @media (min-width: 640px) and (max-height: 960px) {
-  .dd-lif.is-open .dd-lif-card { transform: translateY(-62%); }
-  .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(.74); }
+  .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(.8); }
 }
-/* Very short wide screens: no room above, room below — the envelope settles a little lower as it opens. */
 @media (min-width: 640px) and (max-height: 840px) {
-  .dd-lif-tilt { transition: transform .25s ease-out, translate .9s cubic-bezier(.3,.6,.25,1) .5s; }
-  .dd-lif.is-open .dd-lif-tilt { translate: 0 5%; }
-  .dd-lif.is-open .dd-lif-card { transform: translateY(-66%); }
+  .dd-lif.is-open .dd-lif-flap { transform: perspective(900px) rotateX(180deg) scaleY(.62); }
 }
 
 
@@ -374,4 +373,7 @@ const GATE_CSS = `
 
 .dd-lif.is-still *, .dd-lif.is-still { transition: none !important; animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .dd-lif *, .dd-lif { transition: none !important; animation: none !important; } }
+/* No motion: the card simply sits where the animation would have left it. */
+.dd-lif.is-open.is-still .dd-lif-card { transform: translateY(-2%) scale(1.03); z-index: 7; }
+@media (prefers-reduced-motion: reduce) { .dd-lif.is-open .dd-lif-card { transform: translateY(-2%) scale(1.03); z-index: 7; } }
 `;
