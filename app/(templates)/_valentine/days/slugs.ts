@@ -21,7 +21,7 @@ export const VALENTINE_WEEK_SLUGS = [
 ] as const;
 
 /** Occasions outside Valentine's week that run on the same engine. */
-export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali"] as const;
+export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry"] as const;
 
 /**
  * The ULTRA-PREMIUM tier ($4): one cinematic twin per base template, on the
@@ -92,6 +92,8 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "dandiya-partner": { name: "Navratri", emoji: "🪔", date: 11, month: "October" },
   // Diwali 2026 falls on 8 November.
   "happy-diwali": { name: "Diwali", emoji: "🪔", date: 8, month: "November" },
+  // Evergreen: no date (date 0 hides it in the editor and the wide frame).
+  sorry: { name: "Sorry", emoji: "🥺", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

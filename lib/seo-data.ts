@@ -2580,6 +2580,92 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // I'm Sorry — an evergreen apology page on the Valentine engine (✦ premium).
+  // Searchers want a "sorry page / cute apology website for girlfriend" they
+  // can send on WhatsApp; the FAQs answer how it works and whether they can
+  // say no. No rating, no price.
+  sorry: {
+    title: "Cute Sorry Page for Girlfriend or Boyfriend — Interactive Apology",
+    description:
+      "Say sorry the cute way: a sealed envelope, a bear that shows how upset they are, guilt bubbles they pop, a pinky promise, make-it-up coupons and “Will you forgive me?” — in six pastel colours.",
+    category: "Sorry",
+    emoji: "🥺",
+
+    keywords: [
+      // ── PRIMARY ──
+      "sorry page for girlfriend",
+      "cute sorry website",
+      "interactive apology page",
+      "sorry message for girlfriend",
+      "sorry card online",
+      "forgive me page",
+      "will you forgive me website",
+      "apology link for whatsapp",
+      // ── WHO IT'S FOR ──
+      "sorry for boyfriend",
+      "sorry for wife",
+      "how to say sorry to girlfriend",
+      "sorry for best friend",
+      "cute ways to say sorry",
+      "maaf kar do message",
+      // ── THE PAGE ──
+      "sorry page with photos and music",
+      "forgive me yes no button",
+      "apology coupons",
+      "pinky promise sorry",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a sorry page for my girlfriend or boyfriend?",
+        answer:
+          "Open the I'm Sorry template, press Create and add their name and yours, what you did, a few reasons you're sorry, a promise, your letter, up to six photos and a few make-it-up coupons. Or describe what happened in a few lines and let the AI write it. Pick one of six pastel colours, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They tap a heart seal to open a sealed envelope, slide a meter to show how upset they are (a little bear's face follows, and they see your reply for that level), scratch a card to read what you did, pop guilt bubbles that each hold a reason you're sorry, flip through your photos, unfold your letter, hold a pinky promise until the hands meet and claim one make-it-up coupon. Then comes \"Will you forgive me?\" — and it ends with an Officially Forgiven certificate they can download.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "You choose. By default the No button gets shy and runs away, and after five tries it turns into a second Yes. Or let them answer honestly: after four or five tries No turns into \"I need a little time 🤍\", which they can press. Either way you get an email with their answer.",
+      },
+      {
+        question: "Can I change the colours?",
+        answer:
+          "Yes. Pick Baby Pink, Strawberry Milk, Mint Matcha, Lavender Dream, Peach Cream or Sky Cotton and the whole page — background, bear, bubbles, coupons and certificate — changes to that colour.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose who you're saying sorry to — your love, your crush or your best friend — and the question, the certificate and the reply change with it. Every line stays editable.",
+      },
+      {
+        question: "Can I add a song?",
+        answer:
+          "Yes. Paste a YouTube link (with an optional start time) and only the sound plays while they go through it, or pick a soft favourite such as Jo Tum Mere Ho, Tum Hi Ho or Sorry. There is also a built-in gentle melody. Music starts only after their first tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Say Sorry with a Cute Interactive Page",
+      description: "Build an apology page — what you did, reasons, a promise, coupons and “Will you forgive me?” — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the I'm Sorry page on SubhSandesh and press Create." },
+        { name: "Pick a Colour and Who It's For", text: "Choose one of six pastel looks and your love, your crush or your bestie." },
+        { name: "Own It", text: "Write what you did, a few reasons you're sorry and the promise you'll keep — or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Add your letter, up to six photos and a few make-it-up coupons, then pick a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or

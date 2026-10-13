@@ -471,7 +471,7 @@ export default function WideFrame({ day, data, tier, layout, art, line, dark: da
               </div>
             )}
             <p style={{ margin: 0, font: `600 12px ${FONTS.ui}`, letterSpacing: ".32em", textTransform: "uppercase", color: gold }}>
-              {day.date} {day.month}
+              {day.date ? `${day.date} ${day.month}` : day.emoji}
             </p>
             <p style={{ margin: "6px 0 0", font: `700 clamp(36px, 3.7vw, 70px)/1.02 ${FONTS.serif}`, color: ink, letterSpacing: "-.01em", textWrap: "balance" }}>{day.name}</p>
             <p style={{ margin: "6px 0 0", font: `600 clamp(18px, 1.5vw, 26px)/1.2 ${FONTS.script}`, color: accent }}>{day.title}</p>
