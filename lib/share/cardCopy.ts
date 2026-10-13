@@ -70,6 +70,7 @@ const COPY: Record<string, CardCopy> = {
   sorry: { kicker: "Psst…", headline: "I'm Sorry", line: "Please open this before you stay mad 🥺" },
   "happy-birthday": { kicker: "Happy Birthday", headline: "A Birthday Surprise", line: "Untie the ribbon 🎀" },
   "miss-you": { kicker: "Incoming call", headline: "I Miss You", line: "Pick up, it's me 🥹" },
+  "will-you-be-mine": { kicker: "Psst…", headline: "Will You Be Mine?", line: "Someone has a very big question for you 💍" },
   "happy-diwali": { kicker: "Happy Diwali", headline: "A Diya at Your Door", line: "Light it 🪔" },
   "happy-rose-day-premium": { kicker: "✦ Rose Day", headline: "The Rose Garden", line: "Tear open your seed packet" },
   "happy-propose-day-premium": { kicker: "✦ Propose Day", headline: "The Little Proposal", line: "Knock knock 💍" },

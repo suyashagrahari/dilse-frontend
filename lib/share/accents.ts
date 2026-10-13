@@ -40,6 +40,7 @@ const ACCENTS: Record<string, string> = {
   sorry: "#D9466E",
   "happy-birthday": "#C93A63",
   "miss-you": "#D9487F",
+  "will-you-be-mine": "#B8435F",
   "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its
   // accentDeep where that accent is too light to carry white button text).

@@ -14,6 +14,7 @@ import { dandiyaDay } from "./dandiya-partner";
 import { sorryDay } from "./sorry";
 import { happyBirthdayDay } from "./happy-birthday";
 import { missYouDay } from "./miss-you";
+import { willYouBeMineDay } from "./will-you-be-mine";
 import { diwaliDay } from "./happy-diwali";
 import { roseDayPremium } from "./happy-rose-day-premium";
 import { proposeDayPremium } from "./happy-propose-day-premium";
@@ -55,6 +56,7 @@ export const DAYS: Record<DaySlug, DayConfig> = {
   sorry: sorryDay as unknown as DayConfig,
   "happy-birthday": happyBirthdayDay as unknown as DayConfig,
   "miss-you": missYouDay as unknown as DayConfig,
+  "will-you-be-mine": willYouBeMineDay as unknown as DayConfig,
   "happy-diwali": diwaliDay as unknown as DayConfig,
   // ✦ Premium twins
   "happy-rose-day-premium": withDemoSong(roseDayPremium as unknown as DayConfig),
