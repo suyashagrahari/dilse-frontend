@@ -175,9 +175,21 @@ export default function LetterEnvelope({ recipient, sender, opening, gone, onOpe
                 <circle cx="3.5" cy="3.5" r="1.5" fill="#FFF4DE" />
                 <circle cx="10.5" cy="10.5" r="1.9" fill="#F6D27A" />
               </pattern>
+              <linearGradient id={`lh${uid}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#3D0208" stopOpacity=".5" />
+                <stop offset=".25" stopColor="#3D0208" stopOpacity="0" />
+              </linearGradient>
             </defs>
-            <path d={FLAP} fill={`url(#ln${uid})`} />
-            <path d={FLAP_EDGE} fill="none" stroke="#F6D27A" strokeWidth="2.4" vectorEffect="non-scaling-stroke" />
+            {/* This face is turned over (rotateX 180° about its centre) so it shows once the flap is open,
+                and that turn mirrors it top-to-bottom. Drawn pre-mirrored, so after the flap's own turn
+                about the top edge it sits exactly on the hinge, pointing up, with no gap. */}
+            <g transform="translate(0 200) scale(1 -1)">
+              <path d={FLAP} fill={`url(#ln${uid})`} />
+              {/* the fold: a little shade where the lining meets the envelope */}
+              <path d={FLAP} fill={`url(#lh${uid})`} />
+              <path d="M26 0 L140 84 Q150 91 160 84 L274 0" fill="none" stroke="#F6D27A" strokeOpacity=".7" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+              <path d={FLAP_EDGE} fill="none" stroke="#F6D27A" strokeWidth="2.4" vectorEffect="non-scaling-stroke" />
+            </g>
           </svg>
         </div>
 
