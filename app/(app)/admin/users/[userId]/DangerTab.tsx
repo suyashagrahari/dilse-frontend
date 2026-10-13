@@ -251,8 +251,9 @@ function CloseAccount({ data, hdr, reload }: { data: ProfileData; hdr: () => Rec
       ) : (
         <>
           <p style={{ fontSize: 12.5, color: C.muted, margin: 0, lineHeight: 1.6 }}>
-            Use this when <strong style={{ color: C.text }}>the user asked</strong> for their account to be closed.
-            Both options sign them out everywhere and block sign-in.
+            Close any account. Both options sign the person out everywhere and every page they made stops opening.
+            Their email is released: if they sign in again — Google, password or code — they get a{" "}
+            <strong style={{ color: C.text }}>brand-new, empty account</strong>, never this one.
             {closed && <> It is already closed and hidden — you can still delete everything permanently, or Reinstate above to undo.</>}
           </p>
 
@@ -280,7 +281,7 @@ function CloseAccount({ data, hdr, reload }: { data: ProfileData; hdr: () => Rec
                 <span className="sa-cl-ic"><EyeOff size={15} /></span>
                 <span style={{ minWidth: 0 }}>
                   <span className="sa-cl-t">Close &amp; hide everything</span> <Pill text="reversible" color={C.ok} />
-                  <span className="sa-cl-d" style={{ display: "block" }}>Sign-in is blocked and every share link stops opening. Nothing is deleted — Reinstate brings it all back.</span>
+                  <span className="sa-cl-d" style={{ display: "block" }}>Every share link stops opening. Nothing is deleted — Reinstate brings it all back, unless the person has since made a new account with the same email.</span>
                 </span>
               </button>
             )}
@@ -315,7 +316,7 @@ function CloseAccount({ data, hdr, reload }: { data: ProfileData; hdr: () => Rec
         <p style={{ fontSize: 13.5, lineHeight: 1.65, margin: "0 0 12px" }}>
           {effMode === "delete"
             ? <><strong>{user.email}</strong> will be anonymised and <strong>every page they made deleted</strong>. Recipients holding their links will see a 404. Payment records stay for accounting. <strong>This cannot be undone.</strong></>
-            : <><strong>{user.email}</strong> will be signed out everywhere and unable to sign in, and every share link will stop opening. Nothing is deleted; Reinstate undoes it.</>}
+            : <><strong>{user.email}</strong> will be signed out everywhere and every share link will stop opening. If they sign in again they start a new, empty account. Nothing is deleted; Reinstate undoes it while their email is still free.</>}
         </p>
         <label style={{ display: "block", marginBottom: 10 }}>
           <span className="sa-edit-k">Reason (required — recorded in the audit log)</span>
