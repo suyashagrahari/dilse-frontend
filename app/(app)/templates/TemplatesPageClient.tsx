@@ -672,6 +672,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                               rank={rankOf.get(template.slug)}
                               created={createdBy.get(template.slug)}
                               isNew={PINNED_FIRST.includes(template.slug)}
+                              price
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
                               onFavorite={handleFavorite}
@@ -736,6 +737,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                               rank={rankOf.get(template.slug)}
                               created={createdBy.get(template.slug)}
                               isNew={PINNED_FIRST.includes(template.slug)}
+                              price
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
                               onFavorite={handleFavorite}
@@ -747,6 +749,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                               rank={rankOf.get(template.slug)}
                               created={createdBy.get(template.slug)}
                               isNew={PINNED_FIRST.includes(template.slug)}
+                              price
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
                               onFavorite={handleFavorite}

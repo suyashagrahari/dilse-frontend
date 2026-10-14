@@ -26,8 +26,10 @@ interface TemplateCardProps {
   rank?: number;
   /** Pages created — shown beside the rank badge once it is worth showing. */
   created?: number;
-  /** A new arrival (the gallery's pinned launches): a "New" ribbon on the cover. */
+  /** A new arrival (the gallery's pinned launches): a "New" chip in the price strip. */
   isNew?: boolean;
+  /** The gallery's price strip under the cover. Off by default: the offer pages print their own price line. */
+  price?: boolean;
 }
 
 /** Memoized — only re-renders when isFav, index, or template identity changes */
@@ -39,6 +41,7 @@ const TemplateCard = memo(function TemplateCard({
   rank,
   created = 0,
   isNew = false,
+  price = false,
 }: TemplateCardProps) {
   const badge = rank && rank >= 1 && rank <= RANK_BADGES.length ? RANK_BADGES[rank - 1] : null;
   // A compile-time lookup against the guide registry, not a fetch — the registry
@@ -88,6 +91,7 @@ const TemplateCard = memo(function TemplateCard({
           else if (festival) openFestival(e, `/${template.slug}`);
         }}
       >
+        <div className="tplShell">
         <div className="tplInner relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden">
           {/* Background */}
           <div className="absolute inset-0" style={{ background: "var(--app-card-img-bg)" }} />
@@ -169,7 +173,8 @@ const TemplateCard = memo(function TemplateCard({
             />
           </div>
         </div>
-        <PriceStrip p={settled ? pricing : null} freeFor={freeFor} name={template.title} isNew={isNew} />
+        </div>
+        {price && <PriceStrip p={settled ? pricing : null} freeFor={freeFor} name={template.title} isNew={isNew} />}
       </Link>
     </div>
   );
@@ -222,9 +227,12 @@ export const TEMPLATE_CARD_CSS = `
 @media (min-width: 1024px) { .tplCard { contain-intrinsic-size: auto 380px; } }
 @keyframes tplIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .tplLink { position: relative; border-radius: 1rem; -webkit-tap-highlight-color: transparent; }
+/* The cover's own box: the hover glow outlines it, never the price strip under it. */
+.tplShell { position: relative; border-radius: 1rem; }
+@media (min-width: 768px) { .tplShell { border-radius: 1.5rem; } }
 @media (min-width: 768px) { .tplLink { border-radius: 1.5rem; } }
 .tplInner { border: 1px solid rgba(61,12,17,0.15); transform: translateZ(0); transition: transform .28s cubic-bezier(.22,1,.36,1), border-color .28s ease; }
-.tplLink::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+.tplShell::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
   box-shadow: 0 20px 44px -18px rgba(61,12,17,0.45), 0 0 0 1.5px rgba(201,168,76,0.55); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); }
 .tplImg { transition: transform .6s cubic-bezier(.22,1,.36,1); }
 /* Small solid heart: no backdrop blur (fifty of them), sized for a corner. */
@@ -232,7 +240,7 @@ export const TEMPLATE_CARD_CSS = `
 @media (min-width: 768px) { .tplFav { width: 30px !important; height: 30px !important; } }
 @media (hover: hover) {
   .tplLink:hover .tplInner { transform: translateY(-6px); border-color: rgba(201,168,76,0.5); }
-  .tplLink:hover::after { opacity: 1; transform: translateY(-6px); }
+  .tplLink:hover .tplShell::after { opacity: 1; transform: translateY(-6px); }
   .tplLink:hover .tplImg { transform: scale(1.05); }
 }
 .tplLink:active .tplInner { transform: scale(0.985); }
@@ -272,6 +280,7 @@ export const TEMPLATE_CARD_CSS = `
 /* Price strip under the cover: now · was · % off. One line, never wraps out of the card. */
 .tplPrice { display: flex; align-items: baseline; gap: 6px; min-height: 22px; margin-top: 7px; padding: 0 4px; white-space: nowrap; overflow: hidden;
   font: 600 11px/1.2 'Inter', system-ui, sans-serif; color: rgba(61,12,17,.55); }
+/* Fixed ink: the gallery is always the light cream page (it does not follow .dark). */
 .tplPriceNow { font-weight: 900; font-size: 15px; color: #3d0c11; letter-spacing: -.01em; }
 .tplPriceNow.is-free { color: #157a4f; }
 .tplPriceWas { font-size: 11.5px; color: rgba(61,12,17,.45); text-decoration-thickness: 1.5px; }
@@ -280,7 +289,9 @@ export const TEMPLATE_CARD_CSS = `
 .tplPriceNote { font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; }
 .tplPrice.is-skel { width: 55%; height: 14px; min-height: 0; margin: 11px 4px 4px; border-radius: 99px; background: rgba(61,12,17,.07); }
 @media (min-width: 768px) { .tplPrice { margin-top: 9px; padding: 0 6px; gap: 8px; } .tplPriceNow { font-size: 17px; } .tplPriceWas { font-size: 12.5px; } .tplPriceOff { font-size: 10.5px; padding: 4px 9px; } }
-.pmBody .tplPrice { padding: 0 10px 9px; background: #fffaf0; margin-top: 0; padding-top: 8px; }
+.pmBody .tplPrice { padding: 0 10px 9px; background: #fffaf0; margin-top: 0; padding-top: 8px; color: rgba(61,12,17,.55); }
+/* The premium frame's strip is always cream: keep its ink dark in dark mode too. */
+.pmBody .tplPriceNow { color: #3d0c11; } .pmBody .tplPriceNow.is-free { color: #157a4f; } .pmBody .tplPriceWas { color: rgba(61,12,17,.45); } .pmBody .tplPriceFor { color: #7a5410; }
 .pmBody .tplPrice.is-skel { margin: 0; width: auto; height: 31px; border-radius: 0; background: #fffaf0; }
 @media (max-width: 767px) {
   .tplPrice { gap: 4px; padding: 0 2px; }
@@ -303,7 +314,7 @@ export const TEMPLATE_CARD_CSS = `
 @media (max-width: 767px) { .tplOffLong { display: none; } .tplOffShort { display: inline; } }
 @media (prefers-reduced-motion: reduce) {
   .tplCard, .tplRank, .tplRank::after, .tplNew { animation: none; }
-  .tplInner, .tplImg, .tplLink::after { transition: none; }
+  .tplInner, .tplImg, .tplShell::after { transition: none; }
 }
 `;
 
