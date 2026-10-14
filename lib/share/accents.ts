@@ -39,6 +39,7 @@ const ACCENTS: Record<string, string> = {
   "dandiya-partner": "#B8650A",
   sorry: "#D9466E",
   "happy-birthday": "#C93A63",
+  "birthday-premium": "#BE355D",
   "miss-you": "#D9487F",
   "miss-you-premium": "#C23F79",
   "will-you-be-mine": "#B8435F",

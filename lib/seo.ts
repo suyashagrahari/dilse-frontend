@@ -125,6 +125,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "dandiya-partner":      { emoji: "🪔", label: "Dandiya invitation" },
   sorry:                  { emoji: "🥺", label: "Sorry page" },
   "happy-birthday":       { emoji: "🎂", label: "Birthday surprise" },
+  "birthday-premium":     { emoji: "📖", label: "Birthday storybook" },
   "miss-you":             { emoji: "🥹", label: "Miss You page" },
   "miss-you-premium":     { emoji: "🩵", label: "Miss You page" },
   "will-you-be-mine":     { emoji: "💍", label: "Proposal page" },
@@ -159,6 +160,10 @@ const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day", "happy-k
 
 /** Templates with their own teaser preview (the brief's delivery plan). */
 const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
+  "birthday-premium": (r, s) => ({
+    title: `📖 ${r}, someone made you a birthday storybook`,
+    description: `${s} wrote a little book about you. Peel it open and make a wish 🌼`,
+  }),
   "happy-birthday": (r, s) => ({
     title: `🎂 ${r}, someone made you a birthday surprise`,
     description: `${s} wrapped something up for you. Untie the ribbon and make a wish 🎈`,

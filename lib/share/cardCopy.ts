@@ -69,6 +69,7 @@ const COPY: Record<string, CardCopy> = {
   "dandiya-partner": { kicker: "Happy Navratri", headline: "Be My Dandiya Partner", line: "The dhol is calling 🥁" },
   sorry: { kicker: "Psst…", headline: "I'm Sorry", line: "Please open this before you stay mad 🥺" },
   "happy-birthday": { kicker: "Happy Birthday", headline: "A Birthday Surprise", line: "Untie the ribbon 🎀" },
+  "birthday-premium": { kicker: "✦ Happy Birthday", headline: "A Birthday Storybook", line: "Peel it open 📖" },
   "miss-you": { kicker: "Incoming call", headline: "I Miss You", line: "Pick up, it's me 🥹" },
   "miss-you-premium": { kicker: "Air mail ✦", headline: "Two Dots, One Heart", line: "Good morning from far away 🩵" },
   "will-you-be-mine": { kicker: "Psst…", headline: "Will You Be Mine?", line: "Someone has a very big question for you 💍" },

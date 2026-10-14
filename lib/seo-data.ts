@@ -2758,6 +2758,92 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Birthday Surprise ✦ Premium — the pop-up birthday storybook on the
+  // Valentine engine (✦ premium). The premium edition of /happy-birthday with
+  // its own scenes, so its keywords lean on "interactive birthday website",
+  // the years-together timeline and the game-like scenes (claw machine,
+  // scratch ticket, dandelion). No rating, no price.
+  "birthday-premium": {
+    title: "Interactive Birthday Website for Girlfriend — A Pop-Up Birthday Storybook",
+    description:
+      "A premium birthday surprise website they play like a storybook: blow a dandelion of wishes, ride a hot-air balloon over your love story, win reasons from a claw machine, develop a photo-booth strip, bake a cake, scratch a golden ticket and keep a stamped birthday passport.",
+    category: "Birthday",
+    emoji: "📖",
+
+    keywords: [
+      // ── PRIMARY ──
+      "interactive birthday website for girlfriend",
+      "birthday surprise website for boyfriend",
+      "premium birthday website",
+      "birthday storybook online",
+      "digital birthday gift for girlfriend",
+      "personalised birthday website with photos",
+      "birthday link to send on whatsapp",
+      // ── THE PAGE ──
+      "years together timeline birthday",
+      "claw machine reasons i love you",
+      "scratch card birthday surprise",
+      "blow a dandelion make a wish online",
+      "photo booth strip birthday",
+      "bake a virtual birthday cake",
+      "birthday passport keepsake",
+      // ── WHO IT'S FOR ──
+      "birthday surprise for wife online",
+      "long distance birthday surprise website",
+      "romantic birthday surprise ideas online",
+    ],
+
+    faqs: [
+      {
+        question: "What is the Birthday Storybook?",
+        answer:
+          "It is a premium birthday surprise website you make in a few minutes and send as a private link. They open it like a pop-up storybook: peel the cover up, make a wish and blow a dandelion, float a hot-air balloon over the milestones of your story with a days-together counter, play a claw machine where every capsule holds a reason you love them, shake a photo-booth strip of your photos until it develops, bake and decorate a cake, scratch a golden ticket to find your real gift, pull open your pop-up letter and answer \"Birthday date with me tonight?\". It ends with a stamped birthday passport they can download.",
+      },
+      {
+        question: "How is it different from the Happy Birthday template?",
+        answer:
+          "Every scene is new. Happy Birthday is the gift box, candles, cake cut, balloons and coupons; the Storybook is the premium edition with a timeline of your relationship, game-like scenes (a claw machine, a scratch-off ticket, a bakery), a photo booth and a passport keepsake, in four pastel looks.",
+      },
+      {
+        question: "Can they really blow the dandelion?",
+        answer:
+          "Yes. They can blow into the phone's microphone and the seeds fly off, or swipe across the dandelion to make wind. The mic is only used on that screen, only if they allow it, and nothing is recorded or sent anywhere.",
+      },
+      {
+        question: "What do I need to fill in?",
+        answer:
+          "Their name and yours, and optionally the date you got together, five wishes for their year, four or five milestones of your story, six reasons you love them, the real gift on the golden ticket, a birthday letter and up to six photos. Everything is pre-filled with sweet defaults, and the AI can write it all from a few lines about them.",
+      },
+      {
+        question: "Will I know if they said yes?",
+        answer:
+          "Yes. If they tap \"hmm…\" a prize wheel spins — and every slice says yes. When they say yes they can pick when: tonight, this weekend or you plan it. You get an email with their answer and their pick.",
+      },
+      {
+        question: "Can I add our song?",
+        answer:
+          "Yes. It starts with Good Time by Owl City and Carly Rae Jepsen, or pick golden hour, Lover, Sunflower, Tum Hi Ho, Tera Ban Jaunga, Apna Bana Le or Pehla Nasha in one tap, or paste any YouTube link. Only the sound plays, and music starts on their first tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an Interactive Birthday Storybook Website",
+      description: "Build a premium birthday surprise — wishes, your story, reasons, photos, a real gift and a letter — and send it as a link.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Birthday Surprise ✦ Premium page on SubhSandesh and press Create." },
+        { name: "Pick a Look and a Feel", text: "Choose one of four pastel looks and whether it should feel cute, emotional or funny." },
+        { name: "Write Your Story", text: "Add the date you got together, your milestones, five wishes and six reasons you love them — or let the AI write them from a short story." },
+        { name: "Add the Gift and the Letter", text: "Put your real plan on the golden ticket, write your letter, add up to six photos and pick a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Miss You — an evergreen long-distance "I miss you" on the Valentine engine
   // (✦ premium). Distinct from the older "missyou-gf" letter: this one is the
   // interactive LDR page (map + km, countdown, open-when letters, a hug across
