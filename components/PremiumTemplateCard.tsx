@@ -11,6 +11,7 @@ interface PremiumTemplateCardProps {
   onFavorite: (e: React.MouseEvent, slug: string) => void;
   rank?: number;
   created?: number;
+  isNew?: boolean;
 }
 
 /**
@@ -63,6 +64,9 @@ export const PREMIUM_CARD_CSS = `
   font: 800 9.5px/1 'Inter', system-ui, sans-serif; letter-spacing: .2em; text-transform: uppercase;
   box-shadow: 0 6px 16px -6px rgba(90,55,5,.7), inset 0 1px 0 rgba(255,255,255,.7); }
 @media (min-width: 768px) { .pmSeal { bottom: 14px; font-size: 10.5px; padding: 6px 13px 6px 11px; } }
+/* The price strip sits under the cover inside the frame: keep the seal on the cover. */
+.pmBody .pmSeal { bottom: 50px; }
+@media (min-width: 768px) { .pmBody .pmSeal { bottom: 58px; } }
 @media (hover: hover) {
   .pmFrame:hover { transform: translateY(-6px); box-shadow: 0 26px 50px -20px rgba(160,110,20,.65), 0 0 0 1px rgba(245,215,126,.4); }
   .pmFrame .tplLink:hover .tplInner, .pmFrame .tplLink:hover::after { transform: none; }
