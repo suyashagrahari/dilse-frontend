@@ -125,8 +125,12 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "dandiya-partner":      { emoji: "🪔", label: "Dandiya invitation" },
   sorry:                  { emoji: "🥺", label: "Sorry page" },
   "happy-birthday":       { emoji: "🎂", label: "Birthday surprise" },
+  "birthday-premium":     { emoji: "📖", label: "Birthday storybook" },
   "miss-you":             { emoji: "🥹", label: "Miss You page" },
+  "miss-you-premium":     { emoji: "🩵", label: "Miss You page" },
   "will-you-be-mine":     { emoji: "💍", label: "Proposal page" },
+  "sorry-premium":        { emoji: "🌦️", label: "Sorry page ✦" },
+  "proposal-premium":     { emoji: "💍", label: "Proposal" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
@@ -158,9 +162,17 @@ const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day", "happy-k
 
 /** Templates with their own teaser preview (the brief's delivery plan). */
 const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
+  "birthday-premium": (r, s) => ({
+    title: `📖 ${r}, someone made you a birthday storybook`,
+    description: `${s} wrote a little book about you. Peel it open and make a wish 🌼`,
+  }),
   "happy-birthday": (r, s) => ({
     title: `🎂 ${r}, someone made you a birthday surprise`,
     description: `${s} wrapped something up for you. Untie the ribbon and make a wish 🎈`,
+  }),
+  "miss-you-premium": (r, s) => ({
+    title: `🩵 ${r}, two dots on a map… one of them is you`,
+    description: `${s} planned you a whole day from far away: a radio, a picnic, the stars and a sunrise where the distance runs down to 0 🩵`,
   }),
   "miss-you": (r, s) => ({
     title: `🥹 ${r}, someone misses you a lot`,
@@ -170,9 +182,17 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
     title: `🥺 ${r}, someone is very, very sorry`,
     description: `${s} made you something. Please open it before you stay mad 💗`,
   }),
+  "proposal-premium": (r, s) => ({
+    title: `💌 ${r}, you're invited`,
+    description: `${s} made you a little garden at golden hour, and there's a very big question at the end 💍`,
+  }),
   "will-you-be-mine": (r, s) => ({
     title: `💍 ${r}, someone has a question for you`,
     description: `${s} made you something. Open it when you're smiling 💗`,
+  }),
+  "sorry-premium": (r, s) => ({
+    title: `🌧️ ${r}, someone is at your door in the rain`,
+    description: `${s} is very sorry. Open the door… the sky might clear 🌈`,
   }),
   "dandiya-partner": (r, s) => ({
     title: `🪔 ${r}, you've been invited to a Dandiya night`,

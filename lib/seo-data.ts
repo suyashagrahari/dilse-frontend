@@ -2666,6 +2666,85 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // I'm Sorry ✦ Premium ("After the Rain") — Sorry's premium edition on the
+  // Valentine engine. Searchers want an "apology website for girlfriend" that
+  // feels made by hand: interactive, with their photos and a real way to
+  // answer. The FAQs answer what happens, the "I need time" answer, the
+  // skies and the keepsake. No rating, no price.
+  "sorry-premium": {
+    title: "Premium Sorry Website for Girlfriend or Boyfriend — After the Rain",
+    description:
+      "The premium apology page: a little bear knocks at their door in the rain, they water a wilted flower until it blooms, mend a cracked heart, crack fortune cookies, shake a jar of paper stars, sail your letter across a puddle and sign a peace contract while the sky clears into a rainbow.",
+    category: "Sorry",
+    emoji: "🌦️",
+
+    keywords: [
+      // ── PRIMARY ──
+      "apology website for girlfriend",
+      "sorry website for boyfriend",
+      "premium sorry page",
+      "interactive apology website",
+      "cute sorry website with photos",
+      "forgive me website",
+      "sorry link for whatsapp",
+      // ── THE PAGE ──
+      "sorry page with rainbow",
+      "apology with fortune cookies",
+      "peace treaty for couples",
+      "apology contract for girlfriend",
+      "paper stars reasons i love you",
+      // ── WHO IT'S FOR ──
+      "how to apologise to girlfriend",
+      "sorry for wife",
+      "maaf kar do message",
+    ],
+
+    faqs: [
+      {
+        question: "What is the I'm Sorry ✦ Premium page?",
+        answer:
+          "It is the premium edition of our I'm Sorry template, built around one idea: the sky over the page starts as a soft pastel drizzle and clears a little with every scene, until a rainbow comes out. Every scene is something they do — water a flower, mend a heart, crack a cookie, sail a boat — so the apology is felt, not just read.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "A little bear with an umbrella knocks at their door with a knock-knock joke. They drag a watering can over a wilted flower until it blooms with what you did, stick plasters on a cracked heart (each shows how you understand it felt), crack three fortune cookies with what you learnt, shake a jar of paper stars with things you love about them, see your photos pegged on a washing line, sail your letter across a puddle and sign a peace contract of your promises with their finger. Then comes the question, and it ends with a rainbow and a Peace Treaty keepsake they can download.",
+      },
+      {
+        question: "Can they say they need time?",
+        answer:
+          "Yes, and by default they can. Research on apologies says pressure makes them feel fake, so the question has a real “I need a little time” answer next to Yes. It leads to a warm, complete screen, and you get an email either way. You can switch to a single Yes button if you prefer.",
+      },
+      {
+        question: "How is it different from the regular I'm Sorry page?",
+        answer:
+          "Every scene is new: no envelope, slider, scratch card, bubbles, coupons or runaway No. It adds the rain-to-rainbow sky, drag-and-drop scenes, a signature pad, a days-together counter, six animated stickers you can swap or hide, a choice of cute, emotional or funny tone, and the Peace Treaty keepsake with their own signature on it.",
+      },
+      {
+        question: "Can I change the colours and the song?",
+        answer:
+          "Yes. Pick Rainy Blush, Mint Matcha Morning, Lilac Drizzle or Peach Sunbreak and the whole page re-colours. It plays Thinking Out Loud by default; tap one of ten English and Hindi suggestions such as Baarishein or Agar Tum Saath Ho, or paste any YouTube link. Music starts only after their first tap.",
+      },
+      {
+        question: "Can I lock it with a password or edit it later?",
+        answer:
+          "Yes to both. Set an optional password when you publish, and edit and republish any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Premium Sorry Website",
+      description: "Build an interactive apology — what you did, how it felt, what you learnt, your promises and the question — and send it as a link.",
+      totalTime: "PT8M",
+      steps: [
+        { name: "Open the Template", text: "Go to I'm Sorry ✦ Premium on SubhSandesh and press Create." },
+        { name: "Pick a Sky and a Tone", text: "Choose one of four pastel skies and a cute, emotional or funny tone." },
+        { name: "Own It", text: "Write what you did, how you think it felt, and what you learnt — or let the AI write them from a short story." },
+        { name: "Add Your Promises and Memories", text: "Add the contract's promises, the paper stars, your letter, up to six photos and a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Happy Birthday — an evergreen birthday surprise on the Valentine engine
   // (✦ premium). Searchers want a "birthday website for girlfriend /
   // boyfriend" they can send as a link, with candles to blow and their
@@ -2758,6 +2837,92 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Birthday Surprise ✦ Premium — the pop-up birthday storybook on the
+  // Valentine engine (✦ premium). The premium edition of /happy-birthday with
+  // its own scenes, so its keywords lean on "interactive birthday website",
+  // the years-together timeline and the game-like scenes (claw machine,
+  // scratch ticket, dandelion). No rating, no price.
+  "birthday-premium": {
+    title: "Interactive Birthday Website for Girlfriend — A Pop-Up Birthday Storybook",
+    description:
+      "A premium birthday surprise website they play like a storybook: blow a dandelion of wishes, ride a hot-air balloon over your love story, win reasons from a claw machine, develop a photo-booth strip, bake a cake, scratch a golden ticket and keep a stamped birthday passport.",
+    category: "Birthday",
+    emoji: "📖",
+
+    keywords: [
+      // ── PRIMARY ──
+      "interactive birthday website for girlfriend",
+      "birthday surprise website for boyfriend",
+      "premium birthday website",
+      "birthday storybook online",
+      "digital birthday gift for girlfriend",
+      "personalised birthday website with photos",
+      "birthday link to send on whatsapp",
+      // ── THE PAGE ──
+      "years together timeline birthday",
+      "claw machine reasons i love you",
+      "scratch card birthday surprise",
+      "blow a dandelion make a wish online",
+      "photo booth strip birthday",
+      "bake a virtual birthday cake",
+      "birthday passport keepsake",
+      // ── WHO IT'S FOR ──
+      "birthday surprise for wife online",
+      "long distance birthday surprise website",
+      "romantic birthday surprise ideas online",
+    ],
+
+    faqs: [
+      {
+        question: "What is the Birthday Storybook?",
+        answer:
+          "It is a premium birthday surprise website you make in a few minutes and send as a private link. They open it like a pop-up storybook: peel the cover up, make a wish and blow a dandelion, float a hot-air balloon over the milestones of your story with a days-together counter, play a claw machine where every capsule holds a reason you love them, shake a photo-booth strip of your photos until it develops, bake and decorate a cake, scratch a golden ticket to find your real gift, pull open your pop-up letter and answer \"Birthday date with me tonight?\". It ends with a stamped birthday passport they can download.",
+      },
+      {
+        question: "How is it different from the Happy Birthday template?",
+        answer:
+          "Every scene is new. Happy Birthday is the gift box, candles, cake cut, balloons and coupons; the Storybook is the premium edition with a timeline of your relationship, game-like scenes (a claw machine, a scratch-off ticket, a bakery), a photo booth and a passport keepsake, in four pastel looks.",
+      },
+      {
+        question: "Can they really blow the dandelion?",
+        answer:
+          "Yes. They can blow into the phone's microphone and the seeds fly off, or swipe across the dandelion to make wind. The mic is only used on that screen, only if they allow it, and nothing is recorded or sent anywhere.",
+      },
+      {
+        question: "What do I need to fill in?",
+        answer:
+          "Their name and yours, and optionally the date you got together, five wishes for their year, four or five milestones of your story, six reasons you love them, the real gift on the golden ticket, a birthday letter and up to six photos. Everything is pre-filled with sweet defaults, and the AI can write it all from a few lines about them.",
+      },
+      {
+        question: "Will I know if they said yes?",
+        answer:
+          "Yes. If they tap \"hmm…\" a prize wheel spins — and every slice says yes. When they say yes they can pick when: tonight, this weekend or you plan it. You get an email with their answer and their pick.",
+      },
+      {
+        question: "Can I add our song?",
+        answer:
+          "Yes. It starts with Good Time by Owl City and Carly Rae Jepsen, or pick golden hour, Lover, Sunflower, Tum Hi Ho, Tera Ban Jaunga, Apna Bana Le or Pehla Nasha in one tap, or paste any YouTube link. Only the sound plays, and music starts on their first tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an Interactive Birthday Storybook Website",
+      description: "Build a premium birthday surprise — wishes, your story, reasons, photos, a real gift and a letter — and send it as a link.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Birthday Surprise ✦ Premium page on SubhSandesh and press Create." },
+        { name: "Pick a Look and a Feel", text: "Choose one of four pastel looks and whether it should feel cute, emotional or funny." },
+        { name: "Write Your Story", text: "Add the date you got together, your milestones, five wishes and six reasons you love them — or let the AI write them from a short story." },
+        { name: "Add the Gift and the Letter", text: "Put your real plan on the golden ticket, write your letter, add up to six photos and pick a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Miss You — an evergreen long-distance "I miss you" on the Valentine engine
   // (✦ premium). Distinct from the older "missyou-gf" letter: this one is the
   // interactive LDR page (map + km, countdown, open-when letters, a hug across
@@ -2840,6 +3005,88 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
         { name: "Pick a Look and Who It's For", text: "Choose Midnight Stars, Sunset Peach, Cloud Lilac or Moonlight Mint, and your love, your crush or your bestie." },
         { name: "Add Your Cities and the Date", text: "Type both cities (the km are worked out for you) and the day you'll see them, if you know it." },
         { name: "Fill the Jar and the Envelopes", text: "Write the little things you miss and a few open-when letters, your letter and photos — or let the AI write them." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
+  // Miss You ✦ Premium — the premium edition of Miss You on the Valentine
+  // engine: a whole long-distance day (radio voice notes, a photo-booth strip,
+  // a picnic date, a tear-off countdown, a message in a bottle, synced
+  // heartbeats, initials in the stars, an airmail postcard). Keywords lean on
+  // "premium / virtual date / long distance surprise website" so it does not
+  // cannibalise "miss-you". No rating, no price.
+  "miss-you-premium": {
+    title: "Long Distance Surprise Website — Premium Miss You Page with a Virtual Date",
+    description:
+      "A whole long-distance day as a link: open the curtains to a sky with their name, tune a radio to your voice notes, a photo-booth strip, a virtual picnic date, a countdown to the day you meet, a message in a bottle, synced heartbeats, your initials in the stars and an airmail postcard keepsake.",
+    category: "Miss You",
+    emoji: "🩵",
+
+    keywords: [
+      // ── PRIMARY ──
+      "long distance surprise website",
+      "premium miss you website",
+      "virtual date for long distance couple",
+      "long distance relationship gift website",
+      "message in a bottle online",
+      "website for long distance girlfriend",
+      "website for long distance boyfriend",
+      "distance means nothing gift",
+      // ── THE PAGE ──
+      "virtual picnic date",
+      "voice notes radio love page",
+      "our initials constellation",
+      "heartbeat sync long distance",
+      "countdown to see you again",
+      "airmail postcard keepsake",
+      // ── WHO IT'S FOR ──
+      "ldr surprise for girlfriend",
+      "miss you surprise for boyfriend abroad",
+      "tumhari yaad aa rahi hai page",
+    ],
+
+    faqs: [
+      {
+        question: "What is the premium Miss You page?",
+        answer:
+          "It's a whole long-distance day in one private link. It starts in the morning and ends at the next sunrise: they open the curtains to a sky where a little plane writes their name, tune a radio to find your voice notes, pull a photo-booth strip of your photos, set up a picnic date, tear calendar pages down to the day you meet, drag a message in a bottle out of the waves, tap along until your heartbeats sync, join the stars into your initials and answer “Video call tonight?”. It ends with an airmail postcard they can save.",
+      },
+      {
+        question: "How is it different from the regular Miss You page?",
+        answer:
+          "Every scene is a different, more hands-on moment — dragging, tuning, tearing, tapping in rhythm and drawing in the stars — and the sky changes from morning to dusk to sunrise as they go. Across the top, your two dots creep closer and the kilometres count down until they meet at the end.",
+      },
+      {
+        question: "How do I make one?",
+        answer:
+          "Open the template, press Create and add both names, your two cities, the day you'll meet (if you know it), up to three voice notes, your picnic lines, the things you miss, your letter and up to six photos. Or describe your story and let the AI write it. Pick one of four pastel looks, press Save to preview, Publish, and send the link on WhatsApp or Instagram. It opens in any phone browser with no app.",
+      },
+      {
+        question: "Do I need to know the distance?",
+        answer:
+          "No. Type your two cities and the distance is worked out for most big cities in India and abroad. You can type the exact number yourself, and show it in kilometres or miles.",
+      },
+      {
+        question: "Can they say “later” to the video call?",
+        answer:
+          "Yes, if you allow it: they can answer “Yes, call me” or an honest “Later 🌙”. Either way you get an email and see the answer on your page. You can also keep it to a single Yes.",
+      },
+      {
+        question: "Does it have music?",
+        answer:
+          "Yes. It plays Thinking Out Loud from their first tap, or pick a suggestion such as Photograph, Hawayein, Talking to the Moon, Tera Ban Jaunga or Pehle Bhi Main, or paste any YouTube link.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Long Distance Surprise Website",
+      description: "Build a premium long-distance page — voice notes, a picnic date, a countdown, a letter in a bottle and an airmail postcard — and send it as a link.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Template", text: "Go to Miss You ✦ Premium on SubhSandesh and press Create." },
+        { name: "Pick a Look and Who It's For", text: "Choose Cotton Candy Sky, Lavender Postcard, Peach Airmail or Mint Breeze, and your love, your crush or your bestie." },
+        { name: "Add Your Cities and the Date", text: "Type both cities and, if you know it, the day you'll see them for the countdown." },
+        { name: "Write the Little Things", text: "Add voice notes, picnic lines, the things you miss, your letter and photos — or let the AI write them." },
         { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
       ],
     },
@@ -2927,6 +3174,94 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
         { name: "Pick a Look and What You're Asking", text: "Choose one of four looks, then be my girlfriend, be my boyfriend, marry me or go out with me." },
         { name: "Tell Your Story", text: "Add the chapters of your story, the reasons you fell for them and a little quiz of inside jokes — or let the AI write them from a short story." },
         { name: "Add the Sweet Stuff", text: "Write your letter and your promise, add up to six photos, and keep Perfect or pick another song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for the yes." },
+      ],
+    },
+  },
+  // The Proposal ✦ Premium — the premium edition of the proposal page, a
+  // fairytale garden at golden hour. Searchers want a "romantic proposal
+  // website" / "marriage proposal idea online" that feels expensive; the FAQs
+  // answer what happens, whether they can say no, and what they keep. No
+  // rating, no price (the admin sets it).
+  "proposal-premium": {
+    title: "Romantic Proposal Website Maker — Fairytale Garden Proposal Page",
+    description:
+      "Propose in a pastel garden at golden hour: a wax-sealed invitation, string lights that spell your words, a carousel of your love story, a love lock with your days together, a flower of reasons, a ring box and “Will you be mine?” — with an Officially Ours certificate and a save-the-date.",
+    category: "Love",
+    emoji: "💍",
+
+    keywords: [
+      // ── PRIMARY ──
+      "romantic proposal website",
+      "proposal website for girlfriend",
+      "marriage proposal website",
+      "online proposal page with photos",
+      "will you marry me website",
+      "will you be mine website",
+      "premium proposal page",
+      "digital proposal link",
+      // ── IDEAS ──
+      "unique proposal ideas online",
+      "cute ways to propose to your girlfriend",
+      "long distance proposal idea",
+      "how to propose to your boyfriend",
+      "propose day surprise website",
+      "shaadi karoge proposal page",
+      // ── THE PAGE ──
+      "love story timeline website",
+      "reasons why I love you flower",
+      "love lock days together counter",
+      "officially ours certificate",
+      "save the date first date card",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a romantic proposal website?",
+        answer:
+          "Open The Proposal ✦ Premium, press Create and add their name and yours, the date you got together, a few chapters of your story, the reasons you love them, your promise, your letter and up to six photos. Or describe your story in a few lines and let the AI fill it in. Pick one of four light looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They press a wax seal until it cracks and the invitation opens, then light up a string of fairy lights that spell out your line. They spin a carousel where every horse is a chapter of your story, drag a key into a heart-shaped love lock that counts your days together, and pluck a flower petal by petal, one reason each, always ending on “loves me”. They swipe through your photos, pull a ribbon to unroll your letter and swipe open a ring box. Then comes the big question.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "You choose. By default the No button wilts a little every time they reach for it while YES blooms, and after five tries it sprouts into a second YES. Or give them an honest way out: after four or five tries No becomes “Let me think about it 🤍”, which they can press. Either way you get an email the moment they answer.",
+      },
+      {
+        question: "What do they keep after saying yes?",
+        answer:
+          "After the yes, hearts burst across the sky and they slide the ring onto an illustrated hand. Then they get an “Officially Ours” certificate with both names, today's date and your together-since date, plus a save-the-date card for your first date as a couple. They can download it all as one picture, and their reply comes to you on WhatsApp.",
+      },
+      {
+        question: "Is it only for a girlfriend?",
+        answer:
+          "No. Choose what you're asking — be mine, be my boyfriend, or marry me — and the question, the YES button, the certificate and their reply change with it. Every line stays editable, so you can write your own question too.",
+      },
+      {
+        question: "Can I change the colours and the song?",
+        answer:
+          "Yes. Pick Rose Gold Blush, Champagne Pearl, Lilac Garden or Peach Bellini and the whole garden changes with it. Lover by Taylor Swift plays from their first tap. You can switch to I'm Yours, Can't Help Falling in Love, Tum Hi Ho, Hawayein or Tujhe Dekha To, or paste any YouTube link.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Propose with a Fairytale Proposal Website",
+      description: "Build a premium proposal page — your story, your days together, the reasons you love them, a ring box and “Will you be mine?” — and send it as a link.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Template", text: "Go to The Proposal ✦ Premium on SubhSandesh and press Create." },
+        { name: "Pick a Look and What You're Asking", text: "Choose Rose Gold Blush, Champagne Pearl, Lilac Garden or Peach Bellini, then be mine, be my boyfriend or marry me." },
+        { name: "Tell Your Story", text: "Add your carousel chapters, the date you got together and a reason for every petal, or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Write your letter and the promise in the ring box, add up to six photos and a first-date plan, and keep Lover or pick another song." },
         { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for the yes." },
       ],
     },

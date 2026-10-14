@@ -18,8 +18,13 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   sorry: { emoji: "🥺", gradient: ["#FFB3C7", "#FF6F91"], label: "A cute sorry page" },
   // Happy Birthday: strawberry frosting, the surprise wording.
   "happy-birthday": { emoji: "🎂", gradient: ["#FFB3C8", "#EE5583"], label: "A birthday surprise" },
+  // Birthday Surprise ✦ Premium: buttercream → strawberry, the storybook wording.
+  "birthday-premium": { emoji: "📖", gradient: ["#FFE8C4", "#E5527A"], label: "A birthday storybook" },
   "miss-you": { emoji: "🥹", gradient: ["#3A3480", "#FF7EAE"], label: "Someone misses you" },
+  "miss-you-premium": { emoji: "🩵", gradient: ["#7FA8F5", "#EC5F9C"], label: "Someone misses you" },
   "will-you-be-mine": { emoji: "💍", gradient: ["#F3BFC4", "#B8435F"], label: "A proposal page" },
+  "sorry-premium": { emoji: "🌈", gradient: ["#DCDDEA", "#F4A7BB"], label: "A sorry page, after the rain" },
+  "proposal-premium": { emoji: "💍", gradient: ["#FFD3A6", "#A63D58"], label: "A fairytale proposal" },
   // Happy Diwali: navy night → diya gold, the teaser wording (lib/seo.ts TEASER_PREVIEW).
   "happy-diwali": { emoji: "🪔", gradient: ["#4A0A0D", "#F6A821"], label: "A diya at your door" },
 };

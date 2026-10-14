@@ -21,7 +21,7 @@ export const VALENTINE_WEEK_SLUGS = [
 ] as const;
 
 /** Occasions outside Valentine's week that run on the same engine. */
-export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine"] as const;
+export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine", "miss-you-premium", "birthday-premium", "sorry-premium", "proposal-premium"] as const;
 
 /**
  * The ULTRA-PREMIUM tier ($4): one cinematic twin per base template, on the
@@ -96,10 +96,18 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   sorry: { name: "Sorry", emoji: "🥺", date: 0, month: "" },
   // Evergreen too: a birthday is any day of the year.
   "happy-birthday": { name: "Birthday", emoji: "🎂", date: 0, month: "" },
+  // Birthday Surprise ✦ Premium — the pop-up storybook; evergreen as well.
+  "birthday-premium": { name: "Birthday", emoji: "📖", date: 0, month: "" },
   // Evergreen too: a cute "I miss you" for a long-distance love.
   "miss-you": { name: "Miss You", emoji: "🥹", date: 0, month: "" },
   // Evergreen too: a proposal can happen any day.
   "will-you-be-mine": { name: "Proposal", emoji: "💍", date: 0, month: "" },
+  // Evergreen ✦: the premium edition of Miss You (two dots on a map).
+  "miss-you-premium": { name: "Miss You", emoji: "🩵", date: 0, month: "" },
+  // Evergreen: Sorry's ✦ premium edition ("After the Rain").
+  "sorry-premium": { name: "Sorry", emoji: "🌦️", date: 0, month: "" },
+  // The proposal's premium edition: evergreen as well.
+  "proposal-premium": { name: "The Proposal", emoji: "💍", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,
