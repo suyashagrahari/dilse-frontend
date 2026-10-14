@@ -28,6 +28,20 @@ export const GALLERY_LIST: TemplateListItem[] = (() => {
   return list;
 })();
 
+/**
+ * Shown first in the gallery, in this order, ahead of the most-created
+ * ranking: Dandiya, then the four ✦ premium evergreens. Only the order moves;
+ * rank badges still come from what people actually made (see rankRooms).
+ */
+export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
+
+/** `list` (already in ranking order) with PINNED_FIRST pulled to the front. */
+export function pinFirst<T extends { slug: string }>(list: T[]): T[] {
+  const at = (s: string) => PINNED_FIRST.indexOf(s);
+  const pinned = list.filter((t) => at(t.slug) >= 0).sort((a, b) => at(a.slug) - at(b.slug));
+  return [...pinned, ...list.filter((t) => at(t.slug) < 0)];
+}
+
 /** slug → registry entry. */
 export const GALLERY_BY_SLUG: ReadonlyMap<string, TemplateListItem> = new Map(GALLERY_LIST.map((t) => [t.slug, t]));
 

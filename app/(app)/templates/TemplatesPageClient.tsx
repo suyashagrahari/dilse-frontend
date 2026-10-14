@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { categories, templateTypes } from "@/data/template-registry";
-import { FORCE_COMING_SOON, GALLERY_LIST, rankRooms } from "@/lib/galleryRules";
+import { FORCE_COMING_SOON, GALLERY_LIST, pinFirst, rankRooms } from "@/lib/galleryRules";
 import type { TemplateListItem } from "@/types/template-config";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
@@ -386,7 +386,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   //    the tie-break and for anything with no pages yet.
   const { tiers, ranking } = useTemplateMeta();
   const createdBy = useMemo(() => new Map(ranking.map((r) => [r.slug, r.created])), [ranking]);
-  const visible = useMemo(() => {
+  const ranked = useMemo(() => {
     const idx = new Map(GALLERY_LIST.map((t, i) => [t.slug, i]));
     return GALLERY_LIST
       .filter((t) => !hiddenTemplates.has(t.slug))
@@ -397,7 +397,9 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   // The five most-created templates in each room get a rank badge. Ranked
   // against the whole room, not the filtered view, so a badge means the same
   // thing whatever you searched for.
-  const rankOf = useMemo(() => rankRooms(visible, createdBy), [visible, createdBy]);
+  const rankOf = useMemo(() => rankRooms(ranked, createdBy), [ranked, createdBy]);
+  // Display order: Dandiya and the ✦ evergreens first (PINNED_FIRST), then the ranking.
+  const visible = useMemo(() => pinFirst(ranked), [ranked]);
 
   const q = search.trim().toLowerCase();
   const matchBase = (t: TemplateListItem) =>
