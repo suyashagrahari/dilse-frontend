@@ -3178,6 +3178,94 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // The Proposal ✦ Premium — the premium edition of the proposal page, a
+  // fairytale garden at golden hour. Searchers want a "romantic proposal
+  // website" / "marriage proposal idea online" that feels expensive; the FAQs
+  // answer what happens, whether they can say no, and what they keep. No
+  // rating, no price (the admin sets it).
+  "proposal-premium": {
+    title: "Romantic Proposal Website Maker — Fairytale Garden Proposal Page",
+    description:
+      "Propose in a pastel garden at golden hour: a wax-sealed invitation, string lights that spell your words, a carousel of your love story, a love lock with your days together, a flower of reasons, a ring box and “Will you be mine?” — with an Officially Ours certificate and a save-the-date.",
+    category: "Love",
+    emoji: "💍",
+
+    keywords: [
+      // ── PRIMARY ──
+      "romantic proposal website",
+      "proposal website for girlfriend",
+      "marriage proposal website",
+      "online proposal page with photos",
+      "will you marry me website",
+      "will you be mine website",
+      "premium proposal page",
+      "digital proposal link",
+      // ── IDEAS ──
+      "unique proposal ideas online",
+      "cute ways to propose to your girlfriend",
+      "long distance proposal idea",
+      "how to propose to your boyfriend",
+      "propose day surprise website",
+      "shaadi karoge proposal page",
+      // ── THE PAGE ──
+      "love story timeline website",
+      "reasons why I love you flower",
+      "love lock days together counter",
+      "officially ours certificate",
+      "save the date first date card",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a romantic proposal website?",
+        answer:
+          "Open The Proposal ✦ Premium, press Create and add their name and yours, the date you got together, a few chapters of your story, the reasons you love them, your promise, your letter and up to six photos. Or describe your story in a few lines and let the AI fill it in. Pick one of four light looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They press a wax seal until it cracks and the invitation opens, then light up a string of fairy lights that spell out your line. They spin a carousel where every horse is a chapter of your story, drag a key into a heart-shaped love lock that counts your days together, and pluck a flower petal by petal, one reason each, always ending on “loves me”. They swipe through your photos, pull a ribbon to unroll your letter and swipe open a ring box. Then comes the big question.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "You choose. By default the No button wilts a little every time they reach for it while YES blooms, and after five tries it sprouts into a second YES. Or give them an honest way out: after four or five tries No becomes “Let me think about it 🤍”, which they can press. Either way you get an email the moment they answer.",
+      },
+      {
+        question: "What do they keep after saying yes?",
+        answer:
+          "After the yes, hearts burst across the sky and they slide the ring onto an illustrated hand. Then they get an “Officially Ours” certificate with both names, today's date and your together-since date, plus a save-the-date card for your first date as a couple. They can download it all as one picture, and their reply comes to you on WhatsApp.",
+      },
+      {
+        question: "Is it only for a girlfriend?",
+        answer:
+          "No. Choose what you're asking — be mine, be my boyfriend, or marry me — and the question, the YES button, the certificate and their reply change with it. Every line stays editable, so you can write your own question too.",
+      },
+      {
+        question: "Can I change the colours and the song?",
+        answer:
+          "Yes. Pick Rose Gold Blush, Champagne Pearl, Lilac Garden or Peach Bellini and the whole garden changes with it. Lover by Taylor Swift plays from their first tap. You can switch to I'm Yours, Can't Help Falling in Love, Tum Hi Ho, Hawayein or Tujhe Dekha To, or paste any YouTube link.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Propose with a Fairytale Proposal Website",
+      description: "Build a premium proposal page — your story, your days together, the reasons you love them, a ring box and “Will you be mine?” — and send it as a link.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Template", text: "Go to The Proposal ✦ Premium on SubhSandesh and press Create." },
+        { name: "Pick a Look and What You're Asking", text: "Choose Rose Gold Blush, Champagne Pearl, Lilac Garden or Peach Bellini, then be mine, be my boyfriend or marry me." },
+        { name: "Tell Your Story", text: "Add your carousel chapters, the date you got together and a reason for every petal, or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Write your letter and the promise in the ring box, add up to six photos and a first-date plan, and keep Lover or pick another song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for the yes." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or

@@ -70,6 +70,7 @@ import { config as missYouCfg } from "@/app/(templates)/miss-you/config";
 import { config as missYouPremiumCfg } from "@/app/(templates)/miss-you-premium/config";
 import { config as willYouBeMineCfg } from "@/app/(templates)/will-you-be-mine/config";
 import { config as sorryPremiumCfg } from "@/app/(templates)/sorry-premium/config";
+import { config as proposalPremiumCfg } from "@/app/(templates)/proposal-premium/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -129,6 +130,10 @@ const allConfigs = [
   //    premium (ULTRA_PREMIUM_SLUGS). Ships hidden on the apex (server
   //    DEFAULT_HIDDEN) until released; the price is set in /admin/pricing. ──
   sorryPremiumCfg,
+  // ── The Proposal ✦ Premium — the proposal's premium edition, ✦ premium
+  //    (ULTRA_PREMIUM_SLUGS). Ships hidden on the apex (server DEFAULT_HIDDEN)
+  //    until released; the price is set in /admin/pricing. ────────────────
+  proposalPremiumCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -258,6 +263,7 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "will-you-be-mine",
   "miss-you-premium",
   "sorry-premium",
+  "proposal-premium",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
