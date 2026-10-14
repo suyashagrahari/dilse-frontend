@@ -33,7 +33,7 @@ export const GALLERY_LIST: TemplateListItem[] = (() => {
  * ranking: Dandiya, then the four ✦ premium evergreens. Only the order moves;
  * rank badges still come from what people actually made (see rankRooms).
  */
-export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
+export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "anniversary-premium", "happy-anniversary", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
 
 /**
  * Launch day per template (IST, yyyy-mm-dd). For NEW_LAUNCH_DAYS after it the
@@ -46,6 +46,8 @@ export const LAUNCHES: Readonly<Record<string, string>> = {
   "will-you-be-mine": "2026-10-14",
   "happy-birthday": "2026-10-14",
   "miss-you": "2026-10-14",
+  "anniversary-premium": "2026-10-15",
+  "happy-anniversary": "2026-10-15",
 };
 export const NEW_LAUNCH_DAYS = 10;
 
