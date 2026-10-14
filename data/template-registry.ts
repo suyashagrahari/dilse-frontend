@@ -65,6 +65,7 @@ import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config
 import { config as dandiyaPartnerCfg } from "@/app/(templates)/dandiya-partner/config";
 import { config as sorryCfg } from "@/app/(templates)/sorry/config";
 import { config as happyBirthdayCfg } from "@/app/(templates)/happy-birthday/config";
+import { config as birthdayPremiumCfg } from "@/app/(templates)/birthday-premium/config";
 import { config as missYouCfg } from "@/app/(templates)/miss-you/config";
 import { config as willYouBeMineCfg } from "@/app/(templates)/will-you-be-mine/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
@@ -102,6 +103,11 @@ const allConfigs = [
   // ── Happy Birthday — evergreen, ✦ premium (ULTRA_PREMIUM_SLUGS). Ships
   //    hidden on the apex (server DEFAULT_HIDDEN) until released. ─────────
   happyBirthdayCfg,
+
+  // ── Birthday Surprise ✦ Premium — the pop-up birthday storybook, evergreen,
+  //    ✦ premium (ULTRA_PREMIUM_SLUGS). Ships hidden on the apex (server
+  //    DEFAULT_HIDDEN) until released; the price is set in /admin/pricing. ──
+  birthdayPremiumCfg,
 
   // ── Miss You — evergreen, ✦ premium (ULTRA_PREMIUM_SLUGS), a long-distance
   //    "I miss you" on the same engine. Ships hidden on the apex (server
@@ -236,6 +242,7 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "happy-halloween-premium",
   "sorry",
   "happy-birthday",
+  "birthday-premium",
   "miss-you",
   "will-you-be-mine",
 ]);
