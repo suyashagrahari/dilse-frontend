@@ -2931,6 +2931,94 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Anniversary ✦ Premium — "The Book of Us", the flagship anniversary page on
+  // the Valentine engine. Searchers want an "anniversary website for
+  // girlfriend / husband" they can send as a link, with a timeline, photos and
+  // a "together since" counter; the FAQs answer how it works, whether it suits
+  // married couples, the lock, and the keepsakes. No rating, no price.
+  "anniversary-premium": {
+    title: "Anniversary Website for Girlfriend, Wife or Husband — The Book of Us",
+    description:
+      "An interactive anniversary storybook: your names in film-style titles, two paths that meet, a time machine through every year, your firsts on vinyl, a memory quilt, the letter as a book, your year in numbers, promise lanterns and a Certificate of Forever.",
+    category: "Love",
+    emoji: "💞",
+
+    keywords: [
+      // ── PRIMARY ──
+      "anniversary website for girlfriend",
+      "anniversary website for boyfriend",
+      "anniversary surprise website",
+      "interactive anniversary gift link",
+      "digital anniversary gift",
+      "happy anniversary page with photos",
+      "anniversary gift for wife online",
+      "anniversary gift for husband online",
+      // ── THE PAGE ──
+      "our love story timeline website",
+      "days together counter anniversary",
+      "our year in numbers couple",
+      "anniversary letter for girlfriend",
+      "reasons I love you anniversary",
+      "promises for next year anniversary",
+      "certificate of forever",
+      // ── WHO IT'S FOR ──
+      "1st anniversary gift for girlfriend",
+      "wedding anniversary surprise for wife",
+      "relationship anniversary ideas",
+      "long distance anniversary gift",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make an anniversary website for my partner?",
+        answer:
+          "Open the Anniversary ✦ Premium template, press Create and add their name and yours, your anniversary date, where you met, a chapter for each year, your firsts, the little things you love, your reasons, promises and plans, your letter and up to ten photos. Or describe your story in a few lines and let the AI write it. Pick one of four looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "It plays like a little film. They pull focus on your names in the opening titles, trace two paths until they meet where you met, spin a time machine through every year of you (each year turns into its own season with a photo), drop your firsts on a record player, lift things off a breakfast tray to find the little things you love, stitch a heart-shaped quilt of photos and reasons, turn the pages of your letter, watch your year in numbers, flick promise lanterns into the sky and raise the sun over next year's plans. Then you ask your question, and they answer by dragging their heart into yours.",
+      },
+      {
+        question: "Does it work for married couples too?",
+        answer:
+          "Yes. Choose girlfriend, boyfriend, wife, husband or partner and the question, the wording and the reply change with it. Use your wedding date or the day you got together; the page works out the years, months and days, the hours and the sunrises you have shared, and which anniversary it is.",
+      },
+      {
+        question: "Can I lock it until our anniversary?",
+        answer:
+          "Yes, if you like. Lock it with “our date” so they have to type the day and month of your anniversary to open it, or set a countdown so it stays sealed until the day you pick. You can also set a password when you publish.",
+      },
+      {
+        question: "What do they get to keep?",
+        answer:
+          "A Certificate of Forever with both your names, how long you have been together and your next date, plus an “Our Year in Numbers” story card sized for Instagram and WhatsApp status. Both download as images, and you get an email the moment they answer your question.",
+      },
+      {
+        question: "Can I add our song and change the colours?",
+        answer:
+          "Yes. It plays A Thousand Years by default from their first tap. You can pick Perfect, All of Me, Tum Hi Ho, Kesariya, Raataan Lambiyan and more, or paste any YouTube link; only the sound plays. Pick Champagne Pearl, Blush Ivory, Lilac Dawn or Sage Linen and the whole book changes colour.",
+      },
+      {
+        question: "Can I edit it after sending?",
+        answer:
+          "Yes. Edit and republish any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an Anniversary Website for Your Partner",
+      description: "Build an interactive anniversary storybook — your years together, your firsts, your promises and a question — and send it as a link.",
+      totalTime: "PT10M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Anniversary ✦ Premium page on SubhSandesh and press Create." },
+        { name: "Pick a Look and Who It's For", text: "Choose one of four looks, then girlfriend, boyfriend, wife, husband or partner, and add your anniversary date." },
+        { name: "Write Your Chapters", text: "Add a chapter for each year, your firsts, the little things, your reasons and your numbers — or let the AI write them from a short story." },
+        { name: "Add Photos, Letter and Song", text: "Add up to ten photos and your letter, keep A Thousand Years or pick another song, and optionally lock it with your date." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for their answer." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or
