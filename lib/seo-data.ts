@@ -2931,6 +2931,93 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Happy Anniversary — "Our Little Love Museum", an evergreen ✦ premium page
+  // on the Valentine engine. Searchers want an "anniversary website / digital
+  // anniversary gift" for a girlfriend, boyfriend, wife or husband that they
+  // can send as a link; the FAQs answer the dating-vs-married question and how
+  // the time-together counter works. No rating, no price.
+  "happy-anniversary": {
+    title: "Happy Anniversary Website — a Love Museum of Your Story",
+    description:
+      "Make them a tiny museum about the two of you: tear the admission ticket, a time-together clock, your photos framed with plaques, an audio guide of your story, a snow globe of reasons and their Masterpiece of the Year award.",
+    category: "Love",
+    emoji: "🖼️",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy anniversary website",
+      "anniversary website for girlfriend",
+      "anniversary website for boyfriend",
+      "digital anniversary gift",
+      "online anniversary surprise",
+      "anniversary gift link",
+      "interactive anniversary card",
+      "happy anniversary message with photos",
+      // ── WHO IT'S FOR ──
+      "anniversary gift for wife online",
+      "anniversary gift for husband online",
+      "first anniversary gift for girlfriend",
+      "1 year anniversary surprise for boyfriend",
+      "long distance anniversary gift",
+      "wedding anniversary wishes for wife",
+      // ── THE PAGE ──
+      "how long have we been together counter",
+      "relationship timeline website",
+      "reasons I love you anniversary",
+      "anniversary keepsake to download",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make an anniversary website for my partner?",
+        answer:
+          "Open the Happy Anniversary template, press Create, and add their name and yours, the day you got together (or your wedding day), a few milestones of your story, the reasons you love them, your promises for next year, your letter and up to six photos. Or describe your story in a few lines and let the AI write it. Pick one of four pastel looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They walk through a little museum about you two. They tear the stub off their admission ticket, pull a lever that rolls up the years, months, days and hours you've been together (with fun stats like sunrises and heartbeats), swipe your photos hung as framed artworks with museum plaques, tap an audio guide through your story, brush the dust off a painting of your first date, shake a snow globe for reasons you love them, and watch your letter write itself into the guestbook. Then comes “Another year of us?”, and they unveil their Masterpiece of the Year award, which they can download.",
+      },
+      {
+        question: "Does it work for married couples as well as dating?",
+        answer:
+          "Yes. Choose whether they're your girlfriend, boyfriend, wife, husband or partner, and set the start date to the day you met, got together or got married. The page works out which anniversary it is (1st, 5th, 10th…) and counts the time from that day. Pick a cute, emotional or funny tone and the question, the award and the audio guide change with it.",
+      },
+      {
+        question: "How does the “time together” counter work?",
+        answer:
+          "From the date you enter, the clock room counts the full years, months, days and hours you've been together, live, on the day they open it. It also shows the total sunrises together, an estimate of heartbeats and “I love you”s, and one fun stat you write yourself, like “fries you stole from my plate”.",
+      },
+      {
+        question: "Will I know when they've seen it?",
+        answer:
+          "Yes. You see when they open the page and when they reach the end, and when they say yes to another year you get an email. They can also reply to you on WhatsApp straight from the last screen.",
+      },
+      {
+        question: "Can I add our song?",
+        answer:
+          "Yes. It plays Perfect by Ed Sheeran by default from their first tap. You can pick another anniversary favourite such as All of Me, Die With A Smile, Kesariya, Tum Hi Ho or Jo Tum Mere Ho, or paste any YouTube link with an optional start time; only the sound plays.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version, so you can add to it again next anniversary.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an Anniversary Website for Your Partner",
+      description: "Build a little love museum — your time together, your photos, your story, your reasons and next year's plans — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Anniversary page on SubhSandesh and press Create." },
+        { name: "Set the Date and the Look", text: "Enter the day it all began, choose who they are to you, a tone and one of four pastel looks." },
+        { name: "Tell Your Story", text: "Add the milestones of your story, the first-date memory, the reasons you love them and next year's promises — or let the AI write them from a short story." },
+        { name: "Add Photos, the Letter and a Song", text: "Add up to six photos, write your letter, and keep Perfect or pick another song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for their yes." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or
