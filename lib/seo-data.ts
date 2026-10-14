@@ -2666,6 +2666,85 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // I'm Sorry ✦ Premium ("After the Rain") — Sorry's premium edition on the
+  // Valentine engine. Searchers want an "apology website for girlfriend" that
+  // feels made by hand: interactive, with their photos and a real way to
+  // answer. The FAQs answer what happens, the "I need time" answer, the
+  // skies and the keepsake. No rating, no price.
+  "sorry-premium": {
+    title: "Premium Sorry Website for Girlfriend or Boyfriend — After the Rain",
+    description:
+      "The premium apology page: a little bear knocks at their door in the rain, they water a wilted flower until it blooms, mend a cracked heart, crack fortune cookies, shake a jar of paper stars, sail your letter across a puddle and sign a peace contract while the sky clears into a rainbow.",
+    category: "Sorry",
+    emoji: "🌦️",
+
+    keywords: [
+      // ── PRIMARY ──
+      "apology website for girlfriend",
+      "sorry website for boyfriend",
+      "premium sorry page",
+      "interactive apology website",
+      "cute sorry website with photos",
+      "forgive me website",
+      "sorry link for whatsapp",
+      // ── THE PAGE ──
+      "sorry page with rainbow",
+      "apology with fortune cookies",
+      "peace treaty for couples",
+      "apology contract for girlfriend",
+      "paper stars reasons i love you",
+      // ── WHO IT'S FOR ──
+      "how to apologise to girlfriend",
+      "sorry for wife",
+      "maaf kar do message",
+    ],
+
+    faqs: [
+      {
+        question: "What is the I'm Sorry ✦ Premium page?",
+        answer:
+          "It is the premium edition of our I'm Sorry template, built around one idea: the sky over the page starts as a soft pastel drizzle and clears a little with every scene, until a rainbow comes out. Every scene is something they do — water a flower, mend a heart, crack a cookie, sail a boat — so the apology is felt, not just read.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "A little bear with an umbrella knocks at their door with a knock-knock joke. They drag a watering can over a wilted flower until it blooms with what you did, stick plasters on a cracked heart (each shows how you understand it felt), crack three fortune cookies with what you learnt, shake a jar of paper stars with things you love about them, see your photos pegged on a washing line, sail your letter across a puddle and sign a peace contract of your promises with their finger. Then comes the question, and it ends with a rainbow and a Peace Treaty keepsake they can download.",
+      },
+      {
+        question: "Can they say they need time?",
+        answer:
+          "Yes, and by default they can. Research on apologies says pressure makes them feel fake, so the question has a real “I need a little time” answer next to Yes. It leads to a warm, complete screen, and you get an email either way. You can switch to a single Yes button if you prefer.",
+      },
+      {
+        question: "How is it different from the regular I'm Sorry page?",
+        answer:
+          "Every scene is new: no envelope, slider, scratch card, bubbles, coupons or runaway No. It adds the rain-to-rainbow sky, drag-and-drop scenes, a signature pad, a days-together counter, six animated stickers you can swap or hide, a choice of cute, emotional or funny tone, and the Peace Treaty keepsake with their own signature on it.",
+      },
+      {
+        question: "Can I change the colours and the song?",
+        answer:
+          "Yes. Pick Rainy Blush, Mint Matcha Morning, Lilac Drizzle or Peach Sunbreak and the whole page re-colours. It plays Thinking Out Loud by default; tap one of ten English and Hindi suggestions such as Baarishein or Agar Tum Saath Ho, or paste any YouTube link. Music starts only after their first tap.",
+      },
+      {
+        question: "Can I lock it with a password or edit it later?",
+        answer:
+          "Yes to both. Set an optional password when you publish, and edit and republish any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Premium Sorry Website",
+      description: "Build an interactive apology — what you did, how it felt, what you learnt, your promises and the question — and send it as a link.",
+      totalTime: "PT8M",
+      steps: [
+        { name: "Open the Template", text: "Go to I'm Sorry ✦ Premium on SubhSandesh and press Create." },
+        { name: "Pick a Sky and a Tone", text: "Choose one of four pastel skies and a cute, emotional or funny tone." },
+        { name: "Own It", text: "Write what you did, how you think it felt, and what you learnt — or let the AI write them from a short story." },
+        { name: "Add Your Promises and Memories", text: "Add the contract's promises, the paper stars, your letter, up to six photos and a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Happy Birthday — an evergreen birthday surprise on the Valentine engine
   // (✦ premium). Searchers want a "birthday website for girlfriend /
   // boyfriend" they can send as a link, with candles to blow and their
