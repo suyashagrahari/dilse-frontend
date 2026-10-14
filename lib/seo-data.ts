@@ -2666,6 +2666,271 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Happy Birthday — an evergreen birthday surprise on the Valentine engine
+  // (✦ premium). Searchers want a "birthday website for girlfriend /
+  // boyfriend" they can send as a link, with candles to blow and their
+  // photos; the FAQs answer how it works, the mic, and who it suits. No
+  // rating, no price.
+  "happy-birthday": {
+    title: "Birthday Surprise Website for Girlfriend or Boyfriend — Blow the Candles",
+    description:
+      "Make a birthday surprise page they play: untie the gift ribbon, light and blow out the candles (even with the mic), cut the cake, pop balloons of reasons you love them, unwrap coupons and crown them Birthday Queen or King.",
+    category: "Birthday",
+    emoji: "🎂",
+
+    keywords: [
+      // ── PRIMARY ──
+      "birthday website for girlfriend",
+      "birthday surprise website",
+      "interactive birthday card online",
+      "birthday surprise for boyfriend online",
+      "blow out the candles online",
+      "virtual birthday cake with candles",
+      "happy birthday link for whatsapp",
+      "birthday wishes page with photos",
+      // ── WHO IT'S FOR ──
+      "birthday surprise for girlfriend",
+      "birthday surprise for wife",
+      "romantic birthday wishes for boyfriend",
+      "birthday surprise for best friend",
+      "long distance birthday surprise",
+      "happy birthday jaan",
+      // ── THE PAGE ──
+      "reasons I love you birthday",
+      "birthday coupons for girlfriend",
+      "birthday queen certificate",
+      "birthday page with music",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a birthday surprise website for my girlfriend or boyfriend?",
+        answer:
+          "Open the Happy Birthday template, press Create and add their name and yours, the number on the cake, five things you love about them, a birthday letter, up to six photos and a few birthday coupons. Or describe them in a few lines and let the AI write it. Pick one of four cake colours, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They tug a bow to untie a wrapped gift, tap to light five candles on a cake with their name piped on it, make a wish and blow them out, swipe to cut the cake (the first slice comes with your note), pop balloons that each hold a reason you love them, swipe through your photos on a string of fairy lights, open your birthday card and unwrap coupons to claim one. Then you ask \"Birthday date with me?\" — and it ends with a Birthday Queen or King crown certificate they can download.",
+      },
+      {
+        question: "Can they really blow out the candles?",
+        answer:
+          "Yes. After making a wish they can hold the Blow button, or tap \"really blow\" and blow into the phone's microphone — the flames lean and go out. The mic is only used on that screen, only if they allow it, and nothing is recorded or sent anywhere.",
+      },
+      {
+        question: "Will I know if they said yes?",
+        answer:
+          "Yes. The No button runs away when they reach for it, and when they say yes they can pick when — tonight, this weekend, or you plan it. You get an email with their answer and their pick, and you see it when you open your own link.",
+      },
+      {
+        question: "Can I change the colours?",
+        answer:
+          "Yes. Pick Strawberry Cake, Funfetti Vanilla, Lavender Frosting or Mint Macaron and the whole page — background, cake, balloons, gifts and the crown certificate — changes to that flavour.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose whose birthday it is — your love, your crush or your best friend — and the question, the letter's sign-off and the reply change with it. You can crown them Birthday Queen, King or Star. Every line stays editable.",
+      },
+      {
+        question: "Can I add a song?",
+        answer:
+          "Yes. It starts with Best Day of My Life, or pick a favourite such as Birthday by Katy Perry, Baar Baar Din Ye Aaye, Tum Jiyo Hazaron Saal, Raataan Lambiyan or Kesariya, or paste any YouTube link with an optional start time. Only the sound plays, and music starts on their first tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Birthday Surprise Website for Your Partner",
+      description: "Build a birthday page — candles to blow, a cake to cut, reasons you love them, coupons and a crown — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Birthday page on SubhSandesh and press Create." },
+        { name: "Pick a Cake and a Crown", text: "Choose one of four cake colours, whose birthday it is, and Birthday Queen, King or Star." },
+        { name: "Say What You Love", text: "Add your wish, the note with the first slice and five things you love about them — or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Add your birthday letter, up to six photos and a few birthday coupons, then pick a song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
+  // Miss You — an evergreen long-distance "I miss you" on the Valentine engine
+  // (✦ premium). Distinct from the older "missyou-gf" letter: this one is the
+  // interactive LDR page (map + km, countdown, open-when letters, a hug across
+  // the map, a boarding pass), so its keywords lean on long distance and the
+  // boyfriend side rather than repeating missyou-gf's. No rating, no price.
+  "miss-you": {
+    title: "I Miss You Page for Long Distance Love — Map, Countdown & Open-When Letters",
+    description:
+      "Tell them you miss them the cute way: an incoming love call, your two cities on a map with the km apart, a countdown to the day you meet, open-when letters, a hug across the map and a “See you soon” boarding pass.",
+    category: "Miss You",
+    emoji: "🥹",
+
+    keywords: [
+      // ── PRIMARY ──
+      "i miss you website",
+      "long distance relationship website",
+      "miss you page for boyfriend",
+      "long distance gift online",
+      "interactive miss you message",
+      "open when letters online",
+      "countdown until i see you",
+      "distance between us map gift",
+      // ── WHO IT'S FOR ──
+      "miss you message for long distance boyfriend",
+      "ldr surprise for girlfriend",
+      "miss you for best friend",
+      "cute way to say i miss you",
+      "tumhari yaad aa rahi hai message",
+      // ── THE PAGE ──
+      "see you soon boarding pass",
+      "virtual hug link",
+      "miss you page with photos and music",
+      "video call tonight question",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make an I miss you page for my long-distance partner?",
+        answer:
+          "Open the Miss You template, press Create and add their name and yours, your two cities, the day you'll meet (if you know it), the little things you miss, a few open-when letters, your letter and up to six photos. Or describe your story in a few lines and let the AI write it. Pick one of four looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "Their phone 'rings' with a call from you and they slide to answer. Then a map draws a dotted route between your two cities and counts the kilometres — until they fold the map down to 0 km. They see a live countdown to the day you meet, pull glowing notes out of a jar of things you miss about them, flip through your photos, open your open-when envelopes, unfold a paper plane into your letter and hold a button to send a hug across the map. It ends with a question like “Video call tonight?” and a See-you-soon boarding pass they can download.",
+      },
+      {
+        question: "Do I have to know the distance in kilometres?",
+        answer:
+          "No. Type your two cities and the page works out the distance for most big cities in India and abroad. If you're in different time zones it also shows both of your local times. You can still type the exact kilometres yourself.",
+      },
+      {
+        question: "What if we don't have a date to meet yet?",
+        answer:
+          "Leave the date empty and the countdown says “soon” instead of a number, and the boarding pass reads “Soon 💗”. Add a date later and republish; the same link updates.",
+      },
+      {
+        question: "Can they say no to the question?",
+        answer:
+          "You choose. By default the No button gets shy and runs away until it turns into a second Yes. Or let them answer honestly: after four or five tries No turns into “Not tonight 🌙”, which they can press. Either way you get an email with their answer.",
+      },
+      {
+        question: "Can I add a song?",
+        answer:
+          "Yes. It starts with The Night We Met, or tap a suggestion such as Raataan Lambiyan, Channa Mereya, Agar Tum Saath Ho, A Thousand Miles or Here Without You, or paste any YouTube link. Music starts on their first tap.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose who you're missing — your love, your crush or your best friend — and the question, the reply and the boarding pass change with it. Every line stays editable, and you can lock the page with a password.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an I Miss You Page for Long Distance",
+      description: "Build a long-distance page — your cities on a map, a countdown, open-when letters and a boarding pass — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Miss You page on SubhSandesh and press Create." },
+        { name: "Pick a Look and Who It's For", text: "Choose Midnight Stars, Sunset Peach, Cloud Lilac or Moonlight Mint, and your love, your crush or your bestie." },
+        { name: "Add Your Cities and the Date", text: "Type both cities (the km are worked out for you) and the day you'll see them, if you know it." },
+        { name: "Fill the Jar and the Envelopes", text: "Write the little things you miss and a few open-when letters, your letter and photos — or let the AI write them." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
+  // Will You Be Mine? — an evergreen proposal page on the Valentine engine
+  // (✦ premium). Searchers want a "will you be my girlfriend website" /
+  // "cute proposal page" they can send as a link; the FAQs answer how it works,
+  // whether it suits a crush or a marriage proposal, and whether they can say
+  // no. No rating, no price.
+  "will-you-be-mine": {
+    title: "Will You Be My Girlfriend? Cute Proposal Website Maker",
+    description:
+      "Ask them the cute way: a velvet ring box, your story on a heart path, reasons you fell as a star constellation, a love quiz, your letter and “Will you be mine?” with a No that runs away — in four romantic looks.",
+    category: "Love",
+    emoji: "💍",
+
+    keywords: [
+      // ── PRIMARY ──
+      "will you be my girlfriend website",
+      "will you be mine page",
+      "proposal website for girlfriend",
+      "cute proposal page",
+      "interactive proposal link",
+      "will you be my boyfriend website",
+      "propose online with a link",
+      "yes no proposal page",
+      // ── WHO IT'S FOR ──
+      "how to propose to your crush",
+      "cute ways to ask someone out",
+      "how to ask her to be your girlfriend",
+      "marriage proposal website",
+      "propose day message for crush",
+      "shaadi karoge proposal",
+      // ── THE PAGE ──
+      "proposal page with photos and music",
+      "no button runs away proposal",
+      "reasons why I love you stars",
+      "officially mine certificate",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a “Will you be my girlfriend?” page?",
+        answer:
+          "Open the Will You Be Mine template, press Create and add their name and yours, a few chapters of your story, the reasons you fell for them, a three-question love quiz, your promise, your letter and up to six photos. Or describe your story in a few lines and let the AI write it. Pick one of four looks, press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They tap a velvet ring box open (it's empty — the ring comes at the end), walk a little heart path through your story, connect stars into a heart constellation where every star is a reason you fell for them, take a love quiz with a rigged love meter, swipe your photos and open your love letter. Then they hold a heart until it fills, the ring box opens with your promise, and they get the big question. Saying yes sets off fireworks and an Officially Mine certificate they can download.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "You choose. By default the No button gets shy and runs away while the Yes button grows, and after five tries No turns into a second Yes. Or give them an honest way out: after four or five tries No becomes “Let me think about it 🤍”, which they can press. Either way you get an email with their answer.",
+      },
+      {
+        question: "Is it only for a girlfriend?",
+        answer:
+          "No. Choose what you're asking — be my girlfriend, be my boyfriend, marry me, or go out with me for a crush — and the question, the Yes button, the certificate and their reply change with it. Every line stays editable, so you can write your own question too.",
+      },
+      {
+        question: "Can I change the colours?",
+        answer:
+          "Yes. Pick Rose Gold, Cherry Blossom, Starry Night or Ivory Lace and the whole page — background, ring box, stars, quiz and certificate — changes to that look.",
+      },
+      {
+        question: "Can I add our song?",
+        answer:
+          "Yes. It plays Perfect by Ed Sheeran by default from their first tap. You can pick another proposal favourite such as Marry You, All of Me, Kesariya, Raataan Lambiyan or Tum Se Hi, or paste any YouTube link with an optional start time; only the sound plays.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Ask Someone to Be Yours with a Cute Proposal Page",
+      description: "Build a proposal page — your story, the reasons you fell, a love quiz, a promise and “Will you be mine?” — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Will You Be Mine page on SubhSandesh and press Create." },
+        { name: "Pick a Look and What You're Asking", text: "Choose one of four looks, then be my girlfriend, be my boyfriend, marry me or go out with me." },
+        { name: "Tell Your Story", text: "Add the chapters of your story, the reasons you fell for them and a little quiz of inside jokes — or let the AI write them from a short story." },
+        { name: "Add the Sweet Stuff", text: "Write your letter and your promise, add up to six photos, and keep Perfect or pick another song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for the yes." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or

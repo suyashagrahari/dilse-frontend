@@ -64,6 +64,9 @@ import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-d
 import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config";
 import { config as dandiyaPartnerCfg } from "@/app/(templates)/dandiya-partner/config";
 import { config as sorryCfg } from "@/app/(templates)/sorry/config";
+import { config as happyBirthdayCfg } from "@/app/(templates)/happy-birthday/config";
+import { config as missYouCfg } from "@/app/(templates)/miss-you/config";
+import { config as willYouBeMineCfg } from "@/app/(templates)/will-you-be-mine/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -95,6 +98,20 @@ const allConfigs = [
   //    main grid and in the Premium tab; the price is set in /admin/pricing).
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until released. ─────
   sorryCfg,
+
+  // ── Happy Birthday — evergreen, ✦ premium (ULTRA_PREMIUM_SLUGS). Ships
+  //    hidden on the apex (server DEFAULT_HIDDEN) until released. ─────────
+  happyBirthdayCfg,
+
+  // ── Miss You — evergreen, ✦ premium (ULTRA_PREMIUM_SLUGS), a long-distance
+  //    "I miss you" on the same engine. Ships hidden on the apex (server
+  //    DEFAULT_HIDDEN) until released and priced in the admin. ────────────
+  missYouCfg,
+
+  // ── Will You Be Mine? — evergreen proposal page, ✦ premium (ULTRA_PREMIUM_SLUGS).
+  //    Ships hidden on the apex (server DEFAULT_HIDDEN) until released; the
+  //    price is set in /admin/pricing. ─────────────────────────────────────
+  willYouBeMineCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -218,6 +235,9 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "happy-valentines-day-premium",
   "happy-halloween-premium",
   "sorry",
+  "happy-birthday",
+  "miss-you",
+  "will-you-be-mine",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
