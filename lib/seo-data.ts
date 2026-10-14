@@ -2844,6 +2844,88 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Miss You ✦ Premium — the premium edition of Miss You on the Valentine
+  // engine: a whole long-distance day (radio voice notes, a photo-booth strip,
+  // a picnic date, a tear-off countdown, a message in a bottle, synced
+  // heartbeats, initials in the stars, an airmail postcard). Keywords lean on
+  // "premium / virtual date / long distance surprise website" so it does not
+  // cannibalise "miss-you". No rating, no price.
+  "miss-you-premium": {
+    title: "Long Distance Surprise Website — Premium Miss You Page with a Virtual Date",
+    description:
+      "A whole long-distance day as a link: open the curtains to a sky with their name, tune a radio to your voice notes, a photo-booth strip, a virtual picnic date, a countdown to the day you meet, a message in a bottle, synced heartbeats, your initials in the stars and an airmail postcard keepsake.",
+    category: "Miss You",
+    emoji: "🩵",
+
+    keywords: [
+      // ── PRIMARY ──
+      "long distance surprise website",
+      "premium miss you website",
+      "virtual date for long distance couple",
+      "long distance relationship gift website",
+      "message in a bottle online",
+      "website for long distance girlfriend",
+      "website for long distance boyfriend",
+      "distance means nothing gift",
+      // ── THE PAGE ──
+      "virtual picnic date",
+      "voice notes radio love page",
+      "our initials constellation",
+      "heartbeat sync long distance",
+      "countdown to see you again",
+      "airmail postcard keepsake",
+      // ── WHO IT'S FOR ──
+      "ldr surprise for girlfriend",
+      "miss you surprise for boyfriend abroad",
+      "tumhari yaad aa rahi hai page",
+    ],
+
+    faqs: [
+      {
+        question: "What is the premium Miss You page?",
+        answer:
+          "It's a whole long-distance day in one private link. It starts in the morning and ends at the next sunrise: they open the curtains to a sky where a little plane writes their name, tune a radio to find your voice notes, pull a photo-booth strip of your photos, set up a picnic date, tear calendar pages down to the day you meet, drag a message in a bottle out of the waves, tap along until your heartbeats sync, join the stars into your initials and answer “Video call tonight?”. It ends with an airmail postcard they can save.",
+      },
+      {
+        question: "How is it different from the regular Miss You page?",
+        answer:
+          "Every scene is a different, more hands-on moment — dragging, tuning, tearing, tapping in rhythm and drawing in the stars — and the sky changes from morning to dusk to sunrise as they go. Across the top, your two dots creep closer and the kilometres count down until they meet at the end.",
+      },
+      {
+        question: "How do I make one?",
+        answer:
+          "Open the template, press Create and add both names, your two cities, the day you'll meet (if you know it), up to three voice notes, your picnic lines, the things you miss, your letter and up to six photos. Or describe your story and let the AI write it. Pick one of four pastel looks, press Save to preview, Publish, and send the link on WhatsApp or Instagram. It opens in any phone browser with no app.",
+      },
+      {
+        question: "Do I need to know the distance?",
+        answer:
+          "No. Type your two cities and the distance is worked out for most big cities in India and abroad. You can type the exact number yourself, and show it in kilometres or miles.",
+      },
+      {
+        question: "Can they say “later” to the video call?",
+        answer:
+          "Yes, if you allow it: they can answer “Yes, call me” or an honest “Later 🌙”. Either way you get an email and see the answer on your page. You can also keep it to a single Yes.",
+      },
+      {
+        question: "Does it have music?",
+        answer:
+          "Yes. It plays Thinking Out Loud from their first tap, or pick a suggestion such as Photograph, Hawayein, Talking to the Moon, Tera Ban Jaunga or Pehle Bhi Main, or paste any YouTube link.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Long Distance Surprise Website",
+      description: "Build a premium long-distance page — voice notes, a picnic date, a countdown, a letter in a bottle and an airmail postcard — and send it as a link.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Template", text: "Go to Miss You ✦ Premium on SubhSandesh and press Create." },
+        { name: "Pick a Look and Who It's For", text: "Choose Cotton Candy Sky, Lavender Postcard, Peach Airmail or Mint Breeze, and your love, your crush or your bestie." },
+        { name: "Add Your Cities and the Date", text: "Type both cities and, if you know it, the day you'll see them for the countdown." },
+        { name: "Write the Little Things", text: "Add voice notes, picnic lines, the things you miss, your letter and photos — or let the AI write them." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp." },
+      ],
+    },
+  },
   // Will You Be Mine? — an evergreen proposal page on the Valentine engine
   // (✦ premium). Searchers want a "will you be my girlfriend website" /
   // "cute proposal page" they can send as a link; the FAQs answer how it works,

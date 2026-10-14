@@ -126,6 +126,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   sorry:                  { emoji: "🥺", label: "Sorry page" },
   "happy-birthday":       { emoji: "🎂", label: "Birthday surprise" },
   "miss-you":             { emoji: "🥹", label: "Miss You page" },
+  "miss-you-premium":     { emoji: "🩵", label: "Miss You page" },
   "will-you-be-mine":     { emoji: "💍", label: "Proposal page" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
@@ -161,6 +162,10 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "happy-birthday": (r, s) => ({
     title: `🎂 ${r}, someone made you a birthday surprise`,
     description: `${s} wrapped something up for you. Untie the ribbon and make a wish 🎈`,
+  }),
+  "miss-you-premium": (r, s) => ({
+    title: `🩵 ${r}, two dots on a map… one of them is you`,
+    description: `${s} planned you a whole day from far away: a radio, a picnic, the stars and a sunrise where the distance runs down to 0 🩵`,
   }),
   "miss-you": (r, s) => ({
     title: `🥹 ${r}, someone misses you a lot`,
