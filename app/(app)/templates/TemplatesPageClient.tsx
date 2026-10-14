@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { categories, templateTypes } from "@/data/template-registry";
-import { FORCE_COMING_SOON, GALLERY_LIST, PINNED_FIRST, pinFirst, rankRooms } from "@/lib/galleryRules";
+import { FORCE_COMING_SOON, GALLERY_LIST, isNewLaunch, pinFirst, rankRooms } from "@/lib/galleryRules";
 import type { TemplateListItem } from "@/types/template-config";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
@@ -671,7 +671,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                               template={template}
                               rank={rankOf.get(template.slug)}
                               created={createdBy.get(template.slug)}
-                              isNew={PINNED_FIRST.includes(template.slug)}
+                              isNew={isNewLaunch(template.slug)}
                               price
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
@@ -736,7 +736,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                               template={template}
                               rank={rankOf.get(template.slug)}
                               created={createdBy.get(template.slug)}
-                              isNew={PINNED_FIRST.includes(template.slug)}
+                              isNew={isNewLaunch(template.slug)}
                               price
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
@@ -748,7 +748,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                               template={template}
                               rank={rankOf.get(template.slug)}
                               created={createdBy.get(template.slug)}
-                              isNew={PINNED_FIRST.includes(template.slug)}
+                              isNew={isNewLaunch(template.slug)}
                               price
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
