@@ -21,7 +21,7 @@ export const VALENTINE_WEEK_SLUGS = [
 ] as const;
 
 /** Occasions outside Valentine's week that run on the same engine. */
-export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine"] as const;
+export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine", "proposal-premium"] as const;
 
 /**
  * The ULTRA-PREMIUM tier ($4): one cinematic twin per base template, on the
@@ -100,6 +100,8 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "miss-you": { name: "Miss You", emoji: "🥹", date: 0, month: "" },
   // Evergreen too: a proposal can happen any day.
   "will-you-be-mine": { name: "Proposal", emoji: "💍", date: 0, month: "" },
+  // The proposal's premium edition: evergreen as well.
+  "proposal-premium": { name: "The Proposal", emoji: "💍", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,
