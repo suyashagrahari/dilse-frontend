@@ -27,6 +27,8 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "miss-you-premium": dynamic(() => import("../miss-you-premium/components/MissYouPremiumExperience"), { ssr: false, loading: Loading }),
   "will-you-be-mine": dynamic(() => import("../will-you-be-mine/components/WillYouBeMineExperience"), { ssr: false, loading: Loading }),
   "proposal-premium": dynamic(() => import("../proposal-premium/components/ProposalExperience"), { ssr: false, loading: Loading }),
+  "happy-anniversary": dynamic(() => import("../happy-anniversary/components/HappyAnniversaryExperience"), { ssr: false, loading: Loading }),
+  "anniversary-premium": dynamic(() => import("../anniversary-premium/components/AnniversaryPremiumExperience"), { ssr: false, loading: Loading }),
   "happy-diwali": dynamic(() => import("../happy-diwali/components/DiwaliExperience"), { ssr: false, loading: Loading }),
   "sorry-premium": dynamic(() => import("../sorry-premium/components/SorryPremiumExperience"), { ssr: false, loading: Loading }),
   // ✦ Premium twins

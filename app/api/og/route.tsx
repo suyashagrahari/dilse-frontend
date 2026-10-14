@@ -25,6 +25,8 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   "will-you-be-mine": { emoji: "💍", gradient: ["#F3BFC4", "#B8435F"], label: "A proposal page" },
   "sorry-premium": { emoji: "🌈", gradient: ["#DCDDEA", "#F4A7BB"], label: "A sorry page, after the rain" },
   "proposal-premium": { emoji: "💍", gradient: ["#FFD3A6", "#A63D58"], label: "A fairytale proposal" },
+  "happy-anniversary": { emoji: "🖼️", gradient: ["#FCE4EA", "#D9577A"], label: "A love museum for your anniversary" },
+  "anniversary-premium": { emoji: "💞", gradient: ["#F0E2CC", "#B4813A"], label: "An anniversary storybook" },
   // Happy Diwali: navy night → diya gold, the teaser wording (lib/seo.ts TEASER_PREVIEW).
   "happy-diwali": { emoji: "🪔", gradient: ["#4A0A0D", "#F6A821"], label: "A diya at your door" },
 };

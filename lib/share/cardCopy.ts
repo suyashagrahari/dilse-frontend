@@ -75,6 +75,8 @@ const COPY: Record<string, CardCopy> = {
   "will-you-be-mine": { kicker: "Psst…", headline: "Will You Be Mine?", line: "Someone has a very big question for you 💍" },
   "sorry-premium": { kicker: "Knock knock…", headline: "I'm Sorry", line: "Someone is at your door, in the rain 🌧️" },
   "proposal-premium": { kicker: "✦ You're invited", headline: "The Proposal", line: "A garden at golden hour, and one big question 💍" },
+  "happy-anniversary": { kicker: "Admit one…", headline: "Happy Anniversary", line: "You're invited to a tiny museum about us 🖼️" },
+  "anniversary-premium": { kicker: "Happy anniversary", headline: "The Book of Us", line: "Every year of us, in one little storybook 📖" },
   "happy-diwali": { kicker: "Happy Diwali", headline: "A Diya at Your Door", line: "Light it 🪔" },
   "happy-rose-day-premium": { kicker: "✦ Rose Day", headline: "The Rose Garden", line: "Tear open your seed packet" },
   "happy-propose-day-premium": { kicker: "✦ Propose Day", headline: "The Little Proposal", line: "Knock knock 💍" },

@@ -18,6 +18,8 @@ import { missYouDay } from "./miss-you";
 import { willYouBeMineDay } from "./will-you-be-mine";
 import { missYouPremiumDay } from "./miss-you-premium";
 import { proposalPremiumDay } from "./proposal-premium";
+import { happyAnniversaryDay } from "./happy-anniversary";
+import { anniversaryPremiumDay } from "./anniversary-premium";
 import { diwaliDay } from "./happy-diwali";
 import { sorryPremiumDay } from "./sorry-premium";
 import { roseDayPremium } from "./happy-rose-day-premium";
@@ -64,6 +66,8 @@ export const DAYS: Record<DaySlug, DayConfig> = {
   "will-you-be-mine": willYouBeMineDay as unknown as DayConfig,
   "miss-you-premium": missYouPremiumDay as unknown as DayConfig,
   "proposal-premium": proposalPremiumDay as unknown as DayConfig,
+  "happy-anniversary": happyAnniversaryDay as unknown as DayConfig,
+  "anniversary-premium": anniversaryPremiumDay as unknown as DayConfig,
   "happy-diwali": diwaliDay as unknown as DayConfig,
   "sorry-premium": sorryPremiumDay as unknown as DayConfig,
   // ✦ Premium twins

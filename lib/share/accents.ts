@@ -45,6 +45,8 @@ const ACCENTS: Record<string, string> = {
   "will-you-be-mine": "#B8435F",
   "sorry-premium": "#B5365A",
   "proposal-premium": "#A63D58",
+  "happy-anniversary": "#AE3558",
+  "anniversary-premium": "#B4813A",
   "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its
   // accentDeep where that accent is too light to carry white button text).
