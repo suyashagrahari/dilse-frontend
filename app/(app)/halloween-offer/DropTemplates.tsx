@@ -311,7 +311,7 @@ const HD_CSS = `
 /* the plate lifts as one; the inner card keeps still and drops its own entrance */
 .hdCard .tplCard, .hdCard .pmFrame { animation: none; content-visibility: visible; }
 .hdCard .tplInner { border-color: rgba(185,166,240,.16); }
-.hdCard .tplLink:hover .tplInner, .hdCard .tplLink:hover::after, .hdCard .pmFrame:hover { transform: none; }
+.hdCard .tplLink:hover .tplInner, .hdCard .tplLink:hover .tplShell::after, .hdCard .pmFrame:hover { transform: none; }
 .hdFoot { display: flex; flex-direction: column; gap: 8px; padding: 14px 4px 0; margin-top: auto; }
 .hdName { color: #f3eefe; font: 600 16px/1.25 var(--font-playfair), "Playfair Display", serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
 .hdPrice { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-height: 24px; }

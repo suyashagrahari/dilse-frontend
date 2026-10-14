@@ -324,7 +324,7 @@ const FD_CSS = `
 .fdCard { position: relative; z-index: 1; }
 .fdCard .tplCard, .fdCard .pmFrame { animation: none; content-visibility: visible; }
 .fdCard .tplInner { border-color: rgba(255,211,107,.18); }
-.fdCard .tplLink:hover .tplInner, .fdCard .tplLink:hover::after, .fdCard .pmFrame:hover { transform: none; }
+.fdCard .tplLink:hover .tplInner, .fdCard .tplLink:hover .tplShell::after, .fdCard .pmFrame:hover { transform: none; }
 /* a registry-independent card: festival art on a lit night instead of a poster */
 .fdCard.is-fallback .tplInner > div:first-child { background: radial-gradient(80% 60% at 50% 30%, rgba(255,176,32,.35), transparent 70%), radial-gradient(70% 50% at 50% 100%, rgba(255,93,143,.25), transparent 70%), linear-gradient(170deg, var(--ft-sky0), var(--ft-sky2)) !important; }
 .fdArt { position: absolute; z-index: 14; left: 8%; right: 8%; top: 7%; height: 66%; width: 84%; object-fit: contain; pointer-events: none;
