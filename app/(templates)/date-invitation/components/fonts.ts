@@ -14,6 +14,9 @@ export const grotesk = localFont({
   ],
   variable: "--font-di-grotesk",
   display: "swap",
+  // Not preloaded: this module is pulled into every share page, and a preload
+  // per file overflowed nginx's header buffer (502s, 2026-10-13).
+  preload: false,
 });
 
 export const instrumentSerif = localFont({

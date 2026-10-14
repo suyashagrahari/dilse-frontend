@@ -22,33 +22,53 @@ const cinzel = localFont({
     { path: "../../assets/fonts/cinzel-700-normal.woff2", weight: "700", style: "normal" },
   ],
   adjustFontFallback: "Times New Roman",
-  variable: "--font-cinzel" });
+  variable: "--font-cinzel",
+  // Not preloaded: this module is pulled into every share page, and a preload
+  // per file overflowed nginx's header buffer (502s, 2026-10-13).
+  preload: false,
+});
 const greatVibes = localFont({
   src: [
     { path: "../../assets/fonts/great-vibes-400-normal.woff2", weight: "400", style: "normal" },
   ],
-  variable: "--font-great-vibes" });
+  variable: "--font-great-vibes",
+  // Not preloaded: this module is pulled into every share page, and a preload
+  // per file overflowed nginx's header buffer (502s, 2026-10-13).
+  preload: false,
+});
 const dmSans = localFont({
   src: [
     { path: "../../assets/fonts/dm-sans-400-normal.woff2", weight: "400", style: "normal" },
     { path: "../../assets/fonts/dm-sans-500-normal.woff2", weight: "500", style: "normal" },
     { path: "../../assets/fonts/dm-sans-700-normal.woff2", weight: "700", style: "normal" },
   ],
-  variable: "--font-dm-sans" });
+  variable: "--font-dm-sans",
+  // Not preloaded: this module is pulled into every share page, and a preload
+  // per file overflowed nginx's header buffer (502s, 2026-10-13).
+  preload: false,
+});
 const lora = localFont({
   src: [
     { path: "../../assets/fonts/lora-400-normal.woff2", weight: "400", style: "normal" },
     { path: "../../assets/fonts/lora-700-normal.woff2", weight: "700", style: "normal" },
   ],
   adjustFontFallback: "Times New Roman",
-  variable: "--font-lora" });
+  variable: "--font-lora",
+  // Not preloaded: this module is pulled into every share page, and a preload
+  // per file overflowed nginx's header buffer (502s, 2026-10-13).
+  preload: false,
+});
 const playfair = localFont({
   src: [
     { path: "../../assets/fonts/playfair-display-400-normal.woff2", weight: "400", style: "normal" },
     { path: "../../assets/fonts/playfair-display-700-normal.woff2", weight: "700", style: "normal" },
   ],
   adjustFontFallback: "Times New Roman",
-  variable: "--font-playfair" });
+  variable: "--font-playfair",
+  // Not preloaded: this module is pulled into every share page, and a preload
+  // per file overflowed nginx's header buffer (502s, 2026-10-13).
+  preload: false,
+});
 
 const FONT_VARS = `${cinzel.variable} ${greatVibes.variable} ${dmSans.variable} ${lora.variable} ${playfair.variable}`;
 
