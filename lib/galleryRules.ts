@@ -35,6 +35,28 @@ export const GALLERY_LIST: TemplateListItem[] = (() => {
  */
 export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
 
+/**
+ * Launch day per template (IST, yyyy-mm-dd). For NEW_LAUNCH_DAYS after it the
+ * card wears the diagonal "New launch" ribbon; then it simply stops showing —
+ * no admin step. Add a line here when a template goes live.
+ */
+export const LAUNCHES: Readonly<Record<string, string>> = {
+  "dandiya-partner": "2026-10-11",
+  sorry: "2026-10-13",
+  "will-you-be-mine": "2026-10-14",
+  "happy-birthday": "2026-10-14",
+  "miss-you": "2026-10-14",
+};
+export const NEW_LAUNCH_DAYS = 10;
+
+/** Is `slug` inside its launch window at `now`? */
+export function isNewLaunch(slug: string, now: number = Date.now()): boolean {
+  const day = LAUNCHES[slug];
+  if (!day) return false;
+  const start = Date.parse(`${day}T00:00:00+05:30`);
+  return now >= start && now < start + NEW_LAUNCH_DAYS * 86_400_000;
+}
+
 /** `list` (already in ranking order) with PINNED_FIRST pulled to the front. */
 export function pinFirst<T extends { slug: string }>(list: T[]): T[] {
   const at = (s: string) => PINNED_FIRST.indexOf(s);
