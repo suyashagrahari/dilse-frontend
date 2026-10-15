@@ -13,6 +13,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import { rupees, fmtDate, type InfluencerDashboard } from "@/lib/influencer";
 import InfluencerDashboardView from "@/components/influencer/InfluencerDashboardView";
 import { A, Loading } from "../../adminKit";
+import InfluencerMailPanel from "./InfluencerMailPanel";
 
 export default function AdminInfluencerDetailPage() {
   const { userId } = useParams<{ userId: string }>();
@@ -53,7 +54,13 @@ export default function AdminInfluencerDetailPage() {
       ) : !data ? (
         <Loading h={400} />
       ) : (
-        <InfluencerDashboardView data={data} mode="admin" adminSlot={<Controls data={data} token={accessToken!} onChange={load} />} />
+        <InfluencerDashboardView data={data} mode="admin" adminSlot={
+            <>
+              <Controls data={data} token={accessToken!} onChange={load} />
+              <InfluencerMailPanel userId={data.profile.id} token={accessToken!} name={data.profile.name} />
+            </>
+          }
+        />
       )}
     </div>
   );

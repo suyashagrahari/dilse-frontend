@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Crown, Percent, Save, Loader2, Check, ChevronRight, Clock, Star, MousePointerClick, UserPlus, Sparkles, IndianRupee, Wallet, AlertCircle, ArrowDownWideNarrow } from "lucide-react";
+import { Crown, Percent, Save, Loader2, Check, ChevronRight, Clock, Star, MousePointerClick, UserPlus, Sparkles, IndianRupee, Wallet, AlertCircle, ArrowDownWideNarrow, Mail } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
@@ -43,6 +43,8 @@ interface Row {
   freeAccess?: boolean;
   /** A super admin publishes free already; the toggle does not apply. */
   isSuperAdmin?: boolean;
+  /** The email chat on their page: an unread reply, and how much has been said. */
+  mail?: { unread: boolean; messages: number; lastMessageAt: string | null; lastDirection: string };
 }
 
 interface Settings { defaultCommissionPercent: number; attributionDays: number; updatedByEmail?: string; updatedAt?: string }
@@ -57,7 +59,7 @@ export default function AdminInfluencersPage() {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "owed" | "active" | "suspended">("all");
+  const [filter, setFilter] = useState<"all" | "owed" | "replies" | "active" | "suspended">("all");
   const [sort, setSort] = useState<"owed" | "earned" | "signups" | "newest">("owed");
 
   useEffect(() => {
@@ -121,6 +123,7 @@ export default function AdminInfluencersPage() {
     return (rows || []).filter((r) => {
       if (s && ![r.name, r.email, r.subdomain || "", r.instagram || ""].some((v) => v.toLowerCase().includes(s))) return false;
       if (filter === "owed") return r.pendingPaise > 0;
+      if (filter === "replies") return !!r.mail?.unread;
       if (filter === "active") return r.status === "active";
       if (filter === "suspended") return r.status === "suspended";
       return true;
@@ -198,6 +201,7 @@ export default function AdminInfluencersPage() {
             options={[
               { value: "all", label: "All", count: rows?.length ?? 0 },
               { value: "owed", label: "Payout due", count: (rows || []).filter((r) => r.pendingPaise > 0).length },
+              { value: "replies", label: "New replies", count: (rows || []).filter((r) => r.mail?.unread).length },
               { value: "active", label: "Active", count: (rows || []).filter((r) => r.status === "active").length },
               { value: "suspended", label: "Paused", count: (rows || []).filter((r) => r.status === "suspended").length },
             ]}
@@ -251,6 +255,15 @@ function InfluencerCard({ r, accessToken, onFreeAccess }: { r: Row; accessToken:
           <span>{handle || r.email}</span>
         </span>
         {paused && <span className="infa-paused">Paused</span>}
+        {r.mail?.unread ? (
+          <span className="infa-mail new" title="They replied — open to read and answer">
+            <Mail size={11} /> New reply
+          </span>
+        ) : r.mail && r.mail.messages > 0 ? (
+          <span className="infa-mail" title={`${r.mail.messages} email${r.mail.messages === 1 ? "" : "s"} in the conversation`}>
+            <Mail size={11} /> {r.mail.messages}
+          </span>
+        ) : null}
         <span className={`infa-rate ${r.commissionOverride !== null ? "custom" : ""}`} title={r.commissionOverride !== null ? "Custom rate" : "Default rate"}>
           {r.commissionOverride !== null && <Star size={10} fill="currentColor" />}
           {r.commissionPercent}%
@@ -331,6 +344,8 @@ const CSS = `
   .infa-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .infa-id b { font-size: 14.5px; color: ${A.ink}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .infa-id span { font-size: 11.5px; color: ${A.muted}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .infa-mail { flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 99px; background: rgba(61,12,17,.05); color: ${A.soft}; font-size: 10.5px; font-weight: 800; }
+  .infa-mail.new { background: ${A.danger}; color: #fff; box-shadow: 0 0 0 3px rgba(179,38,30,.15); }
   .infa-paused { flex-shrink: 0; padding: 3px 8px; border-radius: 99px; background: rgba(179,38,30,.1); color: ${A.danger}; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
   .infa-rate { flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; padding: 4px 9px; border-radius: 99px; background: rgba(61,12,17,.06); color: ${A.maroon}; font-size: 12px; font-weight: 800; }
   .infa-rate.custom { background: rgba(201,168,76,.18); color: ${A.goldDeep}; }

@@ -84,6 +84,7 @@ const KIND_META: Record<string, { label: string; color: string; bg: string }> = 
   draft:    { label: "Unfinished page", color: "#a8823a", bg: "rgba(201,168,76,0.16)" },
   feedback: { label: "Feedback",        color: OK,        bg: "rgba(31,122,77,0.10)" },
   inbound:  { label: "Unmatched",       color: OFF,       bg: "rgba(179,38,30,0.10)" },
+  influencer: { label: "Influencer",    color: "#6d4ad1", bg: "rgba(109,74,209,0.10)" },
 };
 
 const FILTERS = [
@@ -91,6 +92,7 @@ const FILTERS = [
   { key: "unread",   label: "Needs a reply" },
   { key: "draft",    label: "Unfinished pages" },
   { key: "feedback", label: "Feedback" },
+  { key: "influencer", label: "Influencers" },
   { key: "inbound",  label: "Unmatched" },
 ] as const;
 
