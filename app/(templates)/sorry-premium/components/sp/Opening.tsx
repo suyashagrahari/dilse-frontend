@@ -115,7 +115,10 @@ export function Knock({
 
 const KNOCK_CSS = `
 .sp-door-wrap { position: relative; height: min(100cqh, 420px); aspect-ratio: .62; max-width: 92cqw; display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 10px; }
-.sp-say-bubble { position: relative; z-index: 3; max-width: min(320px, 86cqw); padding: 10px 16px; border-radius: 20px; background: var(--vw-paper); color: var(--vw-ink);
+/* Desktop zooms the door; size it so the zoomed door still fits under the title. */
+@media (min-width: 1100px) { .sp-door-wrap { height: min(calc(100cqh / 1.14), 420px); } }
+@media (min-width: 1100px) and (min-height: 1000px) { .sp-door-wrap { height: min(calc(100cqh / 1.28), 420px); } }
+.sp-say-bubble { position: relative; z-index: 3; justify-self: center; width: max-content; max-width: min(320px, 86cqw); box-sizing: border-box; text-wrap: balance; padding: 10px 16px; border-radius: 20px; background: var(--vw-paper); color: var(--vw-ink);
   font: 600 clamp(16px, 2.4dvh, 19px)/1.3 ${SP_HAND}; box-shadow: 0 0 0 2px var(--vw-edge), 0 10px 22px -12px color-mix(in srgb, var(--sp-deep) 55%, transparent); overflow-wrap: anywhere; }
 .sp-say-bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 14px; height: 14px; margin-left: -7px; background: var(--vw-paper); transform: rotate(45deg); box-shadow: 2px 2px 0 0 var(--vw-edge); }
 .sp-door-frame { position: relative; height: 100%; aspect-ratio: .66; max-width: 100%; min-height: 0; border-radius: 999px 999px 14px 14px; padding: 10px 10px 0;

@@ -166,7 +166,9 @@ const PICNIC_CSS = `
 .mp-pic-on { position: absolute; transform: translate(-50%, -50%); width: 54px; height: 54px; margin: -27px 0 0 -27px; border: 0; padding: 0; background: none; cursor: pointer; font-size: clamp(34px, 6dvh, 44px); line-height: 1;
   filter: drop-shadow(0 6px 4px rgba(40,60,40,.3)); touch-action: manipulation; }
 .mp-pic-on:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 2px; border-radius: 12px; }
-.mp-pic-gif { position: absolute; right: -8%; top: -16%; z-index: 3; }
+.mp-pic-gif { position: absolute; right: -8%; top: -16%; z-index: 3; pointer-events: none; }
+/* Phones: a smaller sticker tucked onto the grass corner, off the blanket the items sit on. */
+@media (max-width: 599px), (max-height: 700px) { .mp-pic-gif { top: auto; bottom: -16px; right: -14px; } .mp-pic-gif .mp-stk img { width: clamp(46px, 8dvh, 64px) !important; height: auto !important; } }
 .mp-pic-tray { list-style: none; margin: 0; padding: 8px; display: flex; justify-content: center; gap: clamp(6px, 2vw, 12px); border-radius: 22px; background: color-mix(in srgb, var(--vw-paper) 82%, transparent); box-shadow: 0 0 0 2px var(--vw-edge); }
 .mp-pic-item { width: clamp(50px, 14vw, 60px); height: clamp(50px, 14vw, 60px); border-radius: 18px; border: 0; padding: 0; cursor: grab; display: grid; place-items: center; font-size: clamp(28px, 7vw, 34px); line-height: 1; touch-action: none;
   background: radial-gradient(circle at 40% 30%, #FFFFFF, var(--mp-blush)); box-shadow: 0 4px 0 color-mix(in srgb, var(--mp-deep) 30%, transparent); position: relative; }
@@ -346,6 +348,14 @@ const CAL_CSS = `
 .mp-cd-box small { font: 700 11px ${FONTS.ui}; letter-spacing: .08em; text-transform: uppercase; color: var(--vw-ink-soft); }
 .mp-cd-soon { margin: 0; align-self: center; font: 400 clamp(18px, 2.6dvh, 21px) ${MP_HAND}; color: var(--vw-ink); }
 @media (max-width: 359px) { .mp-cd-box { width: 58px; } }
+/* Landscape phones: the page and the countdown sit side by side. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mp-cal-wrap { width: 100%; grid-template-columns: auto auto; grid-template-rows: minmax(0, 1fr); justify-content: center; gap: 22px; }
+  .mp-cal { width: min(40cqw, 70cqh, 220px); }
+  .mp-cal-big { font-size: 30px; } .mp-cal-small, .mp-cal-note { font-size: 16px; } .mp-cal-day { font-size: 62px; }
+  .mp-cal-final, .mp-cal-page { padding-top: 30px; }
+  .mp-cd { flex-wrap: wrap; width: 140px; gap: 8px; }
+}
 `;
 
 // ─── 6 · A message in a bottle ──────────────────────────────────────────────

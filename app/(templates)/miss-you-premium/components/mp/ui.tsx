@@ -180,9 +180,11 @@ export const MP_UI_CSS = `
 .mp-sub { margin: 0; font: 500 clamp(14px, 2.05dvh, 16.5px)/1.45 ${FONTS.ui}; color: var(--vw-ink-soft); text-wrap: balance; overflow-wrap: anywhere; }
 @media (min-width: 1100px) { .mp-title { font-size: clamp(38px, 5dvh, 52px); } .mp-sub { font-size: 17px; } }
 .mp-hint { flex: none; margin: 0; min-height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px 5px 9px; border-radius: 99px;
-  font: 700 clamp(13px, 1.9dvh, 15px)/1.2 ${FONTS.ui}; color: var(--vw-ink); background: color-mix(in srgb, var(--vw-paper) 86%, transparent);
+  font: 700 clamp(14px, 1.9dvh, 15px)/1.2 ${FONTS.ui}; color: var(--vw-ink); background: color-mix(in srgb, var(--vw-paper) 86%, transparent);
   box-shadow: 0 0 0 1.5px var(--vw-edge), 0 8px 16px -10px color-mix(in srgb, var(--mp-deep) 50%, transparent); box-sizing: border-box; max-width: 100%; }
 .mp-hint.is-gone { visibility: hidden; }
+/* Short screens: a finished scene gives the hint's row back to the stage. */
+@media (max-height: 700px) { .mp-hint.is-gone { display: none; } }
 .mp-hint-ico { display: inline-block; animation: mp-tap 1.1s ease-in-out infinite; }
 @keyframes mp-tap { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
 
@@ -200,7 +202,7 @@ export const MP_UI_CSS = `
 .mp-scroll-thumb { position: absolute; left: 0; right: 0; border-radius: 99px; min-height: 24px; transition: top .08s linear;
   background: linear-gradient(180deg, var(--vw-accent), var(--mp-deep)); box-shadow: 0 2px 6px -2px color-mix(in srgb, var(--mp-deep) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.55); }
 .mp-scroll-hint { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); pointer-events: none; padding: 4px 12px; border-radius: 99px;
-  background: var(--vw-accent-deep); color: #FFFFFF; font: 700 12px ${FONTS.ui}; letter-spacing: .02em; animation: mp-hint-bob 1.3s ease-in-out infinite; }
+  background: var(--vw-accent-deep); color: #FFFFFF; font: 700 13.5px ${FONTS.ui}; letter-spacing: .02em; animation: mp-hint-bob 1.3s ease-in-out infinite; }
 @keyframes mp-hint-bob { 0%, 100% { transform: translate(-50%, 0) } 50% { transform: translate(-50%, 4px) } }
 [data-mp-scene] * { scrollbar-width: thin; scrollbar-color: var(--vw-accent) color-mix(in srgb, var(--vw-accent) 14%, transparent); }
 [data-mp-scene] ::-webkit-scrollbar { width: 6px; height: 6px; }

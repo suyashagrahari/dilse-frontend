@@ -80,14 +80,14 @@ export function Question({
           <div className="mp-tin-line">
             <span className="mp-tin-can is-you">
               <Can color="var(--vw-accent)" ringing={pick === "yes"} />
-              <b>{recipient}</b>
+              <b style={{ ["--len" as string]: String(Math.max(6, recipient.length)) }}>{recipient}</b>
             </span>
             <svg className="mp-tin-string" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden>
               <path className="mp-tin-path" d={pick === "yes" ? "M0 30 Q 100 30 200 30" : pick === "later" ? "M0 30 Q 100 70 200 30" : "M0 30 Q 100 52 200 30"} fill="none" strokeWidth="3" strokeLinecap="round" />
             </svg>
             <span className="mp-tin-can is-me">
               <Can color="var(--mp-pop)" ringing={pick === "yes"} />
-              <b>{sender}</b>
+              <b style={{ ["--len" as string]: String(Math.max(6, sender.length)) }}>{sender}</b>
             </span>
           </div>
           <div className="mp-tin-btns">
@@ -129,12 +129,13 @@ export function Question({
 
 const Q_CSS = `
 .mp-tin { width: min(100%, 440px); height: 100%; display: grid; grid-template-rows: auto auto; align-content: center; gap: clamp(28px, 6dvh, 56px); align-items: center; }
-.mp-tin-line { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0; }
+.mp-tin-line { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0; padding: 0 clamp(8px, 5cqw, 20px); }
 .mp-tin-can { position: relative; z-index: 1; display: grid; justify-items: center; gap: 4px; width: clamp(70px, 22cqw, 110px); }
 .mp-tin-can svg { width: 100%; height: auto; filter: drop-shadow(0 10px 10px color-mix(in srgb, var(--mp-deep) 30%, transparent)); }
 .mp-tin-can.is-you svg { transform: rotate(14deg); }
 .mp-tin-can.is-me svg { transform: rotate(-14deg) scaleX(-1); }
-.mp-tin-can b { font: 800 clamp(14px, 2dvh, 17px) ${MP_DISPLAY}; color: var(--vw-ink); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Long names shrink a little to fit under their can (never below 14px), and only break at a hyphen. */
+.mp-tin-can b { display: block; width: 124%; margin: 0 -12%; font: 800 clamp(14px, 2dvh, 17px)/1.1 ${MP_DISPLAY}; font-size: max(14px, min(clamp(14px, 2dvh, 17px), calc(27cqw * 1.9 / var(--len, 8)))); color: var(--vw-ink); text-align: center; text-wrap: balance; }
 .mp-tin-string { width: 100%; height: 60px; margin: 0 -8px; }
 .mp-tin-path { stroke: color-mix(in srgb, var(--mp-deep) 70%, #FFFFFF); transition: d .5s cubic-bezier(.3,1.6,.5,1); }
 .mp-tin.is-taut .mp-tin-string { animation: mp-twang .12s linear 6; }
@@ -441,7 +442,7 @@ const CARD_CSS = `
 .mp-pc-dots b { font-size: 22px; line-height: 1; }
 .mp-pc-greet { margin-top: 6px; font: 700 11px ${FONTS.ui}; letter-spacing: .16em; text-transform: uppercase; color: var(--vw-ink-soft); }
 .mp-pc-title { font: 800 clamp(20px, 6cqw, 28px)/1.1 ${MP_DISPLAY}; color: var(--vw-accent-deep); text-wrap: balance; overflow-wrap: anywhere; }
-.mp-pc-route { font: 600 13px ${FONTS.ui}; color: var(--vw-ink); overflow-wrap: anywhere; }
+.mp-pc-route { font: 600 14px ${FONTS.ui}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .mp-pc-face.is-back { transform: rotateY(180deg); display: grid; grid-template-columns: 1.15fr 1fr; padding: 16px 14px; gap: 10px; text-align: left; }
 .mp-pc-msg { display: grid; align-content: center; gap: 8px; padding-right: 10px; border-right: 2px solid color-mix(in srgb, var(--vw-ink) 15%, transparent); min-width: 0; }
 .mp-pc-line { font: 400 clamp(15px, 4.4cqw, 19px)/1.3 ${MP_HAND}; color: #3B2A33; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
@@ -453,5 +454,11 @@ const CARD_CSS = `
   font: 700 8.5px/1.1 ${FONTS.ui}; color: color-mix(in srgb, var(--vw-ink) 55%, transparent); transform: rotate(-14deg); padding: 6px; box-sizing: border-box; }
 .mp-pc-to { font: 700 clamp(17px, 5cqw, 21px) ${MP_HAND}; color: #3B2A33; overflow-wrap: anywhere; }
 .mp-pc-rule { font: 400 clamp(14px, 4cqw, 17px) ${MP_HAND}; color: #5B4A52; border-bottom: 1.5px solid color-mix(in srgb, var(--vw-ink) 20%, transparent); padding-bottom: 2px; overflow-wrap: anywhere; }
+/* Small postcards: the postmark overlaps the stamp (as real ones do) so it never sits on the address. */
+@container (max-width: 380px) {
+  .mp-pc-postmark { right: 22px; top: 16px; width: 42px; height: 42px; padding: 4px; font-size: 7px; }
+  .mp-pc-addr { padding-top: 56px; gap: 4px; }
+  .mp-pc-face.is-back { padding: 12px 10px; gap: 8px; }
+}
 @media (prefers-reduced-motion: reduce) { .mp-pc-inner { transition-duration: .01s; } }
 `;

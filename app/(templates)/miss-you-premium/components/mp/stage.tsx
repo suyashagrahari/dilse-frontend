@@ -274,6 +274,22 @@ export const MP_STAGE_CSS = `
 @media (min-width: 1100px) { .mp-scene { max-width: min(800px, 60vw); padding-top: 88px; } }
 @media (min-width: 1100px) { .mp-zoom { zoom: 1.12; } }
 @media (min-width: 1100px) and (min-height: 1000px) { .mp-zoom { zoom: 1.25; } }
+/* Phone in landscape (and short in-app browsers turned sideways): the words sit in a column on the
+   left, the stage and its buttons on the right, so nothing is squeezed to a sliver. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mp-scene { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); grid-template-rows: minmax(0, 1fr); grid-auto-rows: auto; column-gap: clamp(16px, 4vw, 36px); row-gap: 8px;
+    max-width: min(860px, 100%); padding: calc(env(safe-area-inset-top, 0px) + 66px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 88px) max(20px, env(safe-area-inset-left, 0px)); }
+  .mp-scene > .mp-head { grid-column: 1; grid-row: 1 / -1; align-self: center; }
+  .mp-scene > .mp-fill { grid-column: 2; grid-row: 1; height: 100%; }
+  .mp-scene > :not(.mp-head):not(.mp-fill) { grid-column: 2; justify-self: center; }
+  .mp-scene:not(:has(> .mp-head)) > * { grid-column: 1 / -1; }
+  .mp-title { font-size: clamp(24px, 3.4vw, 34px); }
+  /* The pill moves under the words (left column), so it never covers the stage on the right. */
+  body .mp-next-wrap { justify-content: flex-start; padding: 0 0 0 max(78px, calc((100vw - min(860px, 100vw)) / 2 + 78px)); }
+  /* The answer reads as a row (sticker, then the words) across the full width. */
+  .mp-fill[data-mp-answered] > .mp-zoom { grid-template-columns: auto minmax(0, 1fr); max-width: 680px !important; column-gap: 24px; text-align: left; justify-items: start !important; align-items: center; }
+  .mp-fill[data-mp-answered] > .mp-zoom > :first-child { grid-row: 1 / span 3; min-height: 0 !important; }
+}
 .mp-fill { position: relative; flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; }
 
 /* The one way forward: airmail-striped, bottom centre, clear of the music icon on its left. */
@@ -297,6 +313,14 @@ export const MP_STAGE_CSS = `
   background: radial-gradient(circle at 40% 35%, #FFFFFF, var(--mp-blush)); box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--mp-deep) 22%, transparent), 0 2px 6px color-mix(in srgb, var(--mp-deep) 40%, transparent); animation: mp-bob 1.3s ease-in-out infinite alternate; }
 @keyframes mp-bob { from { transform: translateY(-2px) rotate(-9deg) } to { transform: translateY(2px) rotate(9deg) } }
 .mp-next-label { position: relative; min-width: 0; font: 800 18px/1.25 ${MP_DISPLAY}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 color-mix(in srgb, var(--mp-deep) 60%, transparent); }
+/* Phones: the music button owns the bottom-left corner, so the pill centres in the space to its right
+   and a long label wraps onto a second line instead of being cut off mid-word. */
+@media (max-width: 479px) {
+  .mp-next-wrap { padding: 0 max(10px, env(safe-area-inset-right, 0px)) 0 calc(max(12px, env(safe-area-inset-left, 0px)) + 58px); }
+  .mp-next { padding-right: 14px; gap: 7px; }
+  .mp-next-label { font-size: clamp(15.5px, 4.6vw, 18px); line-height: 1.08; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: left; }
+  .mp-next-arrow { font-size: 22px; }
+}
 .mp-next-arrow { position: relative; font: 700 26px/1 ${FONTS.ui}; margin-left: 2px; margin-top: -3px; }
 @media (min-width: 1100px) { .mp-next-wrap .mp-next { transform: scale(1.1); transform-origin: 50% 100%; } .mp-next-wrap .mp-next.is-hidden { transform: translateY(18px); } }
 
@@ -314,6 +338,8 @@ export const MP_STAGE_CSS = `
 .mp-trail-map { flex: none; width: 74px; height: 20px; display: block; }
 @media (min-width: 480px) { .mp-trail-map { width: 92px; } }
 @media (max-width: 479px) { .mp-trail { max-width: calc(100vw - 222px); gap: 2px; padding-right: 10px; } .mp-trail-map { width: 50px; } .mp-trail-km { font-size: 11.5px; } }
+@media (max-width: 399px) { .mp-trail-map { width: 28px; } }
+@media (max-width: 359px) { .mp-trail-map { display: none; } .mp-trail { max-width: calc(100vw - 206px); } }
 .mp-trail-km { min-width: 0; font: 700 12.5px/1 ${FONTS.ui}; color: var(--vw-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 @media (min-width: 768px) { .mp-trail-km { font-size: 14px; } }
 /* The music icon (engine, DayConfig.music.compact) stays bottom-left, level with the pill's middle. */

@@ -206,6 +206,8 @@ export const SP_UI_CSS = `
 .sp-sky-rain { position: absolute; inset: 0; background: linear-gradient(180deg, var(--sp-rain-a) 0%, var(--sp-rain-b) 62%, transparent 100%); opacity: calc((1 - var(--sun)) * .92); transition: opacity 1.6s ease; }
 .sp-sun { position: absolute; right: -22px; top: 21vh; width: 88px; aspect-ratio: 1; opacity: var(--sun);
   transform: translateY(calc((1 - var(--sun)) * 60px)) scale(calc(.7 + var(--sun) * .3)); transition: opacity 1.6s ease, transform 1.6s cubic-bezier(.3,1.3,.5,1); }
+/* Phones: the sun hangs off the right edge mid-screen, clear of the titles and subtitles. */
+@media (max-width: 899px) { .sp-sun { top: 44%; top: 44dvh; width: clamp(64px, 18vw, 88px); right: -26px; } }
 @media (min-width: 900px) { .sp-sun { right: max(5vw, 24px); top: 12vh; width: clamp(110px, 14vmin, 160px); } }
 .sp-sun svg { animation: sp-sun-spin 18s linear infinite; }
 @keyframes sp-sun-spin { from { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } to { transform: rotate(-6deg) } }
@@ -242,7 +244,7 @@ export const SP_UI_CSS = `
 .sp-scroll-thumb { position: absolute; left: 0; right: 0; border-radius: 99px; min-height: 24px; transition: top .08s linear;
   background: linear-gradient(180deg, var(--vw-accent), var(--sp-deep)); box-shadow: 0 2px 6px -2px color-mix(in srgb, var(--sp-deep) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.55); }
 .sp-scroll-hint { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); pointer-events: none; padding: 4px 12px; border-radius: 99px;
-  background: var(--vw-accent); color: #FFFFFF; font: 700 12px ${FONTS.ui}; letter-spacing: .02em; box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--sp-deep) 70%, transparent); animation: sp-hint-bob 1.3s ease-in-out infinite; }
+  background: var(--vw-accent); color: #FFFFFF; font: 700 13.5px ${FONTS.ui}; letter-spacing: .02em; box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--sp-deep) 70%, transparent); animation: sp-hint-bob 1.3s ease-in-out infinite; }
 @keyframes sp-hint-bob { 0%, 100% { transform: translate(-50%, 0) } 50% { transform: translate(-50%, 4px) } }
 [data-sp-scene] * { scrollbar-width: thin; scrollbar-color: var(--vw-accent) color-mix(in srgb, var(--vw-accent) 14%, transparent); }
 [data-sp-scene] ::-webkit-scrollbar { width: 6px; height: 6px; }

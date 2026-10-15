@@ -129,6 +129,11 @@ export function Contract({ promises, sender, recipient, sticker, onSigned, onNex
   return (
     <>
       <Head kicker="My repair plan" title="The peace contract" sub={sealed ? undefined : "Tap each clause you accept, then sign 🖋️"} />
+      {sealed && (
+        <motion.div className="sp-contract-gifrow" initial={reduced ? false : { scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 320, damping: 16 }}>
+          {sticker}
+        </motion.div>
+      )}
       <div className="sp-fill">
         <div className={`sp-contract sp-card${sealed ? " is-sealed" : ""}`} data-sp-contract={sealed ? "sealed" : inked ? "inked" : "blank"}>
           <p className="sp-contract-k">
@@ -161,7 +166,9 @@ export function Contract({ promises, sender, recipient, sticker, onSigned, onNex
           </SpScroll>
           <div className="sp-sigs">
             <div className="sp-sig">
-              <span className="sp-sig-name" ref={signFace}>{sender}</span>
+              <span className="sp-sig-name" ref={signFace} style={{ ["--len" as string]: String(Math.max(6, sender.length)) }}>
+                {sender}
+              </span>
               <span className="sp-sig-k">{sender}, sorry one</span>
             </div>
             <div className="sp-sig is-pad">
@@ -219,18 +226,30 @@ const CONTRACT_CSS = `
 .is-on .sp-tick { background: var(--vw-accent); }
 .sp-clause-t { font: 400 clamp(15.5px, 2.3dvh, 18px)/1.3 ${SP_HAND}; overflow-wrap: anywhere; }
 .sp-sigs { flex: none; display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; align-items: end; }
-.sp-sig { display: grid; gap: 2px; justify-items: center; min-width: 0; }
-.sp-sig-name { font: 700 clamp(24px, 3.6dvh, 30px)/1.1 ${SP_SIGN}; color: var(--vw-accent-deep); border-bottom: 2px solid var(--vw-ink-soft); width: 100%; text-align: center; padding-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sp-sig-k { font: 600 12px ${FONTS.ui}; color: var(--vw-ink-soft); overflow-wrap: anywhere; text-align: center; }
+.sp-sig { display: grid; gap: 2px; justify-items: center; min-width: 0; container-type: inline-size; }
+.sp-sig-name { font: 700 clamp(24px, 3.6dvh, 30px)/1.1 ${SP_SIGN}; font-size: min(clamp(24px, 3.6dvh, 30px), calc(190cqi / var(--len, 8))); min-height: 1.1em; color: var(--vw-accent-deep); border-bottom: 2px solid var(--vw-ink-soft); width: 100%; text-align: center; padding-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-sig-k { font: 600 13.5px/1.25 ${FONTS.ui}; color: var(--vw-ink-soft); overflow-wrap: anywhere; text-align: center; }
 .sp-sig.is-pad { position: relative; }
 .sp-pad { display: block; width: 100%; height: clamp(64px, 11dvh, 92px); border-radius: 12px; touch-action: none; cursor: crosshair; color: var(--vw-ink);
   background: repeating-linear-gradient(0deg, transparent 0 calc(100% - 3px), var(--vw-ink-soft) calc(100% - 3px) 100%), color-mix(in srgb, #FFF6C9 60%, #FFFFFF); box-shadow: inset 0 0 0 2px var(--vw-edge); }
 .sp-pad-hint { position: absolute; left: 0; right: 0; top: 28%; pointer-events: none; font: 600 15px ${SP_HAND}; color: var(--vw-ink-soft); animation: sp-hint-pulse 1.6s ease-in-out infinite; }
 @keyframes sp-hint-pulse { 50% { opacity: .45 } }
-.sp-linkbtn { border: 0; background: none; padding: 6px 2px; margin: -6px 0; min-height: 32px; font: 700 12px ${FONTS.ui}; color: var(--vw-accent-deep); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.sp-linkbtn { position: relative; border: 0; background: none; padding: 4px 2px; margin: -4px 0; min-height: 30px; font: 700 14px ${FONTS.ui}; color: var(--vw-accent-deep); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.sp-linkbtn::after { content: ""; position: absolute; inset: -8px -8px; } /* 44px+ hit area, same look */
 .sp-contract-stamp { position: absolute; right: 18px; bottom: 34px; pointer-events: none; padding: 4px 10px; border: 3px solid var(--vw-accent); border-radius: 10px; font: 800 14px ${FONTS.ui}; letter-spacing: .1em; color: var(--vw-accent-deep); background: color-mix(in srgb, var(--vw-paper) 70%, transparent); }
 .sp-contract-gif { position: absolute; right: -6px; top: -46px; transform: rotate(8deg); pointer-events: none; }
 .sp-contract-gif .sp-stk img { width: clamp(64px, 12dvh, 92px) !important; height: auto !important; }
+/* Phones: no room beside the title, so the sticker pops in where the subtitle was and the card makes room. */
+.sp-contract-gifrow { display: none; }
+/* Wide screens: the sticker sits beside the contract, never on its words. */
+@media (min-width: 768px) { .sp-contract-gif { right: -96px; top: 6px; } }
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
+  .sp-contract-gif { display: none; }
+  .sp-contract-gifrow { display: block; flex: none; margin: -4px 0 -2px; }
+  .sp-contract-gifrow .sp-stk { padding: 4px; border-radius: 16px; }
+  .sp-contract-gifrow .sp-stk img { width: auto !important; height: clamp(46px, 8dvh, 64px) !important; border-radius: 12px; }
+}
+@media (orientation: landscape) and (max-height: 500px) { .sp-contract-gifrow { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { .sp-pad-hint { animation: none; } }
 `;
 
@@ -550,7 +569,7 @@ export function Treaty({
           {days > 0 && <p className="sp-tr-days">{days.toLocaleString("en-IN")} days together, and counting ☀️</p>}
           <div className="sp-tr-sigs">
             <span className="sp-tr-sig">
-              <b>{sender}</b>
+              <b style={{ ["--len" as string]: String(Math.max(6, sender.length)) }}>{sender}</b>
               <i>{sender}</i>
             </span>
             <span className="sp-tr-sig">
@@ -558,7 +577,7 @@ export function Treaty({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={signature} alt={`${recipient}'s signature`} />
               ) : (
-                <b>{recipient}</b>
+                <b style={{ ["--len" as string]: String(Math.max(6, recipient.length)) }}>{recipient}</b>
               )}
               <i>{recipient}</i>
             </span>
@@ -588,14 +607,28 @@ const TREATY_CSS = `
 .sp-tr-terms li::marker { color: var(--vw-accent-deep); font-weight: 700; }
 .sp-tr-days { margin: 4px 0 0; padding: 4px 12px; border-radius: 99px; background: var(--sp-blush); font: 700 13px ${FONTS.ui}; color: var(--vw-ink); }
 .sp-tr-sigs { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
-.sp-tr-sig { display: grid; gap: 2px; justify-items: center; min-width: 0; }
+.sp-tr-sig { display: grid; gap: 2px; justify-items: center; min-width: 0; container-type: inline-size; }
+.sp-tr-sig b[style] { font-size: min(clamp(22px, 3.4dvh, 28px), calc(190cqi / var(--len, 8))); }
 .sp-tr-sig b { display: block; width: 100%; height: 44px; line-height: 44px; font: 700 clamp(22px, 3.4dvh, 28px)/44px ${SP_SIGN}; color: var(--vw-accent-deep); border-bottom: 2px solid var(--vw-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp-tr-sig img { display: block; width: 100%; height: 44px; object-fit: contain; border-bottom: 2px solid var(--vw-ink-soft); }
-.sp-tr-sig i { font: 600 12px ${FONTS.ui}; font-style: normal; color: var(--vw-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.sp-tr-sig i { font: 600 13.5px ${FONTS.ui}; font-style: normal; color: var(--vw-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .sp-tr-stamp { position: relative; margin: 6px 0 2px; padding: 4px 9px; border: 3px solid var(--vw-accent); border-radius: 10px; transform: rotate(-5deg);
   font: 800 12px ${FONTS.ui}; letter-spacing: .08em; color: var(--vw-accent-deep); background: color-mix(in srgb, var(--vw-paper) 70%, transparent); animation: sp-stamp .55s cubic-bezier(.3,1.6,.5,1) .6s both; }
 @keyframes sp-stamp { from { transform: rotate(-5deg) scale(2.4); opacity: 0 } to { transform: rotate(-5deg) scale(1); opacity: 1 } }
 .sp-tr-end { margin: 6px 0 0; font: 400 clamp(16px, 2.4dvh, 19px)/1.3 ${SP_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
-.sp-tr-no { margin: 2px 0 0; font: 600 11px ${FONTS.ui}; letter-spacing: .08em; color: var(--vw-ink-soft); }
+.sp-tr-no { margin: 2px 0 0; font: 600 12px ${FONTS.ui}; letter-spacing: .08em; color: var(--vw-ink-soft); }
+/* Short phones: tighten the treaty so the whole card (end line and serial too) fits above the pill;
+   if a very long treaty still doesn't, it scrolls inside its frame instead of being cut off. */
+.sp-treaty { overflow-y: auto; overscroll-behavior: contain; }
+@container (max-height: 520px) {
+  .sp-treaty { padding: 12px 16px 10px; gap: 2px; }
+  .sp-tr-t { font-size: clamp(22px, 7cqw, 28px); }
+  .sp-tr-terms { margin-top: 2px; gap: 2px; }
+  .sp-tr-terms li { font-size: 15px; line-height: 1.22; }
+  .sp-tr-sigs { margin-top: 2px; gap: 10px; }
+  .sp-tr-sig b, .sp-tr-sig img { height: 36px; line-height: 36px; }
+  .sp-tr-stamp { margin: 4px 0 0; }
+  .sp-tr-end { margin-top: 2px; font-size: 16px; }
+}
 @media (prefers-reduced-motion: reduce) { .sp-tr-stamp { animation: none; } }
 `;

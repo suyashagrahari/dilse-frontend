@@ -266,8 +266,9 @@ const STAR_CSS = `
 .sp-jar-wrap { width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 10px; }
 .sp-jar { position: relative; height: min(100%, 300px); aspect-ratio: 170 / 210; max-width: 70cqw; cursor: grab; touch-action: pan-y; transform-origin: 50% 90%; filter: drop-shadow(0 18px 20px color-mix(in srgb, var(--sp-deep) 28%, transparent)); }
 .sp-jar:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 6px; border-radius: 20px; }
-.sp-jar-gif { position: absolute; right: -22%; top: -10%; transform: rotate(10deg); pointer-events: none; }
-.sp-jar-gif .sp-stk img { width: clamp(64px, 17cqh, 96px) !important; height: auto !important; }
+.sp-jar-gif { position: absolute; left: 70%; top: -4%; transform: rotate(10deg); pointer-events: none; }
+.sp-jar-gif .sp-stk img { width: clamp(54px, 15cqh, 92px) !important; height: auto !important; }
+@media (orientation: landscape) and (max-height: 500px) { .sp-jar-gif { left: 92%; top: 6%; } .sp-jar-gif .sp-stk img { width: 58px !important; } }
 .sp-starrow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .sp-star, .sp-star-slot { display: block; width: 44px; height: 44px; box-sizing: border-box; }
 .sp-star { border: 0; padding: 4px; background: none; cursor: pointer; border-radius: 50%; touch-action: manipulation; }
@@ -379,7 +380,7 @@ const LINE_CSS = `
 .sp-peg { position: absolute; left: 50%; top: -14px; width: 12px; height: 26px; margin-left: -6px; border-radius: 3px; background: linear-gradient(90deg, #E9C7A5, #F6DEC4); box-shadow: inset 0 0 0 1.5px #8A6A55; }
 .sp-pin-img { display: block; width: 100%; aspect-ratio: .86; overflow: hidden; border-radius: 2px; background: var(--sp-blush); }
 .sp-pin-empty { display: grid; place-items: center; width: 100%; height: 100%; font-size: 34px; background: repeating-linear-gradient(45deg, var(--sp-blush) 0 10px, var(--vw-paper) 10px 20px); }
-.sp-pin-cap { font: 400 14px/1.2 ${SP_HAND}; color: #3F2A2A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-pin-cap { font: 400 14px/1.2 ${SP_HAND}; color: #3F2A2A; text-wrap: balance; overflow-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .sp-line-bear { justify-self: end; width: clamp(70px, 22cqh, 120px); margin-right: 4%; }
 .sp-zoomed { position: absolute; inset: -8px; z-index: 5; display: grid; place-items: center; background: color-mix(in srgb, var(--vw-paper) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border-radius: 24px; }
 .sp-zoom-card { margin: 0; width: min(82cqw, 62cqh, 330px); max-height: 100%; box-sizing: border-box; padding: 12px 12px 12px; background: #FFFFFF; border-radius: 6px; display: grid; gap: 8px; box-shadow: 0 30px 50px -24px color-mix(in srgb, var(--sp-deep) 70%, transparent); }
@@ -389,6 +390,13 @@ const LINE_CSS = `
 .sp-zoom-note { font: 500 13.5px/1.35 ${FONTS.ui}; color: #6F5A5A; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .sp-zoom-nav { display: flex; gap: 8px; justify-content: center; }
 .sp-zoom-nav .sp-ghost { color: #4A3434; background: #FFFFFF; }
+/* Landscape phones: photo on the left, caption and buttons beside it, so nothing drops off the bottom. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .sp-zoom-card { width: auto; max-width: 96cqw; grid-template-columns: auto minmax(150px, 230px); grid-template-rows: 1fr auto; align-items: center; column-gap: 14px; }
+  .sp-zoom-img { grid-row: 1 / span 2; height: calc(100cqh - 40px); width: auto; }
+  .sp-zoom-card figcaption, .sp-zoom-nav { grid-column: 2; }
+  .sp-zoom-nav { flex-wrap: wrap; }
+}
 @media (prefers-reduced-motion: reduce) { .sp-pin { animation: none; } }
 `;
 

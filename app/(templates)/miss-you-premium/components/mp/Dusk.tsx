@@ -159,7 +159,7 @@ const HB_CSS = `
 .mp-hb-ecg polyline { stroke: var(--vw-accent-deep); stroke-dasharray: 520; stroke-dashoffset: 520; animation: mp-ecg 1.8s linear infinite; }
 @keyframes mp-ecg { to { stroke-dashoffset: 0 } }
 .mp-hb-heart { position: relative; z-index: 1; display: grid; justify-items: center; gap: 6px; width: min(36cqw, 46cqh, 150px); transition: transform 1s cubic-bezier(.4,1.4,.5,1), opacity .6s ease .4s; }
-.mp-hb-heart b { font: 800 clamp(15px, 2.2dvh, 18px) ${MP_DISPLAY}; color: var(--vw-ink); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-hb-heart b { font: 800 clamp(15px, 2.2dvh, 18px)/1.1 ${MP_DISPLAY}; color: var(--vw-ink); max-width: 100%; text-align: center; text-wrap: balance; overflow-wrap: break-word; }
 .mp-hb-beat { display: block; width: 100%; filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--mp-deep) 35%, transparent)); animation: mp-thud .5s cubic-bezier(.3,1.8,.5,1) both; }
 @keyframes mp-thud { 0% { transform: scale(calc(1 + .16 * var(--k, 1))); opacity: calc(1 - .25 * (1 - var(--k, 1))) } 100% { transform: scale(1); opacity: 1 } }
 .mp-hb.is-synced .mp-hb-heart.is-you { transform: translateX(42%) scale(.8); opacity: 0; }
@@ -176,6 +176,12 @@ const HB_CSS = `
 .mp-hb-card { position: relative; width: min(100%, 380px); box-sizing: border-box; padding: 16px 18px 16px 18px; border-radius: 22px; background: #FFFFFF; box-shadow: 0 0 0 2px var(--vw-edge), 0 16px 28px -16px color-mix(in srgb, var(--mp-deep) 60%, transparent); }
 .mp-hb-card p { margin: 0; font: 400 clamp(19px, 2.8dvh, 23px)/1.35 ${MP_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .mp-hb-gif { position: absolute; right: -10px; top: -78px; transform: rotate(6deg); }
+/* Landscape phones: hearts on the left, the button and meter beside them. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mp-hb { width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 190px); grid-template-rows: minmax(0, 1fr); align-items: center; }
+  .mp-hb-btn { min-height: 56px; padding: 0 18px; font-size: 17px; }
+  .mp-hb-heart { width: min(24cqw, 52cqh, 130px); }
+}
 @media (prefers-reduced-motion: reduce) { .mp-hb-ecg polyline { animation: none; stroke-dashoffset: 0; } .mp-hb-heart { transition-duration: .01s; } }
 `;
 
@@ -413,7 +419,8 @@ const STAR_CSS = `
 @keyframes mp-ringpulse { 0% { transform: scale(.6); opacity: 1 } 100% { transform: scale(1.5); opacity: 0 } }
 .mp-cons-heart path { fill: rgba(255,255,255,.35); transition: fill .6s ease; }
 .mp-cons-heart.is-on path { fill: var(--vw-accent); }
-.mp-cons-gif { position: absolute; right: -8px; top: -26px; transform: rotate(6deg); z-index: 3; }
+.mp-cons-gif { position: absolute; right: -8px; top: -26px; transform: rotate(6deg); z-index: 3; pointer-events: none; }
+@media (max-width: 599px), (max-height: 700px) { .mp-cons-gif { right: -10px; top: -16px; } .mp-cons-gif .mp-stk img { width: clamp(50px, 9dvh, 70px) !important; height: auto !important; } }
 .mp-cons-sky.is-done .mp-cons-moon { opacity: 0; }
 .mp-cons-list { min-height: 0; display: grid; }
 .mp-miss { list-style: none; margin: 0; padding: 2px 0 8px; display: grid; gap: 8px; text-align: left; }

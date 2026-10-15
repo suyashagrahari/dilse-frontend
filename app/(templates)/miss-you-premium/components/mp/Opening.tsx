@@ -78,8 +78,8 @@ export function Curtains({ recipient, petName, sender, openingLine, sticker, onN
               <circle cx="260" cy="160" r="8" className="mp-win-dot-b" />
               {open && (
                 <>
-                  <text x="150" y="86" textAnchor="middle" className="mp-sky-name" style={{ fontFamily: MP_HAND }}>
-                    {name.length > 14 ? `${name.slice(0, 13)}…` : name}
+                  <text x="150" y="86" textAnchor="middle" className="mp-sky-name" style={{ fontFamily: MP_HAND, fontSize: name.length > 11 ? Math.max(24, Math.round((46 * 11) / Math.min(name.length, 21))) : undefined }}>
+                    {name.length > 21 ? `${name.slice(0, 20)}…` : name}
                   </text>
                   <g className="mp-sky-plane">
                     <text x="0" y="0" fontSize="26">
@@ -393,7 +393,10 @@ const RADIO_CSS = `
 .mp-knob { width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #FFFFFF, var(--vw-paper) 50%, color-mix(in srgb, var(--vw-accent) 30%, #FFFFFF));
   box-shadow: 0 0 0 3px #FFFFFF, 0 4px 0 color-mix(in srgb, var(--mp-deep) 35%, transparent); position: relative; transition: transform .15s ease; }
 .mp-knob::after { content: ""; position: absolute; left: 50%; top: 5px; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--vw-accent-deep); }
-.mp-vn-slot { width: 100%; min-height: 0; display: grid; align-items: start; }
+.mp-vn-slot { width: 100%; min-height: 0; max-height: 100%; display: grid; align-items: start; overflow-y: auto; overscroll-behavior: contain; border-radius: 22px; }
+/* Short phones: a slimmer speaker so the voice note below never slides under the pill. */
+@media (orientation: landscape) and (max-height: 500px) { .mp-radio-wrap { zoom: .8; } .mp-radio-grille { display: none; } .mp-radio-wrap { gap: 8px; } .mp-radio-face { gap: 8px; padding: 10px 12px; } }
+@media (max-height: 700px) { .mp-radio { margin-top: 24px; } .mp-radio-grille { height: clamp(28px, 5.5dvh, 46px); } .mp-radio-face { padding: 12px 14px 12px; gap: 9px; } .mp-dial { height: 54px; } }
 .mp-vn { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 12px 14px; border-radius: 22px 22px 22px 6px; background: #FFFFFF;
   box-shadow: 0 0 0 2px var(--vw-edge), 0 16px 30px -18px color-mix(in srgb, var(--mp-deep) 60%, transparent); }
 .mp-vn-play { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: #FFFFFF; font-size: 14px; background: var(--vw-accent); }
@@ -403,7 +406,7 @@ const RADIO_CSS = `
 @keyframes mp-wave { from { transform: scaleY(.4) } to { transform: scaleY(1) } }
 .mp-vn-text { font: 400 clamp(17px, 2.5dvh, 20px)/1.35 ${MP_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .mp-vn-text.is-soft { color: var(--vw-ink-soft); font-size: clamp(16px, 2.3dvh, 18px); }
-.mp-vn-meta { font: 600 12px ${FONTS.ui}; color: var(--vw-ink-soft); }
+.mp-vn-meta { font: 600 13.5px ${FONTS.ui}; color: var(--vw-ink-soft); }
 .mp-vn.is-static { align-items: center; border-radius: 22px; }
 .mp-vn-static { flex: none; width: 38px; height: 38px; border-radius: 50%; background: repeating-radial-gradient(circle at 30% 40%, #DDD 0 1px, #FFF 1px 3px); animation: mp-fuzz .2s steps(2) infinite; }
 @keyframes mp-fuzz { to { background-position: 3px 2px } }
