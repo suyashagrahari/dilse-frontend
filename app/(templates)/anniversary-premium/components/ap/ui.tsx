@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useReducedMotion } from "../../../_valentine/kit";
 import type { AnniPaletteDef } from "../../../_valentine/days/anniversary-premium";
-import { AP_HAND, AP_SANS } from "./fonts";
+import { AP_HAND, AP_SANS, AP_SERIF } from "./fonts";
 
 export const clean = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 
@@ -254,6 +254,10 @@ export const AP_UI_CSS = `
 .ap-ghost { min-height: 44px; padding: 0 18px; border: 1.5px solid color-mix(in srgb, var(--ap-foil) 70%, var(--vw-edge)); border-radius: 99px; background: color-mix(in srgb, var(--vw-paper) 74%, transparent); color: var(--vw-ink); font: 600 15px ${AP_SANS}; cursor: pointer; touch-action: manipulation; }
 .ap-ghost:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 3px; }
 .ap-hand { font-family: ${AP_HAND}; }
+/* Round ‹ › arrows (time machine, book): shared, so the book never shows them unstyled. */
+.ap-tm-arrow { width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer; font: 600 26px/1 ${AP_SERIF}; color: var(--vw-accent-deep); background: var(--vw-paper); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ap-foil) 60%, transparent), 0 6px 12px -8px var(--ap-deep); touch-action: manipulation; }
+.ap-tm-arrow:disabled { opacity: .35; cursor: default; }
+.ap-tm-arrow:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 2px; }
 .ap-stk { display: inline-grid; place-items: center; padding: 6px; border-radius: 22px; background: #FFFFFF; transform: rotate(-4deg);
   box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--ap-foil) 70%, transparent), 0 14px 26px -14px color-mix(in srgb, var(--ap-deep) 60%, transparent); }
 .ap-stk img { border-radius: 16px; display: block; }

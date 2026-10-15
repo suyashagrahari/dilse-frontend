@@ -277,6 +277,8 @@ export const HA_UI_CSS = `
 .ha-stk { display: inline-grid; place-items: center; padding: 5px; border-radius: 18px; background: #FFFFFF; transform: rotate(-4deg);
   box-shadow: 0 0 0 2px var(--ha-gilt-a), 0 0 0 4px color-mix(in srgb, var(--ha-gilt-b) 60%, transparent), 0 12px 24px -12px color-mix(in srgb, var(--ha-deep) 60%, transparent); }
 .ha-stk img { border-radius: 14px; display: block; }
+/* The sticker box hugs its image, so a room that shrinks the image on phones shrinks the white card too. */
+.ha-stk > span { width: auto !important; height: auto !important; }
 
 /* A gilt picture frame and a museum plaque — used all over the museum. */
 .ha-frame { position: relative; box-sizing: border-box; padding: clamp(9px, 2.6cqmin, 18px); border-radius: 5px;
@@ -288,7 +290,7 @@ export const HA_UI_CSS = `
 .ha-plaque::before, .ha-plaque::after { content: ""; position: absolute; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FFF6D8, var(--ha-gilt-b)); }
 .ha-plaque::before { left: 6px; } .ha-plaque::after { right: 6px; }
 .ha-pl-t { margin: 0; font: 700 clamp(17px, 2.5dvh, 21px)/1.15 ${HA_DISPLAY}; overflow-wrap: anywhere; }
-.ha-pl-m { margin: 2px 0 0; font: 700 10.5px/1.3 ${HA_CAPS}; letter-spacing: .12em; text-transform: uppercase; color: #6E5530; overflow-wrap: anywhere; }
+.ha-pl-m { margin: 2px 0 0; font: 700 11.5px/1.3 ${HA_CAPS}; letter-spacing: .12em; text-transform: uppercase; color: #6E5530; overflow-wrap: anywhere; }
 .ha-pl-c { margin: 4px 0 0; font: 600 italic clamp(15px, 2.2dvh, 17.5px)/1.3 ${HA_DISPLAY}; color: #4A3826; overflow-wrap: anywhere; }
 .ha-hand { font-family: ${HA_HAND}; font-weight: 600; }
 .ha-say { margin: 0; padding: 10px 16px; border-radius: 16px; background: color-mix(in srgb, var(--vw-paper) 92%, transparent); box-shadow: 0 0 0 2px var(--vw-edge), 0 12px 24px -16px color-mix(in srgb, var(--ha-deep) 55%, transparent);

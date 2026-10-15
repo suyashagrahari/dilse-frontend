@@ -272,7 +272,7 @@ export const HA_STAGE_CSS = `
 .ha-fill { position: relative; flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; }
 
 .ha-head { flex: none; display: grid; gap: 3px; justify-items: center; max-width: 560px; }
-.ha-kick { margin: 0; display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px 3px; border-radius: 3px; font: 700 clamp(10.5px, 1.5dvh, 12px)/1.3 ${HA_CAPS}; letter-spacing: .16em; text-transform: uppercase;
+.ha-kick { margin: 0; display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px 3px; border-radius: 3px; font: 700 clamp(11.5px, 1.5dvh, 12.5px)/1.3 ${HA_CAPS}; letter-spacing: .16em; text-transform: uppercase;
   color: var(--ha-deep); background: linear-gradient(180deg, #FFFDF6, color-mix(in srgb, var(--ha-gilt-a) 45%, #FFFFFF)); box-shadow: 0 0 0 1.5px var(--ha-gilt-b), 0 3px 8px -4px color-mix(in srgb, var(--ha-deep) 50%, transparent); }
 .ha-title { margin: 0; font: 700 clamp(30px, min(9vw, 5.2dvh), 46px)/1.02 ${HA_DISPLAY}; color: var(--vw-ink); text-wrap: balance; overflow-wrap: anywhere; letter-spacing: -.005em; }
 .ha-sub { margin: 0; font: 500 clamp(14px, 2.1dvh, 16.5px)/1.42 ${FONTS.ui}; color: var(--vw-ink-soft); text-wrap: balance; overflow-wrap: anywhere; }
@@ -339,4 +339,27 @@ body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 26px); }
 @keyframes ha-soft { 0% { opacity: 0 } 45% { opacity: 1 } 100% { opacity: 0 } }
 .ha-doors-block { position: fixed; inset: 0; z-index: 75; }
 @media (prefers-reduced-motion: reduce) { .ha-next-ico, .ha-next-ring, .ha-tk.is-here svg { animation: none; } }
+
+/* Phones: a long label never ellipsizes. The pill keeps clear of the music icon on the left but may use the
+   right gutter ("safe center" pins it left only when it would otherwise overflow). */
+@media (max-width: 420px) {
+  .ha-next-wrap { padding: 0 max(12px, env(safe-area-inset-right, 0px)) 0 62px; justify-content: safe center; }
+  .ha-next { gap: 8px; padding-right: 16px; }
+  .ha-next-ico { width: 38px; height: 38px; font-size: 19px; }
+  .ha-next-label { font-size: clamp(17px, 5.4vw, 21px); }
+}
+/* Landscape phones: the room heading, any extras and the pill on the left wall, the exhibit on the right
+   using the full height (otherwise the top bar and the pill leave the exhibit ~150px). */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  .ha-scene { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr) auto auto auto; align-items: center;
+    column-gap: 22px; row-gap: 6px; max-width: none;
+    padding: calc(env(safe-area-inset-top, 0px) + 54px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 10px) max(16px, env(safe-area-inset-left, 0px)); }
+  .ha-scene > .ha-head { grid-column: 1; grid-row: 1; align-self: center; }
+  .ha-scene > .ha-fill { grid-column: 2; grid-row: 1 / -1; height: 100%; }
+  .ha-scene > :not(.ha-head):not(.ha-fill) { grid-column: 1; }
+  .ha-scene::after { content: ""; grid-column: 1; grid-row: 4; height: 66px; }
+  .ha-next-wrap { right: auto; width: calc((100vw - 54px) * .4 + 16px); padding: 0 0 0 62px; justify-content: safe center; }
+  .ha-title { font-size: clamp(24px, 8dvh, 34px); }
+  .ha-sub { font-size: 14px; }
+}
 `;

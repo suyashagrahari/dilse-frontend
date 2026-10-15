@@ -351,4 +351,29 @@ body .vm-icon-btn { background: radial-gradient(circle at 50% 38%, var(--vw-acce
 .ap-wipe.is-soft { background: var(--vw-paper, #FFF); opacity: 0; animation: ap-soft var(--ap-wipe) ease-in-out forwards; }
 @keyframes ap-soft { 0% { opacity: 0 } 45% { opacity: 1 } 100% { opacity: 0 } }
 .ap-wipe-block { position: fixed; inset: 0; z-index: 75; }
+
+/* Phones. A long label never ellipsizes: the pill keeps clear of the music icon on the left but may use
+   the right gutter ("safe center" pins it to the left edge only when it would otherwise overflow). */
+@media (max-width: 420px) {
+  .ap-next-wrap { padding: 0 max(12px, env(safe-area-inset-right, 0px)) 0 62px; justify-content: safe center; }
+  .ap-next { gap: 8px; padding-right: 16px; }
+  .ap-next-ico { width: 38px; height: 38px; font-size: 19px; }
+  .ap-next-label { font-size: clamp(17px, 5.4vw, 21px); }
+}
+/* Landscape phones (and in-app browsers turned sideways): the open-book split — the words and the pill on
+   the left page, the scene on the right page using the full height. */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+  .ap-scene { max-width: none; gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 54px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 84px) max(16px, env(safe-area-inset-left, 0px)); }
+  .ap-scene[data-split] { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr) auto auto; column-gap: 22px; row-gap: 6px; align-items: center;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
+  .ap-scene[data-split] > .ap-head { grid-column: 1; grid-row: 1; align-self: center; }
+  .ap-scene[data-split] > .ap-fill { grid-column: 2; grid-row: 1 / -1; height: 100%; }
+  .ap-scene[data-split] > .ap-foot { grid-column: 1; grid-row: 2; }
+  /* the pill's own row at the foot of the left page */
+  .ap-scene[data-split]::after { content: ""; grid-column: 1; grid-row: 3; height: 64px; }
+  body:has([data-ap-scene][data-split]) .ap-next-wrap { right: auto; width: calc((100vw - 54px) * .4 + 16px); padding: 0 0 0 62px; justify-content: safe center; }
+  .ap-title { font-size: clamp(24px, 8dvh, 34px); }
+  .ap-sub { font-size: 14px; }
+}
 `;

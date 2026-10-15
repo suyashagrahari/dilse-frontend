@@ -182,7 +182,7 @@ export function Wrapped({ cards, onNext }: { cards: WrapCard[]; onNext: () => vo
 }
 
 const WRAP_CSS = `
-.ap-wrap { position: relative; height: min(100cqh, 158cqw, 680px); aspect-ratio: 9 / 15; max-width: 100%; border-radius: 28px; overflow: hidden; touch-action: manipulation; cursor: pointer; user-select: none; -webkit-user-select: none;
+.ap-wrap { position: relative; height: min(100cqh, 158cqw, 680px); aspect-ratio: 9 / 15; max-width: 100%; min-width: min(100%, 300px); border-radius: 28px; overflow: hidden; touch-action: manipulation; cursor: pointer; user-select: none; -webkit-user-select: none;
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ap-foil) 60%, transparent), 0 30px 60px -30px var(--ap-deep); transition: background .6s ease; }
 .ap-wrap.is-0 { background: linear-gradient(165deg, #FFFFFF 0%, var(--ap-blush) 45%, color-mix(in srgb, var(--vw-accent) 30%, var(--ap-blush)) 100%); }
 .ap-wrap.is-1 { background: linear-gradient(165deg, var(--ap-sky1) 0%, var(--ap-sky2) 60%, color-mix(in srgb, var(--ap-rose) 40%, #FFFFFF) 100%); }
@@ -195,13 +195,14 @@ const WRAP_CSS = `
 .ap-wrap-orb.is-a { width: 60%; aspect-ratio: 1; right: -20%; top: 8%; background: radial-gradient(circle, #FFFFFF, transparent 70%); animation: ap-orb 9s ease-in-out infinite alternate; }
 .ap-wrap-orb.is-b { width: 46%; aspect-ratio: 1; left: -16%; bottom: 6%; background: radial-gradient(circle, color-mix(in srgb, var(--ap-rose) 60%, transparent), transparent 70%); animation: ap-orb 11s ease-in-out infinite alternate-reverse; }
 @keyframes ap-orb { from { transform: translate(0, 0) } to { transform: translate(-14%, 10%) } }
-.ap-wrap-card { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: clamp(6px, 1.6cqh, 14px); padding: 18% 9% 12%; text-align: center; }
+/* Side padding always clears the ‹ › buttons, so a big number or a long name never runs under them. */
+.ap-wrap-card { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: clamp(6px, 1.6cqh, 14px); padding: 18% max(9%, 56px) 12%; text-align: center; }
 .ap-wrap-emoji { font-size: clamp(40px, 8cqh, 64px); line-height: 1; filter: drop-shadow(0 8px 10px rgba(0,0,0,.12)); }
 .ap-wrap-kick { margin: 0; font: 700 clamp(11px, 1.8cqh, 14px) ${AP_SANS}; letter-spacing: .2em; text-transform: uppercase; color: var(--vw-accent-deep); }
 .ap-wrap-big { margin: 0; display: grid; justify-items: center; font: 600 clamp(56px, 13cqh, 108px)/.95 ${AP_SERIF}; color: var(--vw-ink); letter-spacing: -.02em; overflow-wrap: anywhere; max-width: 100%; }
 .ap-wrap-big small { font: italic 500 clamp(22px, 4.4cqh, 36px)/1.1 ${AP_SERIF}; color: var(--vw-accent-deep); letter-spacing: 0; }
 .ap-wrap-big.is-text { font-size: clamp(34px, 8cqh, 68px); line-height: 1.02; text-wrap: balance; }
-.ap-wrap-big.is-name { font: 400 clamp(52px, 11cqh, 96px)/1.05 ${AP_SCRIPT}; color: var(--vw-accent-deep); }
+.ap-wrap-big.is-name { font: 400 clamp(40px, 11cqh, 96px)/1.05 ${AP_SCRIPT}; color: var(--vw-accent-deep); overflow-wrap: break-word; }
 .ap-wrap-line { margin: 0; max-width: 28ch; font: 500 clamp(19px, 3.2cqh, 26px)/1.22 ${AP_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .ap-wrap-nav { position: absolute; top: 50%; translate: 0 -50%; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer; font: 600 26px/1 ${AP_SERIF}; color: var(--vw-accent-deep); background: color-mix(in srgb, #FFFFFF 70%, transparent); box-shadow: 0 6px 14px -8px var(--ap-deep); touch-action: manipulation; }
 .ap-wrap-nav.is-prev { left: 8px; }

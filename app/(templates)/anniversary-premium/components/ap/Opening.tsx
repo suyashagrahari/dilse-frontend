@@ -206,6 +206,19 @@ const LOCK_CSS = `
 .ap-key.is-soft { font-family: ${AP_SANS}; font-size: 20px; color: var(--vw-ink-soft); }
 .ap-key:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 2px; }
 .ap-lock-note { margin: 0; font: 600 15px ${AP_SANS}; color: var(--vw-accent-deep); }
+/* Short screens (in-app browsers): the keypad turns into a two-and-a-bit row combination lock so the clasp,
+   the four slots and every key fit without scrolling; keys stay 44px+ tall. */
+@container (max-height: 360px) {
+  .ap-lock { gap: 8px; }
+  .ap-clasp { width: clamp(52px, 17cqh, 90px); }
+  .ap-code-slot { height: clamp(44px, 14cqh, 54px); width: clamp(42px, 12cqw, 52px); font-size: 28px; }
+  .ap-keys { grid-template-columns: repeat(4, clamp(54px, 16cqw, 72px)); gap: 6px; }
+  .ap-key { height: 44px; font-size: 22px; }
+  .ap-key[data-ap-key="0"] { order: 1; }
+  .ap-key.is-soft { order: 2; }
+  .ap-keys > span { display: none; }
+}
+@container (max-height: 250px) { .ap-clasp { display: none; } }
 .ap-count { display: grid; justify-items: center; gap: clamp(14px, 3cqh, 28px); }
 .ap-hourglass { position: relative; width: clamp(70px, 16cqh, 110px); aspect-ratio: .62; animation: ap-hg 6s ease-in-out infinite; }
 @keyframes ap-hg { 0%, 80% { transform: rotate(0) } 90%, 100% { transform: rotate(180deg) } }
@@ -378,6 +391,8 @@ const TITLES_CSS = `
 .ap-t-line { margin: 0; font: 500 clamp(19px, 3cqh, 26px)/1.25 ${AP_HAND}; color: var(--vw-ink); max-width: 30ch; overflow-wrap: anywhere; }
 .ap-t-since { margin: 0; font: 600 clamp(12px, 1.8cqh, 14px) ${AP_SANS}; letter-spacing: .06em; color: var(--vw-ink-soft); }
 .ap-t-stk { margin-top: 4px; }
+/* Short screens (landscape phones): the opening credits tighten so both names and the credits fit. */
+@container (max-height: 360px) { .ap-t-names span { font-size: clamp(32px, 13cqh, 54px); } .ap-t-names i { font-size: 22px; } .ap-t-nth { font-size: 21px; } .ap-t-line { font-size: 17px; } .ap-t-stk { display: none; } }
 .ap-lens-wrap { position: absolute; left: 0; right: 0; bottom: 0; display: grid; justify-items: center; gap: 10px; }
 .ap-lens { position: relative; width: min(100%, 420px); height: 64px; border-radius: 18px; overflow: hidden; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--ap-deep) 70%, #000) 0%, var(--ap-deep) 40%, color-mix(in srgb, var(--ap-deep) 80%, #000) 100%);
@@ -618,7 +633,7 @@ const PATHS_CSS = `
 .ap-met-stk { margin-top: -66px; }
 .ap-met-k { margin: 0; font: 700 12px ${AP_SANS}; letter-spacing: .16em; text-transform: uppercase; color: var(--vw-accent-deep); }
 .ap-met-l { margin: 0; font: 500 clamp(19px, 2.8dvh, 23px)/1.25 ${AP_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
-.ap-path-step { min-height: 40px; font-size: 14px; }
+.ap-path-step { min-height: 44px; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { .ap-dot-ping { animation: none; } }
 `;
 
@@ -829,9 +844,6 @@ const TM_CSS = `
 .ap-sky-sun { position: absolute; right: 12%; top: 10%; width: 22%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #FFF6C9, #FFD36E); box-shadow: 0 0 30px 10px #FFE7A3; }
 .ap-sky-cloud { position: absolute; left: 10%; top: 8%; width: 50%; height: 16%; border-radius: 99px; background: #FFFFFF; opacity: .8; box-shadow: 30px -10px 0 4px #FFFFFF; }
 .ap-tm-foot { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; width: 100%; max-width: 520px; gap: 8px; }
-.ap-tm-arrow { width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer; font: 600 26px/1 ${AP_SERIF}; color: var(--vw-accent-deep); background: var(--vw-paper); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ap-foil) 60%, transparent), 0 6px 12px -8px var(--ap-deep); touch-action: manipulation; }
-.ap-tm-arrow:disabled { opacity: .35; cursor: default; }
-.ap-tm-arrow:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 2px; }
 .ap-tm-card { display: grid; gap: 2px; text-align: center; min-height: 86px; align-content: center; }
 .ap-tm-when { margin: 0; font: 700 12px ${AP_SANS}; letter-spacing: .16em; text-transform: uppercase; color: var(--vw-accent-deep); }
 .ap-tm-title { margin: 0; font: 600 clamp(21px, 3.2dvh, 28px)/1.1 ${AP_SERIF}; color: var(--vw-ink); overflow-wrap: anywhere; }

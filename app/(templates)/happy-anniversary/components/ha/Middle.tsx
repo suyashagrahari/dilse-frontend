@@ -181,6 +181,10 @@ const GAL_CSS = (reduced: boolean) => `
 .ha-art-pl { width: min(calc(100% + 40px), 88cqw); ${reduced ? "" : "transition: opacity .3s ease;"} }
 .ha-art:not(.is-here) .ha-art-pl { opacity: 0; }
 @media (max-width: 999px) { .ha-art { --fh: min(54cqh, 92cqw, 460px); } }
+/* Phones: the plaque spans the room (long names stay on two lines, not six), and on short screens the frame
+   gives up a little height so frame + plaque never run under the ‹ No. 1 of 4 › row. */
+@media (max-width: 999px) { .ha-art { grid-template-columns: minmax(0, 1fr); } .ha-art-pl { --plw: max(100%, min(88cqw, 340px)); width: var(--plw); margin-inline: calc((100% - var(--plw)) / 2); } }
+@container (max-height: 400px) { .ha-art { --fh: min(48cqh, 92cqw, 460px); } .ha-art-pl { padding: 7px 14px 6px; } }
 @media (min-width: 1000px) {
   .ha-art { --fh: min(88cqh, 540px); width: calc(var(--fh) * .8 + 300px); grid-template-columns: calc(var(--fh) * .8) 270px; align-items: end; justify-items: start; gap: 30px; top: 50%; translate: 0 -50%; }
   .ha-art-pl { width: 270px; margin-bottom: 18px; padding: 14px 20px 12px; text-align: left; }
@@ -191,6 +195,7 @@ const GAL_CSS = (reduced: boolean) => `
 }
 .ha-gal-gif { position: absolute; left: -4px; top: -6px; transform: rotate(-8deg); pointer-events: none; z-index: 20; }
 .ha-gal-gif .ha-stk img { width: clamp(52px, 10cqh, 92px) !important; height: auto !important; }
+@media (max-width: 999px) { .ha-gal-gif { left: -12px; top: -10px; } .ha-gal-gif .ha-stk img { width: clamp(46px, 9cqh, 80px) !important; } }
 @media (min-width: 1000px) { .ha-gal-gif { left: 6%; top: 10%; } }
 .ha-gal-nav { flex: none; display: flex; align-items: center; gap: 14px; }
 .ha-arrow { width: 46px; height: 46px; border: 0; border-radius: 50%; cursor: pointer; font: 700 28px/1 ${FONTS.ui}; color: var(--vw-accent-deep); padding-bottom: 3px;
