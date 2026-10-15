@@ -351,19 +351,20 @@ const SHOP_CSS = `
 .ha-dome-shine { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(40% 26% at 30% 22%, rgba(255,255,255,.7), transparent 70%), radial-gradient(70% 70% at 50% 50%, transparent 72%, rgba(255,255,255,.45) 92%); }
 .ha-globe-base { position: relative; margin-top: -9%; width: 84%; height: calc(var(--g) * .24); border-radius: 12px 12px 22px 22px; display: grid; place-items: center;
   background: linear-gradient(180deg, var(--ha-gilt-a), color-mix(in srgb, var(--ha-gilt-b) 80%, var(--ha-deep))); box-shadow: inset 0 4px 0 rgba(255,255,255,.55), inset 0 -6px 0 rgba(0,0,0,.12), 0 16px 24px -14px rgba(60,35,10,.55); }
-.ha-globe-base span { margin-top: 10%; max-width: 86%; padding: 3px 10px; border-radius: 4px; font: 700 clamp(15px, 2.4cqh, 19px)/1.1 ${HA_HAND}; color: #3B2A14; background: #FFFBEF; box-shadow: 0 0 0 1.5px var(--ha-gilt-b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ha-globe-base span { margin-top: 10%; max-width: 88%; padding: 2px 10px; border-radius: 4px; font: 700 clamp(14px, min(2.4cqh, 4.6cqw), 19px)/1.05 ${HA_HAND}; color: #3B2A14; background: #FFFBEF; box-shadow: 0 0 0 1.5px var(--ha-gilt-b); text-align: center; text-wrap: balance; overflow-wrap: break-word; }
 .ha-shop-side { position: relative; width: 100%; display: grid; justify-items: center; gap: 8px; }
 .ha-note { box-sizing: border-box; width: min(100%, 380px); min-height: clamp(84px, 15cqh, 118px); padding: 10px 16px 12px; display: grid; align-content: center; gap: 2px; border-radius: 4px; text-align: center;
   background: linear-gradient(180deg, #FFFEF8, var(--vw-paper)); box-shadow: 0 0 0 1.5px var(--vw-edge), 0 14px 24px -16px color-mix(in srgb, var(--ha-deep) 60%, transparent); }
 .ha-note.is-wait { box-shadow: 0 0 0 1.5px dashed var(--vw-edge); background: color-mix(in srgb, var(--vw-paper) 60%, transparent); outline: 2px dashed var(--vw-edge); outline-offset: -6px; }
-.ha-note-k { font: 700 10.5px ${HA_CAPS}; letter-spacing: .18em; text-transform: uppercase; color: var(--vw-accent-deep); }
+.ha-note-k { font: 700 11.5px ${HA_CAPS}; letter-spacing: .18em; text-transform: uppercase; color: var(--vw-accent-deep); }
 .ha-note-t { margin: 0; font: 700 clamp(20px, 3cqh, 25px)/1.22 ${HA_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .ha-note.is-wait .ha-note-t { color: var(--vw-ink-soft); font-size: 19px; }
 .ha-shop-dots { display: flex; gap: 6px; }
 .ha-shop-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--vw-edge); }
 .ha-shop-dots i.is-on { background: var(--vw-accent); }
 .ha-shop-gif { position: absolute; left: -4px; top: calc(-1 * min(50cqh, 80cqw, 350px) - 20px); transform: rotate(-8deg); pointer-events: none; z-index: 3; }
-.ha-shop-gif .ha-stk img { width: clamp(58px, 11cqh, 88px) !important; height: auto !important; }
+.ha-shop-gif .ha-stk img { width: clamp(48px, 10cqh, 88px) !important; height: auto !important; }
+@media (max-width: 999px) { .ha-shop-gif { left: -10px; } }
 @media (min-width: 1000px) {
   .ha-shop { --hz: 1; width: min(100%, 980px); grid-template-columns: auto minmax(0, 440px); gap: 56px; align-items: center; justify-content: center; }
   .ha-globe { --g: min(70cqh, 430px); }
@@ -538,7 +539,7 @@ export function NextExhibition({
     <>
       <Head kicker={answered ? "It's official" : "Coming soon"} title={answered ? `${recipient} said yes 💗` : question} sub={answered ? undefined : "Read the poster, then answer 🥺"} />
       <div className="ha-fill">
-        <div className="ha-next-ex ha-zoom">
+        <div className={`ha-next-ex ha-zoom${answered ? " is-yes" : ""}`}>
           <div className="ha-poster ha-frame" data-ha-poster={answered ? "yes" : "ask"}>
             <div className="ha-frame-in ha-poster-in">
               <p className="ha-po-k">Next exhibition</p>
@@ -604,7 +605,7 @@ const EX_CSS = `
 .ha-po-plan { margin: 6px 0 0; padding: 5px 12px; border-radius: 99px; background: #FFFFFF; box-shadow: 0 0 0 1.5px var(--vw-edge); font: 600 13.5px/1.3 ${FONTS.ui}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .ha-po-plan b { font: 700 10.5px ${HA_CAPS}; letter-spacing: .14em; text-transform: uppercase; color: var(--vw-accent-deep); margin-right: 4px; }
 .ha-po-by { margin: 6px 0 0; font: 600 italic 14px ${HA_DISPLAY}; color: var(--vw-ink-soft); overflow-wrap: anywhere; }
-.ha-po-stamp { position: absolute; right: -8px; bottom: 6px; padding: 4px 10px; border: 3px solid var(--vw-accent); border-radius: 8px; pointer-events: none; font: 700 15px ${HA_CAPS}; letter-spacing: .12em; text-transform: uppercase; color: var(--vw-accent-deep); background: color-mix(in srgb, #FFFFFF 75%, transparent); }
+.ha-po-stamp { position: absolute; right: -8px; bottom: 6px; z-index: 2; padding: 4px 10px; border: 3px solid var(--vw-accent); border-radius: 8px; pointer-events: none; font: 700 15px ${HA_CAPS}; letter-spacing: .12em; text-transform: uppercase; color: var(--vw-accent-deep); background: color-mix(in srgb, #FFFFFF 75%, transparent); }
 .ha-ex-side { width: 100%; display: grid; justify-items: center; }
 .ha-q-actions { width: 100%; max-width: 380px; display: grid; gap: 10px; }
 .ha-q-yes { width: 100%; min-height: 56px; padding: 10px 22px; border: 0; border-radius: 999px; cursor: pointer; touch-action: manipulation; color: #FFFFFF; font: 700 clamp(21px, 3cqh, 24px)/1.15 ${HA_DISPLAY};
@@ -613,9 +614,21 @@ const EX_CSS = `
 .ha-q-yes.is-alt { color: var(--vw-accent-deep); text-shadow: none; background: linear-gradient(180deg, #FFFFFF, var(--ha-blush)); box-shadow: 0 5px 0 color-mix(in srgb, var(--ha-deep) 50%, transparent), 0 0 0 3px var(--ha-gilt-a); animation: none; }
 @keyframes ha-yes-glow { 50% { box-shadow: 0 5px 0 var(--ha-deep), 0 0 0 3px var(--ha-gilt-a), 0 0 50px 4px color-mix(in srgb, var(--vw-accent) 65%, transparent) } }
 .ha-q-yes:active { transform: translateY(4px); }
+/* Short screens: the two answers sit side by side so the whole poster stays readable above them. */
+@container (max-height: 440px) { .ha-q-actions { grid-template-columns: 1fr 1fr; max-width: 440px; gap: 8px; } .ha-q-yes { min-height: 50px; padding: 8px 12px; font-size: 18px; } }
 .ha-q-yes:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 4px; }
 .ha-yes { display: grid; justify-items: center; gap: 8px; max-width: 400px; }
 .ha-yes-gif .ha-stk img { width: clamp(84px, 16cqh, 130px) !important; height: auto !important; }
+/* Once she says yes the "curated by" line moves up out of the stamp's way. */
+.ha-next-ex.is-yes .ha-po-by { margin-bottom: 30px; }
+/* Phones / short screens: after the yes, the poster folds to its title + stamp so the heading, the sticker
+   and the reply line all fit above the pill (the full poster was read before answering). */
+@container (max-height: 600px) {
+  .ha-next-ex.is-yes .ha-po-f, .ha-next-ex.is-yes .ha-po-list, .ha-next-ex.is-yes .ha-po-plan { display: none; }
+  .ha-next-ex.is-yes .ha-yes-gif .ha-stk img { width: clamp(64px, 18cqh, 110px) !important; }
+  .ha-next-ex.is-yes .ha-say { font-size: clamp(18px, 4.6cqh, 22px); }
+}
+@container (max-height: 290px) { .ha-next-ex.is-yes .ha-yes-gif { display: none; } }
 @media (min-width: 1000px) {
   .ha-next-ex { --hz: 1.22; width: min(100%, 860px); grid-template-columns: minmax(0, 400px) minmax(0, 360px); gap: 36px; align-items: center; justify-content: center; }
   .ha-poster { width: 100%; }
@@ -808,7 +821,7 @@ const AWARD_CSS = `
 .ha-award-in { box-sizing: border-box; padding: 16px 16px 12px; display: grid; justify-items: center; gap: 2px; text-align: center; overflow: hidden;
   background: radial-gradient(120% 60% at 50% 0%, #FFFFFF, var(--vw-paper) 60%, var(--ha-blush)); }
 .ha-aw-rib { position: absolute; left: -30px; top: 14px; width: 120px; height: 22px; transform: rotate(-38deg); background: var(--vw-accent); box-shadow: 0 2px 0 var(--ha-deep); }
-.ha-aw-k { margin: 0; font: 700 10.5px ${HA_CAPS}; letter-spacing: .2em; text-transform: uppercase; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
+.ha-aw-k { margin: 0; font: 700 11.5px ${HA_CAPS}; letter-spacing: .2em; text-transform: uppercase; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
 .ha-aw-t { margin: 2px 0 0; font: 700 clamp(27px, 4.6cqh, 36px)/1.02 ${HA_DISPLAY}; color: var(--vw-ink); text-wrap: balance; overflow-wrap: anywhere; }
 .ha-aw-to { margin: 6px 0 0; font: 600 italic 15px ${HA_DISPLAY}; color: var(--vw-ink-soft); }
 .ha-aw-name { margin: 0; font: 700 clamp(38px, 6.5cqh, 52px)/1 ${HA_HAND}; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
@@ -817,14 +830,19 @@ const AWARD_CSS = `
 .ha-aw-end { margin: 6px 0 0; font: 600 italic clamp(16px, 2.5cqh, 19px)/1.25 ${HA_DISPLAY}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .ha-aw-foot { width: 100%; margin-top: 8px; display: flex; align-items: end; justify-content: space-between; gap: 10px; }
 .ha-aw-sig { display: grid; justify-items: start; min-width: 0; }
-.ha-aw-sig b { font: 700 27px/1 ${HA_HAND}; color: var(--vw-accent-deep); border-bottom: 1.5px solid var(--vw-ink-soft); padding: 0 6px 2px 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ha-aw-sig i { font: 700 9.5px ${HA_CAPS}; font-style: normal; letter-spacing: .16em; text-transform: uppercase; color: var(--vw-ink-soft); margin-top: 3px; }
+.ha-aw-sig b { font: 700 clamp(22px, 7cqw, 27px)/1.05 ${HA_HAND}; color: var(--vw-accent-deep); border-bottom: 1.5px solid var(--vw-ink-soft); padding: 0 6px 2px 0; max-width: 100%; overflow-wrap: break-word; text-align: left; }
+.ha-aw-sig i { font: 700 10.5px ${HA_CAPS}; font-style: normal; letter-spacing: .16em; text-transform: uppercase; color: var(--vw-ink-soft); margin-top: 3px; }
 .ha-seal { flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; color: #FFFFFF; transform: rotate(-10deg);
   background: radial-gradient(circle, var(--vw-accent) 0 52%, transparent 53%), repeating-conic-gradient(from 0deg, var(--vw-accent-deep) 0 10deg, color-mix(in srgb, var(--vw-accent) 70%, #FFFFFF) 10deg 20deg); box-shadow: 0 4px 10px -4px color-mix(in srgb, var(--ha-deep) 70%, transparent); }
 .ha-award.is-on { animation: ha-award-in .7s cubic-bezier(.3,1.5,.5,1) both; }
 @keyframes ha-award-in { from { transform: scale(.94) } to { transform: scale(1) } }
 .ha-aw-gif { position: absolute; right: -10px; top: -96px; transform: rotate(8deg); pointer-events: none; }
 .ha-aw-gif .ha-stk img { width: clamp(64px, 11cqh, 96px) !important; height: auto !important; }
+@media (max-width: 999px) {
+  .ha-aw-gif { top: auto; right: -12px; bottom: -14px; }
+  .ha-aw-gif .ha-stk img { width: clamp(52px, 10cqh, 80px) !important; }
+  .ha-award:has(.ha-aw-gif) .ha-seal { visibility: hidden; }
+}
 .ha-cloth { position: absolute; inset: -14px -12px -10px; padding: 0; border: 0; cursor: grab; touch-action: none; border-radius: 10px 10px 18px 18px;
   background: linear-gradient(90deg, rgba(0,0,0,.16), transparent 14%, rgba(255,255,255,.14) 28%, transparent 40%, rgba(0,0,0,.12) 55%, transparent 68%, rgba(255,255,255,.12) 80%, rgba(0,0,0,.16)), linear-gradient(180deg, var(--vw-accent), var(--ha-deep));
   box-shadow: 0 24px 36px -18px color-mix(in srgb, var(--ha-deep) 80%, transparent), inset 0 8px 0 var(--ha-gilt-a); z-index: 3; }

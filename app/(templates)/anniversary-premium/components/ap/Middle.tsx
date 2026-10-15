@@ -231,11 +231,15 @@ const VINYL_CSS = `
 .ap-notes { position: absolute; inset: 0; pointer-events: none; }
 .ap-notes i { position: absolute; top: 40%; font: 600 clamp(18px, 5cqmin, 30px)/1 ${AP_SERIF}; font-style: normal; color: var(--vw-accent); opacity: 0; animation: ap-note 2.4s ease-out infinite; }
 @keyframes ap-note { 0% { opacity: 0; transform: translate(0, 0) rotate(-10deg) } 20% { opacity: 1 } 100% { opacity: 0; transform: translate(20px, -120px) rotate(14deg) } }
-.ap-vinyl-stk { position: absolute; right: -2%; bottom: -8%; transform: rotate(6deg); }
+.ap-vinyl-stk { position: absolute; right: -2%; bottom: -8%; transform: rotate(6deg); pointer-events: none; z-index: 2; }
 .ap-vinyl-stk .ap-stk { transform: none; }
+/* On a small deck the dancing pair shrinks and steps off the corner so it never sits on the tone arm. */
+.ap-vinyl-stk .ap-stk > span { width: clamp(46px, 17cqh, 84px) !important; height: auto !important; }
+.ap-vinyl-stk .ap-stk img { width: 100% !important; height: auto !important; }
+@container (max-height: 420px) { .ap-vinyl-stk { right: -5%; bottom: -16%; } .ap-vinyl-stk .ap-stk { padding: 4px; border-radius: 16px; } .ap-vinyl-stk .ap-stk img { border-radius: 12px; } }
 .ap-shelf { display: flex; gap: clamp(8px, 2cqw, 14px); max-width: 100%; overflow-x: auto; overflow-y: visible; padding: 10px 6px 8px; scrollbar-width: none; }
 .ap-shelf::-webkit-scrollbar { display: none; }
-.ap-sleeve { position: relative; flex: none; width: clamp(74px, min(19cqw, 15cqh), 120px); aspect-ratio: 1; border: 0; padding: 8px; border-radius: 10px; cursor: grab; touch-action: none; overflow: hidden;
+.ap-sleeve { position: relative; flex: none; width: clamp(62px, min(19cqw, 15cqh), 120px); aspect-ratio: 1; border: 0; padding: 8px; border-radius: 10px; cursor: grab; touch-action: none; overflow: hidden;
   display: grid; align-content: end; text-align: left; box-sizing: border-box;
   background: linear-gradient(150deg, #FFFFFF, color-mix(in srgb, var(--vc) 55%, #FFFFFF)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--vc) 70%, #FFF), 0 10px 18px -10px var(--ap-deep); transition: opacity .25s, transform .25s; }
 .ap-sleeve-disc { position: absolute; right: -28%; top: -28%; width: 80%; aspect-ratio: 1; border-radius: 50%; background: repeating-radial-gradient(circle, color-mix(in srgb, var(--vc) 80%, #000) 0 1px, var(--vc) 1.4px 3px); opacity: .9; }
@@ -811,7 +815,7 @@ const BOOK_CSS = `
 .ap-book { position: relative; height: min(100cqh, 138cqw, 640px); aspect-ratio: .72; max-width: 100%; perspective: 2200px; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
 .ap-book-spine { position: absolute; left: -10px; top: 1%; bottom: 1%; width: 16px; border-radius: 8px 0 0 8px; background: linear-gradient(90deg, var(--ap-deep), color-mix(in srgb, var(--ap-foil) 60%, var(--ap-deep))); box-shadow: 0 10px 20px -10px var(--ap-deep); }
 .ap-leaf { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.45,.05,.25,1), opacity .25s ease; }
-.ap-leaf.is-turned { transition: transform .75s cubic-bezier(.45,.05,.25,1), opacity .2s ease .55s; }
+.ap-leaf.is-turned { transition: transform .75s cubic-bezier(.45,.05,.25,1), opacity .2s ease .55s; pointer-events: none; }
 .ap-leaf.is-drag { transition: none; }
 .ap-leaf-front, .ap-leaf-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 4px 14px 14px 4px; overflow: hidden; }
 .ap-leaf-front { background: linear-gradient(90deg, color-mix(in srgb, var(--ap-blush) 80%, #E8DCC8) 0%, #FFFDF8 7%, #FFFDF8 94%, color-mix(in srgb, var(--ap-blush) 70%, #FFFFFF) 100%);
@@ -836,7 +840,7 @@ const BOOK_CSS = `
 .ap-pg-end { align-content: center; justify-items: center; text-align: center; grid-template-rows: auto auto auto auto; padding: 10%; }
 .ap-pg-stk { margin-bottom: 6px; }
 .ap-pg-sign { margin: 0; font: italic 500 clamp(20px, 4cqh, 28px) ${AP_SERIF}; color: #6B5A49; }
-.ap-pg-name { margin: 0; font: 400 clamp(40px, 9cqh, 64px)/1.1 ${AP_SCRIPT}; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
+.ap-pg-name { margin: 0; max-width: 100%; font: 400 clamp(24px, min(9cqh, 12cqw), 64px)/1.1 ${AP_SCRIPT}; color: var(--vw-accent-deep); overflow-wrap: break-word; text-wrap: balance; }
 .ap-book-count { min-width: 90px; text-align: center; font: italic 600 17px ${AP_SERIF}; color: var(--vw-ink-soft); }
 @media (prefers-reduced-motion: reduce) { .ap-leaf { transition-duration: .01s; } }
 `;

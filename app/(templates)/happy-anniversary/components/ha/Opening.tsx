@@ -298,6 +298,8 @@ const TICKET_CSS = `
 .ha-welcome .ha-stk { transform: rotate(-3deg); }
 .ha-welcome .ha-stk img { width: clamp(88px, 17cqh, 140px) !important; height: auto !important; }
 @media (min-width: 1000px) { .ha-booth { --hz: 1.1; width: 440px; } .ha-facade { width: 440px; } }
+/* Short screens (landscape phones): a smaller museum front so the whole ticket and its stub stay on screen. */
+@container (max-height: 380px) { .ha-facade { width: min(100%, 52cqh, 440px); } .ha-tk-body { min-height: 0; padding: 9px 12px 8px 14px; } .ha-tk-name { font-size: 20px; } .ha-tk-who { font-size: 21px; } .ha-tk-hint { bottom: -30px; } }
 @media (prefers-reduced-motion: reduce) { .ha-tk-hint { animation: none; } }
 `;
 
@@ -463,18 +465,18 @@ export function ClockRoom({ t, funStat, sticker, onNext }: { t: Together; funSta
 
 const CLOCK_CSS = `
 .ha-clockroom { width: min(100%, 460px); display: grid; gap: clamp(10px, 2.2cqh, 18px); justify-items: center; align-content: center; }
-.ha-machine-wrap { position: relative; display: grid; grid-template-columns: auto auto; align-items: center; gap: 10px; }
+.ha-machine-wrap { position: relative; display: grid; grid-template-columns: auto auto; align-items: center; gap: clamp(4px, 2cqw, 10px); max-width: 100%; }
 .ha-machine { width: auto; }
 .ha-machine-in { padding: 10px 12px 12px; border-radius: 3px; background: linear-gradient(180deg, #FFFFFF, var(--vw-paper)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ha-gilt-b) 45%, #FFFFFF); }
-.ha-machine-k { margin: 0 0 7px; font: 700 10.5px ${HA_CAPS}; letter-spacing: .22em; text-transform: uppercase; color: var(--ha-deep); }
+.ha-machine-k { margin: 0 0 7px; font: 700 11.5px ${HA_CAPS}; letter-spacing: .22em; text-transform: uppercase; color: var(--ha-deep); }
 .ha-groups { display: flex; gap: clamp(6px, 2cqw, 14px); }
 .ha-group { display: grid; gap: 4px; justify-items: center; }
 .ha-digits { display: flex; gap: 3px; }
-.ha-dw { --dh: clamp(40px, min(11cqw, 8.5cqh), 64px); position: relative; display: block; width: calc(var(--dh) * .7); height: var(--dh); overflow: hidden; border-radius: 6px;
+.ha-dw { --dh: clamp(26px, min(11cqw, 8.5cqh, (100cqw - 128px) / 5.7), 64px); position: relative; display: block; width: calc(var(--dh) * .7); height: var(--dh); overflow: hidden; border-radius: 6px;
   background: linear-gradient(180deg, #E9E2D6, #FFFFFF 30%, #FFFFFF 70%, #E9E2D6); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ha-gilt-b) 70%, transparent), inset 0 6px 8px -4px rgba(40,25,5,.3), inset 0 -6px 8px -4px rgba(40,25,5,.3); }
 .ha-dw-col { position: absolute; left: 0; right: 0; top: 0; display: grid; }
 .ha-dw-col i { display: block; height: var(--dh); line-height: var(--dh); font: 700 calc(var(--dh) * .78)/var(--dh) ${HA_DISPLAY}; font-style: normal; color: var(--vw-ink); text-align: center; font-variant-numeric: lining-nums tabular-nums; }
-.ha-group-l { font: 700 10px ${HA_CAPS}; letter-spacing: .14em; text-transform: uppercase; color: var(--vw-ink-soft); }
+.ha-group-l { font: 700 11px ${HA_CAPS}; letter-spacing: .1em; text-transform: uppercase; color: var(--vw-ink-soft); }
 .ha-forever { margin: 6px 18px 4px; font: 700 clamp(34px, 9cqw, 50px)/1.1 ${HA_DISPLAY}; color: var(--vw-accent-deep); }
 .ha-lever { position: relative; width: 44px; height: 128px; display: grid; justify-items: center; }
 .ha-lever-slot { position: absolute; top: 18px; bottom: 18px; width: 10px; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--ha-gilt-b) 80%, #000), var(--ha-gilt-b), var(--ha-gilt-a)); box-shadow: inset 0 2px 4px rgba(0,0,0,.35); }
@@ -487,11 +489,20 @@ const CLOCK_CSS = `
 .ha-lever-knob:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 4px; }
 .ha-clock-gif { position: absolute; left: -12px; top: -84px; transform: rotate(-8deg); pointer-events: none; }
 .ha-clock-gif .ha-stk img { width: clamp(62px, 12cqh, 92px) !important; height: auto !important; }
+/* Phones: the sticker shrinks, and once the stats arrive (the machine rides up under the heading) it bows out. */
+@media (max-width: 999px) {
+  .ha-clock-gif { left: -6px; top: calc(-1 * clamp(44px, 9cqh, 70px)); }
+  .ha-clock-gif .ha-stk img { width: clamp(46px, 9cqh, 76px) !important; }
+  .ha-clockroom.is-settled .ha-clock-gif { opacity: 0; transition: opacity .3s ease; }
+}
+@container (max-height: 330px) { .ha-clockroom.is-settled { gap: 8px; } .ha-stats { gap: 6px; } .ha-secs { font-size: 12.5px; } }
+@container (max-height: 300px) { .ha-secs { display: none; } }
+@container (max-width: 340px) { .ha-groups { gap: 5px; } .ha-digits { gap: 2px; } .ha-machine-in { padding: 8px 8px 10px; } .ha-stat { padding: 6px 10px 6px 12px; } }
 .ha-stats { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ha-stat { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 7px 14px 7px 16px; }
 .ha-stat-e { grid-row: 1 / 3; font-size: 22px; line-height: 1; }
 .ha-stat b { font: 700 clamp(17px, 2.6cqh, 22px)/1.05 ${HA_DISPLAY}; color: var(--vw-ink); overflow-wrap: anywhere; }
-.ha-stat span:not(.ha-stat-e):not(.ha-fun) { font: 600 11.5px/1.2 ${FONTS.ui}; color: #6A5440; overflow-wrap: anywhere; }
+.ha-stat span:not(.ha-stat-e):not(.ha-fun) { font: 600 12.5px/1.2 ${FONTS.ui}; color: #6A5440; overflow-wrap: anywhere; }
 .ha-stat.is-wide { grid-column: 1 / -1; grid-template-columns: 1fr; text-align: center; }
 .ha-fun { font: 600 clamp(19px, 2.8cqh, 22px)/1.2 ${HA_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
 .ha-secs { grid-column: 1 / -1; margin: 2px 0 0; font: 600 13px/1.3 ${FONTS.ui}; color: var(--vw-ink-soft); }

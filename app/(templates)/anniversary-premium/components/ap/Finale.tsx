@@ -336,7 +336,7 @@ export function Ending({
       <>
         <Head kicker="The end · and the beginning" title={<>Happy anniversary, <em>{recipient}</em></>} sub={`Save your keepsakes, then tell ${sender}.`} />
         <div className="ap-fill">
-          <motion.div initial={reduced ? false : { opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 180, damping: 16 }} style={{ display: "grid", placeItems: "center" }}>
+          <motion.div initial={reduced ? false : { opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 180, damping: 16 }} className="ap-keep-stk">
             {sticker}
           </motion.div>
         </div>
@@ -426,7 +426,8 @@ const CERT_CSS = `
 .ap-cert-plan { margin: 4px 0 0; padding: 5px 12px; border-radius: 99px; background: color-mix(in srgb, var(--ap-blush) 80%, #FFFFFF); font: 600 clamp(12px, 1.9cqh, 14px)/1.3 ${AP_SANS}; color: var(--vw-ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ap-foil) 50%, transparent); }
 .ap-cert-row { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 10px; margin-top: clamp(4px, 1.4cqh, 12px); }
 .ap-cert-sig { display: grid; gap: 2px; min-width: 0; }
-.ap-cert-sig b { font: 400 clamp(20px, 3.6cqh, 30px)/1 ${AP_SCRIPT}; color: var(--vw-ink); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Signatures wrap (a hyphenated name breaks at its hyphen) instead of being cut to "Anastasia-…". */
+.ap-cert-sig b { font: 400 clamp(17px, min(3.6cqh, 5.6cqw), 30px)/1.05 ${AP_SCRIPT}; color: var(--vw-ink); font-weight: 400; overflow-wrap: break-word; text-wrap: balance; }
 .ap-cert-sig i { height: 1.5px; background: var(--ap-foil); }
 .ap-cert-seal { width: clamp(64px, 12cqh, 92px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
   background: repeating-conic-gradient(from 0deg, var(--ap-foil) 0 10deg, color-mix(in srgb, var(--ap-foil) 75%, #FFFFFF) 10deg 20deg);
@@ -438,6 +439,25 @@ const CERT_CSS = `
 @keyframes ap-seal-in { from { transform: scale(2.2) rotate(-30deg); opacity: 0 } to { transform: scale(1) rotate(0); opacity: 1 } }
 .ap-cert-f { margin: 6px 0 0; font: 600 clamp(10.5px, 1.6cqh, 12px)/1.4 ${AP_SANS}; letter-spacing: .04em; color: var(--vw-ink-soft); }
 .ap-cert-end { margin: 2px 0 0; font: 500 clamp(17px, 2.8cqh, 22px)/1.2 ${AP_HAND}; color: var(--vw-ink); overflow-wrap: anywhere; }
+/* Short screens (landscape phones): the certificate turns wide and compact so every line stays inside it. */
+@container (max-height: 360px) {
+  .ap-cert { width: min(100%, 640px); padding: 10px 28px; gap: 1px; }
+  .ap-cert-t { font-size: clamp(34px, 13cqh, 52px); margin: 0; }
+  .ap-cert-n { font-size: clamp(24px, 9cqh, 32px); }
+  .ap-cert-s { font-size: 13.5px; }
+  .ap-cert-plan { margin: 2px 0 0; padding: 3px 10px; }
+  .ap-cert-row { margin-top: 2px; }
+  .ap-cert-seal { width: clamp(44px, 15cqh, 64px); }
+  .ap-cert-sig b { font-size: clamp(17px, 6cqh, 22px); }
+  .ap-cert-f { margin: 2px 0 0; }
+  .ap-cert-end { font-size: 16px; }
+  .ap-cert-corner { font-size: 18px; }
+}
+/* The goodbye sticker fills whatever room the fill has and steps aside entirely when there is none. */
+.ap-keep-stk { display: grid; place-items: center; max-height: 100%; }
+.ap-keep-stk .ap-stk > span { width: clamp(60px, calc(100cqh - 30px), 170px) !important; height: auto !important; }
+.ap-keep-stk .ap-stk img { width: 100% !important; height: auto !important; }
+@container (max-height: 84px) { .ap-keep-stk { display: none; } }
 .ap-keep-btn { width: 100%; max-width: 380px; min-height: 50px; padding: 12px 18px; border-radius: 16px; cursor: pointer; font: 700 15px ${AP_SANS}; color: var(--vw-ink);
   border: 1.5px solid var(--ap-foil); background: linear-gradient(180deg, #FFFFFF, var(--ap-blush)); box-shadow: 0 8px 18px -12px var(--ap-deep); }
 .ap-keep-btn:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 3px; }
