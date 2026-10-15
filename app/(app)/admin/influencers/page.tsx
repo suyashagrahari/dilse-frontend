@@ -18,6 +18,7 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { rupees, fmtDate } from "@/lib/influencer";
 import FreeAccessToggle from "../FreeAccessToggle";
+import InfluencerTabs from "./InfluencerTabs";
 import { A, AdminPage, Hero, HeroStat, Panel, ChipGroup, SearchBox, Loading, EmptyState, rise } from "../adminKit";
 
 interface Row {
@@ -152,6 +153,8 @@ export default function AdminInfluencersPage() {
           <HeroStat label="INFLUENCERS" value={totals.count} sub={`${totals.active} active`} />
         </div>
       </Hero>
+
+      <InfluencerTabs />
 
       <Panel title="Commission settings" icon={<Percent size={15} color={A.goldDeep} />} delay={0.05} style={{ marginTop: 14 }}>
         <div className="infa-settings">
