@@ -23,7 +23,7 @@ import { FONTS } from "../../../_valentine/theme";
 import { HAND_FINGER, Hand, Ring, Sparkle } from "./art";
 import { PP_HAND, PP_SCRIPT, PP_SERIF } from "./fonts";
 import { useNext, usePp } from "./stage";
-import { Head } from "./ui";
+import { FitBox, Head } from "./ui";
 
 const WILT_AT = 5;
 /** Where the little flowers pop up around YES as No wilts (% of the YES button). */
@@ -215,6 +215,9 @@ export function Question({
 
 const Q_CSS = `
 .pp-q-gif { flex: none; }
+/* The "yes" GIF is sized from the room it has, so on a short phone it never sits on the "said YES!!" line. */
+.pp-yes-gif { display: grid; place-items: center; height: min(30cqh, 170px); }
+.pp-yes-gif .pp-stk > span, .pp-yes-gif .pp-stk img { width: min(150px, calc(30cqh - 14px)) !important; height: min(150px, calc(30cqh - 14px)) !important; }
 .pp-q-gif .pp-stk img { width: clamp(84px, 15dvh, 128px) !important; height: clamp(84px, 15dvh, 128px) !important; }
 .pp-q-arena { position: relative; flex: 1 1 0; min-height: 170px; width: 100%; max-width: calc(420px * var(--vw-s, 1)); max-height: 300px; }
 .pp-q-yes-wrap { position: absolute; left: 50%; top: 32%; z-index: 2; width: max-content; max-width: 92%; transition: transform .45s cubic-bezier(.3,1.6,.5,1); }
@@ -307,7 +310,7 @@ export function YesRoom({ recipient, sender, yesLine, wilts, sticker, onNext }: 
     return (
       <div className="pp-fill" style={{ alignContent: "center" }}>
         <div className="pp-zoom" style={{ display: "grid", gap: "clamp(8px, 1.8dvh, 16px)", justifyItems: "center" }}>
-          <div style={{ display: "grid", placeItems: "center", height: "min(30cqh, 170px)" }}>{sticker}</div>
+          <div className="pp-yes-gif">{sticker}</div>
           <h2 className="pp-title" style={{ fontSize: "clamp(36px, min(11vw, 6dvh), 56px)" }}>
             {recipient} said <em>YES!!</em> 💍
           </h2>
@@ -522,7 +525,8 @@ export function Ending({
     <>
       <style>{CERT_CSS}</style>
       <div className="pp-fill">
-        <motion.div className="pp-cert pp-zoom" initial={reduced ? false : { opacity: 0, y: 30, rotate: -2 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ type: "spring", stiffness: 160, damping: 18 }} data-pp-certificate>
+        <FitBox>
+          <motion.div className="pp-cert pp-zoom" initial={reduced ? false : { opacity: 0, y: 30, rotate: -2 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ type: "spring", stiffness: 160, damping: 18 }} data-pp-certificate>
           <span className="pp-cert-corner pp-cert-tl" aria-hidden>
             ❦
           </span>
@@ -554,7 +558,8 @@ export function Ending({
             SAID YES ✓
           </span>
           {data.endLine && <p className="pp-cert-end">{data.endLine}</p>}
-        </motion.div>
+          </motion.div>
+        </FitBox>
       </div>
     </>
   );
@@ -572,7 +577,7 @@ const CERT_CSS = `
 .pp-cert-t { margin: 4px 0 4px; font: 700 clamp(30px, 4.6dvh, 40px)/1.02 ${PP_SERIF}; color: var(--vw-ink); text-wrap: balance; }
 .pp-cert-s { margin: 0; font: 500 14px ${FONTS.ui}; color: var(--vw-ink-soft); overflow-wrap: anywhere; }
 .pp-cert-n { margin: 2px 0; font: 700 clamp(30px, 4.6dvh, 40px)/1.15 ${PP_SCRIPT}; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
-.pp-cert-f { margin: 8px 0 0; font: 500 12px/1.55 ${FONTS.ui}; color: var(--vw-ink-soft); }
+.pp-cert-f { margin: 8px 0 0; font: 500 13px/1.5 ${FONTS.ui}; color: var(--vw-ink-soft); }
 .pp-cert-stamp { position: absolute; right: 10px; top: 64px; padding: 4px 9px; border: 3px solid var(--vw-accent); border-radius: 10px; transform: rotate(14deg);
   font: 800 12px ${FONTS.ui}; letter-spacing: .1em; color: var(--vw-accent-deep); background: color-mix(in srgb, #FFFFFF 70%, transparent); animation: pp-stamp-in .55s cubic-bezier(.3,1.6,.5,1) .6s both; }
 @keyframes pp-stamp-in { from { transform: rotate(14deg) scale(2.4); opacity: 0 } to { transform: rotate(14deg) scale(1); opacity: 1 } }
@@ -589,5 +594,12 @@ const CERT_CSS = `
 .pp-std-n { margin: 2px 0 0; font: 600 italic 16px ${PP_SERIF}; color: var(--vw-ink-soft); overflow-wrap: anywhere; }
 .pp-std-gif { position: absolute; right: -12px; top: -46px; transform: rotate(8deg); }
 .pp-std-gif .pp-stk img { width: 72px !important; height: 72px !important; }
+/* Phones: the hug GIF tucks into the card's top-right corner instead of climbing over the heading above. */
+@media (max-width: 479px) {
+  .pp-std-gif { top: 8px; right: 8px; }
+  .pp-std-gif .pp-stk > span, .pp-std-gif .pp-stk img { width: 46px !important; height: 46px !important; }
+  .pp-std-gif .pp-stk { padding: 4px; border-radius: 16px; }
+  .pp-std-txt { padding-right: 52px; }
+}
 @media (prefers-reduced-motion: reduce) { .pp-cert-stamp { animation: none; } }
 `;

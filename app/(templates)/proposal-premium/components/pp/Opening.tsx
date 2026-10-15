@@ -13,7 +13,7 @@ import { FONTS } from "../../../_valentine/theme";
 import { Bulb, HeartLock, Horse, LoveKey, Sparkle, WaxSeal } from "./art";
 import { PP_HAND, PP_SCRIPT, PP_SERIF } from "./fonts";
 import { useNext, usePp } from "./stage";
-import { Head, initial } from "./ui";
+import { Head, initial, nameFit } from "./ui";
 
 // ─── 1 · The wax-sealed invitation ──────────────────────────────────────────
 
@@ -61,7 +61,9 @@ export function Invite({ recipient, sender, openingLine, sticker, onEnter }: { r
               <circle cx="70" cy="14" r="4" fill="var(--pp-blush)" stroke="var(--vw-gold)" />
             </svg>
             <p className="pp-inv-k">{sender} requests the pleasure of</p>
-            <p className="pp-inv-n">{recipient}</p>
+            <p className="pp-inv-n" style={nameFit(recipient)}>
+              {recipient}
+            </p>
             <p className="pp-inv-s">in a little garden, at golden hour,</p>
             <p className="pp-inv-t">for one very important question</p>
             <span className="pp-inv-orn" aria-hidden>
@@ -74,7 +76,7 @@ export function Invite({ recipient, sender, openingLine, sticker, onEnter }: { r
           <div className="pp-inv-door pp-inv-door-r" aria-hidden>
             <span className="pp-inv-lace" />
           </div>
-          <span className="pp-inv-for" aria-hidden>
+          <span className="pp-inv-for" style={nameFit(recipient)} aria-hidden>
             For {recipient}
           </span>
           <button
@@ -106,12 +108,15 @@ export function Invite({ recipient, sender, openingLine, sticker, onEnter }: { r
 
 const INVITE_CSS = `
 .pp-inv { position: relative; width: min(82cqw, 62cqh, calc(330px * var(--vw-s, 1))); aspect-ratio: .84; margin-top: min(10cqh, 40px); perspective: 1100px; }
+@container (max-height: 440px) { .pp-inv { width: min(82cqw, 58cqh); margin-top: min(14cqh, 44px); } }
+/* The peeking GIF scales with the room above the card, so on a short phone it never climbs over the subtitle. */
+.pp-inv-peek .pp-stk > span, .pp-inv-peek .pp-stk img { width: clamp(52px, 20cqh, 92px) !important; height: clamp(52px, 20cqh, 92px) !important; }
 .pp-inv-card { position: absolute; inset: 0; box-sizing: border-box; padding: 8% 9% 8%; border-radius: 18px; display: grid; align-content: center; justify-items: center; gap: 4px; text-align: center;
   background: radial-gradient(120% 80% at 50% 0%, #FFFFFF, var(--vw-paper) 60%, var(--pp-blush));
   box-shadow: inset 0 0 0 2px var(--vw-gold), inset 0 0 0 7px var(--vw-paper), inset 0 0 0 8px var(--vw-edge), 0 30px 50px -26px color-mix(in srgb, var(--pp-deep) 70%, transparent); }
 .pp-inv:not(.is-open) .pp-inv-card > * { visibility: hidden; }
 .pp-inv-k { margin: 0; font: 600 italic clamp(14px, 4.6cqw, 17px)/1.25 ${PP_SERIF}; color: var(--vw-ink-soft); }
-.pp-inv-n { margin: 2px 0; font: 700 clamp(34px, 13cqw, 50px)/1.05 ${PP_SCRIPT}; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
+.pp-inv-n { margin: 2px 0; font: 700 min(clamp(34px, 13cqw, 50px), calc(min(82cqw, 62cqh, 330px) * 1.45 / var(--nw, 5)))/1.05 ${PP_SCRIPT}; color: var(--vw-accent-deep); overflow-wrap: break-word; max-width: 100%; }
 .pp-inv-s { margin: 0; font: 600 italic clamp(14px, 4.6cqw, 17px)/1.3 ${PP_SERIF}; color: var(--vw-ink-soft); }
 .pp-inv-t { margin: 6px 0 0; font: 700 clamp(17px, 5.6cqw, 21px)/1.2 ${PP_SERIF}; color: var(--vw-ink); text-wrap: balance; }
 .pp-inv-orn { margin-top: 8px; font-size: 14px; letter-spacing: .3em; color: var(--vw-gold); }
@@ -122,7 +127,7 @@ const INVITE_CSS = `
 .pp-inv-lace { position: absolute; inset: 10px; border-radius: 10px; border: 1.5px dashed color-mix(in srgb, var(--vw-gold) 80%, transparent);
   background: radial-gradient(circle, color-mix(in srgb, var(--vw-gold) 30%, transparent) 0 1.5px, transparent 2px) 0 0 / 14px 14px; opacity: .8; }
 .pp-inv-wreath { width: 46%; height: auto; margin-bottom: 4px; }
-.pp-inv-for { position: absolute; left: 0; right: 0; top: 13%; z-index: 4; text-align: center; pointer-events: none; font: 700 clamp(24px, 8.6cqw, 32px) ${PP_SCRIPT}; color: var(--vw-accent-deep);
+.pp-inv-for { position: absolute; left: 0; right: 0; top: max(5%, calc(13% - (var(--nw, 5) - 5) * 1.6%)); z-index: 4; padding: 0 8%; text-align: center; pointer-events: none; overflow-wrap: break-word; font: 700 min(clamp(24px, 8.6cqw, 32px), calc(min(82cqw, 62cqh, 330px) * 1.1 / var(--nw, 5)))/1.1 ${PP_SCRIPT}; color: var(--vw-accent-deep);
   text-shadow: 0 2px 0 #FFFFFF, 0 0 12px #FFFFFF; transition: opacity .3s ease; }
 .pp-inv.is-open .pp-inv-for { opacity: 0; }
 .pp-inv.is-open .pp-inv-door-l { transform: rotateY(-112deg); opacity: 0; }

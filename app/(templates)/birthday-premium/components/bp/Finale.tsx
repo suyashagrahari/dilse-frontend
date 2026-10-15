@@ -13,7 +13,7 @@ import { FONTS } from "../../../_valentine/theme";
 import { CroppedPhoto } from "../../../_valentine/kit";
 import { BP_DISPLAY, BP_HAND } from "./fonts";
 import { useBp, useNext } from "./stage";
-import { BpScroll, Head } from "./ui";
+import { BpScroll, FitBox, Head, nameFit } from "./ui";
 
 // ─── 7 · The golden ticket ──────────────────────────────────────────────────
 
@@ -81,6 +81,8 @@ const TICKET_CSS = `
 .bp-ticket-k { font: 800 12px ${FONTS.ui}; letter-spacing: .26em; text-transform: uppercase; color: #A87612; }
 .bp-ticket-name { font: 800 clamp(26px, 4.2dvh, 36px)/1.05 ${BP_DISPLAY}; color: #5C3A08; overflow-wrap: anywhere; text-align: center; max-width: 100%; }
 .bp-ticket-scratch { width: 100%; height: clamp(120px, 20dvh, 160px); box-shadow: inset 0 0 0 2px rgba(201,154,46,.5); background: #FFFDF4; }
+/* The kit's "Reveal" fallback for anyone who can't scratch: a full 44px thumb target. */
+.bp-ticket-scratch button { min-height: 44px !important; padding: 0 16px !important; font-size: 14px !important; }
 .bp-ticket-gift { display: grid; gap: 4px; padding: 10px 14px; text-align: center; }
 .bp-ticket-gift b { font: 800 clamp(20px, 3dvh, 25px)/1.15 ${BP_DISPLAY}; color: var(--vw-accent-deep); overflow-wrap: anywhere; }
 .bp-ticket-gift span { font: 400 clamp(17px, 2.5dvh, 20px)/1.2 ${BP_HAND}; color: #5C3A08; overflow-wrap: anywhere; }
@@ -92,6 +94,12 @@ const TICKET_CSS = `
 @keyframes bp-stamp-in { from { transform: rotate(12deg) scale(2.6); opacity: 0 } to { transform: rotate(12deg) scale(1); opacity: 1 } }
 .bp-ticket-gif { position: absolute; left: -8px; top: -58px; pointer-events: none; }
 .bp-ticket-gif .bp-stk img { width: clamp(64px, 11dvh, 92px) !important; height: auto !important; }
+/* Phones: the GIF sits on the ticket's corner (clear of "Admit one") instead of over the subtitle. */
+@media (max-width: 479px), (max-height: 760px) {
+  .bp-ticket-gif { left: -10px; top: -26px; }
+  .bp-ticket-gif .bp-stk { padding: 4px; border-radius: 16px; }
+  .bp-ticket-gif .bp-stk > span, .bp-ticket-gif .bp-stk img { width: 52px !important; height: 52px !important; }
+}
 @media (prefers-reduced-motion: reduce) { .bp-ticket.is-shown, .bp-ticket-stamp { animation: none; } }
 `;
 
@@ -424,6 +432,15 @@ const Q_CSS = `
 .bp-q-yes:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 5px; }
 .bp-q-hmm { min-height: 48px; }
 .bp-q-hmm:disabled { opacity: .5; }
+/* Sideways phone: the marquee becomes the left column (the Next pill sits under it) and the wheel and the
+   two answers get the right column, so "Yes" and "Hmm" never fall below the fold. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .bp-scene:has(> .bp-marquee) { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 20px; row-gap: 6px;
+    align-items: center; justify-items: center; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  .bp-scene > .bp-marquee { grid-column: 1; grid-row: 1 / span 2; margin-bottom: 70px; }
+  .bp-scene:has(> .bp-marquee) > .bp-fill { grid-column: 2; grid-row: 1; width: 100%; height: 100%; }
+  .bp-scene:has(> .bp-marquee) > .bp-q-row { grid-column: 2; grid-row: 2; min-height: 0; }
+}
 @media (prefers-reduced-motion: reduce) { .bp-marquee-bulbs i, .bp-q-tix { animation: none; } .bp-wheel-wrap { transition: none; } }
 `;
 
@@ -615,7 +632,7 @@ export function Passport({
         <div className="bp-fill">
           <motion.div className="bp-pass-mini" initial={reduced ? false : { opacity: 0, scale: 0.8, rotate: -8 }} animate={{ opacity: 1, scale: 1, rotate: -4 }} transition={{ type: "spring", stiffness: 180, damping: 15 }}>
             <span className="bp-pass-mini-k">✦ Birthday passport ✦</span>
-            <b>{recipient}</b>
+            <b style={nameFit(recipient)}>{recipient}</b>
             <span className="bp-pass-mini-s">APPROVED 💮</span>
           </motion.div>
         </div>
@@ -630,7 +647,8 @@ export function Passport({
       <style>{PASS_CSS}</style>
       <Head kicker="Your keepsake" title="Your birthday passport" sub={approved ? "Approved for another year of us 💮" : "One last stamp — and it's official"} />
       <div className="bp-fill">
-        <motion.div className="bp-pass" initial={reduced ? false : { opacity: 0, y: 40, rotate: 3 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ type: "spring", stiffness: 150, damping: 17 }} data-bp-passport>
+        <FitBox>
+          <motion.div className="bp-pass" initial={reduced ? false : { opacity: 0, y: 40, rotate: 3 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ type: "spring", stiffness: 150, damping: 17 }} data-bp-passport>
           <div className="bp-pass-band">
             <span>Republic of {sender}&apos;s heart</span>
             <b>{year}</b>
@@ -678,7 +696,8 @@ export function Passport({
               </motion.span>
             )}
           </AnimatePresence>
-        </motion.div>
+          </motion.div>
+        </FitBox>
       </div>
       {!approved && (
         <button type="button" className="bp-stamp-btn" onClick={approve} disabled={inked < stamps.length} data-bp-approve>
@@ -723,7 +742,7 @@ const PASS_CSS = `
   background: radial-gradient(circle, rgba(255,255,255,.3) 0 2px, transparent 2.6px) 0 0 / 18px 18px, linear-gradient(150deg, color-mix(in srgb, var(--vw-accent) 70%, #FFF), var(--vw-accent-deep)); color: #FFFFFF;
   box-shadow: inset 10px 0 0 color-mix(in srgb, var(--bp-deep) 30%, transparent), 0 0 0 3px var(--vw-gold), 0 26px 40px -22px color-mix(in srgb, var(--bp-deep) 70%, transparent); }
 .bp-pass-mini-k { font: 700 11px ${FONTS.ui}; letter-spacing: .16em; text-transform: uppercase; color: var(--vw-gold); }
-.bp-pass-mini b { font: 800 clamp(26px, 9cqw, 36px)/1.05 ${BP_DISPLAY}; overflow-wrap: anywhere; }
+.bp-pass-mini b { font: 800 min(clamp(26px, 9cqw, 36px), calc(min(62cqw, 70cqh, 250px) * 1.25 / var(--nw, 5)))/1.05 ${BP_DISPLAY}; overflow-wrap: break-word; }
 .bp-pass-mini-s { padding: 4px 10px; border: 2.5px solid #FFFFFF; border-radius: 10px; transform: rotate(-8deg); font: 800 14px ${FONTS.ui}; letter-spacing: .1em; }
 @media (prefers-reduced-motion: reduce) { .bp-stamps li { transition: none; } .bp-stamp-btn { animation: none; } }
 `;

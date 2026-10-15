@@ -12,7 +12,7 @@ import { FONTS } from "../../../_valentine/theme";
 import { HotAirBalloon, PaperCake } from "./art";
 import { BP_DISPLAY, BP_HAND } from "./fonts";
 import { useBp, useNext } from "./stage";
-import { Head } from "./ui";
+import { Head, nameFit } from "./ui";
 
 // ─── 1 · The storybook ──────────────────────────────────────────────────────
 
@@ -150,7 +150,9 @@ export function Cover({
               <span className="bp-cover-tape" aria-hidden />
               <span className="bp-cover-frame">
                 <span className="bp-cover-k">The birthday book of</span>
-                <span className="bp-cover-name">{recipient}</span>
+                <span className="bp-cover-name" style={nameFit(recipient)}>
+                  {recipient}
+                </span>
                 {coverLine && <span className="bp-cover-line">{coverLine}</span>}
                 <span className="bp-cover-by">written with love by {sender}</span>
               </span>
@@ -229,7 +231,7 @@ const COVER_CSS = `
 .bp-cover-frame { position: relative; width: 78%; box-sizing: border-box; padding: 18px 12px 16px; margin-left: 6%; border-radius: 16px; background: var(--vw-paper); display: grid; gap: 4px; justify-items: center; text-align: center;
   box-shadow: 0 0 0 3px var(--vw-gold), 0 0 0 7px color-mix(in srgb, var(--vw-paper) 60%, transparent), 0 14px 24px -12px rgba(0,0,0,.35); }
 .bp-cover-k { font: 700 10.5px ${FONTS.ui}; letter-spacing: .2em; text-transform: uppercase; color: var(--vw-accent-deep); }
-.bp-cover-name { font: 800 clamp(26px, 11cqw, 40px)/1.02 ${BP_DISPLAY}; color: var(--vw-ink); overflow-wrap: anywhere; max-width: 100%; }
+.bp-cover-name { font: 800 min(clamp(26px, 11cqw, 40px), calc(min(76cqw, 62cqh, 330px) * 1.3 / var(--nw, 5)))/1.02 ${BP_DISPLAY}; color: var(--vw-ink); overflow-wrap: break-word; max-width: 100%; }
 .bp-cover-line { font: 400 clamp(17px, 6cqw, 21px)/1.15 ${BP_HAND}; color: var(--vw-ink-soft); overflow-wrap: anywhere; }
 .bp-cover-by { margin-top: 4px; font: 600 11.5px ${FONTS.ui}; color: var(--vw-ink-soft); overflow-wrap: anywhere; }
 .bp-cover-star { position: absolute; color: #FFFFFF; opacity: .85; font-size: 22px; animation: bp-twinkle 1.8s ease-in-out infinite alternate; }
