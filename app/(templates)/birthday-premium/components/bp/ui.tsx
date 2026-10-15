@@ -26,6 +26,12 @@ export function paletteVars(p: BpPaletteDef): CSSProperties {
   };
 }
 
+/** The longest word in a name, as a CSS variable: name lines shrink to fit "Anastasia-Marie" without breaking mid-word. */
+export function nameFit(name: string): CSSProperties {
+  const w = Math.max(5, ...name.split(/[\s\-\u2013]+/).map((p) => Array.from(p).length));
+  return { ["--nw" as string]: w };
+}
+
 export function Head({ kicker, title, sub }: { kicker?: ReactNode; title: ReactNode; sub?: ReactNode }) {
   return (
     <header className="bp-head">
@@ -84,6 +90,38 @@ export function Atmosphere({ floats, pops, warm }: { floats: readonly string[]; 
             </span>
           ),
         )}
+    </div>
+  );
+}
+
+/**
+ * Fits a tall keepsake card into its scene: the card keeps its natural layout and is scaled down
+ * (never up) until it fits the space it was given, so a short phone or an in-app browser never
+ * clips the bottom rows or slides them under the Next pill. A no-op wherever the card already fits.
+ */
+export function FitBox({ children }: { children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [s, setS] = useState(1);
+  useEffect(() => {
+    const b = box.current;
+    const i = inner.current;
+    if (!b || !i || typeof ResizeObserver === "undefined") return;
+    const fit = () => {
+      const k = Math.min(1, b.clientHeight / Math.max(1, i.offsetHeight), b.clientWidth / Math.max(1, i.offsetWidth));
+      setS(Math.max(0.5, Math.floor(k * 1000) / 1000));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(b);
+    ro.observe(i);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={box} className="bp-fitbox">
+      <div ref={inner} className="bp-fitbox-in" style={{ ["--bp-fit" as string]: s }}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -159,6 +197,9 @@ export function BpScroll({ children, className = "", label }: { children: ReactN
 }
 
 export const BP_UI_CSS = `
+/* FitBox: fills its scene's flexible area; the card inside is centred and scaled down to fit. */
+.bp-fitbox { position: relative; align-self: stretch; justify-self: stretch; width: 100%; height: 100%; min-height: 0; }
+.bp-fitbox-in { position: absolute; left: 0; right: 0; top: 50%; display: grid; justify-items: center; transform: translateY(-50%) scale(var(--bp-fit, 1)); transform-origin: 50% 50%; }
 .bp-scroll { position: relative; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); min-height: 0; max-height: 100%; }
 .bp-scroll-view { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: 16px; outline: none;
   --bp-ft: 0px; --bp-fe: 0px;
@@ -193,6 +234,8 @@ export const BP_UI_CSS = `
 .bp-stk { display: inline-grid; place-items: center; padding: 6px; border-radius: 20px; background: #FFFFFF; transform: rotate(-4deg);
   box-shadow: 0 0 0 2px var(--vw-edge), 0 0 0 5px color-mix(in srgb, var(--vw-gold) 45%, transparent), 0 12px 22px -12px color-mix(in srgb, var(--bp-deep) 60%, transparent); }
 .bp-stk img { border-radius: 14px; display: block; }
+/* The frame hugs the GIF, so a scene that shrinks the GIF on a small screen shrinks the whole sticker. */
+.bp-stk > span { width: auto !important; height: auto !important; }
 .bp-atmo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .bp-dots { position: absolute; inset: 0; opacity: .35; background: radial-gradient(circle, color-mix(in srgb, var(--vw-gold) 65%, transparent) 0 1.6px, transparent 2.2px) 0 0 / 30px 30px; -webkit-mask-image: linear-gradient(180deg, #000, transparent 70%); mask-image: linear-gradient(180deg, #000, transparent 70%); }
 .bp-cloud { position: absolute; border-radius: 999px; background: color-mix(in srgb, var(--vw-paper) 85%, transparent); box-shadow: 0 6px 0 color-mix(in srgb, var(--vw-edge) 40%, transparent); opacity: .8; }

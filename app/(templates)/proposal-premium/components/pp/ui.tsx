@@ -48,6 +48,12 @@ export function paletteVars(p: ProposalPaletteDef): CSSProperties {
   };
 }
 
+/** The longest word in a name, as a CSS variable: name lines shrink to fit "Anastasia-Marie" without breaking mid-word. */
+export function nameFit(name: string): CSSProperties {
+  const w = Math.max(5, ...name.split(/[\s\-\u2013]+/).map((p) => Array.from(p).length));
+  return { ["--nw" as string]: w };
+}
+
 export function Head({ kicker, title, sub }: { kicker?: ReactNode; title: ReactNode; sub?: ReactNode }) {
   return (
     <header className="pp-head">
@@ -177,6 +183,38 @@ export function Garden({ petals, warm }: { petals: readonly string[]; warm: bool
 }
 
 /**
+ * Fits a tall keepsake card into its scene: the card keeps its natural layout and is scaled down
+ * (never up) until it fits the space it was given, so a short phone or an in-app browser never
+ * clips the bottom rows or slides them under the Next pill. A no-op wherever the card already fits.
+ */
+export function FitBox({ children }: { children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [s, setS] = useState(1);
+  useEffect(() => {
+    const b = box.current;
+    const i = inner.current;
+    if (!b || !i || typeof ResizeObserver === "undefined") return;
+    const fit = () => {
+      const k = Math.min(1, b.clientHeight / Math.max(1, i.offsetHeight), b.clientWidth / Math.max(1, i.offsetWidth));
+      setS(Math.max(0.5, Math.floor(k * 1000) / 1000));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(b);
+    ro.observe(i);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={box} className="pp-fitbox">
+      <div ref={inner} className="pp-fitbox-in" style={{ ["--pp-fit" as string]: s }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
  * A scroll panel with its own scrollbar: phones hide native bars until you
  * touch them (and iOS never paints a styled one), so a list that runs past the
  * fold looked like it simply ended. This draws a palette-coloured rail that is
@@ -246,6 +284,9 @@ export function PpScroll({ children, className = "", label }: { children: ReactN
 }
 
 export const PP_UI_CSS = `
+/* FitBox: fills its scene's flexible area; the card inside is centred and scaled down to fit. */
+.pp-fitbox { position: relative; align-self: stretch; justify-self: stretch; width: 100%; height: 100%; min-height: 0; }
+.pp-fitbox-in { position: absolute; left: 0; right: 0; top: 50%; display: grid; justify-items: center; transform: translateY(-50%) scale(var(--pp-fit, 1)); transform-origin: 50% 50%; }
 .pp-scroll { position: relative; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); min-height: 0; max-height: 100%; }
 .pp-scroll-view { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: 16px; outline: none;
   --pp-ft: 0px; --pp-fe: 0px;
@@ -274,6 +315,8 @@ export const PP_UI_CSS = `
 .pp-stk { display: inline-grid; place-items: center; padding: 6px; border-radius: 22px; background: #FFFFFF; transform: rotate(-4deg);
   box-shadow: 0 0 0 2px var(--vw-edge), 0 0 0 6px color-mix(in srgb, #FFFFFF 70%, transparent), 0 14px 24px -12px color-mix(in srgb, var(--pp-deep) 60%, transparent); }
 .pp-stk img { border-radius: 16px; display: block; }
+/* The frame hugs the GIF, so a scene that shrinks the GIF on a small screen shrinks the whole sticker. */
+.pp-stk > span { width: auto !important; height: auto !important; }
 
 /* The garden. */
 .pp-garden { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; --px: 0; --py: 0; }

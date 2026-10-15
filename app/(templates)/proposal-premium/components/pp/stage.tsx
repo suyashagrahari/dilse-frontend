@@ -305,6 +305,15 @@ export const PP_STAGE_CSS = `
 @keyframes pp-bob { from { transform: translateY(-2px) rotate(-9deg) } to { transform: translateY(2px) rotate(9deg) } }
 .pp-next-label { position: relative; min-width: 0; font: 700 18px/1.25 ${FONTS.ui}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 color-mix(in srgb, var(--pp-deep) 60%, transparent); }
 .pp-next-arrow { position: relative; font: 700 26px/1 ${FONTS.ui}; margin-left: 2px; margin-top: -3px; }
+/* Phones: a long label ("Step into the garden", "Tell Bartholomew") wraps onto a second line instead of
+   being cut to "Step into…"; the pill keeps clear of the music icon on the left. */
+@media (max-width: 479px) {
+  .pp-next-wrap { padding: 0 58px; }
+  .pp-next { gap: 7px; padding: 0 14px 0 6px; }
+  .pp-next-ico { width: 38px; height: 38px; font-size: 20px; }
+  .pp-next-label { font-size: 16px; line-height: 1.12; white-space: normal; text-overflow: clip; text-align: left; text-wrap: balance;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+}
 @media (min-width: 1100px) { .pp-next-wrap .pp-next { transform: scale(1.1); transform-origin: 50% 100%; } .pp-next-wrap .pp-next.is-hidden { transform: translateY(18px); } }
 
 /* The bud trail: small, top-left, level with the editor's top bar (which sits top-right). */
@@ -349,4 +358,19 @@ body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 26px); }
 .pp-wipe.is-soft { background: var(--vw-paper, #FFF); opacity: 0; animation: pp-soft var(--pp-wipe) ease-in-out forwards; }
 @keyframes pp-soft { 0% { opacity: 0 } 45% { opacity: 1 } 100% { opacity: 0 } }
 .pp-wipe-block { position: fixed; inset: 0; z-index: 75; }
+
+/* A phone turned sideways (or any very short, wide window): one stacked column would leave the scene
+   ~120px tall, so the heading moves to a left column and the scene gets the whole right side, nearly
+   floor to ceiling. The Next pill sits under the heading, clear of the music icon. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .pp-scene { max-width: min(100%, 980px); flex-flow: column wrap; align-content: center; justify-content: center; column-gap: 20px; row-gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 58px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 10px) max(16px, env(safe-area-inset-left, 0px)); }
+  .pp-scene > .pp-fill { width: calc(60% - 10px); }
+  .pp-scene > .pp-head { flex: 0 0 100%; width: calc(40% - 10px); align-content: center; padding-bottom: 76px; box-sizing: border-box; }
+  .pp-scene:not(:has(> .pp-head)) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px); }
+  .pp-scene:not(:has(> .pp-head)) > .pp-fill { width: 100%; }
+  .pp-title { font-size: clamp(22px, 7dvh, 32px); }
+  .pp-next-wrap { right: auto; width: 40%; padding: 0 10px 0 62px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); }
+}
 `;

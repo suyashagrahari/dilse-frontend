@@ -300,6 +300,15 @@ export const BP_STAGE_CSS = `
 @keyframes bp-bob { from { transform: translateY(-2px) rotate(-10deg) } to { transform: translateY(2px) rotate(10deg) } }
 .bp-next-label { position: relative; min-width: 0; font: 800 18px/1.25 ${BP_DISPLAY}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 color-mix(in srgb, var(--bp-deep) 55%, transparent); }
 .bp-next-arrow { position: relative; font: 700 26px/1 ${FONTS.ui}; margin-left: 2px; margin-top: -3px; }
+/* Phones: a long label ("Tell Bartholomew", "I read every word") wraps onto a second line instead of
+   being cut to "Turn the…"; the pill keeps clear of the music icon on the left. */
+@media (max-width: 479px) {
+  .bp-next-wrap { padding: 0 58px; }
+  .bp-next { gap: 7px; padding: 0 14px 0 6px; }
+  .bp-next-ico { width: 38px; height: 38px; font-size: 20px; }
+  .bp-next-label { font-size: 16px; line-height: 1.1; white-space: normal; text-overflow: clip; text-align: left; text-wrap: balance;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+}
 @media (min-width: 1100px) { .bp-next-wrap .bp-next { transform: scale(1.1); transform-origin: 50% 100%; } .bp-next-wrap .bp-next.is-hidden { transform: translateY(18px); } }
 @media (prefers-reduced-motion: reduce) { .bp-next-ico, .bp-next-ring, .bp-hint-hand { animation: none; } }
 
@@ -346,4 +355,19 @@ body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 26px); }
 .bp-wipe.is-soft { background: var(--vw-paper, #FFF); opacity: 0; animation: bp-soft var(--bp-wipe) ease-in-out forwards; }
 @keyframes bp-soft { 0% { opacity: 0 } 45% { opacity: 1 } 100% { opacity: 0 } }
 .bp-wipe-block { position: fixed; inset: 0; z-index: 75; }
+
+/* A phone turned sideways (or any very short, wide window): one stacked column would leave the scene
+   ~120px tall, so the heading moves to a left column and the scene gets the whole right side, nearly
+   floor to ceiling. The Next pill sits under the heading, clear of the music icon. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .bp-scene { max-width: min(100%, 980px); flex-flow: column wrap; align-content: center; justify-content: center; column-gap: 20px; row-gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 58px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 10px) max(16px, env(safe-area-inset-left, 0px)); }
+  .bp-scene > .bp-fill { width: calc(60% - 10px); }
+  .bp-scene > .bp-head { flex: 0 0 100%; width: calc(40% - 10px); align-content: center; padding-bottom: 76px; box-sizing: border-box; }
+  .bp-scene:not(:has(> .bp-head)) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px); }
+  .bp-scene:not(:has(> .bp-head)) > .bp-fill { width: 100%; }
+  .bp-title { font-size: clamp(22px, 7dvh, 32px); }
+  .bp-next-wrap { right: auto; width: 40%; padding: 0 10px 0 62px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); }
+}
 `;

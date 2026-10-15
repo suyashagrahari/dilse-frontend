@@ -229,6 +229,10 @@ const CLAW_CSS = `
 .bp-claw-dir:active:not(:disabled), .bp-claw-go:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
 .bp-claw-dir:disabled, .bp-claw-go:disabled { opacity: .55; cursor: default; }
 .bp-claw-dir:focus-visible, .bp-claw-go:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 3px; }
+/* Narrow machine: the arrows keep a full 46px thumb target and GRAB gives up its width instead. */
+.bp-claw-pad { padding-left: 8px; padding-right: 8px; }
+.bp-claw-dir { flex: none; }
+@media (max-width: 479px) { .bp-claw-pad { gap: 8px; } .bp-claw-dir { width: 46px; height: 46px; } .bp-claw-go { flex: 0 1 120px; min-width: 84px; } }
 .bp-prize { position: absolute; z-index: 5; width: min(86%, 330px); display: grid; gap: 6px; justify-items: center; padding: 30px 18px 16px; border-radius: 24px; background: var(--vw-paper); text-align: center;
   box-shadow: 0 0 0 3px var(--vw-gold), 0 0 0 8px color-mix(in srgb, var(--vw-paper) 70%, transparent), 0 30px 50px -20px color-mix(in srgb, var(--bp-deep) 70%, transparent); }
 .bp-prize-cap { position: absolute; top: -30px; width: 60px; }
@@ -328,7 +332,7 @@ export function PhotoBooth({ photos, placeholders, recipient, sender, pops, onNe
         title={phase === "strip" ? (developed ? "Look at us 🥹" : "Shake it to develop!") : "The photo booth"}
         sub={phase === "strip" ? (developed ? "Tap a photo to see it bigger" : "Drag the strip side to side 📸") : "Step in, strike a pose"}
       />
-      <div className="bp-fill" style={{ ["--k" as string]: per }}>
+      <div className="bp-fill" style={{ ["--k" as string]: per, ["--rows" as string]: Math.ceil(per / 2) }}>
         <AnimatePresence mode="wait" initial={false}>
           {phase !== "strip" ? (
             <motion.div key="booth" className="bp-booth" exit={reduced ? undefined : { opacity: 0, y: -30, scale: 0.9 }} transition={{ duration: 0.3 }} data-bp-booth>
@@ -347,7 +351,7 @@ export function PhotoBooth({ photos, placeholders, recipient, sender, pops, onNe
               {flash > 0 && <span key={flash} className="bp-flash" aria-hidden />}
             </motion.div>
           ) : (
-            <motion.div key="strip" className="bp-strips" onPointerMove={shake} onPointerDown={(e) => (lastX.current = e.clientX)} onPointerUp={() => setLean(0)} onPointerLeave={() => setLean(0)} style={{ ["--dev" as string]: dev }} data-bp-strips>
+            <motion.div key="strip" className={`bp-strips${strips.length === 1 ? " is-one" : ""}`} onPointerMove={shake} onPointerDown={(e) => (lastX.current = e.clientX)} onPointerUp={() => setLean(0)} onPointerLeave={() => setLean(0)} style={{ ["--dev" as string]: dev }} data-bp-strips>
               {strips.map((s, si) => (
                 <motion.div
                   key={si}
@@ -418,7 +422,13 @@ const BOOTH_CSS = `
 .bp-frame > * { filter: brightness(calc(2.1 - var(--dev) * 1.1)) saturate(var(--dev)) sepia(calc(.6 - var(--dev) * .6)) blur(calc((1 - var(--dev)) * 3px)); transition: filter .25s linear; }
 .bp-frame:focus-visible { outline: 3px solid var(--vw-accent); outline-offset: 2px; }
 .bp-frame-ph { display: grid; place-items: center; width: 100%; height: 100%; font-size: 30px; background: repeating-linear-gradient(45deg, var(--bp-blush) 0 10px, var(--vw-paper) 10px 20px); }
-.bp-strip-foot { display: flex; justify-content: center; gap: 6px; align-items: center; height: 30px; font: 400 16px ${BP_HAND}; color: #4A3A40; white-space: nowrap; overflow: hidden; max-width: var(--side); }
+.bp-strip-foot { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; align-items: center; min-height: 30px; padding: 2px 0 5px; box-sizing: border-box; font: 400 clamp(14px, calc(var(--side) * .22), 16px)/1.05 ${BP_HAND}; color: #4A3A40; text-align: center; overflow-wrap: anywhere; max-width: var(--side); }
+/* A short screen with a single strip: the four frames print as a 2×2 booth card instead of one thin
+   ribbon of thumbnails, so each photo stays big enough to see (and to tap). */
+@container (max-height: 460px) {
+  .bp-strips.is-one .bp-strip { --side: min(34cqw, calc((100cqh - 56px) / var(--rows) - 8px), 150px); grid-template-columns: repeat(2, var(--side)); }
+  .bp-strips.is-one .bp-strip-foot { grid-column: 1 / -1; max-width: none; }
+}
 .bp-strip-foot i { font-style: normal; color: var(--vw-accent); font-size: 12px; }
 .bp-lb { position: fixed; inset: 0; z-index: 72; display: grid; place-items: center; align-content: center; gap: 14px; padding: 20px; box-sizing: border-box; background: color-mix(in srgb, var(--vw-base) 80%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .bp-lb-card { margin: 0; width: min(82vw, 52vh, 360px); padding: 12px 12px 14px; background: #FFFFFF; border-radius: 6px; box-shadow: 0 24px 40px -20px color-mix(in srgb, var(--bp-deep) 70%, transparent); display: grid; gap: 8px; }

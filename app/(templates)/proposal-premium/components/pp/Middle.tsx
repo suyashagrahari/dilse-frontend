@@ -516,6 +516,10 @@ export function RingBox({ promise, sticker, onNext }: { promise: string; sticker
 
 const BOX_CSS = `
 .pp-box { position: relative; width: min(62cqw, 74cqh, 240px); aspect-ratio: 1.1; }
+/* Short phones: the box sits low in its space so the lid and the rising ring have room above it, and the
+   heading stays on top of the glow rays instead of disappearing behind them. */
+@container (max-height: 420px) { .pp-box { align-self: end; width: min(62cqw, 66cqh, 240px); } }
+.pp-scene:has(.pp-box) > .pp-head { position: relative; z-index: 5; }
 .pp-box-base { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; filter: drop-shadow(0 18px 18px color-mix(in srgb, var(--pp-deep) 35%, transparent)); }
 .pp-box-lid { position: absolute; left: 0; right: 0; bottom: 51%; z-index: 3; transform-origin: 50% 20%; transform-style: preserve-3d; pointer-events: none; }
 .pp-lid-out { display: block; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
