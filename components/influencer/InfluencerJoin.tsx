@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Loader2, Link2, Instagram, Wallet, Sparkles, AlertCircle } from "lucide-react";
+import { parseInstagramHandle } from "@/lib/instagramHandle";
 import { BRAND } from "@/lib/brand";
 import { API_URL, ROOT_DOMAIN, SITE_URL } from "@/lib/config";
 import { sanitizeSubdomain, validateSubdomainLocal, firstNameSlug } from "@/lib/subdomain";
@@ -25,6 +26,8 @@ export default function InfluencerJoin({ onJoined }: { onJoined: () => void }) {
   const [terms, setTerms] = useState<{ defaultCommissionPercent: number; attributionDays: number } | null>(null);
   const [name, setName] = useState(() => user?.subdomain || firstNameSlug(user?.name) || "");
   const [instagram, setInstagram] = useState("");
+  /** Show the Instagram error only once they've left the field or tried to submit. */
+  const [igTouched, setIgTouched] = useState(false);
   const [upiId, setUpiId] = useState("");
   const [agree, setAgree] = useState(false);
   const [avail, setAvail] = useState<Availability>({ state: "idle" });
@@ -68,14 +71,24 @@ export default function InfluencerJoin({ onJoined }: { onJoined: () => void }) {
 
   const canSubmit = agree && !submitting && (hasSubdomain || avail.state === "ok");
 
+  const ig = parseInstagramHandle(instagram);
+  const igError = igTouched && !ig.ok ? ig.message : error?.field === "instagram" ? error.message : null;
+
   const submit = async () => {
-    setSubmitting(true);
     setError(null);
+    if (!ig.ok) {
+      // Compulsory: say so next to the field rather than a silent disabled button.
+      setIgTouched(true);
+      document.getElementById("ij-instagram")?.focus();
+      return;
+    }
+    setInstagram(ig.handle);
+    setSubmitting(true);
     try {
       const r = await fetch(`${API_URL}/influencer/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ subdomain: hasSubdomain ? undefined : name, instagram, upiId }),
+        body: JSON.stringify({ subdomain: hasSubdomain ? undefined : name, instagram: ig.handle, upiId }),
       });
       const d = await r.json();
       if (!r.ok || !d.success) {
@@ -145,12 +158,39 @@ export default function InfluencerJoin({ onJoined }: { onJoined: () => void }) {
           </>
         )}
 
-        <label className="ij-label"><Instagram size={14} /> Instagram username <em>(optional)</em></label>
-        <div className={`ij-input-wrap ${error?.field === "instagram" ? "bad" : ""}`}>
+        <label className="ij-label" htmlFor="ij-instagram">
+          <Instagram size={14} /> Instagram username <span className="ij-req" aria-hidden>*</span>
+        </label>
+        <div className={`ij-input-wrap ${igError ? "bad" : igTouched && ig.ok ? "good" : ""}`}>
           <span className="ij-prefix">@</span>
-          <input value={instagram} onChange={(e) => setInstagram(e.target.value.replace(/\s/g, ""))} placeholder="yourhandle" maxLength={60} autoCapitalize="off" />
+          <input
+            id="ij-instagram"
+            value={instagram}
+            onChange={(e) => {
+              setInstagram(e.target.value.replace(/\s/g, ""));
+              if (error?.field === "instagram") setError(null);
+            }}
+            onBlur={() => {
+              // A pasted profile link or "@name" becomes the bare handle.
+              if (ig.ok && ig.handle !== instagram) setInstagram(ig.handle);
+              if (instagram) setIgTouched(true);
+            }}
+            placeholder="yourhandle"
+            maxLength={120}
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            required
+            aria-required="true"
+            aria-invalid={igError ? true : undefined}
+            aria-describedby="ij-instagram-msg"
+          />
         </div>
-        <p className="ij-hint">Shown on your invite page so followers know it&apos;s really you.</p>
+        {igError ? (
+          <p className="ij-err" id="ij-instagram-msg" role="alert"><AlertCircle size={13} /> {igError}</p>
+        ) : (
+          <p className="ij-hint" id="ij-instagram-msg">Shown on your invite page so followers know it&apos;s really you. You can paste your profile link.</p>
+        )}
 
         <label className="ij-label"><Wallet size={14} /> UPI ID for payouts <em>(optional, add later)</em></label>
         <div className={`ij-input-wrap ${error?.field === "upiId" ? "bad" : ""}`}>
@@ -167,7 +207,7 @@ export default function InfluencerJoin({ onJoined }: { onJoined: () => void }) {
         </label>
 
         {error && !error.field && <p className="ij-err">{error.message}</p>}
-        {error?.field && error.field !== "subdomain" && <p className="ij-err">{error.message}</p>}
+        {error?.field && error.field !== "subdomain" && error.field !== "instagram" && <p className="ij-err">{error.message}</p>}
 
         <button type="button" className="ij-submit" disabled={!canSubmit} onClick={submit}>
           {submitting ? <Loader2 size={17} className="ij-spin" /> : <Sparkles size={17} />}
@@ -210,7 +250,9 @@ const CSS = `
   .ij-hint b { color: ${BRAND.accent}; }
   .ij-fixed { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px; border-radius: 12px; background: rgba(58,167,109,.07); border: 1px solid rgba(58,167,109,.25); font-size: 14px; color: ${BRAND.text}; overflow-wrap: anywhere; }
   .ij-fixed span { flex-basis: 100%; font-size: 12px; color: ${BRAND.muted}; }
-  .ij-err { margin: 6px 2px 0; font-size: 12.5px; color: ${BRAND.danger}; font-weight: 600; }
+  .ij-err { margin: 6px 2px 0; font-size: 12.5px; color: ${BRAND.danger}; font-weight: 600; display: flex; align-items: flex-start; gap: 5px; line-height: 1.4; }
+  .ij-err svg { flex: none; margin-top: 2px; }
+  .ij-req { color: ${BRAND.danger}; font-weight: 800; margin-left: -3px; }
   .ij-alt { border: none; background: rgba(139,90,43,.1); color: ${BRAND.accent}; font-weight: 800; padding: 2px 8px; border-radius: 99px; cursor: pointer; }
   .ij-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; font-size: 12.5px; line-height: 1.5; color: ${BRAND.muted}; cursor: pointer; }
   .ij-check input { margin-top: 3px; accent-color: ${BRAND.accentStrong}; width: 16px; height: 16px; flex-shrink: 0; }

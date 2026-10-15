@@ -21,6 +21,11 @@ import { Card, Empty } from "./ui";
 import { useToast } from "@/lib/toast/useToast";
 import FreeAccessToggle from "../../FreeAccessToggle";
 import type { ProfileUser } from "./types";
+import TemplateThumb from "@/components/TemplateThumb";
+import { templateList, webpageTemplateList } from "@/data/template-registry";
+
+/** Slug → registry entry, for the grant's cover and human title. */
+const BY_SLUG = new Map([...templateList, ...webpageTemplateList].map((t) => [t.slug, t]));
 
 interface Grant {
   slug: string;
@@ -162,13 +167,24 @@ export default function AccessTab({
                 padding: "9px 10px", animationDelay: `${Math.min(i, 12) * 30}ms`,
               }}
             >
-              <span style={{ width: 30, height: 30, borderRadius: 9, flex: "none", display: "grid", placeItems: "center", background: "rgba(201,168,76,.15)" }}>
-                <KeyRound size={14} style={{ color: C.accent }} />
-              </span>
+              <TemplateThumb
+                src={BY_SLUG.get(gr.slug)?.coverImage}
+                width={36}
+                radius={8}
+                fallbackBg="rgba(201,168,76,.15)"
+                fallback={<KeyRound size={14} style={{ color: C.accent }} />}
+              />
               <div style={{ minWidth: 0, flex: 1 }}>
+                {BY_SLUG.get(gr.slug)?.title && (
+                  <div style={{ fontSize: 13, fontWeight: 800, color: C.text, overflowWrap: "anywhere" }}>
+                    {BY_SLUG.get(gr.slug)?.title}
+                  </div>
+                )}
                 <div
                   style={{
-                    fontSize: 13, fontWeight: 700, color: C.text,
+                    ...(BY_SLUG.has(gr.slug)
+                      ? { fontSize: 11, fontWeight: 500, color: C.faint, marginTop: 1 }
+                      : { fontSize: 13, fontWeight: 700, color: C.text }),
                     fontFamily: "ui-monospace, monospace", overflowWrap: "anywhere",
                   }}
                 >

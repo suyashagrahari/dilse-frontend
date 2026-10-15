@@ -15,6 +15,7 @@ import {
   IndianRupee, Wallet, Clock, Copy, Check, Share2, MousePointerClick, UserPlus, Sparkles,
   Crown, Percent, ChevronDown, Search, Link2, Instagram, Youtube, AlertTriangle, Users, Receipt, Settings, Loader2,
 } from "lucide-react";
+import { parseInstagramHandle } from "@/lib/instagramHandle";
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { BRAND } from "@/lib/brand";
 import {
@@ -49,7 +50,7 @@ export default function InfluencerDashboardView({
     { id: "people", label: "People", icon: <Users size={15} />, count: data.referrals.length },
     { id: "earnings", label: "Earnings", icon: <Receipt size={15} />, count: data.earnings.length },
     { id: "payouts", label: "Payouts", icon: <Wallet size={15} />, count: data.payouts.length },
-    ...(mode === "self" ? [{ id: "settings" as Tab, label: "UPI", icon: <Settings size={15} /> }] : []),
+    ...(mode === "self" ? [{ id: "settings" as Tab, label: "Profile", icon: <Settings size={15} /> }] : []),
   ];
   const goal = nextGoal(totals.earnedPaise);
 
@@ -63,6 +64,26 @@ export default function InfluencerDashboardView({
           {mode === "self"
             ? "Your influencer account is paused. Your link isn't tracking new signups right now. Contact support if you think this is a mistake."
             : "Paused: this link isn't tracking new signups, and new payments earn nothing."}
+        </div>
+      )}
+
+      {/* Joined while the Instagram username was optional: it's compulsory now.
+          Ask for it here rather than locking them out of their own dashboard. */}
+      {mode === "self" && onSaveProfile && !profile.instagram && (
+        <div className="idb-nudge" role="status">
+          <Instagram size={17} />
+          <span>
+            <b>Add your Instagram username.</b> It shows on your invite page so followers know the link is really yours.
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setTab("settings");
+              document.getElementById("idb-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            Add now
+          </button>
         </div>
       )}
 
@@ -159,7 +180,7 @@ export default function InfluencerDashboardView({
       </section>
 
       {/* ── Tabs ── */}
-      <nav className="idb-tabs" role="tablist" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+      <nav id="idb-tabs" className="idb-tabs" role="tablist" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
         {tabs.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? "on" : ""} onClick={() => setTab(t.id)}>
             {tab === t.id && <motion.span layoutId={`idb-tab-${mode}`} className="idb-tab-pill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
@@ -515,7 +536,7 @@ function Payouts({ rows, pending, upi, mode }: { rows: InfluencerDashboard["payo
     <div className="idb-card" style={{ padding: 0, overflow: "hidden" }}>
       <div className="idb-payout-head">
         <span><Clock size={14} /> Pending: <b>{rupees(pending)}</b></span>
-        <span className="idb-upi">{upi ? <>UPI: <b>{upi}</b></> : mode === "self" ? "Add your UPI ID in Payout details to get paid" : "No UPI ID added yet"}</span>
+        <span className="idb-upi">{upi ? <>UPI: <b>{upi}</b></> : mode === "self" ? "Add your UPI ID in the Profile tab to get paid" : "No UPI ID added yet"}</span>
       </div>
       {rows.length === 0 ? (
         <p className="idb-nopages" style={{ padding: 16 }}>No payouts yet. Earnings are paid out to your UPI by the SubhSandesh team.</p>
@@ -543,23 +564,49 @@ function ProfileSettings({ instagram, upiId, onSave }: { instagram: string; upiI
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
   const dirty = ig !== instagram || upi !== upiId;
+  // Compulsory, but someone who joined before it was has none stored — they can
+  // still save their UPI ID; they just can't clear a handle they already have.
+  const parsed = parseInstagramHandle(ig);
+  const igError = parsed.ok ? null : parsed.reason === "empty" ? (instagram ? "Your Instagram username can't be removed — you can change it to a new one." : null) : parsed.message;
   return (
     <div className="idb-card">
       <label className="idb-label"><Wallet size={14} /> UPI ID</label>
       <input className="idb-input" value={upi} onChange={(e) => { setUpi(e.target.value.trim()); setState("idle"); }} placeholder="name@okaxis" />
       <p className="idb-help">Your earnings are sent here. Only the SubhSandesh team can see it.</p>
-      <label className="idb-label"><Instagram size={14} /> Instagram username</label>
-      <input className="idb-input" value={ig} onChange={(e) => { setIg(e.target.value.replace(/\s/g, "")); setState("idle"); }} placeholder="yourhandle" />
-      <p className="idb-help">Shown on your invite page.</p>
+      <label className="idb-label" htmlFor="idb-instagram"><Instagram size={14} /> Instagram username <span className="idb-req" aria-hidden>*</span></label>
+      <input
+        id="idb-instagram"
+        className={`idb-input ${igError ? "bad" : ""}`}
+        value={ig}
+        onChange={(e) => { setIg(e.target.value.replace(/\s/g, "")); setState("idle"); }}
+        onBlur={() => { if (parsed.ok && parsed.handle !== ig) setIg(parsed.handle); }}
+        placeholder="yourhandle"
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
+        required
+        aria-required="true"
+        aria-invalid={igError ? true : undefined}
+        aria-describedby="idb-instagram-msg"
+      />
+      {igError ? (
+        <p className="idb-err idb-err-inline" id="idb-instagram-msg" role="alert">{igError}</p>
+      ) : (
+        <p className="idb-help" id="idb-instagram-msg">
+          {ig ? "Shown on your invite page." : "Required — shown on your invite page so followers know it's you."}
+        </p>
+      )}
       {err && <p className="idb-err">{err}</p>}
       <button
         type="button"
         className="idb-save"
-        disabled={!dirty || state === "saving"}
+        disabled={!dirty || state === "saving" || !!igError}
         onClick={async () => {
           setState("saving");
           setErr(null);
-          const e = await onSave({ instagram: ig, upiId: upi });
+          const handle = parsed.ok ? parsed.handle : "";
+          if (handle !== ig) setIg(handle);
+          const e = await onSave({ instagram: handle, upiId: upi });
           if (e) { setErr(e); setState("idle"); } else setState("saved");
         }}
       >
@@ -696,6 +743,13 @@ const CSS = `
   .idb-input:focus { border-color: ${BRAND.accent}; }
   .idb-help { margin: 5px 2px 0; font-size: 12px; color: ${BRAND.muted}; }
   .idb-err { margin: 10px 0 0; font-size: 12.5px; color: ${BRAND.danger}; font-weight: 700; }
+  .idb-err-inline { margin: 5px 2px 0; }
+  .idb-req { color: ${BRAND.danger}; font-weight: 800; margin-left: -3px; }
+  .idb-input.bad { border-color: ${BRAND.danger}; box-shadow: 0 0 0 3px rgba(161,53,64,.12); }
+  .idb-nudge { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.45); color: ${BRAND.text}; font-size: 13.5px; line-height: 1.5; }
+  .idb-nudge > svg { flex: none; color: ${BRAND.accent}; }
+  .idb-nudge > span { flex: 1 1 200px; min-width: 0; }
+  .idb-nudge > button { flex: none; height: 36px; padding: 0 16px; border: none; border-radius: 99px; background: ${BRAND.gradient}; color: #fdf8ee; font-size: 13px; font-weight: 700; cursor: pointer; }
   .idb-save { margin-top: 14px; display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 22px; border-radius: 99px; border: none; background: ${BRAND.gradient}; color: #f5ede6; font-weight: 800; cursor: pointer; }
   .idb-save:disabled { opacity: .45; cursor: not-allowed; }
   .idb-spin { animation: idb-spin 1s linear infinite; }

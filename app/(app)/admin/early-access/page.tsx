@@ -34,6 +34,7 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
+import TemplateThumb from "@/components/TemplateThumb";
 import {
   Search, Loader2, Check, Globe, AlertTriangle, UserPlus, X,
   EyeOff, Eye, Users, Trash2, KeyRound,
@@ -332,8 +333,7 @@ export default function AdminEarlyAccessPage() {
         .ea-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 7px; }
         @media (min-width: 700px) { .ea-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; } }
         @media (min-width: 1100px) { .ea-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
-        .ea-row { display: flex; align-items: center; gap: 10px; padding: 10px 11px; }
-        .ea-emoji { width: 36px; height: 36px; flex: none; border-radius: 11px; display: grid; place-items: center; font-size: 19px; background: rgba(201,168,76,.13); }
+        .ea-row { display: flex; align-items: center; gap: 11px; padding: 8px 11px 8px 8px; text-align: left; }
         .ea-name { display: block; font-size: 13.5px; font-weight: 800; color: ${t1}; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ea-slug { display: block; font-size: 11px; color: ${tM}; font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ea-count { display: inline-flex; align-items: center; gap: 4px; flex: none; min-width: 42px; justify-content: center; padding: 5px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 800; }
@@ -478,7 +478,7 @@ export default function AdminEarlyAccessPage() {
                 className="adk-card ea-row"
                 {...rise(i)}
               >
-                <span className="ea-emoji" aria-hidden>{t.emoji}</span>
+                <TemplateThumb src={t.coverImage} width={42} fallback={t.emoji} />
                 <span style={{ minWidth: 0, flex: 1 }}>
                   <span className="ea-name">{t.title}</span>
                   <span className="ea-slug">{t.slug}</span>
@@ -528,9 +528,13 @@ export default function AdminEarlyAccessPage() {
               >
                 <div className="ea-sheet-head">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 20, width: 38, height: 38, borderRadius: 12, display: "grid", placeItems: "center", background: "rgba(255,227,163,.14)", flex: "none" }}>
-                      {openTemplateMeta?.emoji}
-                    </span>
+                    <TemplateThumb
+                      src={openTemplateMeta?.coverImage}
+                      width={48}
+                      radius={10}
+                      fallback={openTemplateMeta?.emoji}
+                      fallbackBg="rgba(255,227,163,.14)"
+                    />
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {openTemplateMeta?.title || openSlug}
