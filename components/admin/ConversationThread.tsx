@@ -22,8 +22,8 @@
 //
 // See server/src/services/emailThread.service.ts for why each of those is true.
 
-import { useState } from "react";
-import { AlertTriangle, ChevronDown, Clipboard, Mail, Sparkles, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Check, ChevronDown, Clipboard, Mail, Sparkles, User } from "lucide-react";
 
 const t1 = "#2a0a0e";
 const t2 = "#7f5f5f";
@@ -49,6 +49,11 @@ export interface ThreadMessage {
    */
   fromAddress?: string;
   aiAssisted: boolean;
+  /**
+   * Outbound only: the provider accepted it and returned an id. Not
+   * "delivered" — there is no bounce feed — so the badge says "sent".
+   */
+  sent?: boolean;
   confidence: string;
   source: string;
   trimmed: boolean;
@@ -100,7 +105,15 @@ function Bubble({ m }: { m: ThreadMessage }) {
         >
           {out ? <Mail size={10} /> : <User size={10} />}
           <span style={{ fontWeight: 700 }}>{out ? "We wrote" : "They wrote"}</span>
-          <span>· {stamp(m.at)}</span>
+          <span title={m.at ? new Date(m.at).toLocaleString("en-IN") : ""}>· {stamp(m.at)}</span>
+          {out && m.sent && (
+            <span
+              title="Accepted by the mail provider. Delivery to their inbox is not tracked."
+              style={{ display: "inline-flex", alignItems: "center", gap: 2, color: "#1e7a4b", fontWeight: 700 }}
+            >
+              <Check size={10} /> sent
+            </span>
+          )}
           {/* Replies can go out as feedback@ or support@, so "we wrote" alone no
               longer says who the recipient saw. Only shown when recorded:
               messages sent before the choice existed have nothing to show, and
@@ -166,14 +179,27 @@ export default function ConversationThread({
   thread,
   onPaste,
   pasting,
+  maxHeight = 360,
+  pastePlaceholder = "Paste their reply from the feedback@ mailbox. The quoted original is removed automatically.",
+  scrollToEnd = false,
 }: {
   thread: Thread;
   /** Absent hides the paste box — the panel decides whether it is offered. */
   onPaste?: (text: string) => void | Promise<void>;
   pasting?: boolean;
+  /** Height of the scrolling message area. A chat view wants more. */
+  maxHeight?: number | string;
+  pastePlaceholder?: string;
+  /** Open scrolled to the newest message, as a chat does. */
+  scrollToEnd?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const scroller = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollToEnd && scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
+  }, [scrollToEnd, thread.messages.length]);
 
   const anyGuessed = thread.messages.some(
     (m) => m.direction === "outbound" && m.confidence === "reconstructed"
@@ -212,7 +238,7 @@ export default function ConversationThread({
 
       {/* `paddingRight` leaves room for the scrollbar. At 2px the outbound
           bubbles, which sit flush right, were painted underneath it. */}
-      <div style={{ maxHeight: 360, overflowY: "auto", paddingRight: 8, paddingLeft: 2 }}>
+      <div ref={scroller} style={{ maxHeight, overflowY: "auto", paddingRight: 8, paddingLeft: 2 }}>
         {thread.messages.map((m, i) => (
           <Bubble key={`${thread.id}-${i}`} m={m} />
         ))}
@@ -240,7 +266,7 @@ export default function ConversationThread({
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Paste their reply from the feedback@ mailbox. The quoted original is removed automatically."
+                placeholder={pastePlaceholder}
                 rows={4}
                 style={{
                   width: "100%", padding: 10, borderRadius: 10, resize: "vertical",
