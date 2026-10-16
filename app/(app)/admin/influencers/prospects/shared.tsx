@@ -65,7 +65,18 @@ export interface DeployStatus {
   lastError: string;
   /** Older servers omit these; the UI treats a missing field as "classic only". */
   defaultStyle?: OutreachStyle;
-  personal?: { fromAddress: string; fromName: string; replyToAddress: string; blocked: { message: string; at: string } | null };
+  personal?: {
+    fromAddress: string;
+    fromName: string;
+    replyToAddress: string;
+    blocked: { message: string; at: string } | null;
+    /** The signature as appended, e.g. "Yash\nSubhSandesh". */
+    signature?: string;
+    /** Who writes in the first person ("Yash"); "" for a team signature. */
+    writer?: string;
+  };
+  /** The quiet SES lane prospect mail goes out on (no open tracking). */
+  quietLane?: QuietLane;
   sendWindow?: { startHour: number; endHour: number; tzOffsetMinutes: number } | null;
   maxGapSeconds?: number;
   /** A send within this many hours of the last one is warned about. */
@@ -75,7 +86,13 @@ export interface DeployStatus {
   recommendedPerDay?: number;
 }
 
-/** The From line of the default (team) style, exactly as the server reports it. */
+export interface QuietLane {
+  configurationSet: string;
+  state: "unknown" | "ready" | "missing" | "off";
+  message: string;
+}
+
+/** The From line of the default (personal) style, exactly as the server reports it. */
 export function senderLine(st: DeployStatus | null | undefined): string {
   if (!st) return "";
   if (st.personal && st.defaultStyle !== "classic") return `${st.personal.fromName} <${st.personal.fromAddress}>`;

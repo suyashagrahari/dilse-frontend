@@ -134,7 +134,7 @@ export default function ProspectsPage() {
     <AdminPage
       title="Influencers"
       icon={<Users size={18} />}
-      subtitle="Creators you'd like to invite to the influencer programme. Add them, select one to get an email written for them or several to get a template, review it, and send — first emails, follow-ups and new emails, any time. Emails come from the SubhSandesh team, under a daily cap, and replies land here."
+      subtitle="Creators you'd like to invite to the influencer programme. Add them, select one to get an email written for them or several to get a template, review it, and send — first emails, follow-ups and new emails, any time. Emails come from Yash personally (a plain note, then a light ask), under a daily cap, and replies land here."
     >
       <Hero>
         <div className="adk-hero-grid">
@@ -157,9 +157,15 @@ export default function ProspectsPage() {
               {st.sendMode === "off" && <>Sending is off — SES is not configured on this server</>}
             </span>
           </li>
+          {st.quietLane && (st.quietLane.state === "missing" || st.quietLane.state === "off") && (
+            <li className="warn">
+              <AlertTriangle size={12} />
+              <span>{st.quietLane.state === "off" ? "Quiet sending lane is off — prospect mail uses the default SES configuration set (open tracking on)." : st.quietLane.message || "Quiet lane not set up yet."}</span>
+            </li>
+          )}
           <li className="info">
             <Sparkles size={12} />
-            <span>Emails say <b>{st.commissionPercent}% commission</b> — the live programme rate from the Influencers tab{st.commissionPercent !== 30 ? " (not 30%)" : ""}. Join link: {st.joinUrl.replace(/^https:\/\//, "")}</span>
+            <span>Replies say <b>{st.commissionPercent}% commission</b> — the live programme rate from the Influencers tab{st.commissionPercent !== 30 ? " (not 30%)" : ""}. Join link: {st.joinUrl.replace(/^https:\/\//, "")}</span>
           </li>
           <li className={st.queued ? "info" : "ok"}>
             <Clock size={12} />

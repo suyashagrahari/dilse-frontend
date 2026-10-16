@@ -17,8 +17,8 @@
 //
 // The right-hand side is the server's own verdict, refreshed as you type: the
 // Inbox check, the spam check that gates Send, and the exact email one chosen
-// recipient will receive — From "SubhSandesh Team <team@subhsandesh.in>" as
-// the server reports it.
+// recipient will receive — From "Yash from SubhSandesh <yash@subhsandesh.in>"
+// as the server reports it, signed by Yash, sent on the quiet SES lane.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Eye, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
@@ -59,7 +59,7 @@ interface Preview {
   html?: string;
   headers?: string[];
   lint: Lint | null;
-  inboxCheck?: { ok: boolean; label: string }[];
+  inboxCheck?: { ok: boolean; label: string; warn?: boolean }[];
   personalBlocked?: string;
   eligible: EligibleRow[];
   skipped: { id: string; name: string; reason: string }[];
@@ -76,7 +76,7 @@ interface Draft {
   subjectFallback?: boolean;
 }
 
-const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Team note (recommended)", classic: "Classic" };
+const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Personal (recommended)", classic: "Classic" };
 const INTENTS: JobKind[] = ["initial", "followup", "fresh", "reply"];
 
 function istWindow(status: DeployStatus | null): string {
@@ -257,6 +257,8 @@ export default function Composer({
   const gapText = gapMax > gapMin ? `${gapMin}–${gapMax} min` : `${gapMin} min`;
   const blockedMsg = personal ? preview?.personalBlocked || status?.personal?.blocked?.message || "" : "";
   const noNote = eligible.filter((e) => e.hasNote === false).length;
+  const writer = status?.personal?.writer ?? "";
+  const signatureText = (status?.personal?.signature || writer || "").replace(/\n/g, " / ");
   const fromLine = preview?.from || (personal ? senderLine(status) : `${status?.fromName} <${status?.fromAddress}>`);
   const reach = preview?.reach;
   const intentOptions = INTENTS.filter((k) => (reach ? reach[k] > 0 || k === kind : k === kind));
@@ -324,7 +326,7 @@ export default function Composer({
                 {styleLocked
                   ? "Kept from the first email, so it comes from the same sender."
                   : personal
-                    ? "A plain note from the team — lands in Primary."
+                    ? `A plain note from ${writer || "one person"}, first person — lands in Primary.`
                     : "Programme email with footer — often Promotions."}
               </span>
             </div>
@@ -420,18 +422,18 @@ export default function Composer({
           {reading && <p className="cmp-reading"><Sparkles size={11} /> {reading}{edited ? " · edited by you" : ""}</p>}
 
           <label className="psp-field">
-            <span>Subject {!subjectLocked && <em>— 4–8 words, says what it&apos;s about</em>}</span>
+            <span>Subject {!subjectLocked && <em>{personal ? "— 2–6 words, like a person writes it" : "— 4–8 words, says what it’s about"}</em>}</span>
             <input
               value={subjectLocked ? preview?.subject || "Re: …" : subject}
               disabled={subjectLocked}
               maxLength={200}
-              placeholder={kind === "fresh" ? "Another collab idea for @handle" : "Collab idea for @handle"}
+              placeholder={personal ? (kind === "fresh" ? "One more reel idea" : "Hey Om and Diya") : kind === "fresh" ? "Another collab idea for @handle" : "Collab idea for @handle"}
               onChange={(e) => setSubject(e.target.value)}
             />
           </label>
           <label className="psp-field">
-            <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? "signed “Team SubhSandesh”; no footer" : "signature and footer are added automatically"}</em></span>
-            <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
+            <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? `signed “${signatureText}”; no footer` : "signature and footer are added automatically"}</em></span>
+            <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : personal ? `Hey {{firstName}},\n\nI'm ${writer || "…"} from SubhSandesh. …` : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
           </label>
           {(eligible.length > 1 || /\{\{/.test(body)) && (
             <div className="cmp-merge">
@@ -450,8 +452,8 @@ export default function Composer({
               <h3><Inbox size={14} /> Inbox check {personal ? "" : "— Classic looks like bulk mail"}</h3>
               <ul>
                 {preview.inboxCheck.map((i, n) => (
-                  <li key={n} className={i.ok ? "ok" : "bad"}>
-                    {i.ok ? <CheckCircle2 size={12} /> : <XCircle size={12} />} {i.label}
+                  <li key={n} className={i.ok ? "ok" : i.warn ? "warn" : "bad"}>
+                    {i.ok ? <CheckCircle2 size={12} /> : i.warn ? <AlertTriangle size={12} /> : <XCircle size={12} />} {i.label}
                   </li>
                 ))}
               </ul>
@@ -590,6 +592,7 @@ export default function Composer({
         .cmp-inbox li svg { flex: none; margin-top: 2px; }
         .cmp-inbox li.ok { color: ${A.ok}; }
         .cmp-inbox li.bad { color: ${A.danger}; font-weight: 700; }
+        .cmp-inbox li.warn { color: #7a4f12; font-weight: 700; }
         .cmp-from { font-weight: 700; }
         .cmp-text { margin: 0; padding: 14px 14px 18px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.55; color: #222; background: #fff; max-height: 420px; overflow: auto; }
         @media (max-width: 860px) {
