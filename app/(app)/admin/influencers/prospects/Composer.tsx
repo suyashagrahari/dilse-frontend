@@ -11,11 +11,16 @@
 // The right-hand side is the server's own verdict, refreshed as you type: the
 // spam check that will gate Send, and the exact email one chosen recipient
 // will receive (subject, footer, unsubscribe link and all).
+//
+// Two styles. PERSONAL (default) is a plain-text note from Suyash's own
+// address — no link, no numbers, no footer, no unsubscribe header — which is
+// what lands in Gmail's Primary tab; the "Inbox check" panel lists why.
+// CLASSIC is the original programme email with the unsubscribe footer.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Eye, Info, Loader2, Send, ShieldCheck, Sparkles, Users, Wand2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
 import { A } from "../../adminKit";
-import { KIND_LABEL, Sheet, api, when, type DeployStatus, type JobKind } from "./shared";
+import { KIND_LABEL, Sheet, api, when, type DeployStatus, type JobKind, type OutreachStyle } from "./shared";
 
 interface Lint {
   ok: boolean;
@@ -28,12 +33,29 @@ interface Lint {
 interface Preview {
   to: { id: string; name: string; email: string };
   kind: JobKind;
+  /** The style this recipient actually gets (a follow-up keeps the thread's). */
+  style?: OutreachStyle;
+  /** The From header exactly as it will appear. */
+  from?: string;
+  replyTo?: string;
   subject: string;
   text: string;
   html: string;
+  headers?: string[];
   lint: Lint | null;
-  eligible: { id: string; name: string; kind: JobKind }[];
+  inboxCheck?: { ok: boolean; label: string }[];
+  personalBlocked?: string;
+  eligible: { id: string; name: string; kind: JobKind; hasNote?: boolean }[];
   skipped: { id: string; name: string; reason: string }[];
+}
+
+const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Personal (recommended)", classic: "Classic" };
+
+function istWindow(status: DeployStatus | null): string {
+  const w = status?.sendWindow;
+  if (!w) return "";
+  const pad = (h: number) => `${String(h).padStart(2, "0")}:00`;
+  return ` · ${pad(w.startHour)}–${pad(w.endHour)}${w.tzOffsetMinutes === 330 ? " IST" : ""}`;
 }
 
 export default function Composer({
@@ -62,6 +84,7 @@ export default function Composer({
   const [previewFor, setPreviewFor] = useState<string>("");
   const [checking, setChecking] = useState(false);
   const [mobileTab, setMobileTab] = useState<"write" | "preview">("write");
+  const [style, setStyle] = useState<OutreachStyle>(status?.defaultStyle || "personal");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const idsKey = ids.join(",");
 
@@ -69,11 +92,15 @@ export default function Composer({
   const eligible = useMemo(() => preview?.eligible || [], [preview]);
   const many = eligible.length > 1 || (ids.length > 1 && !preview);
   const subjectLocked = kind === "followup" || kind === "reply";
+  // A follow-up or reply keeps the style its conversation started in.
+  const styleLocked = subjectLocked;
+  const effectiveStyle: OutreachStyle = (styleLocked && preview?.style) || style;
+  const personal = effectiveStyle === "personal";
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(async (asStyle?: OutreachStyle) => {
     setBusy("gen");
     setErr(null);
-    const r = await api<{ data: { subject: string; body: string; reading: string } }>(token, "/prospects/draft", { body: { ids, note: note.trim() || undefined } });
+    const r = await api<{ data: { subject: string; body: string; reading: string } }>(token, "/prospects/draft", { body: { ids, note: note.trim() || undefined, style: asStyle || style } });
     setBusy(null);
     if (!r.ok) {
       setErr(r.data.error || "Could not generate a draft");
@@ -84,7 +111,14 @@ export default function Composer({
     setReading(r.data.data.reading || "");
     setAiBody(r.data.data.body);
     setMobileTab("write");
-  }, [token, ids, note]);
+  }, [token, ids, note, style]);
+
+  function chooseStyle(next: OutreachStyle) {
+    if (next === style || styleLocked) return;
+    setStyle(next);
+    // The two styles want different emails; a fresh draft fits the new one.
+    if (status?.aiConfigured && busy === null) void generate(next);
+  }
 
   // The page remounts this per opening (`key`), so state starts empty. Draft
   // straight away — pressing Generate in the list is the request for one.
@@ -101,13 +135,13 @@ export default function Composer({
     if (!open) return;
     const t = setTimeout(async () => {
       setChecking(true);
-      const r = await api<{ data: Preview }>(token, "/prospects/preview", { body: { ids, prospectId: previewFor || undefined, subject, body } });
+      const r = await api<{ data: Preview }>(token, "/prospects/preview", { body: { ids, prospectId: previewFor || undefined, subject, body, style } });
       setChecking(false);
       if (r.ok) setPreview(r.data.data);
     }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, idsKey, subject, body, previewFor, token]);
+  }, [open, idsKey, subject, body, previewFor, token, style]);
 
   function insert(field: string) {
     const el = bodyRef.current;
@@ -124,7 +158,7 @@ export default function Composer({
     setBusy("send");
     setErr(null);
     const r = await api<{ message: string; data: { queued: string[]; already: string[]; skipped: unknown[]; finishEstimate: string | null }; lint?: Lint; for?: string }>(token, "/prospects/send", {
-      body: { ids: eligible.map((e) => e.id), subject, body, aiAssisted: aiBody !== null },
+      body: { ids: eligible.map((e) => e.id), subject, body, style, aiAssisted: aiBody !== null },
     });
     setBusy(null);
     if (!r.ok) {
@@ -134,7 +168,8 @@ export default function Composer({
     const d = r.data.data;
     const extra = d.already.length ? ` · ${d.already.length} already in the queue` : "";
     const eta = d.finishEstimate && d.queued.length > 1 ? ` · last one goes out ~${when(d.finishEstimate)}` : "";
-    onQueued(`${r.data.message}${extra}${eta}`);
+    const held = (d as { personalBlocked?: string }).personalBlocked ? " · held: the personal sender isn't allowed by SES yet" : "";
+    onQueued(`${r.data.message}${extra}${eta}${held}`);
     onClose();
   }
 
@@ -151,6 +186,11 @@ export default function Composer({
   }, [preview, busy, kind, eligible, ids.length]);
 
   const gapMin = status ? Math.max(1, Math.round(status.minGapSeconds / 60)) : 2;
+  const gapMax = status?.maxGapSeconds ? Math.max(gapMin, Math.round(status.maxGapSeconds / 60)) : gapMin;
+  const gapText = gapMax > gapMin ? `${gapMin}–${gapMax} min` : `${gapMin} min`;
+  const blockedMsg = personal ? preview?.personalBlocked || status?.personal?.blocked?.message || "" : "";
+  const noNote = eligible.filter((e) => e.hasNote === false).length;
+  const fromLine = preview?.from || (personal && status?.personal ? `${status.personal.fromName} <${status.personal.fromAddress}>` : `${status?.fromName} <${status?.fromAddress}>`);
 
   return (
     <Sheet
@@ -161,7 +201,8 @@ export default function Composer({
       footer={
         <>
           <span className="cmp-foot-note">
-            <Info size={12} /> Queued, then sent one at a time (~1 every {status?.minGapSeconds ?? 90}s, max {status?.dailyCap ?? 30}/day){status?.sendMode === "stub" ? " · dev stub: nothing is delivered" : ""}
+            <span className="cmp-tip"><MessageCircleQuestion size={12} /> Ask a question — replies move all future emails to Primary.</span>
+            <span><Info size={12} /> Queued, then sent one at a time (every {gapText}{istWindow(status)}, max {status?.dailyCap ?? 30}/day){status?.sendMode === "stub" ? " · dev stub: nothing is delivered" : ""}</span>
           </span>
           <button type="button" className="psp-btn" onClick={onClose}>Cancel</button>
           <button type="button" className="psp-btn primary" disabled={!canSend} onClick={() => void send()} title={blocked && lint ? lint.errors[0]?.message : undefined}>
@@ -180,13 +221,55 @@ export default function Composer({
 
       <div className="cmp">
         <section className="cmp-left" data-show={mobileTab === "write" ? "1" : "0"}>
+          {status?.personal && (
+            <div className="cmp-style" role="radiogroup" aria-label="Email style">
+              {(["personal", "classic"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={effectiveStyle === k}
+                  data-on={effectiveStyle === k ? "1" : "0"}
+                  disabled={styleLocked || busy !== null}
+                  onClick={() => chooseStyle(k)}
+                >
+                  {STYLE_LABEL[k]}
+                </button>
+              ))}
+              <span className="cmp-style-hint">
+                {styleLocked
+                  ? "Kept from the first email, so it comes from the same sender."
+                  : personal
+                    ? "A short note from you — lands in Primary."
+                    : "Programme email with footer — often Promotions."}
+              </span>
+            </div>
+          )}
+          {blockedMsg && (
+            <p className="cmp-error cmp-blocked"><XCircle size={13} /> <span>{blockedMsg}</span></p>
+          )}
+          {personal && kind === "initial" && eligible.length > 1 && (
+            <p className="cmp-banner cmp-hint">
+              <Sparkles size={13} />
+              <span>
+                Most personal: generate for <b>one creator at a time</b> — the AI writes a line from your note about them.
+                {noNote > 0 ? ` ${noNote} of these ${eligible.length} have no note yet; add one line each (what you liked about their page).` : ""}
+              </span>
+            </p>
+          )}
           {eligible.length > 1 && (
             <p className="cmp-banner">
               <Users size={13} /> <span>One template, sent separately to each person — <code>{"{{firstName}}"}</code> and <code>{"{{instagram}}"}</code> are filled in for each. Nobody sees anyone else.</span>
             </p>
           )}
           {kind === "initial" && eligible.length === 1 && (
-            <p className="cmp-banner"><Sparkles size={13} /> <span>Written for {eligible[0].name} from your note and their handle only — nothing invented about their content.</span></p>
+            <p className="cmp-banner">
+              <Sparkles size={13} />
+              <span>
+                Written for {eligible[0].name} from your note and their handle only — nothing invented about their content.
+                {personal && eligible[0].hasNote === false ? " Tip: add a one-line note about them first for a more personal hook." : ""}
+              </span>
+            </p>
           )}
           {subjectLocked && (
             <p className="cmp-banner"><Info size={13} /> <span>{kind === "followup" ? "A follow-up continues each person's thread, so its subject is “Re: …” their first email." : "Replies continue the thread under its subject."}</span></p>
@@ -204,10 +287,10 @@ export default function Composer({
 
           <label className="psp-field">
             <span>Subject</span>
-            <input value={subjectLocked ? preview?.subject || "Re: …" : subject} disabled={subjectLocked} maxLength={200} placeholder="Your own link on SubhSandesh" onChange={(e) => setSubject(e.target.value)} />
+            <input value={subjectLocked ? preview?.subject || "Re: …" : subject} disabled={subjectLocked} maxLength={200} placeholder={personal ? "quick question" : "Your own link on SubhSandesh"} onChange={(e) => setSubject(e.target.value)} />
           </label>
           <label className="psp-field">
-            <span>Message <em>— {lint ? `${lint.words} words` : "…"} · signature and footer are added automatically</em></span>
+            <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? "your signature is added; no footer" : "signature and footer are added automatically"}</em></span>
             <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
           </label>
           {(eligible.length > 1 || /\{\{/.test(body)) && (
@@ -222,6 +305,18 @@ export default function Composer({
         </section>
 
         <section className="cmp-right" data-show={mobileTab === "preview" ? "1" : "0"}>
+          {preview?.inboxCheck && (
+            <div className={`cmp-inbox ${personal ? "" : "classic"}`}>
+              <h3><Inbox size={14} /> Inbox check {personal ? "— reads as a personal note" : "— Classic looks like bulk mail"}</h3>
+              <ul>
+                {preview.inboxCheck.map((i, n) => (
+                  <li key={n} className={i.ok ? "ok" : "bad"}>
+                    {i.ok ? <CheckCircle2 size={12} /> : <XCircle size={12} />} {i.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className={`cmp-check ${!lint ? "" : lint.ok ? "ok" : "bad"}`}>
             <h3>
               {checking ? <Loader2 size={14} className="psp-spin" /> : <ShieldCheck size={14} />}
@@ -231,7 +326,11 @@ export default function Composer({
               <ul>
                 {lint.errors.map((e, i) => <li key={`e${i}`} className="bad"><AlertTriangle size={12} /> {e.message}</li>)}
                 {lint.warnings.map((w, i) => <li key={`w${i}`} className="warn"><Info size={12} /> {w.message}</li>)}
-                {lint.ok && !lint.warnings.length && <li className="ok"><CheckCircle2 size={12} /> Short, plain, one link to subhsandesh.in, no spam wording.</li>}
+                {lint.ok && !lint.warnings.length && (
+                  <li className="ok">
+                    <CheckCircle2 size={12} /> {personal ? "Short, plain, no links or numbers, no spam wording." : "Short, plain, one link to subhsandesh.in, no spam wording."}
+                  </li>
+                )}
               </ul>
             )}
           </div>
@@ -250,11 +349,16 @@ export default function Composer({
                 )}
               </div>
               <dl className="cmp-env">
-                <dt>From</dt><dd>{status?.fromName} &lt;{status?.fromAddress}&gt;</dd>
+                <dt>From</dt><dd className="cmp-from">{fromLine}</dd>
+                {preview.replyTo && <><dt>Reply-To</dt><dd>{preview.replyTo}</dd></>}
                 <dt>To</dt><dd>{preview.to.email}</dd>
                 <dt>Subject</dt><dd><b>{preview.subject || "(no subject)"}</b></dd>
               </dl>
-              <iframe title="Email preview" className="cmp-frame" sandbox="" srcDoc={preview.html} />
+              {preview.html ? (
+                <iframe title="Email preview" className="cmp-frame" sandbox="" srcDoc={preview.html} />
+              ) : (
+                <pre className="cmp-text" aria-label="Email preview (plain text)">{preview.text}</pre>
+              )}
             </div>
           )}
 
@@ -266,7 +370,7 @@ export default function Composer({
           )}
           {status && (
             <p className="cmp-pace">
-              {status.sentLast24h}/{status.dailyCap} sent in the last 24h · {status.queued} already queued · about {gapMin} min between emails
+              {status.sentLast24h}/{status.dailyCap} sent in the last 24h · {status.queued} already queued · {gapText} between emails{istWindow(status)}
             </p>
           )}
         </section>
@@ -312,7 +416,27 @@ export default function Composer({
         .cmp-skip { padding: 10px 12px; border-radius: 12px; background: rgba(183,121,31,.08); color: #7a4f12; font-size: 12px; line-height: 1.5; }
         .cmp-skip ul { margin: 4px 0 0; padding-left: 18px; }
         .cmp-pace { margin: 0; font-size: 11.5px; color: ${A.muted}; }
-        .cmp-foot-note { margin-right: auto; display: inline-flex; gap: 5px; align-items: center; font-size: 11.5px; color: ${A.muted}; min-width: 0; }
+        .cmp-foot-note { margin-right: auto; display: grid; gap: 2px; font-size: 11.5px; color: ${A.muted}; min-width: 0; }
+        .cmp-foot-note > span { display: inline-flex; gap: 5px; align-items: center; }
+        .cmp-foot-note svg { flex: none; }
+        .cmp-tip { color: ${A.ok}; font-weight: 700; }
+        .cmp-style { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+        .cmp-style button { height: 34px; padding: 0 13px; border-radius: 999px; border: 1.5px solid ${A.edge}; background: #fff; font: inherit; font-size: 12.5px; font-weight: 800; color: ${A.soft}; cursor: pointer; }
+        .cmp-style button[data-on="1"] { border-color: ${A.ok}; background: rgba(30,122,75,.08); color: ${A.ok}; }
+        .cmp-style button:disabled { cursor: default; opacity: .75; }
+        .cmp-style-hint { font-size: 11.5px; color: ${A.muted}; }
+        .cmp-blocked { padding: 9px 11px; border-radius: 12px; background: rgba(179,38,30,.06); border: 1px solid rgba(179,38,30,.25); }
+        .cmp-hint { background: rgba(30,122,75,.06); color: #1d5e3c; }
+        .cmp-inbox { padding: 11px 12px; border-radius: 14px; border: 1px solid rgba(30,122,75,.3); background: rgba(30,122,75,.05); }
+        .cmp-inbox.classic { border-color: rgba(183,121,31,.35); background: rgba(183,121,31,.06); }
+        .cmp-inbox h3 { margin: 0; display: flex; gap: 6px; align-items: center; font-size: 13px; color: ${A.ink}; }
+        .cmp-inbox ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
+        .cmp-inbox li { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+        .cmp-inbox li svg { flex: none; margin-top: 2px; }
+        .cmp-inbox li.ok { color: ${A.ok}; }
+        .cmp-inbox li.bad { color: ${A.danger}; font-weight: 700; }
+        .cmp-from { font-weight: 700; }
+        .cmp-text { margin: 0; padding: 14px 14px 18px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.55; color: #222; background: #fff; max-height: 420px; overflow: auto; }
         @media (max-width: 860px) {
           .cmp { grid-template-columns: minmax(0, 1fr); }
           .cmp-mtabs { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 12px; border-radius: 12px; background: rgba(61,12,17,.05); }

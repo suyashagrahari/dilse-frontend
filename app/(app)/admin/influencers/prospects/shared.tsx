@@ -54,7 +54,14 @@ export interface DeployStatus {
   queued: number;
   queueFinishEstimate: string | null;
   lastError: string;
+  /** Older servers omit these; the UI treats a missing field as "classic only". */
+  defaultStyle?: OutreachStyle;
+  personal?: { fromAddress: string; fromName: string; replyToAddress: string; blocked: { message: string; at: string } | null };
+  sendWindow?: { startHour: number; endHour: number; tzOffsetMinutes: number } | null;
+  maxGapSeconds?: number;
 }
+
+export type OutreachStyle = "personal" | "classic";
 
 export const STATUS_META: Record<ProspectStatus, { label: string; tone: string }> = {
   new: { label: "New", tone: "#6d4ad1" },
