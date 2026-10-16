@@ -11,7 +11,13 @@ import { API_URL } from "@/lib/config";
 import { A } from "../../adminKit";
 
 export type ProspectStatus = "new" | "contacted" | "replied" | "joined" | "not_interested" | "bounced" | "unsubscribed";
-export type JobKind = "initial" | "followup" | "reply";
+/** initial · followup (same thread) · fresh ("New email", new subject) · reply */
+export type JobKind = "initial" | "followup" | "fresh" | "reply";
+
+/** What the server allows for one prospect right now (canEmailProspect). */
+export type Due =
+  | { ok: true; kind: JobKind; kinds?: JobKind[]; needsConfirm?: string; recent?: string; followupDue?: boolean }
+  | { ok: false; reason: string };
 
 export interface Prospect {
   id: string;
@@ -27,6 +33,7 @@ export interface Prospect {
   lastContactedAt: string | null;
   initialSentAt: string | null;
   followUpSentAt: string | null;
+  followUpCount?: number;
   lastReplyAt: string | null;
   joinedUserId: string | null;
   createdAt: string;
@@ -35,7 +42,7 @@ export interface Prospect {
   messages: number;
   lastDirection: string;
   job: { state: string; kind: JobKind; error: string; sentAt: string | null; createdAt: string } | null;
-  due: { ok: true; kind: JobKind } | { ok: false; reason: string } | null;
+  due: Due | null;
 }
 
 export interface DeployStatus {
@@ -61,6 +68,18 @@ export interface DeployStatus {
   personal?: { fromAddress: string; fromName: string; replyToAddress: string; blocked: { message: string; at: string } | null };
   sendWindow?: { startHour: number; endHour: number; tzOffsetMinutes: number } | null;
   maxGapSeconds?: number;
+  /** A send within this many hours of the last one is warned about. */
+  recentHours?: number;
+  /** Above this many recipients at once, suggest spreading the send out. */
+  bulkWarnAbove?: number;
+  recommendedPerDay?: number;
+}
+
+/** The From line of the default (team) style, exactly as the server reports it. */
+export function senderLine(st: DeployStatus | null | undefined): string {
+  if (!st) return "";
+  if (st.personal && st.defaultStyle !== "classic") return `${st.personal.fromName} <${st.personal.fromAddress}>`;
+  return `${st.fromName} <${st.fromAddress}>`;
 }
 
 export type OutreachStyle = "personal" | "classic";
@@ -75,7 +94,7 @@ export const STATUS_META: Record<ProspectStatus, { label: string; tone: string }
   unsubscribed: { label: "Unsubscribed", tone: "#b3261e" },
 };
 
-export const KIND_LABEL: Record<JobKind, string> = { initial: "First email", followup: "Follow-up", reply: "Reply" };
+export const KIND_LABEL: Record<JobKind, string> = { initial: "First email", followup: "Follow-up", fresh: "New email", reply: "Reply" };
 
 export function StatusPill({ status }: { status: ProspectStatus }) {
   const m = STATUS_META[status];

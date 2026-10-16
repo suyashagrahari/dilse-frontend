@@ -1,26 +1,29 @@
 "use client";
 
-// ─── Generate → review → queue ──────────────────────────────────────────────
+// ─── Generate → review → send ───────────────────────────────────────────────
 //
 // Opened from the selection bar (or a conversation). One selected → the AI
-// writes a personal email from what you typed about them; several → one
+// writes an email for them from what you typed about them; several → one
 // template with {{firstName}} / {{instagram}}, rendered per person at send
-// time. Nothing is sent from here without pressing Send, and Send only QUEUES:
-// the server spaces the emails out under the daily cap.
+// time. Nothing is sent from here without pressing Send.
+//
+// WHAT KIND OF EMAIL. One intent per send — First email, Follow-up (same
+// thread, "Re:"), New email (fresh subject) or Reply. A mixed selection is
+// planned by the server: the picker shows how many each intent reaches, and
+// everyone not included is listed with the reason. Nobody is skipped silently.
+//
+// TWO DRAFTS. Generate writes two angles (A / B); switch between them, or
+// Regenerate for a fresh pair.
 //
 // The right-hand side is the server's own verdict, refreshed as you type: the
-// spam check that will gate Send, and the exact email one chosen recipient
-// will receive (subject, footer, unsubscribe link and all).
-//
-// Two styles. PERSONAL (default) is a plain-text note from Suyash's own
-// address — no link, no numbers, no footer, no unsubscribe header — which is
-// what lands in Gmail's Primary tab; the "Inbox check" panel lists why.
-// CLASSIC is the original programme email with the unsubscribe footer.
+// Inbox check, the spam check that gates Send, and the exact email one chosen
+// recipient will receive — From "SubhSandesh Team <team@subhsandesh.in>" as
+// the server reports it.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Eye, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Eye, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
 import { A } from "../../adminKit";
-import { KIND_LABEL, Sheet, api, when, type DeployStatus, type JobKind, type OutreachStyle } from "./shared";
+import { KIND_LABEL, Sheet, ago, api, senderLine, when, type DeployStatus, type JobKind, type OutreachStyle } from "./shared";
 
 interface Lint {
   ok: boolean;
@@ -30,26 +33,51 @@ interface Lint {
   links: string[];
 }
 
-interface Preview {
-  to: { id: string; name: string; email: string };
+interface EligibleRow {
+  id: string;
+  name: string;
   kind: JobKind;
+  hasNote?: boolean;
+  sentCount?: number;
+  lastSentAt?: string | null;
+  sentDates?: string[];
+  recent?: string;
+  notInterested?: boolean;
+}
+
+interface Preview {
+  to?: { id: string; name: string; email: string };
+  kind?: JobKind;
   /** The style this recipient actually gets (a follow-up keeps the thread's). */
   style?: OutreachStyle;
   /** The From header exactly as it will appear. */
   from?: string;
   replyTo?: string;
-  subject: string;
-  text: string;
-  html: string;
+  subject?: string;
+  threaded?: boolean;
+  text?: string;
+  html?: string;
   headers?: string[];
   lint: Lint | null;
   inboxCheck?: { ok: boolean; label: string }[];
   personalBlocked?: string;
-  eligible: { id: string; name: string; kind: JobKind; hasNote?: boolean }[];
+  eligible: EligibleRow[];
   skipped: { id: string; name: string; reason: string }[];
+  intent?: JobKind | null;
+  reach?: Record<JobKind, number>;
+  needsConfirm?: { id: string; name: string }[];
 }
 
-const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Personal (recommended)", classic: "Classic" };
+interface Draft {
+  subject: string;
+  body: string;
+  reading: string;
+  angle?: "a" | "b";
+  subjectFallback?: boolean;
+}
+
+const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Team note (recommended)", classic: "Classic" };
+const INTENTS: JobKind[] = ["initial", "followup", "fresh", "reply"];
 
 function istWindow(status: DeployStatus | null): string {
   const w = status?.sendWindow;
@@ -65,6 +93,8 @@ export default function Composer({
   ids,
   status,
   onQueued,
+  initialIntent,
+  initialAllowNotInterested,
 }: {
   open: boolean;
   onClose: () => void;
@@ -72,10 +102,16 @@ export default function Composer({
   ids: string[];
   status: DeployStatus | null;
   onQueued: (message: string) => void;
+  /** Pre-picked intent (from a conversation's "Follow-up" / "New email" button). */
+  initialIntent?: JobKind | null;
+  /** The admin already confirmed sending to someone marked not interested. */
+  initialAllowNotInterested?: boolean;
 }) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [reading, setReading] = useState("");
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [draftIdx, setDraftIdx] = useState(0);
   const [aiBody, setAiBody] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<"gen" | "send" | null>(null);
@@ -85,39 +121,68 @@ export default function Composer({
   const [checking, setChecking] = useState(false);
   const [mobileTab, setMobileTab] = useState<"write" | "preview">("write");
   const [style, setStyle] = useState<OutreachStyle>(status?.defaultStyle || "personal");
+  const [intent, setIntent] = useState<JobKind | null>(initialIntent || null);
+  const [allowNI, setAllowNI] = useState<boolean>(!!initialAllowNotInterested);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const idsKey = ids.join(",");
 
-  const kind: JobKind | null = preview?.kind || null;
+  const kind: JobKind | null = preview?.intent || preview?.kind || intent || null;
   const eligible = useMemo(() => preview?.eligible || [], [preview]);
   const many = eligible.length > 1 || (ids.length > 1 && !preview);
   const subjectLocked = kind === "followup" || kind === "reply";
-  // A follow-up or reply keeps the style its conversation started in.
-  const styleLocked = subjectLocked;
+  // Anything after the first email keeps the style its conversation started in.
+  const styleLocked = kind !== null && kind !== "initial";
   const effectiveStyle: OutreachStyle = (styleLocked && preview?.style) || style;
   const personal = effectiveStyle === "personal";
 
-  const generate = useCallback(async (asStyle?: OutreachStyle) => {
+  const applyDraft = useCallback((d: Draft) => {
+    setSubject(d.subject || "");
+    setBody(d.body);
+    setReading(d.reading || "");
+    setAiBody(d.body);
+  }, []);
+
+  const generate = useCallback(async (o: { asStyle?: OutreachStyle; asIntent?: JobKind | null } = {}) => {
     setBusy("gen");
     setErr(null);
-    const r = await api<{ data: { subject: string; body: string; reading: string } }>(token, "/prospects/draft", { body: { ids, note: note.trim() || undefined, style: asStyle || style } });
+    const wantIntent = o.asIntent === undefined ? intent : o.asIntent;
+    const r = await api<{ data: Draft & { alternatives?: Draft[]; intent?: JobKind } }>(token, "/prospects/draft", {
+      body: { ids, note: note.trim() || undefined, style: o.asStyle || style, intent: wantIntent || undefined, allowNotInterested: allowNI || undefined },
+    });
     setBusy(null);
     if (!r.ok) {
       setErr(r.data.error || "Could not generate a draft");
       return;
     }
-    setSubject(r.data.data.subject || "");
-    setBody(r.data.data.body);
-    setReading(r.data.data.reading || "");
-    setAiBody(r.data.data.body);
+    const d = r.data.data;
+    const alts = d.alternatives?.length ? d.alternatives : [d];
+    setDrafts(alts);
+    setDraftIdx(0);
+    applyDraft(alts[0]);
+    if (d.intent && !wantIntent) setIntent(d.intent);
     setMobileTab("write");
-  }, [token, ids, note, style]);
+  }, [token, ids, note, style, intent, allowNI, applyDraft]);
 
   function chooseStyle(next: OutreachStyle) {
     if (next === style || styleLocked) return;
     setStyle(next);
     // The two styles want different emails; a fresh draft fits the new one.
-    if (status?.aiConfigured && busy === null) void generate(next);
+    if (status?.aiConfigured && busy === null) void generate({ asStyle: next });
+  }
+
+  function chooseIntent(next: JobKind) {
+    if (next === kind || busy !== null) return;
+    setIntent(next);
+    setPreviewFor("");
+    setDrafts([]);
+    if (next === "followup" || next === "reply") setSubject("");
+    if (status?.aiConfigured) void generate({ asIntent: next });
+  }
+
+  function chooseDraft(i: number) {
+    if (!drafts[i]) return;
+    setDraftIdx(i);
+    applyDraft(drafts[i]);
   }
 
   // The page remounts this per opening (`key`), so state starts empty. Draft
@@ -135,13 +200,15 @@ export default function Composer({
     if (!open) return;
     const t = setTimeout(async () => {
       setChecking(true);
-      const r = await api<{ data: Preview }>(token, "/prospects/preview", { body: { ids, prospectId: previewFor || undefined, subject, body, style } });
+      const r = await api<{ data: Preview }>(token, "/prospects/preview", {
+        body: { ids, prospectId: previewFor || undefined, subject, body, style, intent: intent || undefined, allowNotInterested: allowNI || undefined },
+      });
       setChecking(false);
       if (r.ok) setPreview(r.data.data);
     }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, idsKey, subject, body, previewFor, token, style]);
+  }, [open, idsKey, subject, body, previewFor, token, style, intent, allowNI]);
 
   function insert(field: string) {
     const el = bodyRef.current;
@@ -158,17 +225,17 @@ export default function Composer({
     setBusy("send");
     setErr(null);
     const r = await api<{ message: string; data: { queued: string[]; already: string[]; skipped: unknown[]; finishEstimate: string | null }; lint?: Lint; for?: string }>(token, "/prospects/send", {
-      body: { ids: eligible.map((e) => e.id), subject, body, style, aiAssisted: aiBody !== null },
+      body: { ids: eligible.map((e) => e.id), intent: kind || undefined, subject, body, style, aiAssisted: aiBody !== null, allowNotInterested: allowNI || undefined },
     });
     setBusy(null);
     if (!r.ok) {
-      setErr(r.data.for ? `${r.data.error} (for ${r.data.for})` : r.data.error || "Not queued");
+      setErr(r.data.for ? `${r.data.error} (for ${r.data.for})` : r.data.error || "Not sent");
       return;
     }
     const d = r.data.data;
     const extra = d.already.length ? ` · ${d.already.length} already in the queue` : "";
-    const eta = d.finishEstimate && d.queued.length > 1 ? ` · last one goes out ~${when(d.finishEstimate)}` : "";
-    const held = (d as { personalBlocked?: string }).personalBlocked ? " · held: the personal sender isn't allowed by SES yet" : "";
+    const eta = d.finishEstimate && d.queued.length > 1 && !status?.instant ? ` · last one goes out ~${when(d.finishEstimate)}` : "";
+    const held = (d as { personalBlocked?: string }).personalBlocked ? " · held: SES doesn't allow this sender yet" : "";
     onQueued(`${r.data.message}${extra}${eta}${held}`);
     onClose();
   }
@@ -190,7 +257,15 @@ export default function Composer({
   const gapText = gapMax > gapMin ? `${gapMin}–${gapMax} min` : `${gapMin} min`;
   const blockedMsg = personal ? preview?.personalBlocked || status?.personal?.blocked?.message || "" : "";
   const noNote = eligible.filter((e) => e.hasNote === false).length;
-  const fromLine = preview?.from || (personal && status?.personal ? `${status.personal.fromName} <${status.personal.fromAddress}>` : `${status?.fromName} <${status?.fromAddress}>`);
+  const fromLine = preview?.from || (personal ? senderLine(status) : `${status?.fromName} <${status?.fromAddress}>`);
+  const reach = preview?.reach;
+  const intentOptions = INTENTS.filter((k) => (reach ? reach[k] > 0 || k === kind : k === kind));
+  const one = eligible.length === 1 ? eligible[0] : null;
+  const recentOnes = eligible.filter((e) => e.recent);
+  const bulkAbove = status?.bulkWarnAbove ?? 10;
+  const perDay = status?.recommendedPerDay ?? 15;
+  const needsConfirm = preview?.needsConfirm || [];
+  const excluded = (preview?.skipped || []).filter((s) => !(allowNI && needsConfirm.some((n) => n.id === s.id)));
 
   return (
     <Sheet
@@ -201,13 +276,13 @@ export default function Composer({
       footer={
         <>
           <span className="cmp-foot-note">
-            <span className="cmp-tip"><MessageCircleQuestion size={12} /> Ask a question — replies move all future emails to Primary.</span>
-            <span><Info size={12} /> {status?.instant ? <>Goes out the moment you press Send, any time (max {status.dailyCap}/day)</> : <>Queued, then sent one at a time (every {gapText}{istWindow(status)}, max {status?.dailyCap ?? 30}/day)</>}{status?.sendMode === "stub" ? " · dev stub: nothing is delivered" : ""}</span>
+            <span className="cmp-tip"><MessageCircleQuestion size={12} /> One easy question — a reply moves future emails to Primary.</span>
+            <span><Info size={12} /> {status?.instant ? <>Goes out the moment you press Send (max {status.dailyCap}/day)</> : <>Queued, then sent one at a time (every {gapText}{istWindow(status)}, max {status?.dailyCap ?? 30}/day)</>}{status?.sendMode === "stub" ? " · dev stub: nothing is delivered" : ""}</span>
           </span>
           <button type="button" className="psp-btn" onClick={onClose}>Cancel</button>
           <button type="button" className="psp-btn primary" disabled={!canSend} onClick={() => void send()} title={blocked && lint ? lint.errors[0]?.message : undefined}>
             {busy === "send" ? <Loader2 size={15} className="psp-spin" /> : <Send size={15} />}
-            {eligible.length > 1 ? `${status?.instant ? "Send" : "Queue"} ${eligible.length} emails` : eligible.length === 1 ? `Send to ${eligible[0].name.split(" ")[0]}` : "Send"}
+            {eligible.length > 1 ? `${status?.instant ? "Send" : "Queue"} ${eligible.length} emails` : one ? `Send to ${one.name.split(" ")[0]}` : "Send"}
           </button>
         </>
       }
@@ -221,6 +296,15 @@ export default function Composer({
 
       <div className="cmp">
         <section className="cmp-left" data-show={mobileTab === "write" ? "1" : "0"}>
+          {intentOptions.length > 0 && (
+            <div className="cmp-intent" role="radiogroup" aria-label="What kind of email">
+              {intentOptions.map((k) => (
+                <button key={k} type="button" role="radio" aria-checked={kind === k} data-on={kind === k ? "1" : "0"} disabled={busy !== null} onClick={() => chooseIntent(k)}>
+                  {KIND_LABEL[k]}{many && reach ? <i>{reach[k]}</i> : null}
+                </button>
+              ))}
+            </div>
+          )}
           {status?.personal && (
             <div className="cmp-style" role="radiogroup" aria-label="Email style">
               {(["personal", "classic"] as const).map((k) => (
@@ -240,13 +324,44 @@ export default function Composer({
                 {styleLocked
                   ? "Kept from the first email, so it comes from the same sender."
                   : personal
-                    ? "A short note from you — lands in Primary."
+                    ? "A plain note from the team — lands in Primary."
                     : "Programme email with footer — often Promotions."}
               </span>
             </div>
           )}
           {blockedMsg && (
             <p className="cmp-error cmp-blocked"><XCircle size={13} /> <span>{blockedMsg}</span></p>
+          )}
+
+          {one && (one.sentCount || 0) > 0 && (
+            <p className={`cmp-banner ${one.recent ? "cmp-warn" : "cmp-neutral"}`}>
+              <Clock size={13} />
+              <span>
+                Already sent <b>{one.sentCount} email{one.sentCount === 1 ? "" : "s"}</b> to {one.name.split(" ")[0]}
+                {one.sentDates?.length ? ` — ${one.sentDates.map((d) => when(d)).join(", ")}` : one.lastSentAt ? ` — last ${ago(one.lastSentAt)}` : ""}.
+                {one.recent ? <> <b>{one.recent}</b></> : null}
+              </span>
+            </p>
+          )}
+          {!one && recentOnes.length > 0 && (
+            <p className="cmp-banner cmp-warn">
+              <Clock size={13} />
+              <span><b>{recentOnes.length} of these</b> got an email in the last {status?.recentHours ?? 48}h ({recentOnes.slice(0, 4).map((e) => e.name.split(" ")[0]).join(", ")}{recentOnes.length > 4 ? "…" : ""}). Waiting reads better — but you can send.</span>
+            </p>
+          )}
+          {eligible.length > bulkAbove && (
+            <p className="cmp-banner cmp-warn">
+              <AlertTriangle size={13} />
+              <span>Sending to <b>{eligible.length} people at once.</b> For a young sending domain, about {perDay} a day keeps it in good standing — consider sending the rest tomorrow.</span>
+            </p>
+          )}
+          {needsConfirm.length > 0 && (
+            <label className="cmp-banner cmp-warn cmp-confirm">
+              <input type="checkbox" checked={allowNI} onChange={(e) => setAllowNI(e.target.checked)} />
+              <span>
+                {needsConfirm.length === 1 ? `${needsConfirm[0].name} said` : `${needsConfirm.length} of these said`} they&apos;re <b>not interested</b>. Include them anyway — only if they asked to hear more.
+              </span>
+            </label>
           )}
           {personal && kind === "initial" && eligible.length > 1 && (
             <p className="cmp-banner cmp-hint">
@@ -262,17 +377,26 @@ export default function Composer({
               <Users size={13} /> <span>One template, sent separately to each person — <code>{"{{firstName}}"}</code> and <code>{"{{instagram}}"}</code> are filled in for each. Nobody sees anyone else.</span>
             </p>
           )}
-          {kind === "initial" && eligible.length === 1 && (
+          {kind === "initial" && one && (
             <p className="cmp-banner">
               <Sparkles size={13} />
               <span>
-                Written for {eligible[0].name} from your note and their handle only — nothing invented about their content.
-                {personal && eligible[0].hasNote === false ? " Tip: add a one-line note about them first for a more personal hook." : ""}
+                Written for {one.name} from your note and their handle only — nothing invented about their content.
+                {personal && one.hasNote === false ? " Tip: add a one-line note about them first for a more specific hook." : ""}
               </span>
             </p>
           )}
-          {subjectLocked && (
-            <p className="cmp-banner"><Info size={13} /> <span>{kind === "followup" ? "A follow-up continues each person's thread, so its subject is “Re: …” their first email." : "Replies continue the thread under its subject."}</span></p>
+          {kind && kind !== "initial" && (
+            <p className="cmp-banner">
+              <Info size={13} />
+              <span>
+                {kind === "followup"
+                  ? "A follow-up stays in the same thread: “Re: …” their last email, with In-Reply-To so Gmail keeps one conversation."
+                  : kind === "fresh"
+                    ? "A new email gets its own subject and starts a new thread in their inbox. Their reply still lands in this conversation."
+                    : "Replies continue the thread under its subject."}
+              </span>
+            </p>
           )}
 
           <div className="cmp-ai">
@@ -283,14 +407,30 @@ export default function Composer({
             </button>
           </div>
           {!status?.aiConfigured && <p className="psp-err">AI drafting is off (no OPENAI_API_KEY) — write it by hand.</p>}
+          {drafts.length > 1 && (
+            <div className="cmp-alts" role="tablist" aria-label="Drafts">
+              {drafts.map((d, i) => (
+                <button key={i} type="button" role="tab" aria-selected={i === draftIdx} data-on={i === draftIdx ? "1" : "0"} onClick={() => chooseDraft(i)}>
+                  Draft {String.fromCharCode(65 + i)}
+                </button>
+              ))}
+              <span>Two angles — pick one, then edit freely.</span>
+            </div>
+          )}
           {reading && <p className="cmp-reading"><Sparkles size={11} /> {reading}{edited ? " · edited by you" : ""}</p>}
 
           <label className="psp-field">
-            <span>Subject</span>
-            <input value={subjectLocked ? preview?.subject || "Re: …" : subject} disabled={subjectLocked} maxLength={200} placeholder={personal ? "quick question" : "Your own link on SubhSandesh"} onChange={(e) => setSubject(e.target.value)} />
+            <span>Subject {!subjectLocked && <em>— 4–8 words, says what it&apos;s about</em>}</span>
+            <input
+              value={subjectLocked ? preview?.subject || "Re: …" : subject}
+              disabled={subjectLocked}
+              maxLength={200}
+              placeholder={kind === "fresh" ? "Another collab idea for @handle" : "Collab idea for @handle"}
+              onChange={(e) => setSubject(e.target.value)}
+            />
           </label>
           <label className="psp-field">
-            <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? "your signature is added; no footer" : "signature and footer are added automatically"}</em></span>
+            <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? "signed “Team SubhSandesh”; no footer" : "signature and footer are added automatically"}</em></span>
             <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
           </label>
           {(eligible.length > 1 || /\{\{/.test(body)) && (
@@ -307,7 +447,7 @@ export default function Composer({
         <section className="cmp-right" data-show={mobileTab === "preview" ? "1" : "0"}>
           {preview?.inboxCheck && (
             <div className={`cmp-inbox ${personal ? "" : "classic"}`}>
-              <h3><Inbox size={14} /> Inbox check {personal ? "— reads as a personal note" : "— Classic looks like bulk mail"}</h3>
+              <h3><Inbox size={14} /> Inbox check {personal ? "" : "— Classic looks like bulk mail"}</h3>
               <ul>
                 {preview.inboxCheck.map((i, n) => (
                   <li key={n} className={i.ok ? "ok" : "bad"}>
@@ -328,7 +468,7 @@ export default function Composer({
                 {lint.warnings.map((w, i) => <li key={`w${i}`} className="warn"><Info size={12} /> {w.message}</li>)}
                 {lint.ok && !lint.warnings.length && (
                   <li className="ok">
-                    <CheckCircle2 size={12} /> {personal ? "Short, plain, no links or numbers, no spam wording." : "Short, plain, one link to subhsandesh.in, no spam wording."}
+                    <CheckCircle2 size={12} /> {personal ? "Short, plain, no sales numbers, no spam wording." : "Short, plain, one link to subhsandesh.in, no spam wording."}
                   </li>
                 )}
               </ul>
@@ -362,10 +502,11 @@ export default function Composer({
             </div>
           )}
 
-          {preview && preview.skipped.length > 0 && (
+          {excluded.length > 0 && (
             <div className="cmp-skip">
-              <b>{preview.skipped.length} won&apos;t be emailed:</b>
-              <ul>{preview.skipped.slice(0, 20).map((s) => <li key={s.id}>{s.name || "Unknown"} — {s.reason}</li>)}</ul>
+              <b>Not included — {excluded.length}:</b>
+              <ul>{excluded.slice(0, 30).map((s) => <li key={s.id}>{s.name || "Unknown"} — {s.reason}</li>)}</ul>
+              {excluded.length > 30 && <small>…and {excluded.length - 30} more.</small>}
             </div>
           )}
           {status && (
@@ -383,6 +524,20 @@ export default function Composer({
         .cmp-banner { margin: 0; display: flex; gap: 7px; align-items: flex-start; padding: 9px 11px; border-radius: 12px; background: rgba(109,74,209,.07); color: #4b3296; font-size: 12.5px; line-height: 1.5; }
         .cmp-banner svg { flex: none; margin-top: 3px; }
         .cmp-banner code { font-size: 11.5px; background: rgba(109,74,209,.1); padding: 0 4px; border-radius: 4px; }
+        .cmp-warn { background: rgba(183,121,31,.1); color: #7a4f12; }
+        .cmp-neutral { background: rgba(61,12,17,.045); color: ${A.soft}; }
+        .cmp-confirm { cursor: pointer; }
+        .cmp-confirm input { flex: none; width: 17px; height: 17px; margin: 2px 0 0; accent-color: ${A.maroon}; }
+        .cmp-intent { display: flex; flex-wrap: wrap; gap: 6px; }
+        .cmp-intent button { height: 34px; padding: 0 12px; border-radius: 10px; border: 1.5px solid ${A.edge}; background: #fff; font: inherit; font-size: 12.5px; font-weight: 800; color: ${A.soft}; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .cmp-intent button[data-on="1"] { border-color: ${A.maroon}; background: ${A.maroon}; color: #f7ece4; }
+        .cmp-intent button i { font-style: normal; font-size: 11px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: rgba(61,12,17,.08); display: inline-flex; align-items: center; justify-content: center; }
+        .cmp-intent button[data-on="1"] i { background: rgba(255,255,255,.18); }
+        .cmp-intent button:disabled { cursor: default; opacity: .75; }
+        .cmp-alts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .cmp-alts button { height: 30px; padding: 0 12px; border-radius: 99px; border: 1.5px solid rgba(201,168,76,.55); background: #fff; font: inherit; font-size: 12px; font-weight: 800; color: ${A.goldDeep}; cursor: pointer; }
+        .cmp-alts button[data-on="1"] { background: rgba(201,168,76,.18); border-color: ${A.gold}; }
+        .cmp-alts span { font-size: 11.5px; color: ${A.muted}; }
         .cmp-ai { display: flex; gap: 8px; }
         .cmp-ai input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: 12px; border: 1.5px solid ${A.edge}; font-size: 16px; outline: none; background: #fff; color: ${A.ink}; font-family: inherit; }
         .cmp-ai input:focus { border-color: ${A.gold}; }
@@ -449,6 +604,7 @@ export default function Composer({
         @media (max-width: 520px) {
           .cmp-ai { flex-direction: column; }
           .cmp-ai input { flex: none; }
+          .cmp-intent button { flex: 1 1 auto; justify-content: center; }
         }
       `}</style>
     </Sheet>

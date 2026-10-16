@@ -8,15 +8,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { AtSign, Ban, CheckCircle2, Clock, Loader2, Mail, RotateCcw, Send, StickyNote, XCircle } from "lucide-react";
+import { AlertTriangle, AtSign, Ban, CheckCircle2, Clock, Loader2, Mail, MailPlus, Reply, RotateCcw, Send, StickyNote, XCircle } from "lucide-react";
 import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
 import { A } from "../../adminKit";
-import { KIND_LABEL, Sheet, StatusPill, api, ago, when, type Prospect } from "./shared";
+import { KIND_LABEL, Sheet, StatusPill, api, ago, when, type JobKind, type Prospect } from "./shared";
 
 interface Detail {
   prospect: Prospect;
   thread: (Thread & { userEmail: string; kind: string }) | null;
-  jobs: { id: string; kind: "initial" | "followup" | "reply"; state: string; error: string; subject: string; sentAt: string | null; createdAt: string; via: string }[];
+  jobs: { id: string; kind: JobKind; state: string; error: string; subject: string; sentAt: string | null; createdAt: string; via: string }[];
 }
 
 const JOB_TONE: Record<string, string> = { queued: "#6d4ad1", sending: "#6d4ad1", sent: "#1e7a4b", failed: "#b3261e", cancelled: "#9a7070", skipped: "#b7791f" };
@@ -31,7 +31,7 @@ export default function ProspectSheet({
   id: string | null;
   token: string;
   onClose: () => void;
-  onCompose: (ids: string[]) => void;
+  onCompose: (ids: string[], intent?: JobKind, allowNotInterested?: boolean) => void;
   onChanged: () => void;
 }) {
   const [d, setD] = useState<Detail | null>(null);
@@ -69,6 +69,16 @@ export default function ProspectSheet({
   const p = d?.prospect;
   const due = p?.due;
   const queued = d?.jobs.find((j) => j.state === "queued");
+  const kinds: JobKind[] = due?.ok ? due.kinds || [due.kind] : [];
+  const sentJobs = (d?.jobs || []).filter((j) => j.state === "sent");
+  const ICON: Record<JobKind, typeof Send> = { initial: Send, followup: Send, fresh: MailPlus, reply: Reply };
+  const LABEL: Record<JobKind, string> = { initial: "Write first email", followup: "Follow-up", fresh: "New email", reply: "Reply" };
+
+  function compose(k: JobKind) {
+    if (!p || !due?.ok) return;
+    if (due.needsConfirm && !window.confirm(`${p.name} said they're not interested.\n\nSend anyway? Only do this if they asked to hear more.`)) return;
+    onCompose([p.id], k, !!due.needsConfirm);
+  }
 
   return (
     <Sheet
@@ -90,11 +100,14 @@ export default function ProspectSheet({
             {p.joinedUserId && (
               <Link className="psp-btn primary" href={`/admin/influencers/${p.joinedUserId}`}>Open influencer page</Link>
             )}
-            {due?.ok && !queued && (
-              <button type="button" className="psp-btn primary" onClick={() => onCompose([p.id])}>
-                <Send size={14} /> {due.kind === "initial" ? "Write first email" : due.kind === "followup" ? "Write follow-up" : "Reply"}
-              </button>
-            )}
+            {due?.ok && !queued && kinds.map((k, i) => {
+              const Icon = ICON[k];
+              return (
+                <button key={k} type="button" className={`psp-btn ${i === 0 ? "primary" : ""}`} onClick={() => compose(k)}>
+                  <Icon size={14} /> {LABEL[k]}
+                </button>
+              );
+            })}
           </>
         )
       }
@@ -113,14 +126,23 @@ export default function ProspectSheet({
             {p!.note && <p className="pss-note">“{p!.note}”</p>}
             <dl>
               <dt>Added</dt><dd>{ago(p!.createdAt)}{p!.source === "csv" ? " · from a list" : ""}</dd>
-              <dt>Emails sent</dt><dd>{p!.contactCount}</dd>
+              <dt>Emails sent</dt><dd>{p!.contactCount}{sentJobs.length ? <small className="pss-dates">{sentJobs.slice(0, 6).map((j) => `${KIND_LABEL[j.kind]} ${when(j.sentAt)}`).join(" · ")}</small> : null}</dd>
               <dt>Last contacted</dt><dd>{ago(p!.lastContactedAt)}</dd>
               <dt>Last reply</dt><dd>{ago(p!.lastReplyAt)}</dd>
             </dl>
-            <p className={`pss-due ${due?.ok ? "ok" : ""}`}>
-              {due?.ok ? <CheckCircle2 size={13} /> : <Clock size={13} />}
-              {due?.ok ? `Due: ${KIND_LABEL[due.kind].toLowerCase()}` : due?.reason}
+            <p className={`pss-due ${due?.ok ? (due.needsConfirm ? "warn" : "ok") : ""}`}>
+              {due?.ok ? (due.needsConfirm ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />) : <Clock size={13} />}
+              <span>
+                {due?.ok
+                  ? due.needsConfirm
+                    ? due.needsConfirm
+                    : `Can send: ${kinds.map((k) => KIND_LABEL[k].toLowerCase()).join(" · ")}${due.followupDue ? " — a follow-up is due" : ""}`
+                  : `Can't email: ${due?.reason || "—"}`}
+              </span>
             </p>
+            {due?.ok && due.recent && (
+              <p className="pss-due warn"><Clock size={13} /><span>{due.recent}</span></p>
+            )}
             {d.jobs.length > 0 && (
               <div className="pss-jobs">
                 <h4>Send log</h4>
@@ -160,6 +182,8 @@ export default function ProspectSheet({
         .pss-due { margin: 0; display: flex; gap: 6px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: rgba(61,12,17,.04); color: ${A.soft}; font-size: 12px; line-height: 1.45; }
         .pss-due svg { flex: none; margin-top: 2px; }
         .pss-due.ok { background: rgba(30,122,75,.07); color: ${A.ok}; font-weight: 700; }
+        .pss-due.warn { background: rgba(183,121,31,.1); color: #7a4f12; font-weight: 700; }
+        .pss-dates { display: block; color: ${A.muted}; font-size: 11px; line-height: 1.4; }
         .pss-jobs h4 { margin: 4px 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: ${A.muted}; }
         .pss-jobs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
         .pss-jobs li { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; font-size: 12px; }

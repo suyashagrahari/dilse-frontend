@@ -3,11 +3,12 @@
 // ─── Super admin: Prospects — creators we invite who have not joined ────────
 //
 // Add people (+ Add), tick one or many, press Generate:
-//   · one   → the AI writes a personal email from what you typed about them;
+//   · one   → the AI writes an email for them from what you typed about them;
 //   · many  → one template with {{firstName}}, rendered per person.
-// Review, fix anything the spam check flags, Send. Send only queues: the
-// server sends one email at a time under a daily cap, re-checking each person
-// first, so an unsubscribe or reply that lands meanwhile always wins.
+// The dialog picks the kind of email (first email / follow-up / new email /
+// reply) and lists anyone it can't include, with the reason. Review, fix
+// anything the spam check flags, Send. The server re-checks each person right
+// before sending, so an unsubscribe or bounce that lands meanwhile wins.
 //
 // Server: server/src/controllers/prospect.controller.ts.
 // Deliverability + setup: server/docs/influencer-prospects.md.
@@ -22,14 +23,14 @@ import InfluencerTabs from "../InfluencerTabs";
 import AddProspectModal from "./AddProspectModal";
 import Composer from "./Composer";
 import ProspectSheet from "./ProspectSheet";
-import { KIND_LABEL, SHARED_CSS, StatusPill, api, ago, when, type DeployStatus, type Prospect } from "./shared";
+import { KIND_LABEL, SHARED_CSS, StatusPill, api, ago, senderLine, when, type DeployStatus, type JobKind, type Prospect } from "./shared";
 
 type Filter = "all" | "new" | "followup" | "contacted" | "replied" | "joined" | "closed";
 
 const FILTERS: { value: Filter; label: string; test: (p: Prospect) => boolean }[] = [
   { value: "all", label: "All", test: () => true },
   { value: "new", label: "New", test: (p) => p.status === "new" },
-  { value: "followup", label: "Follow-up due", test: (p) => !!p.due?.ok && p.due.kind === "followup" },
+  { value: "followup", label: "Follow-up due", test: (p) => !!p.due?.ok && !!p.due.followupDue },
   { value: "contacted", label: "Contacted", test: (p) => p.status === "contacted" },
   { value: "replied", label: "Replied", test: (p) => p.status === "replied" },
   { value: "joined", label: "Joined", test: (p) => p.status === "joined" },
@@ -55,6 +56,7 @@ export default function ProspectsPage() {
   /** Bumped on every open, so each dialog mounts fresh instead of resetting in an effect. */
   const [mountKey, setMountKey] = useState(0);
   const [composeIds, setComposeIds] = useState<string[] | null>(null);
+  const [composeIntent, setComposeIntent] = useState<{ intent: JobKind | null; allowNotInterested: boolean }>({ intent: null, allowNotInterested: false });
   const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -109,12 +111,10 @@ export default function ProspectsPage() {
     return n;
   });
 
+  // Mixed stages are fine: the dialog plans one kind of email for the
+  // selection and lists anyone it leaves out, with the reason.
   const emailable = selected.filter((p) => p.due?.ok);
-  const kinds = new Set(emailable.map((p) => (p.due?.ok ? p.due.kind : "")));
-  const generateHint =
-    emailable.length === 0 ? "None of the selected can be emailed now"
-    : kinds.size > 1 ? "Mixed stages — filter to New or Follow-up due first"
-    : undefined;
+  const generateHint = selected.length > 0 && emailable.length === 0 ? "None of the selected can be emailed (unsubscribed, bounced or joined)" : undefined;
 
   async function bulk(path: string, label: string) {
     setBusy(true);
@@ -134,7 +134,7 @@ export default function ProspectsPage() {
     <AdminPage
       title="Influencers"
       icon={<Users size={18} />}
-      subtitle="Creators you'd like to invite to the influencer programme. Add them, select one to get a personal email or several to get a template, review it, and send. Emails go out one at a time under a daily cap, each with an unsubscribe link, and replies land here."
+      subtitle="Creators you'd like to invite to the influencer programme. Add them, select one to get an email written for them or several to get a template, review it, and send — first emails, follow-ups and new emails, any time. Emails come from the SubhSandesh team, under a daily cap, and replies land here."
     >
       <Hero>
         <div className="adk-hero-grid">
@@ -152,7 +152,7 @@ export default function ProspectsPage() {
           <li className={st.sendMode === "ses" ? "ok" : st.sendMode === "stub" ? "warn" : "bad"}>
             {st.sendMode === "off" ? <AlertTriangle size={12} /> : <Mail size={12} />}
             <span>
-              {st.sendMode === "ses" && <>Sends as <b>{st.fromName}</b> &lt;{st.fromAddress}&gt; · replies to {st.replyToAddress}</>}
+              {st.sendMode === "ses" && <>Sends as <b>{senderLine(st)}</b> · replies land here via {st.personal?.replyToAddress || st.replyToAddress}</>}
               {st.sendMode === "stub" && <>Dev stub — emails are recorded, <b>not delivered</b></>}
               {st.sendMode === "off" && <>Sending is off — SES is not configured on this server</>}
             </span>
@@ -164,7 +164,7 @@ export default function ProspectsPage() {
           <li className={st.queued ? "info" : "ok"}>
             <Clock size={12} />
             <span>
-              <b>{st.sentLast24h}/{st.dailyCap}</b> sent in the last 24h · {st.queued ? <><b>{st.queued} queued</b>{st.queueFinishEstimate ? `, last one ~${when(st.queueFinishEstimate)}` : ""}</> : "queue empty"} · follow-up after {st.followUpDays} days
+              <b>{st.sentLast24h}/{st.dailyCap}</b> sent in the last 24h · {st.queued ? <><b>{st.queued} queued</b>{st.queueFinishEstimate ? `, last one ~${when(st.queueFinishEstimate)}` : ""}</> : "queue empty"} · follow-ups any time (suggested after {st.followUpDays} days)
               {st.lastError && <> · <span style={{ color: A.danger }}>last error: {st.lastError}</span></>}
             </span>
           </li>
@@ -242,9 +242,9 @@ export default function ProspectsPage() {
                     {p.unread && <span className="pro-new"><Inbox size={10} /> New reply</span>}
                     {p.job && (p.job.state === "queued" || p.job.state === "sending") && <span className="pro-q"><Loader2 size={10} className="psp-spin" /> {KIND_LABEL[p.job.kind]} queued</span>}
                     {p.job?.state === "failed" && <span className="pro-fail" title={p.job.error}><AlertTriangle size={10} /> Failed</span>}
-                    {p.due?.ok && p.due.kind === "followup" && !p.job?.state?.match(/queued|sending/) && <span className="pro-due">Follow-up due</span>}
+                    {p.due?.ok && p.due.followupDue && !p.job?.state?.match(/queued|sending/) && <span className="pro-due">Follow-up due</span>}
                   </span>
-                  <span className="pro-last">{p.lastContactedAt ? ago(p.lastContactedAt) : <em>never</em>}{p.messages > 0 && <small><Mail size={10} /> {p.messages}</small>}</span>
+                  <span className="pro-last">{p.lastContactedAt ? ago(p.lastContactedAt) : <em>never</em>}{p.contactCount > 0 && <small title={`${p.messages} message(s) in the conversation`}><Mail size={10} /> {p.contactCount} sent</small>}</span>
                   <ChevronRight size={15} className="pro-chev" />
                 </button>
               </div>
@@ -256,8 +256,8 @@ export default function ProspectsPage() {
       {sel.size > 0 && (
         <div className="pro-bar" role="toolbar" aria-label="Selection actions">
           <span className="pro-bar-n"><b>{sel.size}</b><span className="pro-sel-word"> selected</span></span>
-          <button type="button" className="psp-btn gold" disabled={!!generateHint} title={generateHint} onClick={() => { setMountKey((k) => k + 1); setComposeIds(emailable.map((p) => p.id)); }}>
-            <Sparkles size={15} /> Generate{emailable.length > 1 ? ` (${emailable.length})` : ""}
+          <button type="button" className="psp-btn gold" disabled={!!generateHint} title={generateHint} onClick={() => { setMountKey((k) => k + 1); setComposeIntent({ intent: null, allowNotInterested: false }); setComposeIds(selected.map((p) => p.id)); }}>
+            <Sparkles size={15} /> Generate{selected.length > 1 ? ` (${selected.length})` : ""}
           </button>
           <button type="button" className="psp-btn" disabled={busy} onClick={() => void bulk("/prospects/status", "Marked not interested")}><Ban size={14} /> <span className="pro-hide-sm">Not interested</span></button>
           <button
@@ -294,6 +294,8 @@ export default function ProspectsPage() {
         token={token}
         ids={composeIds || []}
         status={data?.status || null}
+        initialIntent={composeIntent.intent}
+        initialAllowNotInterested={composeIntent.allowNotInterested}
         onQueued={(m) => { setToast({ ok: true, text: m }); setSel(new Set()); void load(); }}
       />
       <ProspectSheet
@@ -301,7 +303,7 @@ export default function ProspectsPage() {
         id={openId}
         token={token}
         onClose={() => setOpenId(null)}
-        onCompose={(ids) => { setOpenId(null); setMountKey((k) => k + 1); setComposeIds(ids); }}
+        onCompose={(ids, intent, allowNotInterested) => { setOpenId(null); setMountKey((k) => k + 1); setComposeIntent({ intent: intent || null, allowNotInterested: !!allowNotInterested }); setComposeIds(ids); }}
         onChanged={() => void load()}
       />
 
