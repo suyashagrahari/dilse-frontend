@@ -422,7 +422,7 @@ export default function Composer({
           {reading && <p className="cmp-reading"><Sparkles size={11} /> {reading}{edited ? " · edited by you" : ""}</p>}
 
           <label className="psp-field">
-            <span>Subject {!subjectLocked && <em>{personal ? "— 2–6 words, like a person writes it" : "— 4–8 words, says what it’s about"}</em>}</span>
+            <span>Subject {!subjectLocked && <em>{personal ? "— names them and the idea, e.g. “Om & Diya, a reel idea from SubhSandesh”" : "— 4–8 words, says what it’s about"}</em>}</span>
             <input
               value={subjectLocked ? preview?.subject || "Re: …" : subject}
               disabled={subjectLocked}
