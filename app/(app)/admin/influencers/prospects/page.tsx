@@ -14,7 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, AtSign, Ban, CheckCircle2, ChevronRight, Clock, Inbox, Loader2, Mail, Plus, Send, Sparkles, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, AtSign, Ban, CheckCircle2, ChevronRight, Clock, ExternalLink, Inbox, Loader2, Mail, Plus, Send, Sparkles, Trash2, Users, X } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { isSuperAdmin } from "@/lib/roles";
 import { A, AdminPage, ChipGroup, EmptyState, Hero, HeroStat, Loading, Panel, SearchBox } from "../../adminKit";
@@ -220,8 +220,23 @@ export default function ProspectsPage() {
                   <span className="pro-name">
                     <b>{p.name}</b>
                     <small>{p.email}</small>
+                    {(p.niche || p.note) && <small className="pro-note" title={p.note || p.niche}>{p.note || p.niche}</small>}
                   </span>
-                  <span className="pro-ig">{p.instagram ? <><AtSign size={11} />{p.instagram}</> : <em>—</em>}</span>
+                  {/* The row is a button, so the handle can't be an <a>: open Instagram without opening the row. */}
+                  <span className="pro-ig">
+                    {p.instagram ? (
+                      <span
+                        role="link"
+                        tabIndex={0}
+                        className="pro-ig-link"
+                        title={`Open @${p.instagram} on Instagram`}
+                        onClick={(e) => { e.stopPropagation(); window.open(`https://www.instagram.com/${p.instagram}/`, "_blank", "noopener,noreferrer"); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); e.preventDefault(); window.open(`https://www.instagram.com/${p.instagram}/`, "_blank", "noopener,noreferrer"); } }}
+                      >
+                        <AtSign size={11} />{p.instagram}<ExternalLink size={10} />
+                      </span>
+                    ) : <em>—</em>}
+                  </span>
                   <span className="pro-st">
                     <StatusPill status={p.status} />
                     {p.unread && <span className="pro-new"><Inbox size={10} /> New reply</span>}
@@ -321,6 +336,10 @@ const CSS = `
   .pro-name b { font-size: 14px; color: ${A.ink}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pro-name small { font-size: 12px; color: ${A.muted}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pro-ig { display: inline-flex; align-items: center; gap: 1px; font-size: 12.5px; font-weight: 700; color: ${A.goldDeep}; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pro-ig-link { display: inline-flex; align-items: center; gap: 2px; min-width: 0; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; }
+  .pro-ig-link:hover, .pro-ig-link:focus-visible { background: ${A.goldDeep}14; text-decoration: underline; outline: none; }
+  .pro-ig-link svg:last-child { opacity: .6; margin-left: 2px; flex: none; }
+  .pro-note { display: block; color: ${A.muted}; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   .pro-ig em, .pro-last em { color: ${A.muted}; font-style: normal; font-weight: 500; }
   .pro-st { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
   .pro-new, .pro-q, .pro-fail, .pro-due { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
