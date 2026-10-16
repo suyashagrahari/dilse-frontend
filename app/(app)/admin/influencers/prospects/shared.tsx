@@ -49,6 +49,8 @@ export interface DeployStatus {
   joinUrl: string;
   followUpDays: number;
   dailyCap: number;
+  /** Instant mode: Send goes out immediately, any hour. Older servers omit it. */
+  instant?: boolean;
   sentLast24h: number;
   minGapSeconds: number;
   queued: number;

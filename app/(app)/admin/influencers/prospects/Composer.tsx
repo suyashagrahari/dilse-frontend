@@ -202,12 +202,12 @@ export default function Composer({
         <>
           <span className="cmp-foot-note">
             <span className="cmp-tip"><MessageCircleQuestion size={12} /> Ask a question — replies move all future emails to Primary.</span>
-            <span><Info size={12} /> Queued, then sent one at a time (every {gapText}{istWindow(status)}, max {status?.dailyCap ?? 30}/day){status?.sendMode === "stub" ? " · dev stub: nothing is delivered" : ""}</span>
+            <span><Info size={12} /> {status?.instant ? <>Goes out the moment you press Send, any time (max {status.dailyCap}/day)</> : <>Queued, then sent one at a time (every {gapText}{istWindow(status)}, max {status?.dailyCap ?? 30}/day)</>}{status?.sendMode === "stub" ? " · dev stub: nothing is delivered" : ""}</span>
           </span>
           <button type="button" className="psp-btn" onClick={onClose}>Cancel</button>
           <button type="button" className="psp-btn primary" disabled={!canSend} onClick={() => void send()} title={blocked && lint ? lint.errors[0]?.message : undefined}>
             {busy === "send" ? <Loader2 size={15} className="psp-spin" /> : <Send size={15} />}
-            {eligible.length > 1 ? `Queue ${eligible.length} emails` : eligible.length === 1 ? `Send to ${eligible[0].name.split(" ")[0]}` : "Send"}
+            {eligible.length > 1 ? `${status?.instant ? "Send" : "Queue"} ${eligible.length} emails` : eligible.length === 1 ? `Send to ${eligible[0].name.split(" ")[0]}` : "Send"}
           </button>
         </>
       }
@@ -370,7 +370,7 @@ export default function Composer({
           )}
           {status && (
             <p className="cmp-pace">
-              {status.sentLast24h}/{status.dailyCap} sent in the last 24h · {status.queued} already queued · {gapText} between emails{istWindow(status)}
+              {status.sentLast24h}/{status.dailyCap} sent in the last 24h · {status.queued} already queued · {status.instant ? "sends instantly" : <>{gapText} between emails{istWindow(status)}</>}
             </p>
           )}
         </section>
