@@ -11,6 +11,7 @@
 import { Suspense, useCallback, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import { useAppSelector } from "@/store/hooks";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
 import PremiumTopBar from "./kit/premium/PremiumTopBar";
@@ -65,7 +66,11 @@ function ReactionsChip({ r, asks, yes = "Said YES 💍" }: { r: ValentineReactio
 
 function Inner({ slug }: { slug: DaySlug }) {
   const e = useValentineDayEditor(slug);
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
+  // A studio-form day (the wedding invitation) keeps "Edit" after publishing:
+  // the same link shows the new details, and the owner's RSVP panel lives in the form.
   const day = e.day;
+  const editAfterPublish = !!day.studioForm;
   const Experience = getExperience(slug);
 
   const topAction = e.showShare
@@ -113,7 +118,7 @@ function Inner({ slug }: { slug: DaySlug }) {
           accentInk={day.theme.accentInk}
           font={FONTS.ui}
           onBack={e.goBack}
-          secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
+          secondary={[e.isPersonalized && (!e.showShare || editAfterPublish) && { label: "Edit", onClick: e.handleEditFromPreview }]}
           primary={{ ...topAction, disabled: e.publishing }}
         />
       ) : (
@@ -123,7 +128,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         accentInk={day.theme.accentInk}
         font={FONTS.ui}
         onBack={e.goBack}
-        secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
+        secondary={[e.isPersonalized && (!e.showShare || editAfterPublish) && { label: "Edit", onClick: e.handleEditFromPreview }]}
         primary={{ ...topAction, disabled: e.publishing }}
       />
       )}
@@ -140,7 +145,8 @@ function Inner({ slug }: { slug: DaySlug }) {
         onSave={e.handleSave}
         onDiscard={e.discardEdits}
         saving={e.saving}
-        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm }}
+        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm, fill: day.studioForm ? e.fill : undefined }}
+        owner={day.studioForm ? { pageId: e.pageId, token: accessToken ?? null, published: !!e.shareUrl } : undefined}
       />
       </DayMusicProvider>
 

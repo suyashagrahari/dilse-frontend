@@ -3531,6 +3531,98 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Wedding Invitation (Classic, $5) — the elegant single-page wedding website
+  // on the Valentine engine + wedding kit. Targets website / link / RSVP intent;
+  // the free shaadi-card / digital-invitation-india terms stay with
+  // /wedding-shaadi and /shaadi-card. No rating, no price.
+  "wedding-invitation": {
+    title: "Wedding Invitation Website — Elegant Online Invite with RSVP, Map & Countdown",
+    description:
+      "An elegant wedding invitation website you send as one link: a wax-seal envelope opens to your names, date and a live countdown, your wedding and reception with venue maps, your photos in a magazine-style gallery, your song and a one-tap RSVP that lands in your inbox.",
+    category: "Wedding",
+    emoji: "💌",
+    keywords: [
+      // ── PRIMARY ── (the no-cost / shaadi-card / digital-invitation-india intent stays with /wedding-shaadi and /shaadi-card)
+      "wedding invitation website",
+      "wedding invitation link",
+      "wedding invitation link creation",
+      "online wedding invitation with rsvp",
+      "wedding invitation with rsvp link",
+      "wedding e invite website",
+      "wedding invitation website maker",
+      "elegant wedding invitation online",
+      // ── THE PAGE ──
+      "wedding invitation with countdown",
+      "wedding invitation with google maps location",
+      "wedding invitation with photo gallery",
+      "wedding invitation with music",
+      "wax seal envelope wedding invitation",
+      "wedding invitation add to calendar",
+      "minimalist wedding invitation website",
+      // ── WHO / HOW IT'S SENT ──
+      "wedding invitation for whatsapp group",
+      "wedding invitation message for whatsapp in english",
+      "wedding invitation link for guests",
+      "wedding invite instead of video invitation",
+      "personalised wedding invitation website",
+      "wedding invitation website india",
+      "wedding reception invitation online",
+      "engagement and wedding invitation link",
+      "wedding invitation website ideas",
+      "editable wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a wedding invitation website?",
+        answer:
+          "Open the Wedding Invitation template on SubhSandesh and press Create. Add both your names, your families, the date, and the venue for your wedding and reception, then up to six photos and a song. Or describe your wedding in a few lines and let the AI fill everything in. Pick one of six colour themes, press Save to preview, Publish, and send the link on WhatsApp. Guests open it in any phone browser with no app and no login.",
+      },
+      {
+        question: "What do guests see when they open the invitation?",
+        answer:
+          "A wax-sealed envelope that opens when they tap it. The card rises to show your names, the date, a live countdown, the ceremony and reception with timings, a Google Maps button for each venue, your photos, your song and an RSVP button.",
+      },
+      {
+        question: "How does RSVP work on a wedding invitation link?",
+        answer:
+          "Guests tap RSVP, choose attending or not attending, enter how many people are coming, and send. You get an email for each reply, so you can count heads without chasing anyone on the phone. Guests don't need an account.",
+      },
+      {
+        question: "Is a wedding invitation website better than a video invitation?",
+        answer:
+          "For most families, yes. A video is a heavy file that can't change once it's forwarded, and it has no map, calendar or RSVP. A website link opens instantly on WhatsApp, has a map and an add-to-calendar button for each venue, collects RSVPs, and always shows your latest details when you edit and republish.",
+      },
+      {
+        question: "Can I change the date or venue after sending?",
+        answer:
+          "Yes. Edit the invitation and republish. The same link shows the new details to everyone, so nobody is left with an old card.",
+      },
+      {
+        question: "Which colours and music can I choose?",
+        answer:
+          "Six themes: Blush Pink, Champagne and Powder Blue in light, and Royal Maroon & Gold, Black & Gold and Emerald & Gold in dark, all with foil-style gold. Music starts with a wedding shehnai by Ustad Bismillah Khan. You can pick Din Shagna Da, Canon in D, A Thousand Years and more, or paste any YouTube link.",
+      },
+      {
+        question: "What if we have Haldi, Mehendi and Sangeet too?",
+        answer:
+          "This invitation holds up to two events, usually the wedding and the reception. For every function on one link, plus your love story and up to 20 photos, use Wedding Invitation ✦ Premium. For a royal palace experience with up to eight events and a blessings wall, use the Royal Wedding Invitation.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Wedding Invitation Website",
+      description: "Create an elegant online wedding invitation with RSVP, maps and a countdown, and send it as one link.",
+      totalTime: "PT10M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Wedding Invitation page on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Type a few lines about your wedding and let the AI fill in your names, families, date, venues and message, or fill the short form yourself." },
+        { name: "Add Events and Photos", text: "Check the wedding and reception timings and map links, then add up to six photos and adjust each one's size and crop." },
+        { name: "Pick a Theme and Song", text: "Choose one of six light or dark gold themes and keep the shehnai or pick another song." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the link on WhatsApp and watch the RSVPs arrive by email." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or

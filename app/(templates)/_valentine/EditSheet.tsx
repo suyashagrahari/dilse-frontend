@@ -26,7 +26,7 @@ import VwPhotos, { PHOTOS_CSS } from "./editor/VwPhotos";
 import MusicPicker, { MUSIC_CSS } from "./editor/MusicPicker";
 import VoiceNoteRecorder, { VOICE_CSS } from "./editor/VoiceNoteRecorder";
 import ChorusPicker, { CHORUS_CSS } from "./editor/ChorusPicker";
-import { DayStudio } from "./editor/studios";
+import { DayStudio, type StudioProps } from "./editor/studios";
 import { coercePremium, formatUnlock, PREMIUM_LIMITS, type PremiumFields } from "./premiumData";
 import { premiumTwinOf } from "./days/slugs";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
@@ -487,6 +487,7 @@ function PremiumUpsell({ slug }: { slug: string }) {
 // ─── The sheet ───────────────────────────────────────────────────────────────
 
 type SectionId = "names" | "details" | "letter" | "photos" | "stickers" | "music" | "premium" | "finish";
+// (A day with `studioForm` adds its own section ids — see DayConfig.studioForm.)
 
 export interface EditSheetProps {
   day: DayConfig;
@@ -502,10 +503,14 @@ export interface EditSheetProps {
   onDiscard: () => void;
   saving: boolean;
   /** The "✨ Write it for me" card (hidden when the template has no AI schema). */
-  ai?: { available: boolean; onOpen: () => void };
+  ai?: StudioProps["ai"];
+  /** Passed through to the day's studio (owner panels: RSVPs…). */
+  owner?: StudioProps["owner"];
 }
 
-export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, updateExtra, pagePassword, setPagePassword, onSave, onDiscard, saving, ai }: EditSheetProps) {
+export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, updateExtra, pagePassword, setPagePassword, onSave, onDiscard, saving, ai, owner }: EditSheetProps) {
+  // The studio draws the whole form (DayConfig.studioForm): only Finish stays here.
+  const studioForm = day.studioForm;
   const open = editMode === "manual";
   const modal = useMinWidth(768);
   const wide = useMinWidth(1180);
@@ -516,7 +521,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
   const snapPw = useRef("");
   const [confirm, setConfirm] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [active, setActive] = useState<SectionId>("names");
+  const [active, setActive] = useState<string>(studioForm?.nav[0]?.id ?? "names");
   const [tried, setTried] = useState(false);
   const titleId = useId().replace(/:/g, "");
   const missing = missingForSave(day.slug, mf);
@@ -590,8 +595,9 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
 
   // ── Section status + "you are here" ────────────────────────────────────────
   const musicOk = mf.musicMode !== "youtube" || YOUTUBE_ID_RE.test(mf.musicYoutubeId);
-  const status: Record<SectionId, boolean | null> = useMemo(
+  const status: Record<string, boolean | null> = useMemo(
     () => ({
+      ...(studioForm ? Object.fromEntries(studioForm.nav.map((n) => [n.id, n.done ? n.done(mf) : null])) : {}),
       names: !!mf.recipientName.trim() && !!mf.senderName.trim(),
       details: extrasMissing(day.extras, mf.extras).length === 0,
       letter: mf.letter.trim().length >= day.letterMin,
@@ -601,21 +607,23 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
       premium: null, // optional
       finish: !!mf.endLine.trim(),
     }),
-    [mf, day, musicOk],
+    [mf, day, musicOk, studioForm],
   );
-  const counted = (Object.values(status).filter((v) => v !== null) as boolean[]);
+  const sections: { id: string; label: string; emoji: string }[] = studioForm
+    ? [...studioForm.nav.map(({ id, label, emoji }) => ({ id, label, emoji })), { id: "finish", label: "Finish", emoji: "🎀" }]
+    : [
+        { id: "names", label: "Names", emoji: "💞" },
+        { id: "details", label: c.extrasTitle, emoji: day.emoji },
+        { id: "letter", label: "Letter", emoji: "✉️" },
+        { id: "photos", label: "Photos", emoji: "📸" },
+        { id: "stickers", label: "Stickers", emoji: "✨" },
+        { id: "music", label: "Music", emoji: "🎵" },
+        ...(day.premium ? [{ id: "premium" as const, label: "Premium ✦", emoji: "✦" }] : []),
+        { id: "finish", label: "Finish", emoji: "🎀" },
+      ];
+  const counted = sections.map((s) => status[s.id] ?? null).filter((v): v is boolean => v !== null);
   const doneCount = counted.filter(Boolean).length;
 
-  const sections: { id: SectionId; label: string; emoji: string }[] = [
-    { id: "names", label: "Names", emoji: "💞" },
-    { id: "details", label: c.extrasTitle, emoji: day.emoji },
-    { id: "letter", label: "Letter", emoji: "✉️" },
-    { id: "photos", label: "Photos", emoji: "📸" },
-    { id: "stickers", label: "Stickers", emoji: "✨" },
-    { id: "music", label: "Music", emoji: "🎵" },
-    ...(day.premium ? [{ id: "premium" as const, label: "Premium ✦", emoji: "✦" }] : []),
-    { id: "finish", label: "Finish", emoji: "🎀" },
-  ];
 
   useEffect(() => {
     if (!open) return;
@@ -624,7 +632,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
     const io = new IntersectionObserver(
       (entries) => {
         const vis = entries.filter((en) => en.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (vis[0]) setActive(vis[0].target.id.replace("vs-sec-", "") as SectionId);
+        if (vis[0]) setActive(vis[0].target.id.replace("vs-sec-", ""));
       },
       { root, rootMargin: "0px 0px -60% 0px", threshold: 0 },
     );
@@ -632,7 +640,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
     return () => io.disconnect();
   }, [open]);
 
-  const jump = (id: SectionId) => {
+  const jump = (id: string) => {
     setActive(id);
     scrollToSection(bodyRef.current, id);
   };
@@ -688,7 +696,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
               </nav>
 
               <div className="vs-body" ref={bodyRef}>
-                {ai?.available && (
+                {ai?.available && !studioForm && (
                   <div className="vs-ai">
                     <span className="vs-aiGlow" aria-hidden />
                     <div className="vs-aiTx">
@@ -705,8 +713,9 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                 {!day.premium && !day.studio && <PremiumUpsell slug={day.slug} />}
 
                 {/* The day's own hands-on editor (the bouquet studio…) comes first: it is the heart of the page. */}
-                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} />}
+                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} owner={owner} />}
 
+                {!studioForm && (<>
                 <section className="vs-sec" id="vs-sec-names" aria-labelledby="vs-h-names">
                   <SecHead n={1} done={status.names} title={<span id="vs-h-names">Names</span>} sub="Who it's for, and who it's from." />
                   <div className="vs-row2">
@@ -800,7 +809,9 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                   />
                 </section>
 
-                {day.premium && (
+                </>)}
+
+                {day.premium && !studioForm && (
                   <section className="vs-sec" id="vs-sec-premium" aria-labelledby="vs-h-premium">
                     <SecHead n={7} done={status.premium} title={<span id="vs-h-premium">The premium touches ✦</span>} sub="Your voice, the drop, an unlock time, a sealed P.S. and their reply." />
                     <PremiumFieldsSection day={day} mf={mf} set={(patch) => updateMf("premium", { ...coercePremium(mf.premium), ...patch })} />
@@ -808,7 +819,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                 )}
 
                 <section className="vs-sec" id="vs-sec-finish" aria-labelledby="vs-h-finish">
-                  <SecHead n={day.premium ? 8 : 7} done={status.finish} title={<span id="vs-h-finish">Finishing touches 🎀</span>} sub="The last thing they read, and an optional lock." />
+                  <SecHead n={studioForm ? studioForm.nav.length + 1 : day.premium ? 8 : 7} done={status.finish} title={<span id="vs-h-finish">Finishing touches 🎀</span>} sub="The last thing they read, and an optional lock." />
                   <TextInput spec={{ key: "endLine", kind: "text", max: VW_LIMITS.endLine, label: "The very last line", placeholder: c.endLinePlaceholder, hint: c.endLineHint }} value={mf.endLine} onChange={(v) => updateMf("endLine", v)} />
                   <Field label="Password (optional)" hint="They type it to open your page — something only they'd know. Leave empty for no lock." htmlFor="vs-pw">
                     <input id="vs-pw" className="vs-input" value={pagePassword} maxLength={128} placeholder="e.g. the name of your first date spot" onChange={(e) => setPagePassword(e.target.value)} autoComplete="off" />

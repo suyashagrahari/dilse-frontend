@@ -204,7 +204,16 @@ export interface DayConfig<E extends Extras = Extras> {
    * the top of the form — e.g. the Digital Bouquet's arranging studio. It edits
    * the extras marked `hidden` (and may touch the letter / photos).
    */
-  studio?: "bouquet";
+  studio?: "bouquet" | "wedding-invitation";
+  /**
+   * The studio draws the WHOLE form (names, the letter, photos, the day's
+   * fields, music): the plain form then keeps only its "Finishing touches"
+   * (last line + password) and the Save bar. `nav` lists the studio's own
+   * sections for the side nav / progress ring; give each one the id the
+   * studio renders as `<section id="vs-sec-<id>">` ("names", "letter" and
+   * "details" are the ones Save jumps to when something is missing).
+   */
+  studioForm?: { nav: readonly { id: string; label: string; emoji: string; done?: (mf: ValentineDayData) => boolean | null }[] };
 }
 
 export interface DayMusicConfig {

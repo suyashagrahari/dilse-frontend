@@ -184,10 +184,13 @@ export function useValentineDayEditor(slug: DaySlug) {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
-          await fill.persistStory();
           clearDraft();
+          // Count the publish (and tell them) BEFORE saving the story to their
+          // profile: that save is a model call that can take seconds, and an
+          // event behind it is lost whenever they leave the page first.
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: `Published! ${day.emoji}`, message: "Tap Share to send it" });
+          await fill.persistStory();
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -223,13 +226,14 @@ export function useValentineDayEditor(slug: DaySlug) {
   /** Create: the AI questions first when the server has a schema, else the form. */
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : demoData(slug));
-    if (storySchema) {
+    // A studio that draws the whole form carries its own AI box at the top.
+    if (storySchema && !day.studioForm) {
       setStoryMode("idle");
       setStoryStarter(true);
       return;
     }
     setEditMode("manual");
-  }, [isPersonalized, content, storySchema, setStoryMode, slug]);
+  }, [isPersonalized, content, storySchema, setStoryMode, slug, day.studioForm]);
   /** Alias with the share-page-builder name. */
   const handleStartCreate = handleEditClick;
 
@@ -354,10 +358,13 @@ export function useValentineDayEditor(slug: DaySlug) {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
-        await fill.persistStory();
         clearDraft();
+        // Count the publish (and tell them) BEFORE saving the story to their
+        // profile: that save is a model call that can take seconds, and an
+        // event behind it is lost whenever they leave the page first.
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: `Published! ${day.emoji}`, message: "Tap Share to send it" });
+        await fill.persistStory();
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
