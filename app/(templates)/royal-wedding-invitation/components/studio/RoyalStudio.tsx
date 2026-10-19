@@ -208,7 +208,14 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
     const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : []).filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
     const dStory = DEMO.story as unknown as Row[];
     const st = (Array.isArray(cur.story) ? (cur.story as Row[]) : [])
-      .map((c, i) => (touched(`extras.story[${i}]`) && s(c.when) === s(dStory[i]?.when) ? { ...c, when: "" } : c))
+      // A moment the AI rewrote keeps none of the demo couple's words it did not write itself.
+      .map((c, i) => {
+        if (!touched(`extras.story[${i}]`)) return c;
+        const d = dStory[i] ?? {};
+        const out = { ...c };
+        for (const k of ["when", "title", "line"]) if (!filled.has(`extras.story[${i}].${k}`) && s(c[k]) && s(c[k]) === s(d[k])) out[k] = "";
+        return out;
+      })
       .filter((c, i) => touched(`extras.story[${i}]`) || !same(c, dStory[i], ["title", "line"]));
     if (fill.filled.length) {
       set("events", (evs.length ? evs : (cur.events as Row[])).map((e) => ({ ...e, time: toHHMM(s(e.time)), endTime: toHHMM(s(e.endTime)) })));

@@ -40,6 +40,8 @@ export default function OpengraphImage() {
           <div style={{ fontSize: 26, lineHeight: 1.4, marginTop: 26, color: "#87636A", fontFamily: "sans-serif" }}>Your story · both families · 20 photos · RSVP per function</div>
           <div style={{ fontSize: 24, marginTop: 26, color: "#A94E63", fontWeight: 700, fontFamily: "sans-serif" }}>subhsandesh.in</div>
         </div>
+        {/* satori draws no SVG <text>: the monogram letters sit over the ring as a div. */}
+        <div style={{ display: "flex", position: "relative", width: 360, height: 360 }}>
         <svg width="360" height="360" viewBox="0 0 200 200">
           <defs>
             <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
@@ -56,11 +58,12 @@ export default function OpengraphImage() {
             const a = (k * Math.PI) / 6;
             return <circle key={k} cx={100 + Math.cos(a) * 88} cy={100 + Math.sin(a) * 88} r="3" fill="url(#g)" />;
           })}
-          <text x="100" y="118" textAnchor="middle" fontSize="54" fill="url(#g)" fontStyle="italic">
-            A &amp; V
-          </text>
           <path d="M60 140 Q100 156 140 140" stroke="url(#g)" strokeWidth="2" fill="none" />
         </svg>
+          <div style={{ position: "absolute", left: 0, top: 0, width: 360, height: 360, display: "flex", alignItems: "center", justifyContent: "center", paddingBottom: 14, fontSize: 97, fontStyle: "italic", color: "#B0873A" }}>
+            A &amp; V
+          </div>
+        </div>
       </div>
     ),
     size,

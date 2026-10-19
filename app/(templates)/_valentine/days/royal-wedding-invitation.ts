@@ -151,8 +151,10 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
   brandMark: "stacked",
   studio: "royalWedding",
   // The studio draws every section itself, password included (keeps no plain section).
+  // Edit stays after publishing: the owner's guest replies + blessings live in the form.
   studioForm: {
     ownAi: true,
+    editAfterPublish: true,
     nav: [
       { id: "names", label: "The couple", emoji: "👑" },
       { id: "details", label: "Functions", emoji: "🪔" },
