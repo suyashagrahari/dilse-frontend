@@ -73,6 +73,7 @@ import { config as sorryPremiumCfg } from "@/app/(templates)/sorry-premium/confi
 import { config as proposalPremiumCfg } from "@/app/(templates)/proposal-premium/config";
 import { config as happyAnniversaryCfg } from "@/app/(templates)/happy-anniversary/config";
 import { config as anniversaryPremiumCfg } from "@/app/(templates)/anniversary-premium/config";
+import { config as digitalBouquetCfg } from "@/app/(templates)/digital-bouquet/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -144,6 +145,10 @@ const allConfigs = [
   //    anniversary page (ULTRA_PREMIUM_SLUGS). Ships hidden on the apex
   //    (server DEFAULT_HIDDEN) until released and priced in the admin. ─────
   anniversaryPremiumCfg,
+  // ── Digital Bouquet ✦ — evergreen (ULTRA_PREMIUM_SLUGS): the sender arranges
+  //    a bouquet in the studio. Ships hidden on the apex (server
+  //    DEFAULT_HIDDEN) until released and priced in the admin. ─────────────
+  digitalBouquetCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -276,6 +281,7 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "proposal-premium",
   "happy-anniversary",
   "anniversary-premium",
+  "digital-bouquet",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

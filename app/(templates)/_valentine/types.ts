@@ -199,6 +199,12 @@ export interface DayConfig<E extends Extras = Extras> {
    * word side by side) or "stacked" (logo with the word under it, top-right).
    */
   brandMark?: "pill" | "stacked";
+  /**
+   * A hands-on editor of the day's own (see editor/studios.tsx), opened from
+   * the top of the form — e.g. the Digital Bouquet's arranging studio. It edits
+   * the extras marked `hidden` (and may touch the letter / photos).
+   */
+  studio?: "bouquet";
 }
 
 export interface DayMusicConfig {

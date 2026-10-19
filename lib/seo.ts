@@ -133,6 +133,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "proposal-premium":     { emoji: "💍", label: "Proposal" },
   "happy-anniversary":    { emoji: "🖼️", label: "Anniversary page" },
   "anniversary-premium":  { emoji: "💞", label: "Anniversary book" },
+  "digital-bouquet":      { emoji: "💐", label: "Digital bouquet" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
@@ -203,6 +204,10 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "anniversary-premium": (r, s) => ({
     title: `📖 ${r}, happy anniversary. ${s} wrote you a book`,
     description: `Every year of you two, in one little storybook. Open it somewhere quiet 💗`,
+  }),
+  "digital-bouquet": (r, s) => ({
+    title: `💐 ${r}, a bouquet just arrived for you`,
+    description: `${s} picked every flower by hand. Unwrap it and tap each one — they never wilt 🌷`,
   }),
   "dandiya-partner": (r, s) => ({
     title: `🪔 ${r}, you've been invited to a Dandiya night`,

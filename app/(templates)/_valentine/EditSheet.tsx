@@ -26,6 +26,7 @@ import VwPhotos, { PHOTOS_CSS } from "./editor/VwPhotos";
 import MusicPicker, { MUSIC_CSS } from "./editor/MusicPicker";
 import VoiceNoteRecorder, { VOICE_CSS } from "./editor/VoiceNoteRecorder";
 import ChorusPicker, { CHORUS_CSS } from "./editor/ChorusPicker";
+import { DayStudio } from "./editor/studios";
 import { coercePremium, formatUnlock, PREMIUM_LIMITS, type PremiumFields } from "./premiumData";
 import { premiumTwinOf } from "./days/slugs";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
@@ -701,7 +702,10 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                   </div>
                 )}
 
-                {!day.premium && <PremiumUpsell slug={day.slug} />}
+                {!day.premium && !day.studio && <PremiumUpsell slug={day.slug} />}
+
+                {/* The day's own hands-on editor (the bouquet studio…) comes first: it is the heart of the page. */}
+                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} />}
 
                 <section className="vs-sec" id="vs-sec-names" aria-labelledby="vs-h-names">
                   <SecHead n={1} done={status.names} title={<span id="vs-h-names">Names</span>} sub="Who it's for, and who it's from." />
@@ -728,7 +732,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
 
                 <section className="vs-sec" id="vs-sec-details" aria-labelledby="vs-h-details">
                   <SecHead n={2} done={status.details} title={<span id="vs-h-details">{c.extrasTitle} {day.emoji}</span>} sub={c.extrasSub} />
-                  {day.extras.filter((spec) => !spec.showIf || String(mf.extras[spec.showIf.key] ?? "") === spec.showIf.value).map((spec) => (
+                  {day.extras.filter((spec) => !spec.hidden).filter((spec) => !spec.showIf || String(mf.extras[spec.showIf.key] ?? "") === spec.showIf.value).map((spec) => (
                     <SpecField key={spec.key} spec={spec} value={mf.extras[spec.key]} onChange={(v) => updateExtra(spec.key, v)} />
                   ))}
                 </section>

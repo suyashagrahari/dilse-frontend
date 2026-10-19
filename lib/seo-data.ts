@@ -823,6 +823,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       { question: "Is the digital bouquet free?", answer: "Yes — building, personalizing and sharing your digital bouquet is completely free on SubhSandesh." },
       { question: "What is the Deed of Devotion?", answer: "It's a playful mock-legal certificate you can attach — a 'Government of Love' deed with your own loving clauses and both your names, sealed with love. She can save it as a keepsake image." },
       { question: "Can I edit the bouquet after I send it?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+      { question: "Is there a version with photos and music?", answer: "Yes — Digital Bouquet ✦ (/digital-bouquet) is the premium edition: you place every stem yourself, add a line to each flower, your photos, a song and a full letter, and they unwrap it, watch it bloom, water it and keep it." },
     ],
 
     howTo: {
@@ -3438,6 +3439,95 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
         { name: "Write Your Chapters", text: "Add a chapter for each year, your firsts, the little things, your reasons and your numbers — or let the AI write them from a short story." },
         { name: "Add Photos, Letter and Song", text: "Add up to ten photos and your letter, keep A Thousand Years or pick another song, and optionally lock it with your date." },
         { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link and wait for their answer." },
+      ],
+    },
+  },
+  // Digital Bouquet ✦ — the premium bouquet builder on the Valentine engine.
+  // Searchers want a "digital bouquet" / "virtual bouquet for girlfriend" they
+  // can build themselves and send as a link (the digibouquet trend), with
+  // flower meanings and a card; the FAQs answer how to build one, the
+  // meanings, what the recipient sees, photos/music and the keepsake. No
+  // rating, no price.
+  "digital-bouquet": {
+    title: "Digital Bouquet with Photos, Music & a Letter — Flowers That Never Wilt",
+    description:
+      "Hand-pick a digital flower bouquet, one stem at a time. Every flower carries its meaning and your own little note; tuck your photos between the blooms, add your song and a letter, and send a private link they unwrap, water and keep.",
+    category: "Love",
+    emoji: "💐",
+
+    keywords: [
+      // ── PRIMARY ── (the free/quick intent — "build a bouquet online", "…free" — stays with /bouquet-gf)
+      "digital bouquet",
+      "digital flower bouquet",
+      "virtual bouquet",
+      "digital bouquet with photos",
+      "digital bouquet with music",
+      "online bouquet maker",
+      "send a bouquet online",
+      "flowers that never wilt",
+      // ── WHO IT'S FOR ──
+      "digital bouquet for girlfriend",
+      "virtual flowers for boyfriend",
+      "flowers for wife online surprise",
+      "long distance girlfriend flowers",
+      // ── THE PAGE ──
+      "bouquet with a letter",
+      "flower meanings bouquet",
+      "what each flower means in a bouquet",
+      "bouquet that blooms when you open it",
+      "personalised flower bouquet link",
+      // ── HINDI / HINGLISH ──
+      "gf ke liye digital bouquet",
+      "online phool bhejo",
+      "gulab ka guldasta online",
+      "pyaar bhara bouquet whatsapp",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a digital bouquet?",
+        answer:
+          "Open Digital Bouquet ✦ and press Create. In the bouquet studio, tap flowers to add them (or drag them onto the bouquet), then move, tilt and resize each stem, or let Fill for me arrange it. Pick the greenery, the wrapping paper, the ribbon and a few charms, write the card (or let the AI write it from a few lines about you two), add up to six photos and a song. Save to preview, Publish, and send the private link on WhatsApp or Instagram.",
+      },
+      {
+        question: "Which flowers can I choose, and what do they mean?",
+        answer:
+          "Sixteen: red rose (passion), pink rose (admiration), white rose (devotion), tulip (perfect love), sunflower (adoration), peony (romance), lily (purity), daisy (innocence), lavender (calm), carnation (affection), orchid (rare beauty), baby's breath (everlasting love), cherry blossom (new beginnings), lotus (grace), marigold (celebration) and hydrangea (gratitude). Add your own line to any flower; when they tap it, the bloom shows its meaning and your line.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "A parcel waits at their door with your note on it. They pull the ribbon, and the bouquet blooms stem by stem in exactly the arrangement you made. They tap each flower to read what it means, water it until it glows, pull your photos out from between the stems, open your card from its envelope and answer a little question with a reaction — you get an email when they do. At the end they can download the bouquet as a keepsake card and reply to you on WhatsApp.",
+      },
+      {
+        question: "Does it need an app?",
+        answer: "No. It is a link that opens in any phone or laptop browser, including inside WhatsApp and Instagram — no app, no download and no account for them.",
+      },
+      {
+        question: "Is it private?",
+        answer: "Yes. Only people with your link can open it, and you can add a password when you publish so only they can see it.",
+      },
+      {
+        question: "Can I edit the bouquet after sending it?",
+        answer: "Yes. Change flowers, notes, photos or the card and republish any time; the same link always shows the latest version.",
+      },
+      {
+        question: "How is it different from Build a Bouquet?",
+        answer:
+          "Build a Bouquet (/bouquet-gf) is our quick, free bouquet with a card. Digital Bouquet ✦ is the premium one: you place every stem yourself, add a line to each flower, your photos, a song and a full letter, and they get the whole delivery: unwrap, bloom, water, keep and react. It has a one-time price shown before you publish.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make and Send a Digital Bouquet",
+      description: "Arrange a bouquet flower by flower, write the card and send it as a link that blooms open.",
+      totalTime: "PT8M",
+      steps: [
+        { name: "Open the Studio", text: "Go to Digital Bouquet ✦ on SubhSandesh, press Create and open the bouquet studio." },
+        { name: "Arrange Your Flowers", text: "Tap or drag flowers onto the bouquet, then move, tilt and resize each stem. Use Fill for me or Shuffle if you like." },
+        { name: "Wrap It", text: "Pick the greenery, the wrapping paper, the ribbon and bow, a few charms and the words on the gift tag." },
+        { name: "Write the Card", text: "Write your card, add up to six photos and pick a song." },
+        { name: "Publish and Send", text: "Save to preview, Publish, then send the private link and wait for their reaction." },
       ],
     },
   },

@@ -28,6 +28,11 @@ interface Ui {
   placeholder?: string;
   /** Only shown in the form while another (enum) extra has this value — e.g. "how many tries" under answer mode. */
   showIf?: { key: string; value: string };
+  /**
+   * Edited by the day's own studio (DayConfig.studio), not drawn by the plain
+   * form. Still coerced, tidied and checked for Save like any other field.
+   */
+  hidden?: boolean;
 }
 
 export type TextSpec = Ui & {
