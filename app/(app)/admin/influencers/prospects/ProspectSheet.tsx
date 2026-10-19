@@ -11,12 +11,12 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, AtSign, Ban, CheckCircle2, Clock, Loader2, Mail, MailPlus, Reply, RotateCcw, Send, StickyNote, XCircle } from "lucide-react";
 import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
 import { A } from "../../adminKit";
-import { KIND_LABEL, Sheet, StatusPill, api, ago, when, type JobKind, type Prospect } from "./shared";
+import { KIND_LABEL, Sheet, jobLabel, StatusPill, api, ago, when, type JobKind, type Prospect } from "./shared";
 
 interface Detail {
   prospect: Prospect;
   thread: (Thread & { userEmail: string; kind: string }) | null;
-  jobs: { id: string; kind: JobKind; state: string; error: string; subject: string; sentAt: string | null; createdAt: string; via: string }[];
+  jobs: { id: string; kind: JobKind; touch?: "connect" | "pitch"; state: string; error: string; subject: string; sentAt: string | null; createdAt: string; via: string }[];
 }
 
 const JOB_TONE: Record<string, string> = { queued: "#6d4ad1", sending: "#6d4ad1", sent: "#1e7a4b", failed: "#b3261e", cancelled: "#9a7070", skipped: "#b7791f" };
@@ -126,7 +126,8 @@ export default function ProspectSheet({
             {p!.note && <p className="pss-note">“{p!.note}”</p>}
             <dl>
               <dt>Added</dt><dd>{ago(p!.createdAt)}{p!.source === "csv" ? " · from a list" : ""}</dd>
-              <dt>Emails sent</dt><dd>{p!.contactCount}{sentJobs.length ? <small className="pss-dates">{sentJobs.slice(0, 6).map((j) => `${KIND_LABEL[j.kind]} ${when(j.sentAt)}`).join(" · ")}</small> : null}</dd>
+              <dt>Emails sent</dt><dd>{p!.contactCount}{sentJobs.length ? <small className="pss-dates">{sentJobs.slice(0, 6).map((j) => `${jobLabel(j)} ${when(j.sentAt)}`).join(" · ")}</small> : null}</dd>
+              {p!.firstTouch ? <><dt>First email</dt><dd>{p!.firstTouch === "connect" ? (p!.lastReplyAt ? "Connect sent · they replied — the reply gives the full context" : "Connect sent — just a hello, no pitch yet") : "Pitch sent"}</dd></> : null}
               <dt>Last contacted</dt><dd>{ago(p!.lastContactedAt)}</dd>
               <dt>Last reply</dt><dd>{ago(p!.lastReplyAt)}</dd>
             </dl>
@@ -150,7 +151,7 @@ export default function ProspectSheet({
                   {d.jobs.map((j) => (
                     <li key={j.id}>
                       <span className="pss-job-state" style={{ color: JOB_TONE[j.state] || A.soft }}>{j.state}</span>
-                      <span>{KIND_LABEL[j.kind]} · {when(j.sentAt || j.createdAt)}{j.via === "stub" ? " · stub" : ""}</span>
+                      <span>{jobLabel(j)}{j.kind === "initial" && j.state === "sent" ? " sent" : ""} · {when(j.sentAt || j.createdAt)}{j.via === "stub" ? " · stub" : ""}</span>
                       {j.error && <small>{j.error}</small>}
                     </li>
                   ))}

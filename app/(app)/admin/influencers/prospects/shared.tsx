@@ -13,6 +13,8 @@ import { A } from "../../adminKit";
 export type ProspectStatus = "new" | "contacted" | "replied" | "joined" | "not_interested" | "bounced" | "unsubscribed";
 /** initial · followup (same thread) · fresh ("New email", new subject) · reply */
 export type JobKind = "initial" | "followup" | "fresh" | "reply";
+/** A personal first email: "connect" (a hello, no pitch — the default) or "pitch". */
+export type FirstTouch = "connect" | "pitch";
 
 /** What the server allows for one prospect right now (canEmailProspect). */
 export type Due =
@@ -41,7 +43,9 @@ export interface Prospect {
   unread: boolean;
   messages: number;
   lastDirection: string;
-  job: { state: string; kind: JobKind; error: string; sentAt: string | null; createdAt: string } | null;
+  /** What the first email was; "" before one was sent. Older servers omit it. */
+  firstTouch?: FirstTouch | "";
+  job: { state: string; kind: JobKind; touch?: FirstTouch; error: string; sentAt: string | null; createdAt: string } | null;
   due: Due | null;
 }
 
@@ -65,6 +69,8 @@ export interface DeployStatus {
   lastError: string;
   /** Older servers omit these; the UI treats a missing field as "classic only". */
   defaultStyle?: OutreachStyle;
+  /** A personal first email is a Connect note unless Pitch is picked. */
+  defaultTouch?: FirstTouch;
   personal?: {
     fromAddress: string;
     fromName: string;
@@ -74,6 +80,9 @@ export interface DeployStatus {
     signature?: string;
     /** Who writes in the first person ("Yash"); "" for a team signature. */
     writer?: string;
+    /** Connect notes: From name (PROSPECT_CONNECT_FROM_NAME, else fromName) and signature ("Yash"). */
+    connectFromName?: string;
+    connectSignature?: string;
   };
   /** The quiet SES lane prospect mail goes out on (no open tracking). */
   quietLane?: QuietLane;
@@ -112,6 +121,12 @@ export const STATUS_META: Record<ProspectStatus, { label: string; tone: string }
 };
 
 export const KIND_LABEL: Record<JobKind, string> = { initial: "First email", followup: "Follow-up", fresh: "New email", reply: "Reply" };
+
+/** "Connect sent" / "Pitch sent" for a first email; the plain kind for the rest. */
+export function jobLabel(j: { kind: JobKind; touch?: FirstTouch }): string {
+  if (j.kind !== "initial") return KIND_LABEL[j.kind];
+  return j.touch === "connect" ? "Connect" : "Pitch";
+}
 
 export function StatusPill({ status }: { status: ProspectStatus }) {
   const m = STATUS_META[status];

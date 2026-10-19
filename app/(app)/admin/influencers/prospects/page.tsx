@@ -248,6 +248,7 @@ export default function ProspectsPage() {
                   </span>
                   <span className="pro-st">
                     <StatusPill status={p.status} />
+                    {p.status === "contacted" && p.firstTouch && <span className="pro-touch" title={p.firstTouch === "connect" ? "The first email was a hello asking to connect — no pitch yet" : "The first email pitched the idea"}>{p.firstTouch === "connect" ? "Connect sent" : "Pitch sent"}</span>}
                     {p.unread && <span className="pro-new"><Inbox size={10} /> New reply</span>}
                     {p.job && (p.job.state === "queued" || p.job.state === "sending") && <span className="pro-q"><Loader2 size={10} className="psp-spin" /> {KIND_LABEL[p.job.kind]} queued</span>}
                     {p.job?.state === "failed" && <span className="pro-fail" title={p.job.error}><AlertTriangle size={10} /> Failed</span>}
@@ -355,6 +356,7 @@ const CSS = `
   .pro-st { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
   .pro-new, .pro-q, .pro-fail, .pro-due { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
   .pro-new { background: ${A.danger}; color: #fff; }
+  .pro-touch { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 800; white-space: nowrap; background: rgba(61,12,17,.06); color: #6b4b4b; }
   .pro-q { background: rgba(109,74,209,.1); color: #4b3296; }
   .pro-fail { background: rgba(179,38,30,.1); color: ${A.danger}; }
   .pro-due { background: rgba(183,121,31,.12); color: #7a4f12; }

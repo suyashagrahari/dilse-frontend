@@ -12,6 +12,12 @@
 // planned by the server: the picker shows how many each intent reaches, and
 // everyone not included is listed with the reason. Nobody is skipped silently.
 //
+// CONNECT OR PITCH. A personal first email is a Connect note by default: a
+// hello asking to connect — nothing about SubhSandesh, no numbers, no links,
+// no screenshot (those are saved for after they reply). Pitch is the earlier
+// first email. A follow-up to a Connect note stays a hello; the Reply, once
+// they answer, gives the full context.
+//
 // TWO DRAFTS. Generate writes two angles (A / B); switch between them, or
 // Regenerate for a fresh pair.
 //
@@ -23,7 +29,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, BarChart3, CheckCircle2, Clock, Eye, ImageIcon, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
 import { A } from "../../adminKit";
-import { KIND_LABEL, SOURCE_LABEL, Sheet, ago, api, senderLine, when, type DeployStatus, type JobKind, type OutreachStyle, type Proof } from "./shared";
+import { KIND_LABEL, SOURCE_LABEL, Sheet, ago, api, senderLine, when, type DeployStatus, type FirstTouch, type JobKind, type OutreachStyle, type Proof } from "./shared";
 
 interface Lint {
   ok: boolean;
@@ -50,6 +56,12 @@ interface Preview {
   kind?: JobKind;
   /** The style this recipient actually gets (a follow-up keeps the thread's). */
   style?: OutreachStyle;
+  /** Connect (a hello) or pitch — what this recipient's email is held to. */
+  touch?: FirstTouch;
+  /** A reply to someone who answered a Connect note. */
+  afterConnect?: boolean;
+  /** The signature exactly as appended. */
+  signature?: string;
   /** The From header exactly as it will appear. */
   from?: string;
   replyTo?: string;
@@ -80,19 +92,24 @@ interface Draft {
 }
 
 const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Personal (recommended)", classic: "Classic" };
+const TOUCH_LABEL: Record<FirstTouch, string> = { connect: "Connect (recommended)", pitch: "Pitch" };
 
 /**
  * "Show our numbers" / "Attach the screenshot", remembered per kind of email.
  * Defaults: numbers in the text for every email; the image off for a first
- * email (images nudge Gmail toward Promotions) and on for later ones.
+ * email (images nudge Gmail toward Promotions) and on for later ones and
+ * replies. A Connect note never carries either (forced off, not remembered).
  */
-type ProofPrefs = Record<"first" | "later", { numbers: boolean; image: boolean }>;
+type ProofGroup = "first" | "later" | "reply";
+type ProofPrefs = Record<ProofGroup, { numbers: boolean; image: boolean }>;
 const PREFS_KEY = "psp-proof-prefs";
-const DEFAULT_PREFS: ProofPrefs = { first: { numbers: true, image: false }, later: { numbers: true, image: true } };
+const DEFAULT_PREFS: ProofPrefs = { first: { numbers: true, image: false }, later: { numbers: true, image: true }, reply: { numbers: true, image: true } };
 function readPrefs(): ProofPrefs {
   try {
     const raw = JSON.parse(window.localStorage.getItem(PREFS_KEY) || "null");
-    if (raw && raw.first && raw.later) return { first: { ...DEFAULT_PREFS.first, ...raw.first }, later: { ...DEFAULT_PREFS.later, ...raw.later } };
+    if (raw && raw.first && raw.later) {
+      return { first: { ...DEFAULT_PREFS.first, ...raw.first }, later: { ...DEFAULT_PREFS.later, ...raw.later }, reply: { ...DEFAULT_PREFS.reply, ...(raw.reply || {}) } };
+    }
   } catch { /* private window, blocked storage: defaults */ }
   return DEFAULT_PREFS;
 }
@@ -143,6 +160,7 @@ export default function Composer({
   const [checking, setChecking] = useState(false);
   const [mobileTab, setMobileTab] = useState<"write" | "preview">("write");
   const [style, setStyle] = useState<OutreachStyle>(status?.defaultStyle || "personal");
+  const [touch, setTouch] = useState<FirstTouch>(status?.defaultTouch || "connect");
   const [intent, setIntent] = useState<JobKind | null>(initialIntent || null);
   const [allowNI, setAllowNI] = useState<boolean>(!!initialAllowNotInterested);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -172,9 +190,12 @@ export default function Composer({
   const styleLocked = kind !== null && kind !== "initial";
   const effectiveStyle: OutreachStyle = (styleLocked && preview?.style) || style;
   const personal = effectiveStyle === "personal";
-  const group: "first" | "later" = !kind || kind === "initial" ? "first" : "later";
+  const group: ProofGroup = !kind || kind === "initial" ? "first" : kind === "reply" ? "reply" : "later";
+  // Connect: the first email (as picked) or a follow-up to one (as the server says).
+  const effectiveTouch: FirstTouch = kind === "initial" ? (personal ? touch : "pitch") : preview?.touch || "pitch";
+  const connect = personal && effectiveTouch === "connect" && (kind === "initial" || kind === "followup" || !kind);
   const proof = proofs?.find((p) => p.id === proofId) || null;
-  const numbersOn = !!proof && prefs[group].numbers;
+  const numbersOn = !connect && !!proof && prefs[group].numbers;
   const imageOn = numbersOn && personal && prefs[group].image;
   const proofBody = numbersOn ? { useNumbers: true, proofId: proof!.id, attachImage: imageOn } : {};
 
@@ -185,13 +206,14 @@ export default function Composer({
     setAiBody(d.body);
   }, []);
 
-  const generate = useCallback(async (o: { asStyle?: OutreachStyle; asIntent?: JobKind | null; asNumbers?: boolean } = {}) => {
+  const generate = useCallback(async (o: { asStyle?: OutreachStyle; asIntent?: JobKind | null; asNumbers?: boolean; asTouch?: FirstTouch } = {}) => {
     setBusy("gen");
     setErr(null);
     const wantIntent = o.asIntent === undefined ? intent : o.asIntent;
-    const wantNumbers = o.asNumbers === undefined ? numbersOn : o.asNumbers && !!proof;
+    const wantTouch = o.asTouch || touch;
+    const wantNumbers = wantTouch === "connect" && (!wantIntent || wantIntent === "initial") ? false : o.asNumbers === undefined ? numbersOn : o.asNumbers && !!proof;
     const r = await api<{ data: Draft & { alternatives?: Draft[]; intent?: JobKind } }>(token, "/prospects/draft", {
-      body: { ids, note: note.trim() || undefined, style: o.asStyle || style, intent: wantIntent || undefined, allowNotInterested: allowNI || undefined, ...(wantNumbers ? { useNumbers: true, proofId: proof!.id } : {}) },
+      body: { ids, note: note.trim() || undefined, style: o.asStyle || style, touch: wantTouch, intent: wantIntent || undefined, allowNotInterested: allowNI || undefined, ...(wantNumbers ? { useNumbers: true, proofId: proof!.id } : {}) },
     });
     setBusy(null);
     if (!r.ok) {
@@ -205,7 +227,7 @@ export default function Composer({
     applyDraft(alts[0]);
     if (d.intent && !wantIntent) setIntent(d.intent);
     setMobileTab("write");
-  }, [token, ids, note, style, intent, allowNI, applyDraft, numbersOn, proof]);
+  }, [token, ids, note, style, touch, intent, allowNI, applyDraft, numbersOn, proof]);
 
   function setPref(k: "numbers" | "image", v: boolean) {
     const next = { ...prefs, [group]: { ...prefs[group], [k]: v } };
@@ -220,6 +242,13 @@ export default function Composer({
     setStyle(next);
     // The two styles want different emails; a fresh draft fits the new one.
     if (status?.aiConfigured && busy === null) void generate({ asStyle: next });
+  }
+
+  function chooseTouch(next: FirstTouch) {
+    if (next === touch || busy !== null) return;
+    setTouch(next);
+    // A hello and a pitch are different emails; a fresh draft fits the new one.
+    if (status?.aiConfigured) void generate({ asTouch: next });
   }
 
   function chooseIntent(next: JobKind) {
@@ -253,14 +282,14 @@ export default function Composer({
     const t = setTimeout(async () => {
       setChecking(true);
       const r = await api<{ data: Preview }>(token, "/prospects/preview", {
-        body: { ids, prospectId: previewFor || undefined, subject, body, style, intent: intent || undefined, allowNotInterested: allowNI || undefined, ...proofBody },
+        body: { ids, prospectId: previewFor || undefined, subject, body, style, touch, intent: intent || undefined, allowNotInterested: allowNI || undefined, ...proofBody },
       });
       setChecking(false);
       if (r.ok) setPreview(r.data.data);
     }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, idsKey, subject, body, previewFor, token, style, intent, allowNI, numbersOn, imageOn, proofId]);
+  }, [open, idsKey, subject, body, previewFor, token, style, touch, intent, allowNI, numbersOn, imageOn, proofId]);
 
   function insert(field: string) {
     const el = bodyRef.current;
@@ -277,7 +306,7 @@ export default function Composer({
     setBusy("send");
     setErr(null);
     const r = await api<{ message: string; data: { queued: string[]; already: string[]; skipped: unknown[]; finishEstimate: string | null }; lint?: Lint; for?: string }>(token, "/prospects/send", {
-      body: { ids: eligible.map((e) => e.id), intent: kind || undefined, subject, body, style, aiAssisted: aiBody !== null, allowNotInterested: allowNI || undefined, ...proofBody },
+      body: { ids: eligible.map((e) => e.id), intent: kind || undefined, subject, body, style, touch, aiAssisted: aiBody !== null, allowNotInterested: allowNI || undefined, ...proofBody },
     });
     setBusy(null);
     if (!r.ok) {
@@ -310,8 +339,14 @@ export default function Composer({
   const blockedMsg = personal ? preview?.personalBlocked || status?.personal?.blocked?.message || "" : "";
   const noNote = eligible.filter((e) => e.hasNote === false).length;
   const writer = status?.personal?.writer ?? "";
-  const signatureText = (status?.personal?.signature || writer || "").replace(/\n/g, " / ");
-  const fromLine = preview?.from || (personal ? senderLine(status) : `${status?.fromName} <${status?.fromAddress}>`);
+  const signatureText = (preview?.signature || (connect ? status?.personal?.connectSignature : status?.personal?.signature) || writer || "").replace(/\n/g, " / ");
+  const fromLine =
+    preview?.from ||
+    (personal
+      ? connect && status?.personal?.connectFromName
+        ? `${status.personal.connectFromName} <${status.personal.fromAddress}>`
+        : senderLine(status)
+      : `${status?.fromName} <${status?.fromAddress}>`);
   const reach = preview?.reach;
   const intentOptions = INTENTS.filter((k) => (reach ? reach[k] > 0 || k === kind : k === kind));
   const one = eligible.length === 1 ? eligible[0] : null;
@@ -383,7 +418,39 @@ export default function Composer({
               </span>
             </div>
           )}
-          {proofs && proofs.length > 0 && (
+          {personal && kind === "initial" && (
+            <div className="cmp-style cmp-touch" role="radiogroup" aria-label="First email type">
+              {(["connect", "pitch"] as const).map((k) => (
+                <button key={k} type="button" role="radio" aria-checked={touch === k} data-on={touch === k ? "1" : "0"} disabled={busy !== null} onClick={() => chooseTouch(k)}>
+                  {TOUCH_LABEL[k]}
+                </button>
+              ))}
+              <span className="cmp-style-hint">
+                {touch === "connect"
+                  ? "Just a hello asking to connect — nothing about SubhSandesh. You tell them about it when they reply."
+                  : "Introduces SubhSandesh and the reel idea in the first email."}
+              </span>
+            </div>
+          )}
+          {connect && (
+            <p className="cmp-banner cmp-hint cmp-connect">
+              <MessageCircleQuestion size={13} />
+              <span>
+                {kind === "followup" ? <><b>Follow-up to a Connect note</b> — still just a hello, in the same thread. </> : <><b>Connect</b> — a short hello from {writer || "you"}: a line about their content, that you&apos;d love to connect, one easy question. </>}
+                From <b>{fromLine}</b>, signed “{signatureText}”.
+              </span>
+            </p>
+          )}
+          {connect && proofs && proofs.length > 0 && (
+            <p className="cmp-proof cmp-proof-off"><BarChart3 size={13} /> <span><b>Numbers &amp; screenshot: off.</b> Saved for after they reply.</span></p>
+          )}
+          {kind === "reply" && preview?.afterConnect && (
+            <p className="cmp-banner cmp-hint">
+              <Sparkles size={13} />
+              <span>They answered your Connect note — this reply is the first time they hear what SubhSandesh is: it answers them, then who you are, what we make, why it fits them, the numbers and the paid reel idea.</span>
+            </p>
+          )}
+          {!connect && proofs && proofs.length > 0 && (
             <div className="cmp-proof">
               <label className="cmp-switch">
                 <input type="checkbox" checked={numbersOn} onChange={(e) => setPref("numbers", e.target.checked)} disabled={busy !== null} />
@@ -506,18 +573,18 @@ export default function Composer({
           {reading && <p className="cmp-reading"><Sparkles size={11} /> {reading}{edited ? " · edited by you" : ""}</p>}
 
           <label className="psp-field">
-            <span>Subject {!subjectLocked && <em>{personal ? "— names them and the idea, e.g. “Om & Diya, a reel idea from SubhSandesh”" : "— 4–8 words, says what it’s about"}</em>}</span>
+            <span>Subject {!subjectLocked && <em>{connect ? "— names them, e.g. “Om & Diya, would love to connect”" : personal ? "— names them and the idea, e.g. “Om & Diya, a reel idea from SubhSandesh”" : "— 4–8 words, says what it’s about"}</em>}</span>
             <input
               value={subjectLocked ? preview?.subject || "Re: …" : subject}
               disabled={subjectLocked}
               maxLength={200}
-              placeholder={personal ? (kind === "fresh" ? "One more reel idea" : "Hey Om and Diya") : kind === "fresh" ? "Another collab idea for @handle" : "Collab idea for @handle"}
+              placeholder={connect ? "Om & Diya, would love to connect" : personal ? (kind === "fresh" ? "One more reel idea" : "Hey Om and Diya") : kind === "fresh" ? "Another collab idea for @handle" : "Collab idea for @handle"}
               onChange={(e) => setSubject(e.target.value)}
             />
           </label>
           <label className="psp-field">
             <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? `signed “${signatureText}”; no footer` : "signature and footer are added automatically"}</em></span>
-            <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : personal ? `Hey {{firstName}},\n\nI'm ${writer || "…"} from SubhSandesh. …` : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
+            <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : connect ? `Hey {{firstName}},\n\n… I'm ${writer || "…"}. I'd love to connect …?` : personal ? `Hey {{firstName}},\n\nI'm ${writer || "…"} from SubhSandesh. …` : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
           </label>
           {(eligible.length > 1 || /\{\{/.test(body)) && (
             <div className="cmp-merge">
@@ -533,7 +600,7 @@ export default function Composer({
         <section className="cmp-right" data-show={mobileTab === "preview" ? "1" : "0"}>
           {preview?.inboxCheck && (
             <div className={`cmp-inbox ${personal ? "" : "classic"}`}>
-              <h3><Inbox size={14} /> Inbox check {personal ? "" : "— Classic looks like bulk mail"}</h3>
+              <h3><Inbox size={14} /> Inbox check {connect ? "— Connect" : personal ? "" : "— Classic looks like bulk mail"}</h3>
               <ul>
                 {preview.inboxCheck.map((i, n) => (
                   <li key={n} className={i.ok ? "ok" : i.warn ? "warn" : "bad"}>
@@ -554,7 +621,7 @@ export default function Composer({
                 {lint.warnings.map((w, i) => <li key={`w${i}`} className="warn"><Info size={12} /> {w.message}</li>)}
                 {lint.ok && !lint.warnings.length && (
                   <li className="ok">
-                    <CheckCircle2 size={12} /> {personal ? "Short, plain, no sales numbers, no spam wording." : "Short, plain, one link to subhsandesh.in, no spam wording."}
+                    <CheckCircle2 size={12} /> {connect ? "Just a hello — no company, links, numbers or pitch words." : personal ? "Short, plain, no sales numbers, no spam wording." : "Short, plain, one link to subhsandesh.in, no spam wording."}
                   </li>
                 )}
               </ul>
@@ -679,6 +746,9 @@ export default function Composer({
         .cmp-style button[data-on="1"] { border-color: ${A.ok}; background: rgba(30,122,75,.08); color: ${A.ok}; }
         .cmp-style button:disabled { cursor: default; opacity: .75; }
         .cmp-style-hint { font-size: 11.5px; color: ${A.muted}; }
+        .cmp-touch button[data-on="1"] { border-color: ${A.maroon}; background: rgba(61,12,17,.06); color: ${A.maroon}; }
+        .cmp-proof-off { margin: 0; gap: 6px; font-size: 12px; color: ${A.soft}; border-color: ${A.edge}; background: rgba(61,12,17,.03); }
+        .cmp-proof-off svg { flex: none; }
         .cmp-blocked { padding: 9px 11px; border-radius: 12px; background: rgba(179,38,30,.06); border: 1px solid rgba(179,38,30,.25); }
         .cmp-hint { background: rgba(30,122,75,.06); color: #1d5e3c; }
         .cmp-inbox { padding: 11px 12px; border-radius: 14px; border: 1px solid rgba(30,122,75,.3); background: rgba(30,122,75,.05); }
