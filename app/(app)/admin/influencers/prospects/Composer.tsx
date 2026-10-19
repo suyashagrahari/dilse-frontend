@@ -441,7 +441,7 @@ export default function Composer({
               </span>
             </p>
           )}
-          {connect && proofs && proofs.length > 0 && (
+          {connect && (
             <p className="cmp-proof cmp-proof-off"><BarChart3 size={13} /> <span><b>Numbers &amp; screenshot: off.</b> Saved for after they reply.</span></p>
           )}
           {kind === "reply" && preview?.afterConnect && (
