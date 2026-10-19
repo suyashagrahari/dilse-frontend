@@ -91,6 +91,9 @@ export function TemplateGate({
       const result = await res.json();
       if (result?.success && result.verified) {
         try { sessionStorage.setItem(`${storageKey}_unlocked_${shareId}`, "true"); } catch {}
+        // Kept for this tab only, so a page's own public writes (the wedding kit's
+        // RSVP / blessings) can prove the guest got past the gate.
+        try { sessionStorage.setItem(`page_pw_${shareId}`, pw); } catch {}
         onUnlocked();
       } else {
         setError("Wrong password. Try again.");

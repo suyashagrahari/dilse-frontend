@@ -15,7 +15,15 @@ export interface LovePhoto {
   cropX?: number;
   cropY?: number;
   scale?: number;
+  /** Masonry galleries (the wedding kit): "wide" = 2 columns, "tall" = 1.5× height, "large" = both. Absent = normal. */
+  span?: PhotoSpan;
+  /** Natural pixel size, measured in the editor, so a masonry can lay out before the image loads. */
+  w?: number;
+  h?: number;
 }
+
+export const PHOTO_SPANS = ["normal", "wide", "tall", "large"] as const;
+export type PhotoSpan = (typeof PHOTO_SPANS)[number];
 
 export interface LoveKitData {
   photos: LovePhoto[];
@@ -91,7 +99,7 @@ export const DEMO_PHOTOS: LovePhoto[] = [
 // ─── Wire parsing ────────────────────────────────────────────────────────────
 
 /** Photos off the wire. A missing field falls back to `fallback` (the demo); an empty list stays empty. */
-export function parseLovePhotos(v: unknown, fallback: LovePhoto[]): LovePhoto[] {
+export function parseLovePhotos(v: unknown, fallback: LovePhoto[], max: number = MAX_PHOTOS): LovePhoto[] {
   if (!Array.isArray(v)) return fallback;
   return list<LovePhoto>(
     v,
@@ -107,10 +115,17 @@ export function parseLovePhotos(v: unknown, fallback: LovePhoto[]): LovePhoto[] 
         const n = Number(o[k]);
         if (Number.isFinite(n)) p[k] = n;
       }
+      if (typeof o.span === "string" && o.span !== "normal" && (PHOTO_SPANS as readonly string[]).includes(o.span)) p.span = o.span as PhotoSpan;
+      const w = Number(o.w);
+      const h = Number(o.h);
+      if (typeof o.w === "number" && typeof o.h === "number" && w > 0 && h > 0) {
+        p.w = Math.round(w);
+        p.h = Math.round(h);
+      }
       return p;
     },
     [],
-  ).slice(0, MAX_PHOTOS);
+  ).slice(0, Math.max(MAX_PHOTOS, max));
 }
 
 export function parseLoveGifs(v: unknown, fallback: string[]): string[] {

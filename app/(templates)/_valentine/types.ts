@@ -297,7 +297,7 @@ export function fromDb(slug: DaySlug, db: Raw | null | undefined, fromServer = d
     senderName: s(src.senderName, VW_LIMITS.name, demo.senderName),
     petName: s(src.petName, VW_LIMITS.petName, demo.petName),
     letter: s(src.letter, day.letterMax, demo.letter),
-    photos: parseLovePhotos(src.photos, fromServer ? [] : demo.photos).slice(0, day.maxPhotos),
+    photos: parseLovePhotos(src.photos, fromServer ? [] : demo.photos, day.maxPhotos).slice(0, day.maxPhotos),
     gifs: coerceGifs(slug, src.gifs),
     ...coerceMusic(src, { track: !!day.music?.track }),
     endLine: s(src.endLine, VW_LIMITS.endLine, demo.endLine),

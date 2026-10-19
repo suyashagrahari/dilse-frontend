@@ -23,6 +23,7 @@ import { TemplateGate, initialUnlocked } from "./_TemplateGate";
 import { parseLockedTeaser } from "@/app/(templates)/_valentine/premiumData";
 import UnlockTeaser from "@/app/(templates)/_valentine/kit/premium/UnlockTeaser";
 import { PremiumShareContext } from "@/app/(templates)/_valentine/kit/premium/ReplyBox";
+import { DayShareContext } from "@/app/(templates)/_valentine/kit/shareInfo";
 
 /** Fire-and-forget; never throws, never blocks the experience. */
 function useReactBeacon(slug: DaySlug, shareId: string): ReactFn {
@@ -111,6 +112,7 @@ export default function ValentineDayViewer({
     };
   }, [accessToken, pageId, slug, teaser]);
   const shareInfo = useMemo(() => ({ slug, shareId, replySent: raw.replySent === true }), [slug, shareId, raw.replySent]);
+  const dayShare = useMemo(() => ({ slug, shareId, hasPassword }), [slug, shareId, hasPassword]);
   const [unlocked, setUnlocked] = useState(() => initialUnlocked(hasPassword, slug, shareId));
   const unlock = useCallback(() => setUnlocked(true), []);
   const react = useReactBeacon(slug, shareId);
@@ -169,9 +171,11 @@ export default function ValentineDayViewer({
       {/* The sender's music (off · melody · YouTube song) — the day's own
           useSynthMusic()/MusicToggle delegate to this. Starts on the first tap. */}
       <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions} chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined} track={day.music?.track} compact={!!day.music?.compact} volume={day.music?.volume}>
-        <PremiumShareContext.Provider value={day.premium ? shareInfo : null}>
-          <Experience data={data} mode="live" react={react} />
-        </PremiumShareContext.Provider>
+        <DayShareContext.Provider value={dayShare}>
+          <PremiumShareContext.Provider value={day.premium ? shareInfo : null}>
+            <Experience data={data} mode="live" react={react} />
+          </PremiumShareContext.Provider>
+        </DayShareContext.Provider>
       </DayMusicProvider>
       <BrandMark dark={day.theme.dark} stacked={day.brandMark === "stacked"} />
       {ownerView && <OwnerBanner r={ownerView} asks={day.asksQuestion} yes={day.copy.yesChip} />}
