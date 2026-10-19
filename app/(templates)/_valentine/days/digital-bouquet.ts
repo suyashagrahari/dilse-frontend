@@ -473,7 +473,7 @@ export const digitalBouquetDay: DayConfig<DbExtras> = {
       ribbon: "rose",
       bow: "bow",
       charms: ["heart"],
-      giftTag: "For my Riya, always",
+      giftTag: "Just for you, always",
       deliveryLine: "Special delivery for the prettiest girl in the world 💐",
       flowerNotes: DEMO_NOTES.map((n) => ({ ...n })),
       cardHand: "hand",
