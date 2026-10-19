@@ -26,7 +26,7 @@ import VwPhotos, { PHOTOS_CSS } from "./editor/VwPhotos";
 import MusicPicker, { MUSIC_CSS } from "./editor/MusicPicker";
 import VoiceNoteRecorder, { VOICE_CSS } from "./editor/VoiceNoteRecorder";
 import ChorusPicker, { CHORUS_CSS } from "./editor/ChorusPicker";
-import { DayStudio } from "./editor/studios";
+import { DayStudio, type StudioProps } from "./editor/studios";
 import { coercePremium, formatUnlock, PREMIUM_LIMITS, type PremiumFields } from "./premiumData";
 import { premiumTwinOf } from "./days/slugs";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
@@ -503,9 +503,11 @@ export interface EditSheetProps {
   saving: boolean;
   /** The "✨ Write it for me" card (hidden when the template has no AI schema). */
   ai?: { available: boolean; onOpen: () => void };
+  /** Passed through to a studio with its own AI box (DayConfig.studioAi): the story-fill hook. */
+  fill?: StudioProps["fill"];
 }
 
-export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, updateExtra, pagePassword, setPagePassword, onSave, onDiscard, saving, ai }: EditSheetProps) {
+export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, updateExtra, pagePassword, setPagePassword, onSave, onDiscard, saving, ai, fill }: EditSheetProps) {
   const open = editMode === "manual";
   const modal = useMinWidth(768);
   const wide = useMinWidth(1180);
@@ -589,6 +591,9 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
   };
 
   // ── Section status + "you are here" ────────────────────────────────────────
+  // A studio that is the form keeps only some of the plain sections (DayConfig.formSections),
+  // numbered on from the studio's own steps (DayConfig.formStart).
+  const keep = (id: SectionId) => !day.formSections || (day.formSections as readonly string[]).includes(id);
   const musicOk = mf.musicMode !== "youtube" || YOUTUBE_ID_RE.test(mf.musicYoutubeId);
   const status: Record<SectionId, boolean | null> = useMemo(
     () => ({
@@ -603,10 +608,10 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
     }),
     [mf, day, musicOk],
   );
-  const counted = (Object.values(status).filter((v) => v !== null) as boolean[]);
+  const counted = ((Object.keys(status) as SectionId[]).filter((k) => keep(k)).map((k) => status[k]).filter((v) => v !== null) as boolean[]);
   const doneCount = counted.filter(Boolean).length;
 
-  const sections: { id: SectionId; label: string; emoji: string }[] = [
+  const allSections: { id: SectionId; label: string; emoji: string }[] = [
     { id: "names", label: "Names", emoji: "💞" },
     { id: "details", label: c.extrasTitle, emoji: day.emoji },
     { id: "letter", label: "Letter", emoji: "✉️" },
@@ -616,6 +621,8 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
     ...(day.premium ? [{ id: "premium" as const, label: "Premium ✦", emoji: "✦" }] : []),
     { id: "finish", label: "Finish", emoji: "🎀" },
   ];
+  const sections = allSections.filter((s) => keep(s.id));
+  const num = (id: SectionId, n: number) => (day.formSections ? (day.formStart ?? 0) + sections.findIndex((s) => s.id === id) + 1 : n);
 
   useEffect(() => {
     if (!open) return;
@@ -667,16 +674,17 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
               <span className="vs-headArt" aria-hidden>{day.emoji}</span>
               <span className="vs-headEmoji" aria-hidden>{day.emoji}</span>
               <div className="vs-headTx">
-                <p className="vs-kicker">{day.name}{day.date ? ` · ${day.month.slice(0, 3)} ${day.date}` : ""}<span className="vs-kickDone"> · {doneCount} of {counted.length} done</span></p>
+                <p className="vs-kicker">{day.name}{day.date ? ` · ${day.month.slice(0, 3)} ${day.date}` : ""}{!day.formSections && <span className="vs-kickDone"> · {doneCount} of {counted.length} done</span>}</p>
                 <h2 className="vs-title" id={`${titleId}-t`}>{c.sheetTitle}</h2>
                 <p className="vs-sub">{c.sheetSub}</p>
               </div>
-              <Ring done={doneCount} total={counted.length} />
+              {!day.formSections && <Ring done={doneCount} total={counted.length} />}
               <button type="button" className="vs-x" onClick={requestClose} aria-label="Close the form">✕</button>
             </div>
 
             <div className="vs-main">
-              <nav className="vs-nav" aria-label="Form sections">
+              {/* A studio that is the form (formSections) numbers its own steps; the jump list would only show the leftovers. */}
+              {!day.formSections && <nav className="vs-nav" aria-label="Form sections">
                 <p className="vs-navHead">{doneCount} of {counted.length} done</p>
                 {sections.map((s, i) => (
                   <button key={s.id} type="button" onClick={() => jump(s.id)} className={`${active === s.id ? "is-active" : ""}${status[s.id] ? " is-done" : ""}`} aria-current={active === s.id ? "true" : undefined}>
@@ -685,10 +693,10 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                     {status[s.id] === null && <small className="vs-navOpt">optional</small>}
                   </button>
                 ))}
-              </nav>
+              </nav>}
 
               <div className="vs-body" ref={bodyRef}>
-                {ai?.available && (
+                {ai?.available && !day.studioAi && (
                   <div className="vs-ai">
                     <span className="vs-aiGlow" aria-hidden />
                     <div className="vs-aiTx">
@@ -705,9 +713,9 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                 {!day.premium && !day.studio && <PremiumUpsell slug={day.slug} />}
 
                 {/* The day's own hands-on editor (the bouquet studio…) comes first: it is the heart of the page. */}
-                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} />}
+                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} fill={fill} />}
 
-                <section className="vs-sec" id="vs-sec-names" aria-labelledby="vs-h-names">
+                {keep("names") && <section className="vs-sec" id="vs-sec-names" aria-labelledby="vs-h-names">
                   <SecHead n={1} done={status.names} title={<span id="vs-h-names">Names</span>} sub="Who it's for, and who it's from." />
                   <div className="vs-row2">
                     <TextInput
@@ -728,16 +736,16 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                     />
                   </div>
                   <TextInput spec={{ key: "petName", kind: "text", max: VW_LIMITS.petName, label: "What you lovingly call them (optional)", placeholder: c.petNamePlaceholder, hint: "Leave it empty and we'll use their name." }} value={mf.petName} onChange={(v) => updateMf("petName", v)} />
-                </section>
+                </section>}
 
-                <section className="vs-sec" id="vs-sec-details" aria-labelledby="vs-h-details">
+                {keep("details") && <section className="vs-sec" id="vs-sec-details" aria-labelledby="vs-h-details">
                   <SecHead n={2} done={status.details} title={<span id="vs-h-details">{c.extrasTitle} {day.emoji}</span>} sub={c.extrasSub} />
                   {day.extras.filter((spec) => !spec.hidden).filter((spec) => !spec.showIf || String(mf.extras[spec.showIf.key] ?? "") === spec.showIf.value).map((spec) => (
                     <SpecField key={spec.key} spec={spec} value={mf.extras[spec.key]} onChange={(v) => updateExtra(spec.key, v)} />
                   ))}
-                </section>
+                </section>}
 
-                <section className="vs-sec" id="vs-sec-letter" aria-labelledby="vs-h-letter">
+                {keep("letter") && <section className="vs-sec" id="vs-sec-letter" aria-labelledby="vs-h-letter">
                   <SecHead n={3} done={status.letter} title={<span id="vs-h-letter">Your letter ✉️</span>} sub={c.letterHint} />
                   <Field label="The letter" required error={letterErr} hint="Tip: one real memory beats ten compliments. Leave a blank line between paragraphs." count={<Counter n={letterLen} max={day.letterMax} />} htmlFor="vs-letter">
                     <textarea
@@ -757,9 +765,9 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                   <div className="vs-meter" aria-hidden>
                     <i style={{ width: `${Math.min(100, (mf.letter.trim().length / Math.max(day.letterMin * 6, 1)) * 100)}%` }} />
                   </div>
-                </section>
+                </section>}
 
-                <section className="vs-sec" id="vs-sec-photos" aria-labelledby="vs-h-photos">
+                {keep("photos") && <section className="vs-sec" id="vs-sec-photos" aria-labelledby="vs-h-photos">
                   <SecHead n={4} done={status.photos} title={<span id="vs-h-photos">Photos 📸</span>} sub={<>{c.photosHint} Up to {day.maxPhotos} — tap <b>Adjust</b> to drag &amp; zoom each one.</>} />
                   <VwPhotos
                     photos={mf.photos}
@@ -770,19 +778,19 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                     noteHint={c.noteHint}
                     themeStyle={themeVars(t)}
                   />
-                </section>
+                </section>}
 
-                <section className="vs-sec" id="vs-sec-stickers" aria-labelledby="vs-h-stickers">
+                {keep("stickers") && <section className="vs-sec" id="vs-sec-stickers" aria-labelledby="vs-h-stickers">
                   <SecHead n={5} done={status.stickers} title={<span id="vs-h-stickers">Stickers ✨</span>} sub="Each moment has its own cute sticker. Keep ours, paste your own GIF, or hide it." />
                   <div className="vs-gifs">
                     {day.gifSlots.map((slot) => (
                       <GifSlotRow key={slot.id} day={day} slot={slot} value={mf.gifs[slot.id] ?? ""} onChange={(v) => updateMf("gifs", { ...mf.gifs, [slot.id]: v })} />
                     ))}
                   </div>
-                </section>
+                </section>}
 
-                <section className="vs-sec" id="vs-sec-music" aria-labelledby="vs-h-music">
-                  <SecHead n={6} done={status.music} title={<span id="vs-h-music">Music 🎵</span>} sub="What plays softly while they open it." />
+                {keep("music") && <section className="vs-sec" id="vs-sec-music" aria-labelledby="vs-h-music">
+                  <SecHead n={num("music", 6)} done={status.music} title={<span id="vs-h-music">Music 🎵</span>} sub="What plays softly while they open it." />
                   <MusicPicker
                     value={mf}
                     suggestions={day.music?.suggestions}
@@ -798,7 +806,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                       if (p.musicStart !== undefined) updateMf("musicStart", p.musicStart);
                     }}
                   />
-                </section>
+                </section>}
 
                 {day.premium && (
                   <section className="vs-sec" id="vs-sec-premium" aria-labelledby="vs-h-premium">
@@ -807,13 +815,13 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                   </section>
                 )}
 
-                <section className="vs-sec" id="vs-sec-finish" aria-labelledby="vs-h-finish">
-                  <SecHead n={day.premium ? 8 : 7} done={status.finish} title={<span id="vs-h-finish">Finishing touches 🎀</span>} sub="The last thing they read, and an optional lock." />
+                {keep("finish") && <section className="vs-sec" id="vs-sec-finish" aria-labelledby="vs-h-finish">
+                  <SecHead n={num("finish", day.premium ? 8 : 7)} done={status.finish} title={<span id="vs-h-finish">Finishing touches 🎀</span>} sub="The last thing they read, and an optional lock." />
                   <TextInput spec={{ key: "endLine", kind: "text", max: VW_LIMITS.endLine, label: "The very last line", placeholder: c.endLinePlaceholder, hint: c.endLineHint }} value={mf.endLine} onChange={(v) => updateMf("endLine", v)} />
                   <Field label="Password (optional)" hint="They type it to open your page — something only they'd know. Leave empty for no lock." htmlFor="vs-pw">
                     <input id="vs-pw" className="vs-input" value={pagePassword} maxLength={128} placeholder="e.g. the name of your first date spot" onChange={(e) => setPagePassword(e.target.value)} autoComplete="off" />
                   </Field>
-                </section>
+                </section>}
                 <p className="vs-end" aria-hidden>{day.emoji} That&apos;s everything. Save to watch it once yourself.</p>
               </div>
             </div>

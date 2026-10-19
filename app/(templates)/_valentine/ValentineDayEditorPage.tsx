@@ -15,6 +15,7 @@ import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
 import PremiumTopBar from "./kit/premium/PremiumTopBar";
 import EditSheet from "./EditSheet";
+import { DayOwnerPanel } from "./editor/studios";
 import { DayMusicProvider, chipThemeFrom } from "./music/DayMusic";
 import { getDay } from "./days";
 import { getExperience } from "./experiences";
@@ -104,6 +105,7 @@ function Inner({ slug }: { slug: DaySlug }) {
       >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 
+      {day.ownerPanel && e.pageId && e.shareUrl && e.editMode !== "manual" && <DayOwnerPanel day={day} pageId={e.pageId} />}
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
 
       {topBar ? (
@@ -141,6 +143,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         onDiscard={e.discardEdits}
         saving={e.saving}
         ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm }}
+        fill={day.studioAi ? e.fill : undefined}
       />
       </DayMusicProvider>
 

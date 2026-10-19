@@ -204,7 +204,22 @@ export interface DayConfig<E extends Extras = Extras> {
    * the top of the form — e.g. the Digital Bouquet's arranging studio. It edits
    * the extras marked `hidden` (and may touch the letter / photos).
    */
-  studio?: "bouquet";
+  studio?: "bouquet" | "weddingPremium";
+  /**
+   * When the studio IS the form (the wedding tiers): the plain form's own
+   * sections to keep under it (e.g. ["music", "finish"]); the rest — names,
+   * extras, letter, photos, stickers — are the studio's. Absent = all.
+   */
+  formSections?: readonly ("names" | "details" | "letter" | "photos" | "stickers" | "music" | "premium" | "finish")[];
+  /**
+   * The studio has its own inline AI box: Create opens the form straight away
+   * (no guided StoryStarter first) and the form's generic AI card is hidden.
+   */
+  studioAi?: boolean;
+  /** With `formSections`: how many numbered steps the studio shows, so the kept sections number on from there. */
+  formStart?: number;
+  /** An owner-only panel over the editor preview once the page is published (editor/studios.tsx OWNER_PANELS), e.g. the wedding RSVP list. */
+  ownerPanel?: "weddingGuests";
 }
 
 export interface DayMusicConfig {
