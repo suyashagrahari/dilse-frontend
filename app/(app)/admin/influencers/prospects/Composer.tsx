@@ -21,9 +21,9 @@
 // as the server reports it, signed by Yash, sent on the quiet SES lane.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Eye, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, Clock, Eye, ImageIcon, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
 import { A } from "../../adminKit";
-import { KIND_LABEL, Sheet, ago, api, senderLine, when, type DeployStatus, type JobKind, type OutreachStyle } from "./shared";
+import { KIND_LABEL, SOURCE_LABEL, Sheet, ago, api, senderLine, when, type DeployStatus, type JobKind, type OutreachStyle, type Proof } from "./shared";
 
 interface Lint {
   ok: boolean;
@@ -59,6 +59,9 @@ interface Preview {
   html?: string;
   headers?: string[];
   lint: Lint | null;
+  /** The screenshot that goes inline (personal + "attach"): shown in the preview exactly as sent. */
+  image?: { url: string; alt: string; source: string; mime: string } | null;
+  proof?: { id: string; allowedNumbers?: string[]; attach: boolean } | null;
   inboxCheck?: { ok: boolean; label: string; warn?: boolean }[];
   personalBlocked?: string;
   eligible: EligibleRow[];
@@ -77,6 +80,25 @@ interface Draft {
 }
 
 const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Personal (recommended)", classic: "Classic" };
+
+/**
+ * "Show our numbers" / "Attach the screenshot", remembered per kind of email.
+ * Defaults: numbers in the text for every email; the image off for a first
+ * email (images nudge Gmail toward Promotions) and on for later ones.
+ */
+type ProofPrefs = Record<"first" | "later", { numbers: boolean; image: boolean }>;
+const PREFS_KEY = "psp-proof-prefs";
+const DEFAULT_PREFS: ProofPrefs = { first: { numbers: true, image: false }, later: { numbers: true, image: true } };
+function readPrefs(): ProofPrefs {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(PREFS_KEY) || "null");
+    if (raw && raw.first && raw.later) return { first: { ...DEFAULT_PREFS.first, ...raw.first }, later: { ...DEFAULT_PREFS.later, ...raw.later } };
+  } catch { /* private window, blocked storage: defaults */ }
+  return DEFAULT_PREFS;
+}
+function savePrefs(p: ProofPrefs) {
+  try { window.localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch { /* not remembered, still works */ }
+}
 const INTENTS: JobKind[] = ["initial", "followup", "fresh", "reply"];
 
 function istWindow(status: DeployStatus | null): string {
@@ -125,6 +147,22 @@ export default function Composer({
   const [allowNI, setAllowNI] = useState<boolean>(!!initialAllowNotInterested);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const idsKey = ids.join(",");
+  const [proofs, setProofs] = useState<Proof[] | null>(null);
+  const [proofId, setProofId] = useState<string>("");
+  const [prefs, setPrefs] = useState<ProofPrefs>(() => (typeof window === "undefined" ? DEFAULT_PREFS : readPrefs()));
+
+  // Confirmed traction screenshots; the default one is preselected.
+  useEffect(() => {
+    if (!open || !token) return;
+    let live = true;
+    api<{ data: { proofs: Proof[] } }>(token, "/prospects/proofs").then((r) => {
+      if (!live) return;
+      const list = r.ok ? r.data.data.proofs.filter((p) => p.active && p.quotable.length > 0) : [];
+      setProofs(list);
+      setProofId((cur) => cur || (list.find((p) => p.isDefault) || list[0])?.id || "");
+    });
+    return () => { live = false; };
+  }, [open, token]);
 
   const kind: JobKind | null = preview?.intent || preview?.kind || intent || null;
   const eligible = useMemo(() => preview?.eligible || [], [preview]);
@@ -134,6 +172,11 @@ export default function Composer({
   const styleLocked = kind !== null && kind !== "initial";
   const effectiveStyle: OutreachStyle = (styleLocked && preview?.style) || style;
   const personal = effectiveStyle === "personal";
+  const group: "first" | "later" = !kind || kind === "initial" ? "first" : "later";
+  const proof = proofs?.find((p) => p.id === proofId) || null;
+  const numbersOn = !!proof && prefs[group].numbers;
+  const imageOn = numbersOn && personal && prefs[group].image;
+  const proofBody = numbersOn ? { useNumbers: true, proofId: proof!.id, attachImage: imageOn } : {};
 
   const applyDraft = useCallback((d: Draft) => {
     setSubject(d.subject || "");
@@ -142,12 +185,13 @@ export default function Composer({
     setAiBody(d.body);
   }, []);
 
-  const generate = useCallback(async (o: { asStyle?: OutreachStyle; asIntent?: JobKind | null } = {}) => {
+  const generate = useCallback(async (o: { asStyle?: OutreachStyle; asIntent?: JobKind | null; asNumbers?: boolean } = {}) => {
     setBusy("gen");
     setErr(null);
     const wantIntent = o.asIntent === undefined ? intent : o.asIntent;
+    const wantNumbers = o.asNumbers === undefined ? numbersOn : o.asNumbers && !!proof;
     const r = await api<{ data: Draft & { alternatives?: Draft[]; intent?: JobKind } }>(token, "/prospects/draft", {
-      body: { ids, note: note.trim() || undefined, style: o.asStyle || style, intent: wantIntent || undefined, allowNotInterested: allowNI || undefined },
+      body: { ids, note: note.trim() || undefined, style: o.asStyle || style, intent: wantIntent || undefined, allowNotInterested: allowNI || undefined, ...(wantNumbers ? { useNumbers: true, proofId: proof!.id } : {}) },
     });
     setBusy(null);
     if (!r.ok) {
@@ -161,7 +205,15 @@ export default function Composer({
     applyDraft(alts[0]);
     if (d.intent && !wantIntent) setIntent(d.intent);
     setMobileTab("write");
-  }, [token, ids, note, style, intent, allowNI, applyDraft]);
+  }, [token, ids, note, style, intent, allowNI, applyDraft, numbersOn, proof]);
+
+  function setPref(k: "numbers" | "image", v: boolean) {
+    const next = { ...prefs, [group]: { ...prefs[group], [k]: v } };
+    setPrefs(next);
+    savePrefs(next);
+    // The numbers line is written by the AI; switching it needs a new draft.
+    if (k === "numbers" && status?.aiConfigured && busy === null) void generate({ asNumbers: v });
+  }
 
   function chooseStyle(next: OutreachStyle) {
     if (next === style || styleLocked) return;
@@ -189,11 +241,11 @@ export default function Composer({
   // straight away — pressing Generate in the list is the request for one.
   const started = useRef(false);
   useEffect(() => {
-    if (!open || started.current || !status?.aiConfigured) return;
+    if (!open || started.current || !status?.aiConfigured || proofs === null) return;
     started.current = true;
     const t = setTimeout(() => void generate(), 0);
     return () => clearTimeout(t);
-  }, [open, status?.aiConfigured, generate]);
+  }, [open, status?.aiConfigured, generate, proofs]);
 
   // The server's verdict, debounced.
   useEffect(() => {
@@ -201,14 +253,14 @@ export default function Composer({
     const t = setTimeout(async () => {
       setChecking(true);
       const r = await api<{ data: Preview }>(token, "/prospects/preview", {
-        body: { ids, prospectId: previewFor || undefined, subject, body, style, intent: intent || undefined, allowNotInterested: allowNI || undefined },
+        body: { ids, prospectId: previewFor || undefined, subject, body, style, intent: intent || undefined, allowNotInterested: allowNI || undefined, ...proofBody },
       });
       setChecking(false);
       if (r.ok) setPreview(r.data.data);
     }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, idsKey, subject, body, previewFor, token, style, intent, allowNI]);
+  }, [open, idsKey, subject, body, previewFor, token, style, intent, allowNI, numbersOn, imageOn, proofId]);
 
   function insert(field: string) {
     const el = bodyRef.current;
@@ -225,7 +277,7 @@ export default function Composer({
     setBusy("send");
     setErr(null);
     const r = await api<{ message: string; data: { queued: string[]; already: string[]; skipped: unknown[]; finishEstimate: string | null }; lint?: Lint; for?: string }>(token, "/prospects/send", {
-      body: { ids: eligible.map((e) => e.id), intent: kind || undefined, subject, body, style, aiAssisted: aiBody !== null, allowNotInterested: allowNI || undefined },
+      body: { ids: eligible.map((e) => e.id), intent: kind || undefined, subject, body, style, aiAssisted: aiBody !== null, allowNotInterested: allowNI || undefined, ...proofBody },
     });
     setBusy(null);
     if (!r.ok) {
@@ -329,6 +381,38 @@ export default function Composer({
                     ? `A plain note from ${writer || "one person"}, first person — lands in Primary.`
                     : "Programme email with footer — often Promotions."}
               </span>
+            </div>
+          )}
+          {proofs && proofs.length > 0 && (
+            <div className="cmp-proof">
+              <label className="cmp-switch">
+                <input type="checkbox" checked={numbersOn} onChange={(e) => setPref("numbers", e.target.checked)} disabled={busy !== null} />
+                <span><BarChart3 size={13} /> <b>Show our numbers</b></span>
+              </label>
+              {numbersOn && (
+                <>
+                  {proofs.length > 1 ? (
+                    <select value={proofId} onChange={(e) => setProofId(e.target.value)} aria-label="Which numbers">
+                      {proofs.map((p) => <option key={p.id} value={p.id}>{SOURCE_LABEL[p.source]} · {p.periodLabel} · {p.quotable.join(", ")}</option>)}
+                    </select>
+                  ) : (
+                    <span className="cmp-proof-what">{SOURCE_LABEL[proof!.source]} · {proof!.periodLabel} · {proof!.quotable.join(", ")}</span>
+                  )}
+                  {personal && (
+                    <label className="cmp-switch">
+                      <input type="checkbox" checked={imageOn} onChange={(e) => setPref("image", e.target.checked)} />
+                      <span><ImageIcon size={13} /> Attach the screenshot</span>
+                    </label>
+                  )}
+                  <small className="cmp-proof-hint">
+                    {imageOn
+                      ? group === "first"
+                        ? "Images can nudge Gmail toward Promotions — the numbers in the text alone are safest for a first email."
+                        : "Shown inline, the way you'd paste a screenshot into Gmail."
+                      : "One honest line with the confirmed numbers; only these numbers pass the spam check."}
+                  </small>
+                </>
+              )}
             </div>
           )}
           {blockedMsg && (
@@ -496,8 +580,11 @@ export default function Composer({
                 <dt>To</dt><dd>{preview.to.email}</dd>
                 <dt>Subject</dt><dd><b>{preview.subject || "(no subject)"}</b></dd>
               </dl>
+              {preview.image && (
+                <p className="cmp-attach"><ImageIcon size={12} /> Inline image: {preview.image.source} screenshot · sent as {preview.image.mime}</p>
+              )}
               {preview.html ? (
-                <iframe title="Email preview" className="cmp-frame" sandbox="" srcDoc={preview.html} />
+                <iframe title="Email preview" className={`cmp-frame ${preview.image ? "tall" : ""}`} sandbox="" srcDoc={preview.image ? `<base target="_blank"><style>body{margin:14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#222}</style>${preview.html}` : preview.html} />
               ) : (
                 <pre className="cmp-text" aria-label="Email preview (plain text)">{preview.text}</pre>
               )}
@@ -570,6 +657,16 @@ export default function Composer({
         .cmp-env dt { color: ${A.muted}; font-weight: 700; }
         .cmp-env dd { margin: 0; color: ${A.ink}; overflow-wrap: anywhere; }
         .cmp-frame { display: block; width: 100%; height: 400px; border: 0; background: #fff; }
+        .cmp-frame.tall { height: 560px; }
+        .cmp-attach { margin: 0; display: flex; gap: 6px; align-items: flex-start; padding: 7px 11px; font-size: 11.5px; color: ${A.soft}; border-bottom: 1px solid ${A.edge}; background: rgba(61,12,17,.02); }
+        .cmp-attach svg { flex: none; margin-top: 2px; }
+        .cmp-proof { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 9px 11px; border-radius: 12px; border: 1px solid rgba(30,122,75,.25); background: rgba(30,122,75,.05); }
+        .cmp-switch { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: ${A.ink}; cursor: pointer; }
+        .cmp-switch input { width: 17px; height: 17px; margin: 0; accent-color: ${A.ok}; }
+        .cmp-switch span { display: inline-flex; align-items: center; gap: 5px; }
+        .cmp-proof select { min-width: 0; max-width: 100%; height: 32px; border-radius: 8px; border: 1px solid ${A.edge}; background: #fff; font: inherit; font-size: 12.5px; color: ${A.ink}; }
+        .cmp-proof-what { font-size: 12px; font-weight: 700; color: ${A.ok}; }
+        .cmp-proof-hint { flex-basis: 100%; font-size: 11.5px; color: ${A.muted}; line-height: 1.45; }
         .cmp-skip { padding: 10px 12px; border-radius: 12px; background: rgba(183,121,31,.08); color: #7a4f12; font-size: 12px; line-height: 1.5; }
         .cmp-skip ul { margin: 4px 0 0; padding-left: 18px; }
         .cmp-pace { margin: 0; font-size: 11.5px; color: ${A.muted}; }

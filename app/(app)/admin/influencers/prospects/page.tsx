@@ -23,6 +23,7 @@ import InfluencerTabs from "../InfluencerTabs";
 import AddProspectModal from "./AddProspectModal";
 import Composer from "./Composer";
 import ProspectSheet from "./ProspectSheet";
+import TractionPanel from "./TractionPanel";
 import { KIND_LABEL, SHARED_CSS, StatusPill, api, ago, senderLine, when, type DeployStatus, type JobKind, type Prospect } from "./shared";
 
 type Filter = "all" | "new" | "followup" | "contacted" | "replied" | "joined" | "closed";
@@ -176,6 +177,8 @@ export default function ProspectsPage() {
           </li>
         </ul>
       )}
+
+      {token && <TractionPanel token={token} />}
 
       <Panel
         title="Prospects"

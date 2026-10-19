@@ -231,3 +231,38 @@ export const SHARED_CSS = `
   .psp-spin { animation: psp-spin 1s linear infinite; }
   @keyframes psp-spin { to { transform: rotate(360deg); } }
 `;
+
+// ── Traction proof (analytics screenshots) ─────────────────────────────────
+// Server: server/src/controllers/outreachProof.controller.ts
+
+export type ProofSource = "search_console" | "google_analytics" | "other";
+
+export interface Proof {
+  id: string;
+  imageUrl: string;
+  width: number;
+  height: number;
+  source: ProofSource;
+  periodLabel: string;
+  stats: { label: string; value: string }[];
+  /** The values an email may quote (counts only — no %, no position). */
+  quotable: string[];
+  caption: string;
+  isDefault: boolean;
+  /** Confirmed by the admin. Unconfirmed proofs can't be used in emails. */
+  active: boolean;
+  createdAt: string;
+}
+
+export const SOURCE_LABEL: Record<ProofSource, string> = {
+  search_console: "Google Search Console",
+  google_analytics: "Google Analytics",
+  other: "Other",
+};
+
+/** A multipart upload with the admin token (the JSON `api` helper can't send files). */
+export async function uploadForm<T = unknown>(token: string, path: string, form: FormData): Promise<{ ok: boolean; status: number; data: T & { success: boolean; error?: string } }> {
+  const r = await fetch(`${API_URL}/admin/super${path}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+  const data = await r.json().catch(() => ({ success: false, error: r.status === 413 ? "That image is too large." : "Unexpected response" }));
+  return { ok: r.ok && data.success !== false, status: r.status, data };
+}
