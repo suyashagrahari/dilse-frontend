@@ -54,6 +54,7 @@ export const LAUNCHES: Readonly<Record<string, string>> = {
   "happy-anniversary": "2026-10-15",
   "digital-bouquet": "2026-10-19",
   "wedding-invitation": "2026-10-20",
+  "wedding-invitation-premium": "2026-10-20",
 };
 export const NEW_LAUNCH_DAYS = 10;
 

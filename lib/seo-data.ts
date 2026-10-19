@@ -3442,6 +3442,99 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Wedding Invitation ✦ Premium — the $10 wedding website (story, every function,
+  // 20-photo gallery, RSVP per function). Targets "wedding website / every function /
+  // RSVP per function" terms; the free wedding pages keep "free / online shaadi card".
+  "wedding-invitation-premium": {
+    title: "Indian Wedding Website with Every Function — Haldi, Mehendi, Sangeet, Pheras & Reception",
+    description:
+      "A premium Indian wedding website on one link: your love story, Haldi, Mehendi, Sangeet, Wedding and Reception each with timings, dress code and map, both families, up to 20 photos in a Pinterest-style gallery, your song, and an RSVP where guests tick each function they're coming to.",
+    category: "Wedding",
+    emoji: "💍",
+
+    keywords: [
+      // ── PRIMARY ──
+      "indian wedding website",
+      "wedding website for indian wedding",
+      "digital wedding invitation website",
+      "premium wedding invitation online",
+      "all functions wedding invitation link",
+      "multi event wedding invitation",
+      "wedding invitation with rsvp online",
+      "wedding website with rsvp",
+      // ── FUNCTIONS ──
+      "haldi invitation message",
+      "mehendi invitation online",
+      "sangeet invitation wording",
+      "haldi mehendi sangeet invitation",
+      "pheras and reception invitation",
+      "wedding functions schedule for guests",
+      // ── THE PAGE ──
+      "our love story wedding website",
+      "wedding invitation with photo gallery and story",
+      "bride side groom side family invitation",
+      "wedding invitation with dress code",
+      "rsvp for each wedding function",
+      "wedding invitation with venue map for every event",
+      // ── HOW IT'S SENT ──
+      "shaadi invitation message in hindi",
+      "wedding invitation for whatsapp status",
+      "shadi ka card online kaise banaye",
+      "wedding website ideas india",
+      "destination wedding website india",
+    ],
+
+    faqs: [
+      {
+        question: "How do I make a wedding website for an Indian wedding with several functions?",
+        answer:
+          "Open Wedding Invitation ✦ Premium on SubhSandesh and press Create. Write a few lines about your wedding and the AI fills in your names, families, love story and all five functions: Haldi, Mehendi, Sangeet, Wedding and Reception. Check each function's date, time, venue, map link and dress code, add up to 20 photos, pick a theme and song, then Publish and share the link on WhatsApp.",
+      },
+      {
+        question: "Can guests RSVP to only some functions?",
+        answer:
+          "Yes. Guests tick each function they will attend, say how many people are coming and send. You get an email with their answers, so caterers and venues get accurate numbers per event.",
+      },
+      {
+        question: "What is on the guest's page?",
+        answer:
+          "A sealed envelope opens with a gold-foil monogram and falling petals, then your names, the date and a flip-digit countdown. Below that come your love story as a timeline, the bride's and groom's families, a card for every function with dress code, map and timings, your photo gallery, things to know (parking, stay, contacts) and the RSVP.",
+      },
+      {
+        question: "How many photos can I add, and do they get cropped?",
+        answer:
+          "Up to 20. The gallery is Pinterest-style, so every photo keeps its own shape, portrait or landscape, and the columns balance themselves. You can make any photo wide, tall or large, set its focal point and drag to reorder. Guests tap a photo to see it full screen and swipe through.",
+      },
+      {
+        question: "Can the invitation be in Hindi?",
+        answer:
+          "Yes. Write your message, function descriptions and blessings in Hindi or Hinglish, and the fonts support Devanagari. Ask the AI to write in Hindi and it will. For an English-and-Hindi side-by-side invitation, the Royal Wedding Invitation does it automatically.",
+      },
+      {
+        question: "How is this different from a video e-invite?",
+        answer:
+          "A video e-invite is a large file that can't be corrected after it's forwarded, and it has no map, RSVP or calendar. This is a link that opens instantly, shows the latest details whenever you republish, has a map and timings for every function, and collects RSVPs per function.",
+      },
+      {
+        question: "Can I change the theme and music?",
+        answer:
+          "Yes. Choose Blush Pink, Champagne or Powder Blue in light, or Royal Maroon & Gold, Black & Gold or Emerald & Gold in dark, with foil-gold details throughout. Din Shagna Da plays by default. You can pick Mehndi Laga Ke Rakhna, Gallan Goodiyaan, Kesariya, A Thousand Years, a shehnai and more, or paste any YouTube link.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make an Indian Wedding Website with Every Function",
+      description: "Put your love story, every wedding function, both families, photos and a per-function RSVP on one link.",
+      totalTime: "PT15M",
+      steps: [
+        { name: "Open the Template", text: "Go to Wedding Invitation ✦ Premium on SubhSandesh and press Create." },
+        { name: "Let the AI Draft It", text: "Describe your wedding in a few lines; the AI writes your names, families, story and all five functions." },
+        { name: "Check Every Function", text: "Confirm the date, time, venue, Google Maps link and dress code for Haldi, Mehendi, Sangeet, Wedding and Reception." },
+        { name: "Add Photos, Theme and Song", text: "Add up to 20 photos, size and order them, pick one of six gold themes and keep Din Shagna Da or choose another song." },
+        { name: "Publish and Share", text: "Press Save to preview, Publish, then share the link on WhatsApp and get an email for every RSVP." },
+      ],
+    },
+  },
   // Digital Bouquet ✦ — the premium bouquet builder on the Valentine engine.
   // Searchers want a "digital bouquet" / "virtual bouquet for girlfriend" they
   // can build themselves and send as a link (the digibouquet trend), with

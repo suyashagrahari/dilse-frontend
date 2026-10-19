@@ -21,7 +21,12 @@ export const VALENTINE_WEEK_SLUGS = [
 ] as const;
 
 /** Occasions outside Valentine's week that run on the same engine. */
-export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine", "miss-you-premium", "birthday-premium", "sorry-premium", "proposal-premium", "happy-anniversary", "anniversary-premium", "digital-bouquet", "wedding-invitation"] as const;
+export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine", "miss-you-premium", "birthday-premium", "sorry-premium", "proposal-premium", "happy-anniversary", "anniversary-premium", "digital-bouquet",
+  // The three wedding tiers (Classic $5, ✦ Premium $10, Royal 👑 $20) — the wedding kit (_wedding).
+  "wedding-invitation",
+  "wedding-invitation-premium",
+  "royal-wedding-invitation",
+] as const;
 
 /**
  * The ULTRA-PREMIUM tier ($4): one cinematic twin per base template, on the
@@ -115,6 +120,10 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "digital-bouquet": { name: "Digital Bouquet", emoji: "💐", date: 0, month: "" },
   // Wedding Invitation (Classic, $5): evergreen — the couple's own date lives in extras.date.
   "wedding-invitation": { name: "Wedding Invitation", emoji: "💌", date: 0, month: "" },
+  // Evergreen ✦: a wedding website (story, every function, gallery, RSVP per function).
+  "wedding-invitation-premium": { name: "Wedding Invitation", emoji: "💍", date: 0, month: "" },
+  // Evergreen: every couple picks their own muhurat.
+  "royal-wedding-invitation": { name: "Royal Wedding", emoji: "👑", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

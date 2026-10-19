@@ -75,6 +75,7 @@ import { config as happyAnniversaryCfg } from "@/app/(templates)/happy-anniversa
 import { config as anniversaryPremiumCfg } from "@/app/(templates)/anniversary-premium/config";
 import { config as digitalBouquetCfg } from "@/app/(templates)/digital-bouquet/config";
 import { config as weddingInvitationCfg } from "@/app/(templates)/wedding-invitation/config";
+import { config as weddingPremiumCfg } from "@/app/(templates)/wedding-invitation-premium/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -154,6 +155,11 @@ const allConfigs = [
   //    wax-seal envelope invitation on the wedding kit. Ships hidden on the
   //    apex (server DEFAULT_HIDDEN) until released and priced in the admin. ─
   weddingInvitationCfg,
+  // ── Wedding Invitation ✦ Premium — evergreen (ULTRA_PREMIUM_SLUGS): a wedding
+  //    website with every function, the story, a 20-photo gallery and RSVP per
+  //    function. Ships hidden on the apex (server DEFAULT_HIDDEN) until released
+  //    and priced in the admin. ─────────────────────────────────────────────
+  weddingPremiumCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -288,6 +294,7 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "anniversary-premium",
   "digital-bouquet",
   "wedding-invitation",
+  "wedding-invitation-premium",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

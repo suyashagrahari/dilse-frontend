@@ -49,6 +49,7 @@ const ACCENTS: Record<string, string> = {
   "anniversary-premium": "#B4813A",
   "digital-bouquet": "#AE2F57",
   "wedding-invitation": "#9A7B2F", // antique gold, carries white text
+  "wedding-invitation-premium": "#A8445E",
   "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its
   // accentDeep where that accent is too light to carry white button text).
