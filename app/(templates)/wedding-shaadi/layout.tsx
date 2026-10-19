@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
+import WeddingTiersCrossLink from "@/components/WeddingTiersCrossLink";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
 const SLUG = "wedding-shaadi";
@@ -33,6 +34,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {howTo && <HowToJsonLd howTo={howTo} />}
       {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
       {children}
+      {/* The paid wedding invitation websites (cross-link, below the free editor). */}
+      <WeddingTiersCrossLink variant="shaadi" />
     </>
   );
 }

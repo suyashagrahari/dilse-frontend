@@ -13,7 +13,7 @@ import { MotionConfig } from "framer-motion";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { useAppSelector } from "@/store/hooks";
 import { getDay } from "@/app/(templates)/_valentine/days";
-import { getExperience, teaserArtFor } from "@/app/(templates)/_valentine/experiences";
+import { DayExperience, teaserArtFor } from "@/app/(templates)/_valentine/experiences";
 import { fromDb, parseReactions, type DaySlug, type ReactFn, type ValentineReactions } from "@/app/(templates)/_valentine/types";
 import OwnerBanner from "@/app/(templates)/_valentine/kit/OwnerBanner";
 import { BrandMark } from "@/app/(templates)/_valentine/kit/DayRoot";
@@ -117,7 +117,6 @@ export default function ValentineDayViewer({
   const unlock = useCallback(() => setUnlocked(true), []);
   const react = useReactBeacon(slug, shareId);
   const data = useMemo(() => fromDb(slug, raw, true), [slug, raw]);
-  const Experience = getExperience(slug);
   const open = !hasPassword || unlocked;
 
   useEffect(() => {
@@ -173,7 +172,7 @@ export default function ValentineDayViewer({
       <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions} chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined} track={day.music?.track} compact={!!day.music?.compact} volume={day.music?.volume}>
         <DayShareContext.Provider value={dayShare}>
           <PremiumShareContext.Provider value={day.premium ? shareInfo : null}>
-            <Experience data={data} mode="live" react={react} />
+            <DayExperience slug={slug} data={data} mode="live" react={react} />
           </PremiumShareContext.Provider>
         </DayShareContext.Provider>
       </DayMusicProvider>

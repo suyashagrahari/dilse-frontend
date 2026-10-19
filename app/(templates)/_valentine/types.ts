@@ -204,17 +204,68 @@ export interface DayConfig<E extends Extras = Extras> {
    * the top of the form — e.g. the Digital Bouquet's arranging studio. It edits
    * the extras marked `hidden` (and may touch the letter / photos).
    */
-  studio?: "bouquet" | "wedding-invitation";
+  studio?: StudioId;
   /**
-   * The studio draws the WHOLE form (names, the letter, photos, the day's
-   * fields, music): the plain form then keeps only its "Finishing touches"
-   * (last line + password) and the Save bar. `nav` lists the studio's own
-   * sections for the side nav / progress ring; give each one the id the
-   * studio renders as `<section id="vs-sec-<id>">` ("names", "letter" and
-   * "details" are the ones Save jumps to when something is missing).
+   * The studio IS the form (the wedding tiers). Absent = the plain form with
+   * the studio (if any) on top — every other day, unchanged. See StudioForm.
    */
-  studioForm?: { nav: readonly { id: string; label: string; emoji: string; done?: (mf: ValentineDayData) => boolean | null }[] };
+  studioForm?: StudioForm;
 }
+
+/** The registered studios (editor/studios.tsx STUDIOS). */
+export type StudioId = "bouquet" | "weddingClassic" | "weddingPremium" | "royalWedding";
+
+/** The plain form's own sections (EditSheet), in the order it draws them. */
+export type FormSectionId = "names" | "details" | "letter" | "photos" | "stickers" | "music" | "premium" | "finish";
+
+/** One of the studio's own sections in the side nav / progress ring. */
+export interface StudioNavItem {
+  /** The studio renders it as `<section id="vs-sec-<id>">` (jump + "you are here"). */
+  id: string;
+  label: string;
+  emoji: string;
+  /**
+   * Done (true/false) or optional (null). Absent: a plain section id
+   * ("names", "details", "letter", "photos", "music", "finish") uses the plain
+   * form's own check — those are also the ids Save jumps to when it is missing
+   * something — and any other id counts as optional.
+   */
+  done?: (mf: ValentineDayData) => boolean | null;
+}
+
+/**
+ * DayConfig.studioForm — a studio that draws the whole editor form.
+ *
+ *  - `nav`: the studio's sections for the side nav + progress ring (the kept
+ *    plain sections are appended). Omit it for no nav, ring or "n of m done"
+ *    at all (the studio numbers its own steps).
+ *  - `keep`: plain-form sections still drawn under the studio (default none;
+ *    a studio that keeps no "finish" draws the closing line + password itself,
+ *    through StudioProps.mf / `password`).
+ *  - `numberFrom`: the kept sections are numbered on from this (default
+ *    `nav.length`, else 0).
+ *  - `ownAi`: the studio carries its own "describe it" AI box: Create opens the
+ *    form straight away (no guided StoryStarter), the form's generic AI card is
+ *    hidden and the studio gets the story-fill hook as `ai.fill`.
+ *  - `editAfterPublish`: keep "Edit" in the top bar after publishing (the same
+ *    link then shows the new details).
+ *  - `ownerPanel`: an owner-only panel floated over the editor preview once the
+ *    page is published (editor/studios.tsx OWNER_PANELS).
+ *
+ * A studio-form studio also always receives `owner` ({ pageId, token,
+ * published }) for an in-form owner dashboard (RSVPs…).
+ */
+export interface StudioForm {
+  nav?: readonly StudioNavItem[];
+  keep?: readonly FormSectionId[];
+  numberFrom?: number;
+  ownAi?: boolean;
+  editAfterPublish?: boolean;
+  ownerPanel?: OwnerPanelId;
+}
+
+/** The registered owner panels (editor/studios.tsx OWNER_PANELS). */
+export type OwnerPanelId = "weddingGuests";
 
 export interface DayMusicConfig {
   /**

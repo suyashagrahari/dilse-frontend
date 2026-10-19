@@ -226,14 +226,14 @@ export function useValentineDayEditor(slug: DaySlug) {
   /** Create: the AI questions first when the server has a schema, else the form. */
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : demoData(slug));
-    // A studio that draws the whole form carries its own AI box at the top.
-    if (storySchema && !day.studioForm) {
+    // A studio that is the form with its own AI box (StudioForm.ownAi: the wedding tiers) opens the form straight away.
+    if (storySchema && !day.studioForm?.ownAi) {
       setStoryMode("idle");
       setStoryStarter(true);
       return;
     }
     setEditMode("manual");
-  }, [isPersonalized, content, storySchema, setStoryMode, slug, day.studioForm]);
+  }, [isPersonalized, content, storySchema, setStoryMode, slug, day.studioForm?.ownAi]);
   /** Alias with the share-page-builder name. */
   const handleStartCreate = handleEditClick;
 

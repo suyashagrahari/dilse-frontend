@@ -162,10 +162,8 @@ export const weddingPremiumDay: DayConfig = {
   topBar: true,
   brandMark: "stacked",
   studio: "weddingPremium",
-  studioAi: true,
-  formSections: ["music", "finish"],
-  formStart: 9,
-  ownerPanel: "weddingGuests",
+  // The studio numbers its own 9 steps (no side nav); the sheet keeps Music + Finishing touches as 10 and 11.
+  studioForm: { keep: ["music", "finish"], numberFrom: 9, ownAi: true, ownerPanel: "weddingGuests" },
   music: {
     audioOnly: true,
     compact: true,

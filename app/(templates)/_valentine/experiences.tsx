@@ -33,6 +33,7 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "digital-bouquet": dynamic(() => import("../digital-bouquet/components/DigitalBouquetExperience"), { ssr: false, loading: Loading }),
   "wedding-invitation": dynamic(() => import("../wedding-invitation/components/WeddingInvitationExperience"), { ssr: false, loading: Loading }),
   "wedding-invitation-premium": dynamic(() => import("../wedding-invitation-premium/components/WeddingPremiumExperience"), { ssr: false, loading: Loading }),
+  "royal-wedding-invitation": dynamic(() => import("../royal-wedding-invitation/components/RoyalWeddingExperience"), { ssr: false, loading: Loading }),
   "sorry-premium": dynamic(() => import("../sorry-premium/components/SorryPremiumExperience"), { ssr: false, loading: Loading }),
   // ✦ Premium twins
   "happy-rose-day-premium": dynamic(() => import("../happy-rose-day-premium/components/RoseDayPremiumExperience"), { ssr: false, loading: Loading }),
@@ -48,6 +49,11 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
 
 export function getExperience(slug: DaySlug): ComponentType<ExperienceProps> {
   return EXPERIENCES[slug];
+}
+
+/** The day's Experience, rendered from the static map (callers never pick a component during their own render). */
+export function DayExperience({ slug, ...props }: ExperienceProps & { slug: DaySlug }) {
+  return createElement(EXPERIENCES[slug], props);
 }
 
 // Optional per-day art for <UnlockTeaser> (premium pages before their unlock

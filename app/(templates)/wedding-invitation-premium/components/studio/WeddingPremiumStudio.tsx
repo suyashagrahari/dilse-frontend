@@ -1,7 +1,7 @@
 "use client";
 // ─── Wedding Invitation ✦ Premium — the editor ("studio") ─────────────────────
 //
-// The whole form except music and the finishing touches (DayConfig.formSections):
+// The whole form except music and the finishing touches (DayConfig.studioForm.keep):
 //   ✨ Describe your wedding (inline AI: fills names, date, every function,
 //   the story, families and the message) → the couple → the big day →
 //   functions → photos (masonry editor) → the invitation → our story →
@@ -17,7 +17,6 @@ import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { ValentineDayData } from "../../../_valentine/types";
 import { DEMO_EVENTS, DEMO_FAQS, DEMO_STORY, WP_LIMITS, newEventId, presetFor, weddingPremiumDay } from "../../../_valentine/days/wedding-invitation-premium";
 
-const SLUG = "wedding-invitation-premium";
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (typeof v === "string" ? v : "");
 const rowsOf = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);
@@ -152,7 +151,8 @@ export function tidyAfterFill(mf: ValentineDayData): ValentineDayData {
 }
 
 // ── The studio ───────────────────────────────────────────────────────────────
-export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, fill }: StudioProps) {
+export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, ai }: StudioProps) {
+  const fill = ai?.fill;
   const x = mf.extras as Row;
   const events = rowsOf(x.events);
   const story = rowsOf(x.story);

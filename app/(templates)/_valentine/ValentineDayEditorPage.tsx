@@ -8,7 +8,7 @@
 // AI questions (StoryStarter, mounted after EditSheet), then the form.
 // When the recipient has reacted, the owner sees a small "Seen ✓ / Said YES" chip.
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import { useAppSelector } from "@/store/hooks";
@@ -16,9 +16,10 @@ import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
 import PremiumTopBar from "./kit/premium/PremiumTopBar";
 import EditSheet from "./EditSheet";
+import { DayOwnerPanel } from "./editor/studios";
 import { DayMusicProvider, chipThemeFrom } from "./music/DayMusic";
 import { getDay } from "./days";
-import { getExperience } from "./experiences";
+import { DayExperience } from "./experiences";
 import { FONTS } from "./theme";
 import type { DaySlug, ValentineReactions } from "./types";
 import { useValentineDayEditor } from "./useValentineDayEditor";
@@ -66,12 +67,12 @@ function ReactionsChip({ r, asks, yes = "Said YES 💍" }: { r: ValentineReactio
 
 function Inner({ slug }: { slug: DaySlug }) {
   const e = useValentineDayEditor(slug);
-  const accessToken = useAppSelector((s) => s.auth.accessToken);
-  // A studio-form day (the wedding invitation) keeps "Edit" after publishing:
-  // the same link shows the new details, and the owner's RSVP panel lives in the form.
   const day = e.day;
-  const editAfterPublish = !!day.studioForm;
-  const Experience = getExperience(slug);
+  // A studio-form day (the wedding tiers, DayConfig.studioForm) gets the owner's
+  // token for its RSVP dashboard; with editAfterPublish it keeps "Edit" once published.
+  const sf = day.studioForm;
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
+  const canEdit = e.isPersonalized && (!e.showShare || !!sf?.editAfterPublish);
 
   const topAction = e.showShare
     ? { label: e.shareLabel, onClick: e.handleShare }
@@ -79,7 +80,8 @@ function Inner({ slug }: { slug: DaySlug }) {
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish }
       : { label: "Create", onClick: e.handleEditClick };
 
-  const setEditMode = useCallback((m: Parameters<typeof e.setEditMode>[0]) => e.setEditMode(m), [e]);
+  // A useState setter: already stable.
+  const setEditMode = e.setEditMode;
   // Premium days, and $2 days that opt in (DayConfig.topBar), get the top-right bar.
   const topBar = !!day.premium || !!day.topBar;
 
@@ -107,7 +109,9 @@ function Inner({ slug }: { slug: DaySlug }) {
         track={day.music?.track}
         compact={!!day.music?.compact} volume={day.music?.volume}
       >
-      <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
+      <DayExperience key={e.previewVersion} slug={slug} data={e.displayData} mode="preview" react={noopReact} />
+
+      {sf?.ownerPanel && e.pageId && e.shareUrl && e.editMode !== "manual" && <DayOwnerPanel day={day} pageId={e.pageId} />}
 
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
 
@@ -118,7 +122,7 @@ function Inner({ slug }: { slug: DaySlug }) {
           accentInk={day.theme.accentInk}
           font={FONTS.ui}
           onBack={e.goBack}
-          secondary={[e.isPersonalized && (!e.showShare || editAfterPublish) && { label: "Edit", onClick: e.handleEditFromPreview }]}
+          secondary={[canEdit && { label: "Edit", onClick: e.handleEditFromPreview }]}
           primary={{ ...topAction, disabled: e.publishing }}
         />
       ) : (
@@ -128,7 +132,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         accentInk={day.theme.accentInk}
         font={FONTS.ui}
         onBack={e.goBack}
-        secondary={[e.isPersonalized && (!e.showShare || editAfterPublish) && { label: "Edit", onClick: e.handleEditFromPreview }]}
+        secondary={[canEdit && { label: "Edit", onClick: e.handleEditFromPreview }]}
         primary={{ ...topAction, disabled: e.publishing }}
       />
       )}
@@ -145,8 +149,8 @@ function Inner({ slug }: { slug: DaySlug }) {
         onSave={e.handleSave}
         onDiscard={e.discardEdits}
         saving={e.saving}
-        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm, fill: day.studioForm ? e.fill : undefined }}
-        owner={day.studioForm ? { pageId: e.pageId, token: accessToken ?? null, published: !!e.shareUrl } : undefined}
+        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm, fill: sf?.ownAi ? e.fill : undefined }}
+        owner={sf ? { pageId: e.pageId, token: accessToken ?? null, published: !!e.shareUrl } : undefined}
       />
       </DayMusicProvider>
 

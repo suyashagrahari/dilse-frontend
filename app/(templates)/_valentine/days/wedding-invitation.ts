@@ -139,8 +139,12 @@ export const weddingInvitationDay: DayConfig<WiExtras> = {
   gifSlots: [],
   topBar: true,
   brandMark: "stacked",
-  studio: "wedding-invitation",
+  studio: "weddingClassic",
+  // The studio is the whole form; the sheet keeps only "Finishing touches" (last line + password).
   studioForm: {
+    keep: ["finish"],
+    ownAi: true,
+    editAfterPublish: true,
     nav: [
       { id: "names", label: "The couple", emoji: "💍" },
       { id: "details", label: "Date & functions", emoji: "📅" },

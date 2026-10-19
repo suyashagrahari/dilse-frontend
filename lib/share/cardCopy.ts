@@ -80,6 +80,7 @@ const COPY: Record<string, CardCopy> = {
   "digital-bouquet": { kicker: "✦ Special delivery", headline: "A Bouquet for You", line: "Hand-picked, one stem at a time 💐" },
   "wedding-invitation": { kicker: "Together with their families", headline: "You're Invited", line: "Tap the seal to open our wedding invitation 💌" },
   "wedding-invitation-premium": { kicker: "✦ Shubh Vivah", headline: "Our Wedding Celebrations", line: "Haldi to Reception, and we'd love you at every one 🌸" },
+  "royal-wedding-invitation": { kicker: "✦ Shubh Vivah", headline: "A Royal Invitation", line: "The palace gates are open. Step inside 👑" },
   "happy-diwali": { kicker: "Happy Diwali", headline: "A Diya at Your Door", line: "Light it 🪔" },
   "happy-rose-day-premium": { kicker: "✦ Rose Day", headline: "The Rose Garden", line: "Tear open your seed packet" },
   "happy-propose-day-premium": { kicker: "✦ Propose Day", headline: "The Little Proposal", line: "Knock knock 💍" },
