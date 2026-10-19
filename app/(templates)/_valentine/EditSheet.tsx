@@ -27,6 +27,7 @@ import MusicPicker, { MUSIC_CSS } from "./editor/MusicPicker";
 import VoiceNoteRecorder, { VOICE_CSS } from "./editor/VoiceNoteRecorder";
 import ChorusPicker, { CHORUS_CSS } from "./editor/ChorusPicker";
 import { DayStudio } from "./editor/studios";
+import type { UseStoryFillResult } from "@/hooks/useStoryFill";
 import { coercePremium, formatUnlock, PREMIUM_LIMITS, type PremiumFields } from "./premiumData";
 import { premiumTwinOf } from "./days/slugs";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
@@ -502,7 +503,7 @@ export interface EditSheetProps {
   onDiscard: () => void;
   saving: boolean;
   /** The "✨ Write it for me" card (hidden when the template has no AI schema). */
-  ai?: { available: boolean; onOpen: () => void };
+  ai?: { available: boolean; onOpen: () => void; fill?: UseStoryFillResult };
 }
 
 export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, updateExtra, pagePassword, setPagePassword, onSave, onDiscard, saving, ai }: EditSheetProps) {
@@ -606,7 +607,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
   const counted = (Object.values(status).filter((v) => v !== null) as boolean[]);
   const doneCount = counted.filter(Boolean).length;
 
-  const sections: { id: SectionId; label: string; emoji: string }[] = [
+  const sections: { id: SectionId; label: string; emoji: string }[] = day.studioForm ? [...day.studioForm.sections] : [
     { id: "names", label: "Names", emoji: "💞" },
     { id: "details", label: c.extrasTitle, emoji: day.emoji },
     { id: "letter", label: "Letter", emoji: "✉️" },
@@ -688,7 +689,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
               </nav>
 
               <div className="vs-body" ref={bodyRef}>
-                {ai?.available && (
+                {ai?.available && !day.studioForm && (
                   <div className="vs-ai">
                     <span className="vs-aiGlow" aria-hidden />
                     <div className="vs-aiTx">
@@ -705,7 +706,10 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                 {!day.premium && !day.studio && <PremiumUpsell slug={day.slug} />}
 
                 {/* The day's own hands-on editor (the bouquet studio…) comes first: it is the heart of the page. */}
-                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} />}
+                {day.studio && <DayStudio day={day} mf={mf} updateMf={updateMf} updateExtra={updateExtra} ai={ai} password={{ value: pagePassword, set: setPagePassword }} />}
+
+                {/* A studio that replaces the form (the wedding invitations) draws every section itself. */}
+                {!day.studioForm && (<>
 
                 <section className="vs-sec" id="vs-sec-names" aria-labelledby="vs-h-names">
                   <SecHead n={1} done={status.names} title={<span id="vs-h-names">Names</span>} sub="Who it's for, and who it's from." />
@@ -814,6 +818,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                     <input id="vs-pw" className="vs-input" value={pagePassword} maxLength={128} placeholder="e.g. the name of your first date spot" onChange={(e) => setPagePassword(e.target.value)} autoComplete="off" />
                   </Field>
                 </section>
+                </>)}
                 <p className="vs-end" aria-hidden>{day.emoji} That&apos;s everything. Save to watch it once yourself.</p>
               </div>
             </div>

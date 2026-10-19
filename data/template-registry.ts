@@ -74,6 +74,7 @@ import { config as proposalPremiumCfg } from "@/app/(templates)/proposal-premium
 import { config as happyAnniversaryCfg } from "@/app/(templates)/happy-anniversary/config";
 import { config as anniversaryPremiumCfg } from "@/app/(templates)/anniversary-premium/config";
 import { config as digitalBouquetCfg } from "@/app/(templates)/digital-bouquet/config";
+import { config as royalWeddingCfg } from "@/app/(templates)/royal-wedding-invitation/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -149,6 +150,10 @@ const allConfigs = [
   //    a bouquet in the studio. Ships hidden on the apex (server
   //    DEFAULT_HIDDEN) until released and priced in the admin. ─────────────
   digitalBouquetCfg,
+  // ── Royal Wedding Invitation 👑 — the $20 wedding tier (ULTRA_PREMIUM_SLUGS):
+  //    palace gates, 8 functions, 40 photos, RSVP per function, blessings wall.
+  //    Ships hidden on the apex (server DEFAULT_HIDDEN) until released and priced. ─
+  royalWeddingCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -282,6 +287,7 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "happy-anniversary",
   "anniversary-premium",
   "digital-bouquet",
+  "royal-wedding-invitation",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

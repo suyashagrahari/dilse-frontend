@@ -21,7 +21,10 @@ export const VALENTINE_WEEK_SLUGS = [
 ] as const;
 
 /** Occasions outside Valentine's week that run on the same engine. */
-export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine", "miss-you-premium", "birthday-premium", "sorry-premium", "proposal-premium", "happy-anniversary", "anniversary-premium", "digital-bouquet"] as const;
+export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwali", "sorry", "happy-birthday", "miss-you", "will-you-be-mine", "miss-you-premium", "birthday-premium", "sorry-premium", "proposal-premium", "happy-anniversary", "anniversary-premium", "digital-bouquet",
+  // Royal Wedding Invitation 👑 ($20 wedding tier)
+  "royal-wedding-invitation",
+] as const;
 
 /**
  * The ULTRA-PREMIUM tier ($4): one cinematic twin per base template, on the
@@ -113,6 +116,8 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "anniversary-premium": { name: "Anniversary", emoji: "💞", date: 0, month: "" },
   // Evergreen ✦: flowers are for any day.
   "digital-bouquet": { name: "Digital Bouquet", emoji: "💐", date: 0, month: "" },
+  // Evergreen: every couple picks their own muhurat.
+  "royal-wedding-invitation": { name: "Royal Wedding", emoji: "👑", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

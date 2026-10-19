@@ -204,7 +204,14 @@ export interface DayConfig<E extends Extras = Extras> {
    * the top of the form — e.g. the Digital Bouquet's arranging studio. It edits
    * the extras marked `hidden` (and may touch the letter / photos).
    */
-  studio?: "bouquet";
+  studio?: "bouquet" | "royalWedding";
+  /**
+   * The studio IS the whole form (the wedding invitations): the plain
+   * sections (names, letter, photos, stickers, music, finish) and the AI card
+   * are not drawn; the studio renders its own, with these ids/labels in the
+   * side nav (each studio section carries id="vs-sec-<id>").
+   */
+  studioForm?: { sections: readonly { id: "names" | "details" | "letter" | "photos" | "music" | "finish"; label: string; emoji: string }[] };
 }
 
 export interface DayMusicConfig {

@@ -140,7 +140,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         onSave={e.handleSave}
         onDiscard={e.discardEdits}
         saving={e.saving}
-        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm }}
+        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm, fill: e.fill }}
       />
       </DayMusicProvider>
 

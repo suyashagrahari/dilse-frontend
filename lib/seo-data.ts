@@ -1119,6 +1119,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       { question: "How many guests can view the digital wedding invitation?", answer: "Unlimited! There's no guest limit — share the link with as many people as you want." },
       { question: "Can I add venue details and map to the wedding invitation?", answer: "Yes! Add the venue address, timing, and a map link so guests can easily find the location." },
       { question: "Is the digital wedding invitation in Hindi?", answer: "The platform is in English, but you can write your invitation content in Hindi or any Indian language in the personalized message sections." },
+      { question: "Is there a wedding website with RSVP for every function?", answer: "Yes. Wedding Invitation ✦ Premium (/wedding-invitation-premium) puts Haldi, Mehendi, Sangeet, Wedding and Reception on one link with an RSVP for each, and the Royal Wedding Invitation (/royal-wedding-invitation) adds palace gates, up to eight functions and a blessings wall." },
     ],
 
     howTo: {
@@ -1313,6 +1314,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       { question: "Can I share the shaadi card directly on WhatsApp?", answer: "Yes! Copy the unique link and share via WhatsApp, Instagram, or email — the animated card opens beautifully on any device." },
       { question: "Is the shaadi card suitable for all Indian wedding communities?", answer: "Yes! The shaadi card design is elegant and universal, suitable for Hindu, Muslim, Sikh, and all Indian wedding celebrations." },
       { question: "What does the animated shaadi card look like?", answer: "It's a beautiful animated portrait wedding invitation with couple illustration, falling petals, elegant typography, and all wedding details." },
+      { question: "Can my shaadi card collect RSVPs and show maps for every function?", answer: "The Wedding Invitation templates do: each function gets its own map, timings and calendar button, and guests RSVP in one tap. Choose Wedding Invitation ✦ Premium (/wedding-invitation-premium) for all five functions, or the Royal Wedding Invitation (/royal-wedding-invitation) for palace gates, up to eight functions and a blessings wall." },
     ],
 
     howTo: {
@@ -3528,6 +3530,98 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
         { name: "Wrap It", text: "Pick the greenery, the wrapping paper, the ribbon and bow, a few charms and the words on the gift tag." },
         { name: "Write the Card", text: "Write your card, add up to six photos and pick a song." },
         { name: "Publish and Send", text: "Save to preview, Publish, then send the private link and wait for their reaction." },
+      ],
+    },
+  },
+  // Royal Wedding Invitation 👑 ($20 wedding tier). The free /wedding-shaadi and
+  // /shaadi-card keep "free / online shaadi card"; this owns royal / luxury / website terms.
+  "royal-wedding-invitation": {
+    title: "Royal Wedding Invitation Website — Palace Gates, Every Function & a Blessings Wall",
+    description:
+      "A cinematic royal wedding invitation: palace gates open to shehnai, your monogram stamps in gold foil, and your guests walk through your story, up to eight functions with dress-code colours, 40 photos, a Hindi and English invitation, a blessings wall and a diya-lantern finale. All on one private link.",
+    category: "Wedding",
+    emoji: "👑",
+
+    keywords: [
+      // ── PRIMARY ──
+      "royal wedding invitation",
+      "royal wedding invitation website",
+      "royal indian wedding invitation online",
+      "luxury wedding invitation website",
+      "luxury wedding invitation online",
+      "royal wedding e invite",
+      "palace wedding invitation",
+      "rajasthani royal wedding invitation",
+      "maharaja style wedding invitation",
+      // ── THE PAGE ──
+      "royal wedding invitation with music",
+      "cinematic wedding invitation",
+      "gold foil wedding invitation online",
+      "guest blessings wall wedding website",
+      "wedding invitation with dress code colours",
+      "hindi english wedding invitation",
+      "vivah nimantran patra online",
+      "shubh vivah invitation",
+      // ── ALTERNATIVE TO ──
+      "royal wedding invitation video alternative",
+      "luxury wedding invitation instead of box invite",
+      "designer wedding e invite",
+      // ── WHO ──
+      "destination wedding invitation udaipur",
+      "jaipur palace wedding invitation",
+      "nri wedding invitation website",
+      "grand indian wedding invitation",
+      "royal theme wedding invitation ideas",
+    ],
+
+    faqs: [
+      {
+        question: "What is a royal wedding invitation website?",
+        answer:
+          "It is an invitation that opens like an entrance to a palace. On SubhSandesh, the Royal Wedding Invitation starts with palace gates swinging open to shehnai, stamps your monogram in gold foil, then takes guests through your love story, every function, your families, your photo gallery and a blessings wall, ending with diya lanterns rising over the palace. It is sent as one private link and opens on any phone.",
+      },
+      {
+        question: "How do I make a royal wedding invitation online?",
+        answer:
+          "Open the Royal Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, story, up to eight functions with dress codes, and an invitation in English and Hindi. Add up to 40 photos, choose a theme such as Royal Maroon & Gold, press Save to preview, Publish and send the link.",
+      },
+      {
+        question: "Which functions can I include?",
+        answer:
+          "Up to eight, for example Roka, Haldi, Mehendi, Sangeet, Baraat, Wedding (Pheras), Cocktail and Reception. Each has its own date, time, venue, Google Maps link, dress-code colour swatch and add-to-calendar button. Guests RSVP to each function separately.",
+      },
+      {
+        question: "What is the blessings wall?",
+        answer:
+          "A page where guests leave a one-line blessing or wish for the couple. Every blessing is emailed to you, so you have them all in one place to keep after the wedding.",
+      },
+      {
+        question: "Can the invitation be in Hindi and English together?",
+        answer:
+          "Yes. The royal invitation shows your message in English and Hindi side by side in a proper Devanagari font, and the AI can write the Hindi version for you. Section titles such as Shubh Vivah, Hamari Kahani and Aashirvaad are bilingual too.",
+      },
+      {
+        question: "Is it better than a royal wedding invitation video?",
+        answer:
+          "It does what the video does, with gates, gold, music and your photos, and adds what a video can't: an RSVP for each function, a map and calendar for every venue, a blessings wall, and changes after sending, because the same link always shows your latest version. It also costs far less than a designer video invite.",
+      },
+      {
+        question: "Will it run smoothly on older phones?",
+        answer:
+          "Yes. The animation uses only GPU-friendly effects, photos load progressively as guests scroll, and phones set to reduce motion get a calm fade-through version. It works on Android and iPhone in WhatsApp's built-in browser, with no app.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Royal Wedding Invitation Website",
+      description: "Create a cinematic royal palace wedding invitation with every function, a bilingual message and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Royal Invitation", text: "Go to the Royal Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, story, functions, dress codes and a Hindi and English invitation." },
+        { name: "Arrange Your Functions", text: "Keep or add up to eight functions and confirm each date, time, venue, map link and dress-code colour." },
+        { name: "Build the Gallery", text: "Add up to 40 photos, choose each one's size and focal point, and drag them into order." },
+        { name: "Choose a Theme, Publish and Send", text: "Pick Royal Maroon & Gold or another theme, keep the shehnai or choose a song, preview, Publish and send the link." },
       ],
     },
   },
