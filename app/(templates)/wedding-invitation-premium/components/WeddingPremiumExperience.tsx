@@ -163,6 +163,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
   const [sealed, setSealed] = useState(true);
   const [shown, setShown] = useState(false);
   const [go, setGo] = useState(false);
+  const [restOn, setRestOn] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const storyRef = useRef<HTMLElement>(null);
@@ -171,7 +172,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
   const url = useSyncExternalStore(noopSub, pageUrl, () => "");
 
   useStoryLine(storyRef, reduce || sealed);
-  useIoReveal(rootRef, reduce, shown ? m : null);
+  useIoReveal(rootRef, reduce, restOn ? m : null);
 
   // The floating RSVP pill: after the hero, until the RSVP is on screen.
   useEffect(() => {
@@ -203,6 +204,19 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
     Promise.race([decoded, new Promise((r) => window.setTimeout(r, 600))]).then(() => setGo(true));
   }, []);
   const onGone = useCallback(() => setSealed(false), []);
+
+  useEffect(() => {
+    if (sealed || restOn) return;
+    const on = () => setRestOn(true);
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const t = window.setTimeout(() => (w.requestIdleCallback ? w.requestIdleCallback(on, { timeout: 1200 }) : on()), reduce ? 0 : 1600);
+    const ev = ["wheel", "touchstart", "keydown"] as const;
+    ev.forEach((e) => window.addEventListener(e, on, { passive: true, once: true }));
+    return () => {
+      window.clearTimeout(t);
+      ev.forEach((e) => window.removeEventListener(e, on));
+    };
+  }, [sealed, restOn, reduce]);
   const onSeenEnd = useCallback(() => react("completed"), [react]);
 
   const main = mainEventOf(m.events);
@@ -286,7 +300,12 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
       <main ref={rootRef} className={`wp-page${shown ? " is-open" : " is-sealed"}`} aria-hidden={sealed || undefined}>
         <Hero m={m} heroRef={heroRef} go={go} reduce={reduce} />
 
-        {rest}
+        {/* Below the hero stays display:none until the envelope has gone, so its
+            lazy photos (≈ 900 KB of demo photos) never compete with the opening;
+            it lays out once the hero's intro has settled, or on the first scroll. */}
+        <div className="wp-rest" hidden={!restOn}>
+          {rest}
+        </div>
       </main>
 
       <a className={`wp-pill${pill ? " is-on" : ""}`} href="#wp-rsvp" aria-hidden={!pill} tabIndex={pill ? 0 : -1}>
