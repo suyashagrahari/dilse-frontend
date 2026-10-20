@@ -255,6 +255,8 @@ export const ENVELOPE_CSS = /* css */ `
 .wi-env-sprig { position: absolute; z-index: 0; pointer-events: none; }
 .wi-env-sprig-a { width: 52%; left: -16%; top: -17%; transform: rotate(-150deg) scaleY(-1); }
 .wi-env-sprig-b { width: 38%; right: -11%; bottom: -13%; transform: rotate(32deg) scaleY(-1); }
+[data-wk-theme=noir] .wi-env-sprig-a { width: 30%; left: -8%; top: -12%; }
+[data-wk-theme=noir] .wi-env-sprig-b { width: 22%; right: -6%; bottom: -9%; }
 .wi-env-back { position: absolute; inset: 0; z-index: 1; border-radius: 6px; background: var(--env-inside); overflow: hidden;
   box-shadow: 0 34px 60px -30px rgba(30, 14, 8, .6), 0 10px 20px -12px rgba(30, 14, 8, .35); }
 .wi-env-back::after, .wi-env-liner::after { content: ""; position: absolute; inset: 0; background: var(--env-line); opacity: .32;
