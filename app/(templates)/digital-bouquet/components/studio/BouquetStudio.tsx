@@ -51,7 +51,7 @@ import { haptic } from "../../../_valentine/kit/haptic";
 import { themeVars } from "../../../_valentine/theme";
 import { VW_FONT_VARS } from "../../../_valentine/fonts";
 import type { LovePhoto } from "../../../_valentine/types";
-import { ArtImg, Bouquet, BOUQUET_CSS, FlowerFace, type BouquetLook } from "../db/Bouquet";
+import { ArtImg, Bouquet, BOUQUET_CSS, FlowerFace, dragStemDom, endStemDrag, type BouquetLook } from "../db/Bouquet";
 import { CHARM_ART, GREEN_ART, RIBBON_FILE, FRAME, UNIT, hitSize, STEM_ART } from "../db/assets";
 import { DB_FONT_VARS, DB_HAND, DB_SANS, DB_SCRIPT, DB_SERIF, cardFontPx, handFace } from "../db/fonts";
 import { wrapSrc } from "../db/wraps";
@@ -143,6 +143,11 @@ interface Gesture {
   a0: number;
   moved: boolean;
   kind: "move" | "pinch" | "handle";
+  /** Where the stem is right now (painted straight to the DOM, committed on release). */
+  cur: DbStem | null;
+  /** The bouquet's box, read once when the gesture starts (no layout reads per move). */
+  rect: DOMRect;
+  raf: number;
 }
 
 function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioProps & { onClose: () => void }) {
@@ -154,27 +159,28 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
   const [sel, setSel] = useState<number | null>(null);
   const [info, setInfo] = useState<FlowerId | null>(null);
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
-  const [live, setLiveState] = useState<DbStem[] | null>(null); // the stems mid-gesture
-  const liveRef = useRef<DbStem[] | null>(null);
-  const setLive = useCallback((v: DbStem[] | null) => {
-    liveRef.current = v;
-    setLiveState(v);
-  }, []);
-  const [ghost, setGhost] = useState<{ flower: FlowerId; x: number; y: number; over: boolean } | null>(null);
+  // The shelf drag: only WHICH flower is React state; its position is painted by ref.
+  const [ghost, setGhost] = useState<FlowerId | null>(null);
+  const ghostRef = useRef<HTMLSpanElement>(null);
+  const handleRef = useRef<HTMLSpanElement>(null);
   const history = useRef<Snap[]>([]);
   const [canUndo, setCanUndo] = useState(false);
   const bqRef = useRef<HTMLDivElement>(null);
   const gest = useRef<Gesture | null>(null);
-  const stems = live ?? bq.stems;
+  const stems = bq.stems;
   const full = bq.stems.length >= STEM_LIMITS.max;
 
   // Lock the page under the studio; Escape closes it.
+  // Everything under the studio stops painting too (the page's petals, the
+  // form's own mini bouquet): the studio is full-screen, so it is all hidden.
   useEffect(() => {
     const b = document.body;
     const prev = b.style.overflow;
     b.style.overflow = "hidden";
+    document.documentElement.classList.add("dbs-open");
     return () => {
       b.style.overflow = prev;
+      document.documentElement.classList.remove("dbs-open");
     };
   }, []);
 
@@ -238,6 +244,27 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
     return { x: ((cx - r.left) / r.width) * 1000, y: (((cy - r.top) / r.height) * FRAME.h) / UNIT, inside: cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom, w: r.width };
   };
 
+  const bqEl = () => bqRef.current?.querySelector<HTMLElement>("[data-dbq]") ?? null;
+
+  /** Paint the gesture's current stem on the next frame (one DOM write per frame, however fast the pointer). */
+  const paint = (g: Gesture) => {
+    if (g.raf) return;
+    g.raf = requestAnimationFrame(() => {
+      g.raf = 0;
+      const root = bqEl();
+      if (!root || !g.cur) return;
+      const from = bq.stems[g.i];
+      if (!from) return;
+      dragStemDom(root, g.i, from, g.cur, g.rect.width / FRAME.w);
+      const hd = handleRef.current;
+      if (hd) {
+        const r = hitSize(STEM_ART[g.cur.flower], g.cur.scale / 100) / 2;
+        hd.style.left = `${((g.cur.x * UNIT + r * 0.74) / FRAME.w) * 100}%`;
+        hd.style.top = `${((g.cur.y * UNIT - r * 0.74) / FRAME.h) * 100}%`;
+      }
+    });
+  };
+
   const startGesture = (i: number, e: ReactPointerEvent<HTMLElement>, kind: Gesture["kind"] = "move") => {
     e.preventDefault();
     e.stopPropagation();
@@ -248,11 +275,13 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
       const [a, b] = [...g.pointers.values()];
       g.d0 = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       g.a0 = Math.atan2(b.y - a.y, b.x - a.x);
-      g.start = { ...(liveRef.current ?? bq.stems)[i] };
+      g.start = { ...(g.cur ?? bq.stems[i]) };
       g.kind = "pinch";
       return;
     }
-    gest.current = { i, pointers: new Map([[e.pointerId, { x: e.clientX, y: e.clientY }]]), start: { ...bq.stems[i] }, ox: e.clientX, oy: e.clientY, d0: 1, a0: 0, moved: false, kind };
+    const rect = bqEl()?.getBoundingClientRect();
+    if (!rect) return;
+    gest.current = { i, pointers: new Map([[e.pointerId, { x: e.clientX, y: e.clientY }]]), start: { ...bq.stems[i] }, ox: e.clientX, oy: e.clientY, d0: 1, a0: 0, moved: false, kind, cur: null, rect, raf: 0 };
     if (kind === "handle") {
       const head = bqRef.current?.querySelector<HTMLElement>(`[data-dbq-head="${i}"]`)?.getBoundingClientRect();
       if (head) {
@@ -263,8 +292,8 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
         gest.current.oy = c.y;
       }
     }
-    setSel(i);
-    setInfo(bq.stems[i].flower);
+    if (sel !== i) setSel(i);
+    if (info !== bq.stems[i].flower) setInfo(bq.stems[i].flower);
   };
 
   useEffect(() => {
@@ -272,10 +301,7 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
       const g = gest.current;
       if (!g || !g.pointers.has(e.pointerId)) return;
       g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      const r = bqRef.current?.querySelector<HTMLElement>("[data-dbq]")?.getBoundingClientRect();
-      if (!r) return;
-      const k = 1000 / r.width;
-      const base = bq.stems;
+      const k = 1000 / g.rect.width;
       let s: DbStem = g.start;
       if (g.kind === "pinch" && g.pointers.size >= 2) {
         const [a, b] = [...g.pointers.values()];
@@ -304,7 +330,8 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
         const p = snapToArea(g.start.x + dx, g.start.y + dy);
         s = { ...g.start, ...p };
       }
-      setLive(base.map((x, j) => (j === g.i ? s : x)));
+      g.cur = s;
+      paint(g);
     };
     const up = (e: PointerEvent) => {
       const g = gest.current;
@@ -316,20 +343,24 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
         g.kind = "move";
         g.ox = p.x;
         g.oy = p.y;
-        if (liveRef.current) g.start = { ...liveRef.current[g.i] };
+        if (g.cur) g.start = { ...g.cur };
         return;
       }
       gest.current = null;
-      const cur = liveRef.current;
-      setLive(null);
-      if (cur && g.moved) {
+      if (g.raf) cancelAnimationFrame(g.raf);
+      const cur = g.cur;
+      const from = bq.stems[g.i];
+      const root = bqEl();
+      if (root && from) endStemDrag(root, g.i, from);
+      if (cur && g.moved && from) {
         history.current.push({ stems: bq.stems.map((x) => ({ ...x })), greenery: bq.greenery, wrap: bq.wrap, ribbon: bq.ribbon, bow: bq.bow, charms: [...bq.charms] });
         setCanUndo(true);
-        updateExtra("stems", cur);
+        // Same event, same frame: React paints the committed stem before the browser shows the reset.
+        updateExtra("stems", bq.stems.map((x, j) => (j === g.i ? cur : x)));
         haptic(6);
       }
     };
-    window.addEventListener("pointermove", move);
+    window.addEventListener("pointermove", move, { passive: true });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     return () => {
@@ -337,7 +368,8 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
     };
-  }, [bq, updateExtra, setLive]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bq, updateExtra]);
 
   // ── Selected-stem tools ──────────────────────────────────────────────────────
   const patchSel = (p: Partial<DbStem>) => {
@@ -397,16 +429,37 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
     const oy = e.clientY;
     const pid = e.pointerId;
     let dragging = false;
+    let over = false;
+    let raf = 0;
+    let at = { x: 0, y: 0 };
+    // Read the bouquet's box once; the ghost moves by transform on the next frame.
+    let box: DOMRect | null = null;
+    const inBox = (x: number, y: number) => !!box && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
     const mv = (ev: PointerEvent) => {
       if (ev.pointerId !== pid) return;
       const dx = ev.clientX - ox;
       const dy = ev.clientY - oy;
       // A mostly-vertical pull (or any mouse drag) lifts the flower off the shelf; sideways is the shelf scrolling.
-      if (!dragging && (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * 1.1 || (ev.pointerType === "mouse" && Math.hypot(dx, dy) > 8))) dragging = true;
+      if (!dragging && (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * 1.1 || (ev.pointerType === "mouse" && Math.hypot(dx, dy) > 8))) {
+        dragging = true;
+        box = bqEl()?.getBoundingClientRect() ?? null;
+        setGhost(flower);
+      }
       if (!dragging) return;
       ev.preventDefault();
-      const u = toUnits(ev.clientX, ev.clientY);
-      setGhost({ flower, x: ev.clientX, y: ev.clientY, over: !!u?.inside });
+      at = { x: ev.clientX, y: ev.clientY };
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          const el = ghostRef.current;
+          if (!el) return;
+          const o = inBox(at.x, at.y);
+          el.style.transform = `translate3d(${at.x}px, ${at.y}px, 0)`;
+          if (o !== over) {
+            over = o;
+            el.classList.toggle("is-over", o);
+          }
+        });
     };
     const done = (ev: PointerEvent) => {
       if (ev.pointerId !== pid) return;
@@ -414,6 +467,7 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
       window.removeEventListener("pointerup", done);
       window.removeEventListener("pointercancel", done);
       if (!dragging) return;
+      if (raf) cancelAnimationFrame(raf);
       setGhost(null);
       const u = toUnits(ev.clientX, ev.clientY);
       if (u?.inside && ev.type === "pointerup") add(flower, { x: u.x, y: u.y });
@@ -435,7 +489,11 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
 
   const infoFlower = info ? FLOWER_BY_ID[info] : null;
   const stemCount = bq.stems.length;
-  const look = { ...lookOf(bq), stems };
+  const look = useMemo(() => lookOf(bq), [bq]);
+  const onHeadDown = useRef<(i: number, e: ReactPointerEvent<HTMLElement>) => void>(() => {});
+  onHeadDown.current = (i, e) => startGesture(i, e);
+  const headDown = useCallback((i: number, e: ReactPointerEvent<HTMLElement>) => onHeadDown.current(i, e), []);
+  const headLabel = useCallback((i: number) => `${FLOWER_BY_ID[bq.stems[i]?.flower ?? "rose-red"].name}, stem ${i + 1}. Drag to move; arrow keys move, plus and minus resize, brackets tilt, Delete removes.`, [bq.stems]);
   const style: CSSProperties = {
     ...themeVars(t),
     ["--db-hand" as string]: DB_HAND,
@@ -472,14 +530,15 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
             <Bouquet
               look={look}
               palette={palette}
-              sway={!live}
+              sway={false}
               selected={sel}
-              onHeadPointerDown={(i, e) => startGesture(i, e)}
-              headLabel={(i) => `${FLOWER_BY_ID[stems[i].flower].name}, stem ${i + 1}. Drag to move; arrow keys move, plus and minus resize, brackets tilt, Delete removes.`}
+              onHeadPointerDown={headDown}
+              headLabel={headLabel}
             />
             {selStem && (
               <span
                 className="dbs-handle"
+                ref={handleRef}
                 data-dbs-handle
                 role="slider"
                 aria-label="Resize and tilt"
@@ -782,8 +841,10 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
         </p>
       )}
       {ghost && (
-        <span className={`dbs-ghost${ghost.over ? " is-over" : ""}`} style={{ left: ghost.x, top: ghost.y }} aria-hidden>
-          <FlowerFace id={ghost.flower} />
+        <span className="dbs-ghost" ref={ghostRef} style={{ transform: "translate3d(-200px, -200px, 0)" }} aria-hidden>
+          <span className="dbs-ghostIn">
+            <FlowerFace id={ghost} />
+          </span>
         </span>
       )}
     </div>
@@ -941,6 +1002,9 @@ const LAUNCH_CSS = `
 `;
 
 const STUDIO_CSS = `
+html.dbs-open body > *:not([data-dbs]) { visibility: hidden; }
+/* The studio is for placing things: the bouquet holds still (charms and the tag too). */
+.dbs-stage .dbq-tag, .dbs-stage .dbq-charm { animation: none; }
 .dbs-root { position: fixed; inset: 0; z-index: 240; display: flex; flex-direction: column; background: var(--dbs-bg); color: var(--vw-ink); font-family: ${DB_SANS}; outline: none;
   animation: dbs-in .32s cubic-bezier(.2,.9,.3,1); }
 @keyframes dbs-in { from { opacity: 0; transform: translateY(18px) scale(.98); } }
@@ -1024,10 +1088,8 @@ const STUDIO_CSS = `
 .dbs-fl:active { transform: scale(.95); }
 .dbs-fl.is-info { box-shadow: inset 0 0 0 2px var(--vw-accent), 0 8px 16px -12px var(--vw-accent-deep); }
 .dbs-fl:focus-visible { outline: 2px solid var(--vw-ink); outline-offset: 2px; }
-.dbs-flArt { width: 48px; height: 48px; display: block; animation: dbs-idle 3.4s ease-in-out infinite alternate; }
-.dbs-fl:nth-child(2n) .dbs-flArt { animation-delay: -1.3s; }
-.dbs-fl:nth-child(3n) .dbs-flArt { animation-delay: -2.1s; }
-@keyframes dbs-idle { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+.dbs-flArt { width: 48px; height: 48px; display: block; transition: transform .2s ease; }
+@media (hover: hover) { .dbs-fl:hover .dbs-flArt { transform: rotate(-6deg) scale(1.06); } }
 .dbs-flArt .dbq-face, .dbs-infoArt .dbq-face, .dbs-ghost .dbq-face { width: 100%; height: 100%; }
 .dbs-flArt img, .dbs-infoArt img, .dbs-ghost img { filter: drop-shadow(0 4px 5px rgba(60,20,40,.18)); }
 .dbs-fl b { font: 700 10.5px/1.15 ${DB_SANS}; color: var(--vw-paper-ink); text-align: center; }
@@ -1090,8 +1152,9 @@ const STUDIO_CSS = `
 .dbs-toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 50px); transform: translateX(-50%); z-index: 260; margin: 0; max-width: min(92vw, 440px); width: max-content; padding: 8px 14px; border-radius: 14px;
   background: rgba(255,255,255,.97); color: var(--vw-paper-ink); font: 600 12px/1.35 ${DB_SANS}; text-align: center; box-shadow: 0 14px 30px -16px var(--vw-accent-deep), inset 0 0 0 1px var(--vw-edge); animation: dbs-toast 2.6s ease forwards; pointer-events: none; }
 @keyframes dbs-toast { 0% { opacity: 0; transform: translate(-50%, -8px); } 10%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
-.dbs-ghost { position: fixed; z-index: 270; width: 96px; height: 96px; margin: -60px 0 0 -48px; pointer-events: none; transform: scale(.9) rotate(-8deg); transition: transform .15s ease; filter: drop-shadow(0 14px 16px rgba(60,20,40,.35)); }
-.dbs-ghost.is-over { transform: scale(1.15) rotate(0); }
+.dbs-ghost { position: fixed; left: 0; top: 0; z-index: 270; width: 96px; height: 96px; margin: -60px 0 0 -48px; pointer-events: none; will-change: transform; }
+.dbs-ghostIn { display: block; width: 100%; height: 100%; transform: scale(.9) rotate(-8deg); transition: transform .15s ease; filter: drop-shadow(0 14px 16px rgba(60,20,40,.35)); }
+.dbs-ghost.is-over .dbs-ghostIn { transform: scale(1.15) rotate(0); }
 
 @media (prefers-reduced-motion: reduce) { .dbs-flArt, .dbs-toast, .dbs-tools { animation: none; } }
 `;

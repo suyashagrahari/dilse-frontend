@@ -10,11 +10,11 @@
 // Every stem leans out from the tie point; its bloom lands exactly on the
 // stored (x, y). Geometry: 600×760 frame, stems converge on (300, 730).
 
-import { memo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { memo, useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { FLOWER_BY_ID, type DbBow, type DbCharm, type DbGreenery, type DbPaletteDef, type DbRibbon, type DbStem, type DbWrap, type FlowerId } from "../../../_valentine/days/digital-bouquet";
 import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, greensFor, headOf, hitSize, pctX, pctY, placeStem, src1, srcSet, type StemArt } from "./assets";
 import { paintOrder } from "./model";
-import { wrapSrc } from "./wraps";
+import { wrapBitmap, wrapBitmapNow, wrapSrc } from "./wraps";
 
 export interface BouquetLook {
   stems: readonly DbStem[];
@@ -98,12 +98,13 @@ export function FlowerFace({ id, className }: { id: FlowerId; className?: string
 }
 
 /** One stem image, positioned so its bloom lands on (hx, hy) (frame px). */
-function Stem({ art, hx, hy, scale, tilt, delay, swayDur, swayDelay, z, small }: { art: StemArt; hx: number; hy: number; scale: number; tilt: number; delay: number; swayDur: number; swayDelay: number; z: number; small?: boolean }) {
+const Stem = memo(function Stem({ art, hx, hy, scale, tilt, delay, swayDur, swayDelay, z, small, idx }: { art: StemArt; hx: number; hy: number; scale: number; tilt: number; delay: number; swayDur: number; swayDelay: number; z: number; small?: boolean; idx?: number }) {
   const p = placeStem(art, hx, hy, scale, tilt);
   const origin = `${art.anchor.x * 100}% ${art.anchor.y * 100}%`;
   return (
     <span
       className="dbq-stem"
+      data-dbq-stem={idx}
       style={{
         left: pctX(p.left),
         top: pctY(p.top),
@@ -125,6 +126,64 @@ function Stem({ art, hx, hy, scale, tilt, delay, swayDur, swayDelay, z, small }:
       </span>
     </span>
   );
+});
+
+/**
+ * Live drag preview without React: moves stem `i` (and its tap circle) from
+ * where `from` drew it to where `to` would, with one compositor-only transform
+ * (translate + rotate + scale about the stem's base). The studio calls it on
+ * every animation frame of a gesture and commits the stem once at the end
+ * (after `endStemDrag`), so a drag never re-renders the bouquet.
+ * `pxPerFrame` = the bouquet's rendered width / 600.
+ */
+export function dragStemDom(root: HTMLElement, i: number, from: DbStem, to: DbStem, pxPerFrame: number) {
+  const el = root.querySelector<HTMLElement>(`[data-dbq-stem="${i}"]`);
+  const art = STEM_ART[from.flower as FlowerId];
+  if (!el || !art) return;
+  const h0 = headOf(from);
+  const h1 = headOf(to);
+  const p0 = placeStem(art, h0.x, h0.y, from.scale / 100, from.rot);
+  const p1 = placeStem(art, h1.x, h1.y, to.scale / 100, to.rot);
+  if (!el.classList.contains("is-drag")) el.classList.add("is-drag");
+  el.style.transform = `translate3d(${((p1.ax - p0.ax) * pxPerFrame).toFixed(2)}px, ${((p1.ay - p0.ay) * pxPerFrame).toFixed(2)}px, 0) rotate(${p1.deg.toFixed(2)}deg) scale(${(p1.w / p0.w).toFixed(4)})`;
+  const hit = root.querySelector<HTMLElement>(`[data-dbq-head="${i}"]`);
+  if (hit) {
+    const d = hitSize(art, to.scale / 100);
+    hit.style.left = pctX(h1.x);
+    hit.style.top = pctY(h1.y);
+    hit.style.width = pctX(d);
+  }
+}
+
+/** Undo `dragStemDom` (put back what React rendered) — call right before committing the stem. */
+export function endStemDrag(root: HTMLElement, i: number, from: DbStem) {
+  const el = root.querySelector<HTMLElement>(`[data-dbq-stem="${i}"]`);
+  const art = STEM_ART[from.flower as FlowerId];
+  if (!el || !art) return;
+  const h = headOf(from);
+  el.classList.remove("is-drag");
+  el.style.transform = `rotate(${placeStem(art, h.x, h.y, from.scale / 100, from.rot).deg}deg)`;
+  const hit = root.querySelector<HTMLElement>(`[data-dbq-head="${i}"]`);
+  if (hit) {
+    hit.style.left = pctX(h.x);
+    hit.style.top = pctY(h.y);
+    hit.style.width = pctX(hitSize(art, from.scale / 100));
+  }
+}
+
+/** The wrap image: the vector drawn once into a bitmap (no SVG re-raster on resize / scale). */
+function WrapImg({ kind, part, className }: { kind: BouquetLook["wrap"]; part: "back" | "front"; className: string }) {
+  // Re-render once the bitmap is ready; until then the vector paints.
+  const [, setReady] = useState(0);
+  useEffect(() => {
+    let live = true;
+    if (!wrapBitmapNow(kind, part)) void wrapBitmap(kind, part).then((u) => live && u && setReady((n) => n + 1));
+    return () => {
+      live = false;
+    };
+  }, [kind, part]);
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={wrapBitmapNow(kind, part) ?? wrapSrc(kind, part)} className={className} alt="" draggable={false} decoding="async" />;
 }
 
 function BouquetImpl(p: BouquetProps) {
@@ -147,8 +206,7 @@ function BouquetImpl(p: BouquetProps) {
       data-dbq
     >
       <span className="dbq-halo" aria-hidden />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={wrapSrc(look.wrap, "back")} className="dbq-full" alt="" draggable={false} />
+      <WrapImg kind={look.wrap} part="back" className="dbq-full" />
 
       <div className="dbq-layer" aria-hidden>
         {greens.map((g, k) => (
@@ -175,13 +233,13 @@ function BouquetImpl(p: BouquetProps) {
               swayDelay={-(i * 0.7)}
               z={2 + s.z}
               small={small}
+              idx={i}
             />
           );
         })}
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={wrapSrc(look.wrap, "front")} className="dbq-full dbq-front" alt="" draggable={false} />
+      <WrapImg kind={look.wrap} part="front" className="dbq-full dbq-front" />
       <span
         className="dbq-ribbon"
         aria-hidden
@@ -256,7 +314,7 @@ function BouquetImpl(p: BouquetProps) {
 export const Bouquet = memo(BouquetImpl);
 
 export const BOUQUET_CSS = `
-.dbq { position: relative; width: 100%; aspect-ratio: 600 / 760; container-type: inline-size; clip-path: inset(-30% -30% 0 -30%); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.dbq { position: relative; width: 100%; aspect-ratio: 600 / 760; container-type: inline-size; contain: layout style; clip-path: inset(-30% -30% 0 -30%); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .dbq img { display: block; pointer-events: none; }
 .dbq-full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .dbq-front { z-index: 3; filter: drop-shadow(0 -2px 6px rgba(70, 30, 30, .12)); }
@@ -268,6 +326,9 @@ export const BOUQUET_CSS = `
 .dbq.is-glow .dbq-halo { opacity: calc(.6 + var(--dbq-glow) * .4); transform: translate(-50%, -50%) scale(calc(1 + var(--dbq-glow) * .12));
   background: radial-gradient(circle, #FFFFFF 0%, color-mix(in srgb, #FFE9A8 60%, transparent) 30%, color-mix(in srgb, var(--dbq-accent, #D94A75) 18%, transparent) 52%, transparent 72%); }
 .dbq-stem { position: absolute; display: block; }
+/* Mid-drag: its own GPU layer, transform-only updates, no sway. */
+.dbq-stem.is-drag { will-change: transform; }
+.dbq-stem.is-drag .dbq-sway, .dbq-stem.is-drag .dbq-grow { animation: none !important; }
 .dbq-face { position: relative; display: block; overflow: hidden; aspect-ratio: 1; }
 .dbq-face img { position: absolute; left: 0; top: 0; width: 100%; height: auto; display: block; pointer-events: none; }
 .dbq-grow, .dbq-sway { display: block; width: 100%; height: 100%; transform-origin: var(--o); }

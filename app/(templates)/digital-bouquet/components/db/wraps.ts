@@ -185,3 +185,51 @@ export function wrapSrc(kind: DbWrap, part: "back" | "front", scale = 1): string
   }
   return v;
 }
+
+// ── Bitmaps ──────────────────────────────────────────────────────────────────
+// An SVG <img> with filters is re-rasterised whenever it is drawn at a new
+// size (the studio panel growing, the delivery box zooming), which costs a
+// frame or more on a phone. So each wrap is drawn ONCE into a canvas at 2×
+// the frame and served as a blob: URL; the data: URI is only the first paint.
+
+const BITMAPS = new Map<string, string>();
+const PENDING = new Map<string, Promise<string | null>>();
+
+/** The bitmap if it is ready, else null (the caller shows the vector meanwhile). */
+export const wrapBitmapNow = (kind: DbWrap, part: "back" | "front") => BITMAPS.get(`${kind}-${part}`) ?? null;
+
+export function wrapBitmap(kind: DbWrap, part: "back" | "front"): Promise<string | null> {
+  const key = `${kind}-${part}`;
+  const done = BITMAPS.get(key);
+  if (done) return Promise.resolve(done);
+  let p = PENDING.get(key);
+  if (!p) {
+    p = new Promise<string | null>((resolve) => {
+      if (typeof document === "undefined") return resolve(null);
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          c.width = 1200;
+          c.height = 1520;
+          const ctx = c.getContext("2d");
+          if (!ctx) return resolve(null);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob((b) => {
+            if (!b) return resolve(null);
+            const url = URL.createObjectURL(b);
+            BITMAPS.set(key, url);
+            resolve(url);
+          }, "image/webp", 0.92);
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = wrapSrc(kind, part, 2);
+    });
+    PENDING.set(key, p);
+  }
+  return p;
+}
