@@ -42,3 +42,4 @@ export type { FamiliesBlockProps, MessageBlockProps, MonogramProps } from "./sec
 export * from "./types";
 export * from "./ics";
 export * from "./api";
+export * from "./art";
