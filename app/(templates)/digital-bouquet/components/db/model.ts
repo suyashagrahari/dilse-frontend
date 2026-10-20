@@ -6,6 +6,7 @@ import {
   BLOOM_AREA,
   DB_CHARM_KEYS,
   DB_GREENERY_KEYS,
+  DB_CARD_SIZES,
   DB_HANDS,
   DB_PALETTES,
   DB_RIBBON_KEYS,
@@ -16,6 +17,7 @@ import {
   STEM_LIMITS,
   isFlowerId,
   type DbBow,
+  type DbCardSize,
   type DbCharm,
   type DbExtras,
   type DbFlowerNote,
@@ -49,6 +51,7 @@ export interface Bq {
   deliveryLine: string;
   notes: Partial<Record<FlowerId, string>>;
   hand: DbHand;
+  size: DbCardSize;
   question: string;
   yesLine: string;
 }
@@ -99,6 +102,7 @@ export function readBouquet(x: Partial<DbExtras> | Record<string, unknown>): Bq 
     deliveryLine: clean(e.deliveryLine),
     notes: readNotes(e.flowerNotes),
     hand: pick(e.cardHand, Object.keys(DB_HANDS) as DbHand[], "hand"),
+    size: pick(e.cardSize, Object.keys(DB_CARD_SIZES) as DbCardSize[], "m"),
     question: clean(e.question),
     yesLine: clean(e.yesLine),
   };

@@ -159,7 +159,7 @@ export default function DigitalBouquetExperience({ data, react }: ExperienceProp
           {step === "water" && screen("water", <Water {...common} sticker={sticker("b3-water", 90)} hasPhotos={photos.length > 0} onNext={next} />)}
           {step === "photos" && screen("photos", <Photos {...common} photos={photos} hand={bq.hand} sticker={sticker("b4-photos", 84)} onNext={next} />)}
           {step === "card" &&
-            screen("card", <CardRoom {...common} recipient={recipient} sender={sender} petName={data.petName} letter={data.letter || "These are for you. Just because."} hand={bq.hand} sticker={sticker("b5-letter", 84)} onNext={next} />)}
+            screen("card", <CardRoom {...common} recipient={recipient} sender={sender} petName={data.petName} letter={data.letter || "These are for you. Just because."} hand={bq.hand} size={bq.size} sticker={sticker("b5-letter", 84)} onNext={next} />)}
           {step === "question" && !answered && screen("question", <Question question={question} reactions={T.reactions} {...common} onAnswer={onAnswer} />)}
           {step === "question" && answered && screen("yes", <YesRoom line={bq.yesLine || T.yes} recipient={recipient} sticker={sticker("b6-yes", 170)} onNext={next} />, true)}
           {step === "ending" &&

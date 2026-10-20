@@ -67,3 +67,13 @@ export const DB_FONT_VARS = `${dbSerif.variable} ${dbScript.variable} ${dbCalli.
 
 /** The card's handwriting choice → its face. */
 export const handFace = (h: "script" | "hand" | "serif") => (h === "script" ? DB_CALLI : h === "serif" ? DB_SERIF : DB_HAND);
+
+/**
+ * The card's text size, normalised per handwriting: Caveat sets small and
+ * Cormorant has a low x-height, so each face gets its own px for the same
+ * Small / Medium / Large. The studio preview and the recipient's card both use
+ * it, so what the sender picks is exactly what they read.
+ */
+const CARD_PX = { s: 16, m: 18.5, l: 21.5 } as const;
+const HAND_K = { hand: 1.14, script: 1, serif: 1.06 } as const;
+export const cardFontPx = (h: "script" | "hand" | "serif", size: "s" | "m" | "l" = "m") => Math.round(CARD_PX[size] * HAND_K[h] * 2) / 2;

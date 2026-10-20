@@ -210,6 +210,12 @@ export interface DayConfig<E extends Extras = Extras> {
    * the studio (if any) on top — every other day, unchanged. See StudioForm.
    */
   studioForm?: StudioForm;
+  /**
+   * Phones get the form (and the AI questions) as a full-screen page with a
+   * compact header and smaller type instead of a bottom sheet. Desktop is
+   * unchanged. The Digital Bouquet uses it; every other day is untouched.
+   */
+  compactForm?: boolean;
 }
 
 /** The registered studios (editor/studios.tsx STUDIOS). */

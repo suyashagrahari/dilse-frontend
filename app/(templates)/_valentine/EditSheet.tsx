@@ -670,7 +670,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
           <motion.div className="vs-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={requestClose} aria-hidden />
           <motion.div
             ref={dialogRef}
-            className={`vs-sheet${wide ? " is-wide" : ""}`}
+            className={`vs-sheet${wide ? " is-wide" : ""}${day.compactForm ? " is-compact" : ""}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`${titleId}-t`}
@@ -897,6 +897,44 @@ const SHEET_CSS = `
   .vs-sheet { width: min(760px, 100%); height: min(88vh, 940px); border-radius: 28px; box-shadow: 0 40px 100px -30px rgba(30,12,24,.6), 0 0 0 1px rgba(255,255,255,.4); }
 }
 @media (min-width: 1180px) { .vs-sheet { width: min(940px, 100%); } }
+/* compactForm: a full-screen page on phones, tighter header + type. */
+@media (max-width: 767px) {
+  .vs-sheet.is-compact { height: 100dvh; border-radius: 0; box-shadow: none; }
+  .vs-sheet.is-compact .vs-grab, .vs-sheet.is-compact .vs-headArt, .vs-sheet.is-compact .vs-sub { display: none; }
+  .vs-sheet.is-compact .vs-head { gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px; }
+  .vs-sheet.is-compact .vs-headEmoji { width: 36px; height: 36px; border-radius: 12px; font-size: 19px; }
+  .vs-sheet.is-compact .vs-kicker { font-size: 9.5px; letter-spacing: .1em; }
+  .vs-sheet.is-compact .vs-title { margin-top: 1px; font-size: 16.5px; }
+  .vs-sheet.is-compact .vs-x { width: 36px; height: 36px; font-size: 13px; }
+  .vs-sheet.is-compact .vs-nav { gap: 5px; padding: 6px 12px; }
+  .vs-sheet.is-compact .vs-nav button { min-height: 32px; padding: 3px 10px 3px 3px; gap: 5px; font-size: 11.5px; }
+  .vs-sheet.is-compact .vs-navDot { width: 22px; height: 22px; font-size: 10.5px; }
+  .vs-sheet.is-compact .vs-body { padding: 10px 12px 24px; }
+  .vs-sheet.is-compact .vs-ai { gap: 8px; padding: 12px 14px; margin: 2px 0 6px; border-radius: 16px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .vs-sheet.is-compact .vs-aiK { font-size: 9.5px; }
+  .vs-sheet.is-compact .vs-aiH { font-size: 15px; }
+  .vs-sheet.is-compact .vs-aiP { display: none; }
+  .vs-sheet.is-compact .vs-aiBtn { min-height: 38px; padding: 0 12px; border-radius: 12px; font-size: 12.5px; box-shadow: 0 3px 0 rgba(0,0,0,.18); }
+  .vs-sheet.is-compact .vs-sec { padding: 14px 0 4px; }
+  .vs-sheet.is-compact .vs-secHead { gap: 9px; margin-bottom: 10px; }
+  .vs-sheet.is-compact .vs-secN { width: 26px; height: 26px; border-radius: 9px; font-size: 12px; }
+  .vs-sheet.is-compact .vs-secH { margin-top: 1px; font-size: 15px; }
+  .vs-sheet.is-compact .vs-secSub { font-size: 11.5px; }
+  .vs-sheet.is-compact .vs-field { gap: 4px; margin-bottom: 12px; }
+  .vs-sheet.is-compact .vs-label { font-size: 12px; }
+  .vs-sheet.is-compact .vs-hint { font-size: 11.5px; }
+  .vs-sheet.is-compact .vs-input { min-height: 42px; padding: 9px 12px; border-radius: 12px; border-width: 1.5px; }
+  .vs-sheet.is-compact .vs-letter { font-size: 16px; line-height: 1.55; min-height: 180px; padding: 12px 14px; }
+  .vs-sheet.is-compact .vs-enum--chips button { min-height: 36px; padding: 6px 12px; font-size: 12.5px; border-width: 1.5px; }
+  .vs-sheet.is-compact .vs-enum--cards button { min-height: 54px; padding: 9px; border-radius: 13px; font-size: 12.5px; border-width: 1.5px; }
+  .vs-sheet.is-compact .vs-swatch { width: 38px; height: 38px; }
+  .vs-sheet.is-compact .vs-enum--swatches button { width: 56px; }
+  .vs-sheet.is-compact .vs-swatchLabel { font-size: 10.5px; }
+  .vs-sheet.is-compact .vs-foot { gap: 10px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .vs-sheet.is-compact .vs-footTx { gap: 4px; }
+  .vs-sheet.is-compact .vs-missing, .vs-sheet.is-compact .vs-ready { font-size: 11px; }
+  .vs-sheet.is-compact .vs-save { min-height: 44px; padding: 0 16px; border-radius: 14px; font-size: 14px; box-shadow: 0 3px 0 var(--vw-accent-deep); }
+}
 
 /* Header */
 .vs-head { position: relative; flex: none; display: flex; align-items: center; gap: 14px; padding: 22px 16px 16px; color: var(--vw-ink); overflow: hidden; }

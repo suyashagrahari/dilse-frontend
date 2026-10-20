@@ -156,7 +156,7 @@ function Inner({ slug }: { slug: DaySlug }) {
 
       {/* Mounted after EditSheet (and above it: z 200 > 190) so the AI
           questions sit over the form they fill. */}
-      {e.storyStarter && <StoryStarter guided fill={e.fill} onManual={e.openManualForm} title={day.copy.storyTitle} />}
+      {e.storyStarter && <StoryStarter guided fill={e.fill} onManual={e.openManualForm} title={day.copy.storyTitle} fullScreen={day.compactForm} />}
 
       <AnimatePresence>
         {e.publishing && (

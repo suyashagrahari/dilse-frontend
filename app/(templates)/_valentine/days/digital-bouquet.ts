@@ -103,6 +103,7 @@ export type DbBow = "bow" | "knot" | "twine";
 export type DbGreenery = "mixed" | "eucalyptus" | "fern" | "leafy" | "none";
 export type DbCharm = "heart" | "teddy" | "butterfly";
 export type DbHand = "script" | "hand" | "serif";
+export type DbCardSize = "s" | "m" | "l";
 
 export interface DbFlowerNote {
   flower: FlowerId;
@@ -122,6 +123,7 @@ export interface DbExtras {
   deliveryLine: string;
   flowerNotes: DbFlowerNote[];
   cardHand: DbHand;
+  cardSize: DbCardSize;
   question: string;
   yesLine: string;
   [k: string]: unknown;
@@ -256,6 +258,8 @@ export const DB_HANDS: Record<DbHand, { label: string; hint: string }> = {
   serif: { label: "Storybook", hint: "elegant and easy to read" },
 };
 
+export const DB_CARD_SIZES: Record<DbCardSize, { label: string }> = { s: { label: "Small" }, m: { label: "Medium" }, l: { label: "Large" } };
+
 /** The tone changes the defaults the sender left empty, and the reactions. */
 export const DB_TONES: Record<
   DbTone,
@@ -374,6 +378,7 @@ export const digitalBouquetDay: DayConfig<DbExtras> = {
   topBar: true,
   brandMark: "stacked",
   studio: "bouquet",
+  compactForm: true,
   music: {
     audioOnly: true,
     compact: true,
@@ -436,6 +441,7 @@ export const digitalBouquetDay: DayConfig<DbExtras> = {
       ],
     },
     { key: "cardHand", kind: "enum", label: "Handwriting", default: "hand", hidden: true, options: (Object.keys(DB_HANDS) as DbHand[]).map((k) => ({ value: k, label: DB_HANDS[k].label })) },
+    { key: "cardSize", kind: "enum", label: "Card text size", default: "m", hidden: true, options: (Object.keys(DB_CARD_SIZES) as DbCardSize[]).map((k) => ({ value: k, label: DB_CARD_SIZES[k].label })) },
     {
       key: "question", kind: "text", max: 60, label: "The soft question",
       placeholder: "leave empty to use the one for your tone",
@@ -477,6 +483,7 @@ export const digitalBouquetDay: DayConfig<DbExtras> = {
       deliveryLine: "Special delivery for the prettiest girl in the world 💐",
       flowerNotes: DEMO_NOTES.map((n) => ({ ...n })),
       cardHand: "hand",
+      cardSize: "m",
       question: "Do you like your flowers? 🥹",
       yesLine: "Then I'll keep bringing you flowers, forever 💗",
     },

@@ -198,6 +198,11 @@ export interface StoryStarterProps {
    * answers. Ignored (falls back to the classic screen) if the hook predates it.
    */
   guided?: boolean;
+  /**
+   * Phones only (< 768px): the sheet becomes a full-screen page instead of a
+   * bottom sheet. Desktop is unchanged. Default false.
+   */
+  fullScreen?: boolean;
 }
 
 export default function StoryStarter({
@@ -206,6 +211,7 @@ export default function StoryStarter({
   title,
   cast,
   guided = false,
+  fullScreen = false,
 }: StoryStarterProps) {
   const {
     schema,
@@ -261,6 +267,9 @@ export default function StoryStarter({
             style={{ background: "rgba(43,38,32,0.34)" }}
             onClick={close}
           >
+            {fullScreen && (
+              <style>{`@media (max-width: 767px) { .ss-full { max-width: none !important; height: 100dvh; max-height: 100dvh !important; border-radius: 0 !important; padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important; } }`}</style>
+            )}
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -270,7 +279,7 @@ export default function StoryStarter({
               role="dialog"
               aria-modal="true"
               aria-labelledby="story-starter-title"
-              className="w-full overflow-y-auto overflow-x-hidden"
+              className={`w-full overflow-y-auto overflow-x-hidden${fullScreen ? " ss-full" : ""}`}
               style={{
                 maxWidth: 480,
                 maxHeight: "92dvh",

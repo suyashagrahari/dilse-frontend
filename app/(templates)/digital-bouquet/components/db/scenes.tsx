@@ -12,11 +12,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CroppedPhoto, burst, haptic, useReducedMotion } from "../../../_valentine/kit";
-import { FLOWER_BY_ID, type DbHand, type DbPaletteDef, type FlowerId } from "../../../_valentine/days/digital-bouquet";
+import { FLOWER_BY_ID, type DbCardSize, type DbHand, type DbPaletteDef, type FlowerId } from "../../../_valentine/days/digital-bouquet";
 import type { LovePhoto } from "../../../_valentine/types";
 import { Bouquet, FlowerFace, type BouquetLook } from "./Bouquet";
 import { pctX, pctY } from "./assets";
-import { DB_HAND, DB_SANS, DB_SCRIPT, DB_SERIF, handFace } from "./fonts";
+import { DB_HAND, DB_SANS, DB_SCRIPT, DB_SERIF, cardFontPx, handFace } from "./fonts";
 import { kindsOf } from "./model";
 import { useDb, useNext } from "./stage";
 import { Head, Hint } from "./ui";
@@ -515,7 +515,7 @@ export function Photos({ look, palette, photos, hand, sticker, onNext }: Common 
 
 // ─── 6 · The card ────────────────────────────────────────────────────────────
 
-export function CardRoom({ look, palette, recipient, sender, petName, letter, hand, sticker, onNext }: Common & { recipient: string; sender: string; petName: string; letter: string; hand: DbHand; sticker: ReactNode; onNext: () => void }) {
+export function CardRoom({ look, palette, recipient, sender, petName, letter, hand, size = "m", sticker, onNext }: Common & { recipient: string; sender: string; petName: string; letter: string; hand: DbHand; size?: DbCardSize; sticker: ReactNode; onNext: () => void }) {
   const { cue } = useDb();
   const reduced = useReducedMotion();
   const [state, setState] = useState<"sealed" | "reading" | "read">("sealed");
@@ -553,7 +553,7 @@ export function CardRoom({ look, palette, recipient, sender, petName, letter, ha
             <motion.div key="card" className="db-letter-wrap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.article
                 className="db-letter"
-                style={{ fontFamily: handFace(hand) }}
+                style={{ fontFamily: handFace(hand), ["--db-card-px" as string]: `${cardFontPx(hand, size)}px` }}
                 initial={reduced ? { opacity: 0 } : { y: "60%", rotate: 4, opacity: 0 }}
                 animate={{ y: 0, rotate: -1, opacity: 1 }}
                 exit={{ y: "30%", opacity: 0 }}
@@ -673,13 +673,13 @@ export const DB_SCENES_CSS = `
 .db-env:focus-visible { outline: 3px solid var(--vw-ink); outline-offset: 4px; border-radius: 10px; }
 @keyframes db-envbob { 0%, 100% { transform: translate(-50%, -50%) rotate(-6deg); } 50% { transform: translate(-50%, -54%) rotate(-3deg); } }
 .db-letter-wrap { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: calc(env(safe-area-inset-top, 0px) + 58px) 14px calc(env(safe-area-inset-bottom, 0px) + 86px); background: color-mix(in srgb, var(--db-deep) 30%, transparent); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-.db-letter { position: relative; width: min(100%, 520px); max-height: 100%; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 22px 20px 16px; border-radius: 6px; color: #3F2A22; text-align: left;
+.db-letter { position: relative; width: min(100%, 500px); max-height: 100%; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 20px 18px 14px; border-radius: 6px; color: #3F2A22; text-align: left;
   background-color: #FFFDF8; background-image: linear-gradient(180deg, #FFFDF8, #FBF3E6); box-shadow: 0 34px 60px -26px rgba(40,10,20,.65), inset 0 0 0 1px rgba(160,120,80,.2); }
-.db-letter-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-size: clamp(20px, 5.2vw, 24px); line-height: 32px; outline: none; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--vw-accent) transparent; }
+.db-letter-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-size: var(--db-card-px, 21px); line-height: 1.55; outline: none; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--vw-accent) transparent; }
 .db-letter-scroll:focus-visible { box-shadow: 0 0 0 3px var(--vw-accent); border-radius: 6px; }
 .db-letter-to { margin: 0 0 4px; }
 .db-letter-body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .db-letter-from { margin: 14px 0 0; text-align: right; }
-.db-letter-from span { font-size: 1.6em; color: var(--vw-accent-deep); }
+.db-letter-from span { font-size: 1.5em; color: var(--vw-accent-deep); }
 .db-letter-fold { align-self: center; flex: none; }
 `;

@@ -12,8 +12,9 @@
 
 import { memo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { FLOWER_BY_ID, type DbBow, type DbCharm, type DbGreenery, type DbPaletteDef, type DbRibbon, type DbStem, type DbWrap, type FlowerId } from "../../../_valentine/days/digital-bouquet";
-import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, WRAP_FILE, greensFor, headOf, hitSize, pctX, pctY, placeStem, src1, srcSet, type StemArt } from "./assets";
+import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, greensFor, headOf, hitSize, pctX, pctY, placeStem, src1, srcSet, type StemArt } from "./assets";
 import { paintOrder } from "./model";
+import { wrapSrc } from "./wraps";
 
 export interface BouquetLook {
   stems: readonly DbStem[];
@@ -137,7 +138,6 @@ function BouquetImpl(p: BouquetProps) {
   const done = bloomDelay + n * bloomGap;
   const interactive = !!onHeadTap || !!onHeadPointerDown;
   const rib = RIBBON_FILE[look.ribbon] ?? RIBBON_FILE.rose;
-  const wrap = WRAP_FILE[look.wrap] ?? WRAP_FILE.tissue;
   const charmAt: Record<DbCharm, { x: number; y: number }> = { heart: FRAME.charm, teddy: { x: 266, y: 606 }, butterfly: { x: 356, y: 600 } };
 
   return (
@@ -147,7 +147,8 @@ function BouquetImpl(p: BouquetProps) {
       data-dbq
     >
       <span className="dbq-halo" aria-hidden />
-      <ArtImg file={`${wrap}-back`} className="dbq-full" small={small} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={wrapSrc(look.wrap, "back")} className="dbq-full" alt="" draggable={false} />
 
       <div className="dbq-layer" aria-hidden>
         {greens.map((g, k) => (
@@ -179,7 +180,8 @@ function BouquetImpl(p: BouquetProps) {
         })}
       </div>
 
-      <ArtImg file={`${wrap}-front`} className="dbq-full dbq-front" small={small} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={wrapSrc(look.wrap, "front")} className="dbq-full dbq-front" alt="" draggable={false} />
       <span
         className="dbq-ribbon"
         aria-hidden
