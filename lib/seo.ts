@@ -249,9 +249,14 @@ interface SharePageSeo {
   recipientName: string;
   senderName: string;
   shareId: string;
+  /** The link's username part (username links only). */
+  username?: string;
 }
 
-export function getSharePageMeta({ templateType, recipientName, senderName, shareId }: SharePageSeo): Metadata {
+/** Templates whose link preview is drawn from the page itself (the sender's own arrangement). */
+const PAGE_DRAWN_PREVIEW: Record<string, string> = { "digital-bouquet": "/api/og-bouquet" };
+
+export function getSharePageMeta({ templateType, recipientName, senderName, shareId, username }: SharePageSeo): Metadata {
   const info = TEMPLATE_TYPE_INFO[templateType] ?? { emoji: "🎁", label: "Gift" };
 
   // A link preview can surface on a shared family phone; for these templates
@@ -265,8 +270,11 @@ export function getSharePageMeta({ templateType, recipientName, senderName, shar
       ? teaser.description
       : `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
 
-  const cover = TEMPLATE_COVER_IMAGES[templateType];
-  const ogImageUrl = cover
+  const drawn = PAGE_DRAWN_PREVIEW[templateType];
+  const cover = drawn ? undefined : TEMPLATE_COVER_IMAGES[templateType];
+  const ogImageUrl = drawn
+    ? `${SITE_URL}${drawn}?id=${encodeURIComponent(shareId)}${username ? `&u=${encodeURIComponent(username)}` : ""}`
+    : cover
     ? `${SITE_URL}${cover.path}`
     : `${SITE_URL}/api/og?type=${encodeURIComponent(templateType)}&recipient=${encodeURIComponent(recipientName)}&sender=${encodeURIComponent(senderName)}`;
 

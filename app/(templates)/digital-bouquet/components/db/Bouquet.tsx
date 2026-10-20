@@ -335,7 +335,7 @@ export const BOUQUET_CSS = `
 .dbq-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 5px rgba(60, 20, 40, .14)); transition: filter .6s ease; }
 .dbq.is-glow .dbq-img { filter: drop-shadow(0 4px 5px rgba(60, 20, 40, .12)) saturate(calc(1 + var(--dbq-glow) * .25)) brightness(calc(1 + var(--dbq-glow) * .05)); }
 .dbq.is-sway .dbq-sway { animation: dbq-sway var(--sw) ease-in-out var(--sd) infinite alternate; }
-@keyframes dbq-sway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
+@keyframes dbq-sway { from { transform: rotate(-.7deg); } to { transform: rotate(.7deg); } }
 .dbq-ribbon { position: absolute; z-index: 4; display: block; }
 .dbq-ribbon img { width: 100%; height: auto; filter: drop-shadow(0 4px 6px rgba(80, 20, 30, .22)); }
 .dbq-charm { position: absolute; z-index: 5; display: block; transform-origin: 50% 0; animation: dbq-dangle 3.2s ease-in-out infinite alternate; }

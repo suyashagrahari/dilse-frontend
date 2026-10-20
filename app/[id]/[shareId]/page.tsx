@@ -63,6 +63,7 @@ export async function generateMetadata({
     recipientName: result.data.recipientName || "You",
     senderName: result.data.senderName || "Someone Special",
     shareId,
+    username,
   });
 
   const canonicalUrl = ROOT_DOMAIN
