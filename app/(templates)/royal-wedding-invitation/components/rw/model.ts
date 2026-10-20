@@ -42,8 +42,10 @@ export interface RoyalModel {
   blessings: boolean;
   /** Photos not used by a story chapter or a family card. */
   gallery: LovePhoto[];
-  /** The hero (Ken Burns) photo: the first gallery photo, else any photo. */
+  /** The couple's portrait in the jharokha: the first gallery photo, else any photo. */
   hero: LovePhoto | null;
+  /** Ganesha invocation before the gates open (default); false = the royal crest. */
+  invocation: boolean;
 }
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -166,12 +168,14 @@ export function readRoyal(extras: Record<string, unknown>, photos: LovePhoto[], 
     blessings: x.blessings !== false,
     gallery,
     hero: gallery[0] ?? pool[0] ?? null,
+    // No editor field yet (the schema lives in _valentine/days); honoured when one is added.
+    invocation: x.invocation !== false,
   };
 }
 
 // ── Bilingual strings (copy.md) ─────────────────────────────────────────────
 
-type StringsShape = { [K in "open" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide" | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "goodToKnow" | "gettingThere" | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "whatsapp" | "replyBy" | "done" | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and"]: string } & { units: { d: string; h: string; m: string; s: string } };
+type StringsShape = { [K in "open" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide" | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "goodToKnow" | "gettingThere" | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "whatsapp" | "replyBy" | "done" | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and" | "royalOf" | "weds" | "scroll" | "decree" | "at" | "dateEyebrow" | "venueEyebrow" | "upasthiti"]: string } & { units: { d: string; h: string; m: string; s: string } };
 
 export const T: Record<Lang, StringsShape> = {
   en: {
@@ -210,6 +214,14 @@ export const T: Record<Lang, StringsShape> = {
     tba: "Time to be announced",
     play: "Play the film",
     and: "&",
+    royalOf: "The royal wedding of",
+    weds: "weds",
+    scroll: "Enter the palace",
+    decree: "By the grace of the Almighty, on the auspicious day of",
+    at: "at",
+    dateEyebrow: "The auspicious day",
+    venueEyebrow: "The palace",
+    upasthiti: "Aapki upasthiti prarthaniya hai",
   },
   hi: {
     open: "द्वार खोलने के लिए छुएँ",
@@ -247,6 +259,14 @@ export const T: Record<Lang, StringsShape> = {
     tba: "समय की सूचना जल्द",
     play: "फ़िल्म चलाएँ",
     and: "संग",
+    royalOf: "शुभ विवाह",
+    weds: "संग",
+    scroll: "महल में पधारें",
+    decree: "ईश्वर की कृपा से, शुभ तिथि",
+    at: "समय",
+    dateEyebrow: "शुभ मुहूर्त",
+    venueEyebrow: "विवाह स्थल",
+    upasthiti: "आपकी उपस्थिति प्रार्थनीय है",
   },
 };
 export type Strings = StringsShape;

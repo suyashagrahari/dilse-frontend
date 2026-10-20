@@ -1,19 +1,21 @@
 "use client";
 
-// ─── The finale: diya lanterns rise over the palace, the Shubh Vivah seal ────
-// Fourteen lanterns (CSS, transform/opacity only), animated only while the
-// section is on screen. Reduced motion: they hang still, glowing.
+// ─── The finale: the palace gates close softly on "Shubh Vivah" ──────────────
+// The same carved doors as the opening, at a smaller scale, stand open with
+// lamplight behind; when the gate is 60% on screen they swing shut (rotateY
+// ±78° → 0, 1.4 s), "शुभ विवाह · Shubh Vivah" settles onto the closed doors and
+// a last shower of petals falls. Diya lanterns rise behind (only while the
+// section is on screen). Reduced motion: doors closed, lanterns hang still.
 
 import { useEffect, useRef, useState } from "react";
-import { Ornament, Reveal } from "../../../_wedding";
+import { Ornament, PetalBurst, Reveal, useWeddingReducedMotion } from "../../../_wedding";
+import Door from "./Door";
+import { seeded } from "./art";
 
-const LANTERNS = Array.from({ length: 14 }, (_, i) => {
-  const r = (n: number) => {
-    const x = Math.sin((i + 1) * 9301 + n * 49297) * 233280;
-    return x - Math.floor(x);
-  };
-  return { left: 4 + r(1) * 92, size: 16 + r(2) * 18, delay: -r(3) * 14, dur: 11 + r(4) * 8, sway: 8 + r(5) * 18 };
-});
+const LANTERNS = (() => {
+  const r = seeded(17);
+  return Array.from({ length: 10 }, () => ({ left: 4 + r() * 92, size: 16 + r() * 18, delay: -r() * 14, dur: 11 + r() * 8, sway: 8 + r() * 18 }));
+})();
 
 export interface FinaleProps {
   seal: string;
@@ -30,7 +32,10 @@ export interface FinaleProps {
 
 export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, whatsapp, shareText }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
+  const gateRef = useRef<HTMLDivElement>(null);
+  const reduce = useWeddingReducedMotion();
   const [on, setOn] = useState(false);
+  const [closed, setClosed] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -38,7 +43,24 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  useEffect(() => {
+    if (reduce) return;
+    const el = gateRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([en]) => {
+        if (en.isIntersecting) {
+          setClosed(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.6 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [reduce]);
 
+  const shut = closed || reduce;
   const share = () => {
     const url = typeof window !== "undefined" ? window.location.href.split("#")[0] : "";
     window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}`)}`, "_blank", "noopener,noreferrer");
@@ -56,13 +78,25 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
         ))}
       </div>
       <div className="rw-finale-in">
-        <Reveal className="rw-seal-big" effect="zoom">
-          <Ornament id="wax-seal" className="rw-seal-big-wax" shimmer />
-          <span className="rw-seal-big-tx">
-            <b lang="hi">{sealHi}</b>
-            <small>{seal}</small>
-          </span>
-        </Reveal>
+        <div ref={gateRef} className={`rw-close${shut ? " is-closed" : ""}`}>
+          <div className="rw-arch rw-arch-sm">
+            <div className="rw-light" aria-hidden />
+            <div className="rw-doors">
+              <Door side="left" lazy />
+              <Door side="right" lazy />
+            </div>
+            <Ornament id="jharokha-arch" className="rw-arch-frame" shimmer />
+            <p className="rw-close-seal">
+              <b lang="hi">{sealHi}</b>
+              <small>{seal}</small>
+            </p>
+          </div>
+          {closed && !reduce && (
+            <div className="rw-close-petals">
+              <PetalBurst kind={["marigold-petal", "rose-petal", "gold-confetti"]} count={10} mode="fall" seed={23} />
+            </div>
+          )}
+        </div>
         <Reveal as="p" className="wk-eyebrow" delay={120}>
           <span lang={lang}>{closing}</span>
         </Reveal>

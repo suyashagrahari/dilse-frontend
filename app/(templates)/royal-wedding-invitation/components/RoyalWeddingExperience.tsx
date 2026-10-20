@@ -2,14 +2,14 @@
 
 // ─── Royal Wedding Invitation 👑 — the guest's experience ────────────────────
 //
-// palace gates (tap: doors swing in, light + petals, the shehnai starts) →
-// the hero (Ken Burns cover in a jharokha, the crest stamps in gold foil) →
-// the invitation in English + Hindi → the families (with photos) → a flip
-// countdown with the muhurat → the story in chapters along a scroll-drawn
-// gold line → every function (dress-code swatch, map, calendar, "save all")
-// → the pre-wedding film → the 40-photo masonry (arch + foil frames) → good
-// to know → RSVP per function (headcount, meal, a note) → the blessings
-// wall → diya lanterns rise over the palace and the Shubh Vivah seal.
+// palace gates (tap: Ganesha glows in, the carved doors swing out in 3D,
+// light + petals, the camera pushes through) → the courtyard (scene, gold
+// mandala, lattice jharokha with the names, jhoomars, peacocks, elephants,
+// diyas, toran, gold dust) → the invitation in English + Hindi → the families
+// inside a Mughal manuscript border → the farmaan scroll with the date and a
+// mohar seal → the story → illustrated function panels → the palace venue →
+// a countdown in a gold medallion → film → masonry → good to know → RSVP →
+// blessings → the gates close on "Shubh Vivah".
 //
 // One long, calm scroll after one cinematic moment; every motion is
 // transform/opacity, gated on visibility, and reduced-motion aware. A
@@ -19,11 +19,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BlessingsWall,
   Countdown,
-  EventsTimeline,
   FamiliesBlock,
   MessageBlock,
-  Monogram,
-  Ornament,
   RSVPBlock,
   Reveal,
   Section,
@@ -32,11 +29,15 @@ import {
   WeddingRoot,
   formatEventDate,
   formatEventTime,
-  photoImgStyle,
 } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import Gates from "./rw/Gates";
 import Story from "./rw/Story";
+import Courtyard from "./rw/Courtyard";
+import Farmaan from "./rw/Farmaan";
+import RoyalEvents from "./rw/RoyalEvents";
+import Venue from "./rw/Venue";
+import { artImg, royalArt } from "./rw/art";
 import Finale from "./rw/Finale";
 import { RW_CSS } from "./rw/css";
 import { T, readRoyal, type Lang } from "./rw/model";
@@ -76,6 +77,13 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
   const couple = `${m.first} & ${m.second}`;
   const [open, setOpen] = useState(false);
+  const look = royalArt(m.theme);
+  // Spec 7.1.11: on low-end phones drop the ambient particles and the parallax.
+  const [lite] = useState(() => {
+    if (typeof navigator === "undefined") return false;
+    const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+    return (navigator.hardwareConcurrency || 8) <= 4 && mem !== undefined && mem <= 3;
+  });
 
   const dateLine = m.main?.date ? formatEventDate(m.main.date, locale) : "";
   const shortDate = m.main?.date ? m.main.date.split("-").reverse().join(" · ") : "";
@@ -109,9 +117,13 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
   const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 👑` : `You're invited to the wedding of ${couple} 👑`;
 
   return (
-    <WeddingRoot theme={m.theme} className={`rw-root${lang === "hi" ? " is-hi" : ""}`} style={{ minHeight: "100dvh" }}>
+    <WeddingRoot theme={m.theme} className={`rw-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}`} style={{ minHeight: "100dvh" }}>
       <style>{RW_CSS}</style>
-      <Gates first={m.first} second={m.second} dateLine={shortDate} s={s} lang={lang} onOpened={onOpened} />
+      <div className="rw-backdrop" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...artImg(look.plate, { one: true })} />
+      </div>
+      <Gates first={m.first} second={m.second} dateLine={shortDate} s={s} lang={lang} invocation={m.invocation} look={look} onOpened={onOpened} />
 
       <div className="rw-lang" role="group" aria-label="Language">
         <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
@@ -122,46 +134,20 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         </button>
       </div>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <header className={`rw-hero${open ? " is-open" : ""}`}>
-        {m.hero ? (
-          <div className="rw-hero-photo" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={m.hero.url} alt="" decoding="async" fetchPriority="high" style={photoImgStyle(m.hero)} />
-          </div>
-        ) : (
-          <div className="rw-hero-mandala" aria-hidden>
-            <Ornament id="mandala-ornate" width="min(760px, 140vw)" />
-          </div>
-        )}
-        <div className="rw-hero-scrim" aria-hidden />
-        <div className="rw-toran rw-toran-hero" aria-hidden />
-        <div className="rw-hero-in">
-          <div className="rw-hero-crest">{open && <Monogram a={m.first} b={m.second} variant="crest" size={132} />}</div>
-          <p className="wk-eyebrow rw-hero-k" lang={lang}>
-            {s.shubh}
-          </p>
-          <h1 className="rw-hero-names">
-            <span className="wk-foil-text wk-shimmer">{m.first}</span>
-            <span className="rw-amp" lang={lang}>
-              {s.and}
-            </span>
-            <span className="wk-foil-text wk-shimmer">{m.second}</span>
-          </h1>
-          <p className="rw-hero-inv" lang={lang}>
-            {s.invited}
-          </p>
-          {dateLine && (
-            <p className="rw-hero-date">
-              {dateLine}
-              {mainTime && <> · {mainTime}</>}
-            </p>
-          )}
-          {m.muhurat && <p className="rw-hero-muhurat">{m.muhurat}</p>}
-          {m.main?.venue && <p className="rw-hero-venue">{[m.main.venue, m.main.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ")}</p>}
-        </div>
-        <span className="rw-scroll-cue" aria-hidden />
-      </header>
+      {/* ── The courtyard (hero) ────────────────────────────────────────── */}
+      <Courtyard
+        open={open}
+        look={look}
+        s={s}
+        lang={lang}
+        first={m.first}
+        second={m.second}
+        photo={m.hero}
+        dateLine={dateLine}
+        time={mainTime}
+        muhurat={m.muhurat}
+        venue={[m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ")}
+      />
 
       {/* ── The invitation ──────────────────────────────────────────────── */}
       <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal">
@@ -170,35 +156,33 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         </WeddingCard>
       </Section>
 
-      {/* ── Families ────────────────────────────────────────────────────── */}
+      {/* ── Families, inside a Mughal manuscript border ─────────────────── */}
       {(hasFamilies || m.blessingsOf) && (
         <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal">
-          {m.blessingsOf && (
-            <Reveal className="rw-blessings-of">
-              <p className="wk-eyebrow" lang={lang}>
-                {s.blessingsOf}
-              </p>
-              <p className="rw-blessings-names">{m.blessingsOf}</p>
-            </Reveal>
-          )}
-          {hasFamilies && <FamiliesBlock bride={bride} groom={groom} first={m.familyFirst} heading="" photos />}
+          <div className="rw-hashiya">
+            <span className="rw-band rw-band-top" aria-hidden />
+            <div className="rw-hashiya-frame">
+              <div className="rw-hashiya-in">
+                {m.blessingsOf && (
+                  <Reveal className="rw-blessings-of">
+                    <p className="wk-eyebrow" lang={lang}>
+                      {s.blessingsOf}
+                    </p>
+                    <p className="rw-blessings-names">{m.blessingsOf}</p>
+                  </Reveal>
+                )}
+                {hasFamilies && <FamiliesBlock bride={bride} groom={groom} first={m.familyFirst} heading="" photos />}
+              </div>
+            </div>
+            <span className="rw-band rw-band-bottom" aria-hidden />
+          </div>
         </Section>
       )}
 
-      {/* ── Countdown ───────────────────────────────────────────────────── */}
+      {/* ── The farmaan: the date ───────────────────────────────────────── */}
       {m.main?.date && (
-        <Section id="countdown" eyebrow={<span lang={lang}>{s.countdown}</span>} ornament={null} width="narrow" className="rw-count">
-          <div className="rw-count-ring" aria-hidden>
-            <Ornament id="mandala-simple" width="min(520px, 120vw)" />
-          </div>
-          <Reveal>
-            <Countdown date={m.main.date} time={m.main.time || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
-          </Reveal>
-          {(m.muhurat || dateLine) && (
-            <Reveal as="p" className="rw-count-line" delay={120}>
-              {m.muhurat || dateLine}
-            </Reveal>
-          )}
+        <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} title={<span lang={lang}>{s.shubh}</span>} ornament={null} width="narrow">
+          <Farmaan s={s} lang={lang} locale={locale} date={m.main.date} time={mainTime} muhurat={m.muhurat} venue={m.main.venue} first={m.first} second={m.second} />
         </Section>
       )}
 
@@ -212,16 +196,35 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
       {/* ── Functions ───────────────────────────────────────────────────── */}
       {m.events.length > 0 && (
         <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="normal">
-          <EventsTimeline
-            events={m.events}
-            couple={couple}
-            calendar="all"
-            mainEventId={m.main?.id}
-            url={url || undefined}
-            locale={locale}
-            showSwatch
-            labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba }}
-          />
+          <RoyalEvents events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba }} />
+        </Section>
+      )}
+
+      {/* ── The palace venue ────────────────────────────────────────────── */}
+      {m.main?.venue && (
+        <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal">
+          <Venue event={m.main} look={look} directions={s.directions} />
+        </Section>
+      )}
+
+      {/* ── Countdown, in a gold medallion ─────────────────────────────── */}
+      {m.main?.date && (
+        <Section id="countdown" eyebrow={<span lang={lang}>{s.countdown}</span>} ornament={null} width="narrow" className="rw-count">
+          <Reveal effect="zoom" className="rw-medallion">
+            <span className="rw-medallion-ring" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...artImg("gold/gold-lotus-ring-frame-01", { lazy: true })} />
+            </span>
+            <span className="rw-medallion-disc" aria-hidden />
+            <div className="rw-medallion-in">
+              <Countdown date={m.main.date} time={m.main.time || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
+            </div>
+          </Reveal>
+          {(m.muhurat || dateLine) && (
+            <Reveal as="p" className="rw-count-line" delay={120}>
+              {m.muhurat || dateLine}
+            </Reveal>
+          )}
         </Section>
       )}
 
@@ -265,6 +268,9 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
 
       {/* ── RSVP ────────────────────────────────────────────────────────── */}
       <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow">
+        <Reveal as="p" className="rw-upasthiti">
+          <span lang={lang}>{s.upasthiti}</span>
+        </Reveal>
         <Reveal>
           <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
         </Reveal>
