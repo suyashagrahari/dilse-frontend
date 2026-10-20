@@ -52,9 +52,8 @@ import { themeVars } from "../../../_valentine/theme";
 import { VW_FONT_VARS } from "../../../_valentine/fonts";
 import type { LovePhoto } from "../../../_valentine/types";
 import { ArtImg, Bouquet, BOUQUET_CSS, FlowerFace, dragStemDom, endStemDrag, type BouquetLook } from "../db/Bouquet";
-import { CHARM_ART, GREEN_ART, RIBBON_FILE, FRAME, UNIT, hitSize, STEM_ART } from "../db/assets";
+import { CHARM_ART, GREEN_ART, RIBBON_FILE, WRAP_FILE, FRAME, UNIT, hitSize, STEM_ART } from "../db/assets";
 import { DB_FONT_VARS, DB_HAND, DB_SANS, DB_SCRIPT, DB_SERIF, cardFontPx, handFace } from "../db/fonts";
-import { wrapSrc } from "../db/wraps";
 import { arrange, fillForMe, kindsOf, newStem, notesToList, readBouquet, snapToArea, type Bq } from "../db/model";
 
 type Tab = "flowers" | "greens" | "wrap" | "ribbon" | "charms" | "card" | "photos";
@@ -740,10 +739,8 @@ function StudioOverlay({ day, mf, updateMf, updateExtra, ai, onClose }: StudioPr
                   return (
                     <button key={w} type="button" className={`dbs-opt${bq.wrap === w ? " is-on" : ""}`} onClick={() => setX("wrap", w)} aria-pressed={bq.wrap === w}>
                       <span className="dbs-optArt is-wrap" aria-hidden>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={wrapSrc(w, "back")} alt="" />
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={wrapSrc(w, "front")} alt="" />
+                        <ArtImg file={`${WRAP_FILE[w]}-back`} small />
+                        <ArtImg file={`${WRAP_FILE[w]}-front`} small />
                       </span>
                       <b>{DB_WRAPS[w].label}</b>
                       <small>{DB_WRAPS[w].hint}</small>

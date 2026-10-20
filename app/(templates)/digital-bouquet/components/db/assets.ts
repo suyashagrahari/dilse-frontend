@@ -76,7 +76,8 @@ export function greensFor(g: DbGreenery): { id: GreenId; x: number; y: number; s
   }
 }
 
-export const WRAP_FILE: Record<DbWrap, string> = { tissue: "wraps/pink-tissue", kraft: "wraps/kraft", newspaper: "wraps/newspaper", pearl: "wraps/pearl" };
+/** The wrapping papers, rendered from ./wraps.ts by scripts/render-bouquet-wraps.mts (`-back` / `-front`). */
+export const WRAP_FILE: Record<DbWrap, string> = { tissue: "wraps/paper-tissue", kraft: "wraps/paper-kraft", newspaper: "wraps/paper-newspaper", pearl: "wraps/paper-pearl" };
 
 /** The pack has four ribbon colours; older/other values map onto the nearest. */
 export const RIBBON_FILE: Record<DbRibbon, { file: string; filter?: string }> = {

@@ -10,11 +10,10 @@
 // Every stem leans out from the tie point; its bloom lands exactly on the
 // stored (x, y). Geometry: 600×760 frame, stems converge on (300, 730).
 
-import { memo, useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { memo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { FLOWER_BY_ID, type DbBow, type DbCharm, type DbGreenery, type DbPaletteDef, type DbRibbon, type DbStem, type DbWrap, type FlowerId } from "../../../_valentine/days/digital-bouquet";
-import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, greensFor, headOf, hitSize, pctX, pctY, placeStem, src1, srcSet, type StemArt } from "./assets";
+import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, WRAP_FILE, greensFor, headOf, hitSize, pctX, pctY, placeStem, src1, srcSet, type StemArt } from "./assets";
 import { paintOrder } from "./model";
-import { wrapBitmap, wrapBitmapNow, wrapSrc } from "./wraps";
 
 export interface BouquetLook {
   stems: readonly DbStem[];
@@ -171,21 +170,6 @@ export function endStemDrag(root: HTMLElement, i: number, from: DbStem) {
   }
 }
 
-/** The wrap image: the vector drawn once into a bitmap (no SVG re-raster on resize / scale). */
-function WrapImg({ kind, part, className }: { kind: BouquetLook["wrap"]; part: "back" | "front"; className: string }) {
-  // Re-render once the bitmap is ready; until then the vector paints.
-  const [, setReady] = useState(0);
-  useEffect(() => {
-    let live = true;
-    if (!wrapBitmapNow(kind, part)) void wrapBitmap(kind, part).then((u) => live && u && setReady((n) => n + 1));
-    return () => {
-      live = false;
-    };
-  }, [kind, part]);
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={wrapBitmapNow(kind, part) ?? wrapSrc(kind, part)} className={className} alt="" draggable={false} decoding="async" />;
-}
-
 function BouquetImpl(p: BouquetProps) {
   const { look, palette, bloom = false, bloomGap = 0.32, bloomDelay = 0.3, sway = true, glow = 0, selected = null, visited, onHeadPointerDown, onHeadTap, headLabel, between, front, className = "", style, buds, small } = p;
   const order = paintOrder(look.stems);
@@ -197,6 +181,7 @@ function BouquetImpl(p: BouquetProps) {
   const done = bloomDelay + n * bloomGap;
   const interactive = !!onHeadTap || !!onHeadPointerDown;
   const rib = RIBBON_FILE[look.ribbon] ?? RIBBON_FILE.rose;
+  const wrap = WRAP_FILE[look.wrap] ?? WRAP_FILE.tissue;
   const charmAt: Record<DbCharm, { x: number; y: number }> = { heart: FRAME.charm, teddy: { x: 266, y: 606 }, butterfly: { x: 356, y: 600 } };
 
   return (
@@ -206,7 +191,7 @@ function BouquetImpl(p: BouquetProps) {
       data-dbq
     >
       <span className="dbq-halo" aria-hidden />
-      <WrapImg kind={look.wrap} part="back" className="dbq-full" />
+      <ArtImg file={`${wrap}-back`} className="dbq-full" small={small} />
 
       <div className="dbq-layer" aria-hidden>
         {greens.map((g, k) => (
@@ -239,7 +224,7 @@ function BouquetImpl(p: BouquetProps) {
         })}
       </div>
 
-      <WrapImg kind={look.wrap} part="front" className="dbq-full dbq-front" />
+      <ArtImg file={`${wrap}-front`} className="dbq-full dbq-front" small={small} />
       <span
         className="dbq-ribbon"
         aria-hidden

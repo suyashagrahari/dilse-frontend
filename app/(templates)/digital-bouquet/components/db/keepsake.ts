@@ -4,8 +4,7 @@
 // read through Next's same-origin image route so the canvas never taints.
 
 import { FLOWER_BY_ID, type DbCharm } from "../../../_valentine/days/digital-bouquet";
-import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, greensFor, headOf, media, placeStem, type StemArt } from "./assets";
-import { wrapSrc } from "./wraps";
+import { CHARM_ART, FRAME, GREEN_ART, RIBBON_ART, RIBBON_FILE, STEM_ART, WRAP_FILE, greensFor, headOf, media, placeStem, type StemArt } from "./assets";
 import type { BouquetLook } from "./Bouquet";
 import { paintOrder } from "./model";
 
@@ -41,8 +40,8 @@ export async function renderBouquetPng(look: BouquetLook, scale = 1.6): Promise<
   const charms = look.charms as DbCharm[];
 
   const [back, front, ribbon, greenImgs, stemImgs, charmImgs] = await Promise.all([
-    load(wrapSrc(look.wrap, "back", scale)),
-    load(wrapSrc(look.wrap, "front", scale)),
+    art(`${WRAP_FILE[look.wrap] ?? WRAP_FILE.tissue}-back`),
+    art(`${WRAP_FILE[look.wrap] ?? WRAP_FILE.tissue}-front`),
     art(rib.file),
     Promise.all(greens.map((g) => art(GREEN_ART[g.id].file))),
     Promise.all(order.map((i) => art(STEM_ART[look.stems[i].flower].file))),
