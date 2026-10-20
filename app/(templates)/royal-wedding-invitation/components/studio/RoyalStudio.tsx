@@ -651,6 +651,9 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
             <input type="checkbox" checked={x.blessings !== false} onChange={(e) => set("blessings", e.target.checked)} /> Show the blessings wall
           </label>
           <label className="rs-tog">
+            <input type="checkbox" checked={x.invocation !== false} onChange={(e) => set("invocation", e.target.checked)} /> Open with Shri Ganesh (off = the royal crest)
+          </label>
+          <label className="rs-tog">
             <input type="checkbox" checked={x.lang === "hi"} onChange={(e) => set("lang", e.target.checked ? "hi" : "en")} /> Open the invitation in Hindi (guests can switch)
           </label>
 

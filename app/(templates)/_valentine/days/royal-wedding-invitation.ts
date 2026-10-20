@@ -203,6 +203,7 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     { key: "maxGuests", kind: "number", min: 1, max: 10, default: 4, label: "Guests per reply", hidden: true },
     { key: "rsvpMeal", kind: "bool", default: true, label: "Ask for meal preference", hidden: true },
     { key: "blessings", kind: "bool", default: true, label: "Blessings wall", hidden: true },
+    { key: "invocation", kind: "bool", default: true, label: "Open with Shri Ganesh", hidden: true },
   ],
   theme: THEME,
   demo: {
