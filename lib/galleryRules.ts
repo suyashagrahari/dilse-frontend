@@ -63,11 +63,16 @@ export function isNewLaunch(slug: string, now: number = Date.now()): boolean {
   return now >= start && now < start + NEW_LAUNCH_DAYS * 86_400_000;
 }
 
-/** `list` (already in ranking order) with PINNED_FIRST pulled to the front. */
-export function pinFirst<T extends { slug: string }>(list: T[]): T[] {
-  const at = (s: string) => PINNED_FIRST.indexOf(s);
-  const pinned = list.filter((t) => at(t.slug) >= 0).sort((a, b) => at(a.slug) - at(b.slug));
-  return [...pinned, ...list.filter((t) => at(t.slug) < 0)];
+/**
+ * `list` (already in ranking order) with the front of the gallery pulled first:
+ * the super admin's saved order (/admin/template-order) when there is one,
+ * otherwise PINNED_FIRST. Anything not in that list keeps its ranking order after it.
+ */
+export function pinFirst<T extends { slug: string }>(list: T[], order?: readonly string[]): T[] {
+  const front = order && order.length ? order : PINNED_FIRST;
+  const pos = new Map(front.map((s, i) => [s, i]));
+  const pinned = list.filter((t) => pos.has(t.slug)).sort((a, b) => pos.get(a.slug)! - pos.get(b.slug)!);
+  return [...pinned, ...list.filter((t) => !pos.has(t.slug))];
 }
 
 /** slug → registry entry. */
