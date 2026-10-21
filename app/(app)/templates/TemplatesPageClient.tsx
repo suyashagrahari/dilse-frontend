@@ -384,7 +384,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   //  • tier — a super admin can move any template into or out of Premium;
   //  • order — most-created first (pages made, all time), registry order as
   //    the tie-break and for anything with no pages yet.
-  const { tiers, ranking } = useTemplateMeta();
+  const { tiers, ranking, order } = useTemplateMeta();
   const createdBy = useMemo(() => new Map(ranking.map((r) => [r.slug, r.created])), [ranking]);
   const ranked = useMemo(() => {
     const idx = new Map(GALLERY_LIST.map((t, i) => [t.slug, i]));
@@ -398,8 +398,9 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   // against the whole room, not the filtered view, so a badge means the same
   // thing whatever you searched for.
   const rankOf = useMemo(() => rankRooms(ranked, createdBy), [ranked, createdBy]);
-  // Display order: Dandiya and the ✦ evergreens first (PINNED_FIRST), then the ranking.
-  const visible = useMemo(() => pinFirst(ranked), [ranked]);
+  // Display order: the super admin's saved order (/admin/template-order) or, when
+  // there is none, Dandiya and the ✦ evergreens (PINNED_FIRST); then the ranking.
+  const visible = useMemo(() => pinFirst(ranked, order), [ranked, order]);
 
   const q = search.trim().toLowerCase();
   const matchBase = (t: TemplateListItem) =>

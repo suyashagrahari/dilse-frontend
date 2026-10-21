@@ -16,9 +16,11 @@ export interface TemplateMeta {
   tiers: Record<string, boolean>;
   /** Pages created per template, busiest first. */
   ranking: { slug: string; created: number }[];
+  /** Super-admin gallery order (/admin/template-order); empty = the code's PINNED_FIRST. */
+  order: string[];
 }
 
-const EMPTY: TemplateMeta = { tiers: {}, ranking: [] };
+const EMPTY: TemplateMeta = { tiers: {}, ranking: [], order: [] };
 
 let meta: TemplateMeta = EMPTY;
 let inflight: Promise<void> | null = null;
@@ -34,6 +36,7 @@ function load(fresh = false): Promise<void> {
         meta = {
           tiers: json.data.tiers && typeof json.data.tiers === "object" ? json.data.tiers : {},
           ranking: Array.isArray(json.data.ranking) ? json.data.ranking : [],
+          order: Array.isArray(json.data.order) ? json.data.order.filter((x: unknown): x is string => typeof x === "string") : [],
         };
         listeners.forEach((l) => l());
       }
@@ -44,7 +47,7 @@ function load(fresh = false): Promise<void> {
   return inflight;
 }
 
-/** For the admin panel after it changes a tier. */
+/** For the admin panel after it changes a tier or the gallery order. */
 export function refreshTemplateMeta(): Promise<void> {
   return load(true);
 }
