@@ -23,10 +23,14 @@ export const FW_ASSETS = {
     "12-floral-drape-arch-2": { src: "/wedding-v3/template3/12-floral-drape-arch-2.webp", w: 1372, h: 1600 },
     "13-pampas-grass-border": { src: "/wedding-v3/template3/13-pampas-grass-border.webp", w: 800, h: 553 },
     "card": { src: "/wedding-v3/template3/card.webp", w: 600, h: 840 },
+    /** Derived (this template): the 1200×630 art plate under the link preview (opengraph-image.tsx; JPEG, satori reads no WebP). */
+    "og-floral-base": { src: "/wedding-v3/template3/og-floral-base.jpg", w: 1200, h: 630 },
   },
   "template8": {
     "00-background-colour": { src: "/wedding-v3/template8/00-background-colour.webp", w: 1013, h: 1800 },
     "01-gold-line-art-floral-swirl": { src: "/wedding-v3/template8/01-gold-line-art-floral-swirl.webp", w: 1600, h: 1454 },
+    /** Derived (this template): the swirl at 720 px for phone-sized flourishes. */
+    "01-gold-line-art-floral-swirl-720": { src: "/wedding-v3/template8/01-gold-line-art-floral-swirl-720.webp", w: 720, h: 654 },
     "02-pink-white-rose-bouquet": { src: "/wedding-v3/template8/02-pink-white-rose-bouquet.webp", w: 800, h: 686 },
     "03-gold-ganesha": { src: "/wedding-v3/template8/03-gold-ganesha.webp", w: 415, h: 535 },
     "04-cream-mandala-diamond-pattern-tile": { src: "/wedding-v3/template8/04-cream-mandala-diamond-pattern-tile.webp", w: 320, h: 560 },
