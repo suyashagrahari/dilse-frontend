@@ -34,6 +34,10 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "wedding-invitation": dynamic(() => import("../wedding-invitation/components/WeddingInvitationExperience"), { ssr: false, loading: Loading }),
   "wedding-invitation-premium": dynamic(() => import("../wedding-invitation-premium/components/WeddingPremiumExperience"), { ssr: false, loading: Loading }),
   "royal-wedding-invitation": dynamic(() => import("../royal-wedding-invitation/components/RoyalWeddingExperience"), { ssr: false, loading: Loading }),
+  "palace-door-wedding-invitation": dynamic(() => import("../palace-door-wedding-invitation/components/PalaceDoorWeddingExperience"), { ssr: false, loading: Loading }),
+  "garden-wedding-invitation": dynamic(() => import("../garden-wedding-invitation/components/GardenWeddingExperience"), { ssr: false, loading: Loading }),
+  "floral-wedding-invitation": dynamic(() => import("../floral-wedding-invitation/components/FloralWeddingExperience"), { ssr: false, loading: Loading }),
+  "lotus-wedding-invitation": dynamic(() => import("../lotus-wedding-invitation/components/LotusWeddingExperience"), { ssr: false, loading: Loading }),
   "sorry-premium": dynamic(() => import("../sorry-premium/components/SorryPremiumExperience"), { ssr: false, loading: Loading }),
   // ✦ Premium twins
   "happy-rose-day-premium": dynamic(() => import("../happy-rose-day-premium/components/RoseDayPremiumExperience"), { ssr: false, loading: Loading }),

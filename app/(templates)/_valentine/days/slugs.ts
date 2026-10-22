@@ -26,6 +26,11 @@ export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwa
   "wedding-invitation",
   "wedding-invitation-premium",
   "royal-wedding-invitation",
+  // Four more wedding designs on Royal's limits (art served from public/wedding-v3).
+  "palace-door-wedding-invitation",
+  "garden-wedding-invitation",
+  "floral-wedding-invitation",
+  "lotus-wedding-invitation",
 ] as const;
 
 /**
@@ -124,6 +129,10 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "wedding-invitation-premium": { name: "Wedding Invitation", emoji: "💍", date: 0, month: "" },
   // Evergreen: every couple picks their own muhurat.
   "royal-wedding-invitation": { name: "Royal Wedding", emoji: "👑", date: 0, month: "" },
+  "palace-door-wedding-invitation": { name: "Palace Door Wedding", emoji: "🚪", date: 0, month: "" },
+  "garden-wedding-invitation": { name: "Mughal Garden Wedding", emoji: "🦚", date: 0, month: "" },
+  "floral-wedding-invitation": { name: "Pampas & Peony Wedding", emoji: "🌸", date: 0, month: "" },
+  "lotus-wedding-invitation": { name: "Lotus Temple Wedding", emoji: "🪷", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

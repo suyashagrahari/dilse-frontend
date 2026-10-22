@@ -137,6 +137,10 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "wedding-invitation":   { emoji: "💌", label: "Wedding invitation" },
   "wedding-invitation-premium": { emoji: "💍", label: "Wedding website" },
   "royal-wedding-invitation": { emoji: "👑", label: "Royal wedding invitation" },
+  "palace-door-wedding-invitation": { emoji: "🚪", label: "Palace door wedding invitation" },
+  "garden-wedding-invitation": { emoji: "🦚", label: "Garden wedding invitation" },
+  "floral-wedding-invitation": { emoji: "🌸", label: "Floral wedding invitation" },
+  "lotus-wedding-invitation": { emoji: "🪷", label: "Lotus wedding invitation" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
@@ -225,6 +229,22 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "royal-wedding-invitation": (r, s) => ({
     title: `👑 The palace gates are open: ${r} & ${s}'s wedding`,
     description: `A royal invitation awaits. Turn up the sound and step inside ✨`,
+  }),
+  "palace-door-wedding-invitation": (r, s) => ({
+    title: `🚪 The palace doors are opening: ${r} & ${s}'s wedding`,
+    description: `Step through carved doors into every function. Sound on ✨`,
+  }),
+  "garden-wedding-invitation": (r, s) => ({
+    title: `🦚 You're invited to a garden wedding: ${r} & ${s}`,
+    description: `Pink gazebos, a peacock and every function inside. Sound on 🌸`,
+  }),
+  "floral-wedding-invitation": (r, s) => ({
+    title: `🌸 ${r} & ${s} are getting married`,
+    description: `Pampas, peonies and every function, all on one page. Open it 🤍`,
+  }),
+  "lotus-wedding-invitation": (r, s) => ({
+    title: `🪷 The lamps are lit: ${r} & ${s}'s wedding`,
+    description: `A temple wedding invitation with every function inside. Open it 🙏`,
   }),
   "dandiya-partner": (r, s) => ({
     title: `🪔 ${r}, you've been invited to a Dandiya night`,

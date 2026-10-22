@@ -219,7 +219,15 @@ export interface DayConfig<E extends Extras = Extras> {
 }
 
 /** The registered studios (editor/studios.tsx STUDIOS). */
-export type StudioId = "bouquet" | "weddingClassic" | "weddingPremium" | "royalWedding";
+export type StudioId =
+  | "bouquet"
+  | "weddingClassic"
+  | "weddingPremium"
+  | "royalWedding"
+  | "palaceDoorWedding"
+  | "gardenWedding"
+  | "floralWedding"
+  | "lotusWedding";
 
 /** The plain form's own sections (EditSheet), in the order it draws them. */
 export type FormSectionId = "names" | "details" | "letter" | "photos" | "stickers" | "music" | "premium" | "finish";
