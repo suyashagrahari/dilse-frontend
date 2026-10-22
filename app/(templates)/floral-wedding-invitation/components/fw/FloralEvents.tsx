@@ -1,64 +1,51 @@
 "use client";
 
-// ─── The functions as illustrated panels (spec 6.3 scene 6) ──────────────────
-// Each function is its own panel: an arched "window" with a vignette picked
-// from its title (haldi = the museum marigold painting, mehendi = the floral
-// medallion, sangeet = the miniature dhol player GIF, baraat = the gold palki,
-// pheras = the pietra-dura arch, reception = a jhoomar …) over the details the
-// kit's EventsTimeline shows (time, venue, dress-code swatch, note, map and
-// calendar), plus "Save all dates". Same behaviour, the Royal look.
+// ─── The functions: a suite of stationery cards ─────────────────────────────
+// Each function is its own card from the suite: an arched window washed in
+// watercolour with a vignette picked from its title (haldi = marigold pots,
+// mehendi = banana leaves, sangeet = the peacock, baraat = the umbrella
+// bearer, the pheras = the floral drape, reception = the couple, roka = a
+// peony bouquet…), then the date, time, venue, a dress-code swatch, a note and
+// three actions (directions, calendar, WhatsApp). Cards unfold on scroll
+// (rotateX from the top edge, staggered). One column on phones, two from
+// 720 px, three from 1280 px.
 
 import { useState } from "react";
 import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, formatEventDate, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
-import type { WeddingArtId } from "../../../_wedding/art";
-import { GIF, artImg } from "./art";
+import { pic, type ArtRole } from "./art";
+import { waLink } from "./guest";
 import { MAIN_RE } from "./model";
 
-interface Vignette {
-  art: WeddingArtId;
-  /** "paint" = an opaque painting that fills the window; "line" = a cutout on the theme glow. */
-  kind: "paint" | "line";
-  gif?: string;
-  /** Crop into a painting past its museum mount. */
-  zoom?: number;
-}
-
-const VIGNETTES: [RegExp, Vignette][] = [
-  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, { art: "museum/indian-marigold", kind: "paint", zoom: 1.75 }],
-  [/mehendi|mehndi|henna|मेहंदी/i, { art: "museum/spread-floral-medallion", kind: "paint", zoom: 1.35 }],
-  [/sangeet|garba|dandiya|music|dance|cocktail|संगीत/i, { art: "museum/floral-canopy-gold-leaf", kind: "paint", gif: GIF.dhol, zoom: 1.15 }],
-  [/baraat|barat|procession|ghudchadi|sehra|milni|बारात/i, { art: "royal/palki-doli-gold-line-01", kind: "line" }],
-  [/reception|dinner|party|gala|banquet|स्वागत/i, { art: "royal/jhoomar-chandelier-gold-01", kind: "line" }],
-  [/tilak|roka|engagement|sagai|ring|सगाई/i, { art: "royal/kalash-line-01", kind: "line" }],
-  [MAIN_RE, { art: "royal/mughal-pietra-dura-arch-01", kind: "line" }],
+const VIGNETTES: [RegExp, ArtRole][] = [
+  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, "marigoldPots"],
+  [/mehendi|mehndi|henna|मेहंदी/i, "banana"],
+  [/sangeet|garba|dandiya|music|dance|cocktail|संगीत/i, "peacock"],
+  [/baraat|barat|procession|ghudchadi|sehra|milni|बारात/i, "umbrella"],
+  [/reception|dinner|party|gala|banquet|स्वागत/i, "coupleStanding"],
+  [/tilak|roka|engagement|sagai|ring|सगाई/i, "peonyPink"],
+  [/puja|pooja|path|havan|chowki|पूजा/i, "garland"],
+  [MAIN_RE, "drapeSm"],
 ];
-const FALLBACK: Vignette = { art: "museum/lotus-canopy", kind: "paint", zoom: 1.3 };
-const vignetteFor = (title: string): Vignette => VIGNETTES.find(([re]) => re.test(title))?.[1] ?? FALLBACK;
+const vignetteFor = (title: string): ArtRole => VIGNETTES.find(([re]) => re.test(title))?.[1] ?? "roses";
 
-function Icon({ d }: { d: string }) {
+export function Icon({ d }: { d: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d={d} />
     </svg>
   );
 }
-const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
-const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
+export const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
+export const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
 const CLOCK = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2";
+export const WA =
+  "M12 3.2a8.8 8.8 0 0 0-7.6 13.2L3.2 20.8l4.5-1.2A8.8 8.8 0 1 0 12 3.2zM8.6 8.4c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .6.5l.7 1.6c.1.2.1.4 0 .5-.4.8-.8.8-.6 1.2a6 6 0 0 0 2.9 2.5c.2.1.4.1.5-.1l.7-.9c.2-.2.4-.2.6-.1l1.5.7c.3.1.5.2.5.3 0 .3 0 .8-.2 1.1-.3.5-1 .9-1.6 1-.8.2-1.4.1-2.9-.5a10.4 10.4 0 0 1-4-3.5 4.6 4.6 0 0 1-1-2.4c0-.8.3-1.3.6-1.5z";
 
-function Art({ v }: { v: Vignette }) {
-  const [gifOk, setGifOk] = useState(true);
+export function WaGlyph() {
   return (
-    <div className={`fw-ev-art is-${v.kind}`} aria-hidden>
-      <span className="fw-ev-win">
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="fw-ev-img" {...artImg(v.art, { lazy: true })} style={v.zoom ? { transform: `scale(${v.zoom})` } : undefined} />
-      </span>
-      {v.gif && gifOk && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="fw-ev-gif" src={v.gif} alt="" width={200} height={200} loading="lazy" decoding="async" onError={() => setGifOk(false)} />
-      )}
-    </div>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d={WA} />
+    </svg>
   );
 }
 
@@ -67,7 +54,7 @@ export interface FloralEventsProps {
   couple: string;
   url?: string;
   locale: string;
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string };
+  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; whatsapp: string; saved: string };
 }
 
 export default function FloralEvents({ events, couple, url, locale, labels: l }: FloralEventsProps) {
@@ -89,19 +76,26 @@ export default function FloralEvents({ events, couple, url, locale, labels: l }:
           const map = mapLink(e);
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
+          const art = vignetteFor(e.title);
+          const waText = [`${e.title} · ${couple}`, [date, time].filter(Boolean).join(", "), e.venue, url].filter(Boolean).join("\n");
           return (
-            <Reveal as="li" key={key} effect="zoom" className={`fw-ev${i % 2 ? " is-alt" : ""}`}>
+            <Reveal as="li" key={key} effect="rise" delay={(i % 3) * 110} className="fw-ev fw-fold">
               <article className="fw-ev-card">
-                <Art v={vignetteFor(e.title)} />
-                <span className="fw-ev-no" aria-hidden>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
+                <div className={`fw-ev-art is-${art}`} aria-hidden>
+                  <span className="fw-ev-win">
+                    {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                    <img className="fw-ev-wash" {...pic("cloudWashSm", { lazy: true })} />
+                    {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                    <img className="fw-ev-img" {...pic(art, { lazy: true, sizes: "220px" })} />
+                  </span>
+                  <span className="fw-ev-no">{String(i + 1).padStart(2, "0")}</span>
+                </div>
                 <div className="fw-ev-body">
-                  {date && <p className="wk-eyebrow wk-ev-date">{date}</p>}
+                  {date && <p className="fw-ev-date">{date}</p>}
                   <h3 className="fw-ev-title">{e.title}</h3>
                   <p className="fw-ev-line">
                     <Icon d={CLOCK} />
-                    {time ? `${time}${end ? ` – ${end}` : ""}` : l.tba}
+                    <span>{time ? `${time}${end ? ` – ${end}` : ""}` : l.tba}</span>
                   </p>
                   {(e.venue || e.address) && (
                     <p className="fw-ev-line">
@@ -114,27 +108,28 @@ export default function FloralEvents({ events, couple, url, locale, labels: l }:
                   )}
                   {e.dressCode && (
                     <p className="fw-ev-line fw-ev-dress">
-                      {swatch && <span className="fw-ev-swatch" style={{ background: swatch }} aria-hidden />}
+                      <span className={`fw-ev-swatch${swatch ? "" : " is-none"}`} style={swatch ? { background: swatch } : undefined} aria-hidden />
                       <span>
-                        <span className="wk-ev-k">{l.dress}</span> {e.dressCode}
+                        <span className="fw-ev-k">{l.dress}</span> {e.dressCode}
                       </span>
                     </p>
                   )}
                   {e.note && <p className="fw-ev-note">{e.note}</p>}
-                  {(map || e.date) && (
-                    <div className="fw-ev-actions">
-                      {map && (
-                        <a className="wk-btn wk-btn-ghost wk-btn-sm" href={map} target="_blank" rel="noopener noreferrer">
-                          <Icon d={PIN} /> {l.directions}
-                        </a>
-                      )}
-                      {e.date && (
-                        <button type="button" className="wk-btn wk-btn-ghost wk-btn-sm" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                          <Icon d={CAL} /> {flash === key ? "Saved ✓" : l.calendar}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="fw-ev-actions">
+                    {map && (
+                      <a className="fw-chip" href={map} target="_blank" rel="noopener noreferrer">
+                        <Icon d={PIN} /> {l.directions}
+                      </a>
+                    )}
+                    {e.date && (
+                      <button type="button" className="fw-chip" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
+                        <Icon d={CAL} /> {flash === key ? `${l.saved} ✓` : l.calendar}
+                      </button>
+                    )}
+                    <a className="fw-chip fw-chip-icon" href={waLink(waText)} target="_blank" rel="noopener noreferrer" aria-label={`${l.whatsapp}: ${e.title}`}>
+                      <WaGlyph />
+                    </a>
+                  </div>
                 </div>
               </article>
             </Reveal>
@@ -142,11 +137,11 @@ export default function FloralEvents({ events, couple, url, locale, labels: l }:
         })}
       </ol>
       {list.filter((e) => e.date).length > 1 && (
-        <div className="fw-ev-all">
-          <button type="button" className="wk-btn" onClick={() => save(list, "all", `wedding-${couple}`)}>
-            <Icon d={CAL} /> {flash === "all" ? "Saved ✓" : l.saveAll}
+        <Reveal className="fw-ev-all">
+          <button type="button" className="wk-btn fw-btn" onClick={() => save(list, "all", `wedding-${couple}`)}>
+            <Icon d={CAL} /> {flash === "all" ? `${l.saved} ✓` : l.saveAll}
           </button>
-        </div>
+        </Reveal>
       )}
     </div>
   );

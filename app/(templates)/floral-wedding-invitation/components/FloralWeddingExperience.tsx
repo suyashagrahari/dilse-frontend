@@ -1,56 +1,45 @@
 "use client";
 
-// SCAFFOLD (wedding quartet): this started as a working copy of
-// royal-wedding-invitation so the template runs end to end. Rebuild it with
-// this template's own art (./assets.ts or ../assets.ts, served from
-// public/wedding-v3, never the CDN); light themes only.
-
-// ─── Royal Wedding Invitation 👑 — the guest's experience ────────────────────
+// ─── Pampas & Peony Wedding Invitation 🌸 — the guest's experience ──────────
 //
-// palace gates (tap: Ganesha glows in, the carved doors swing out in 3D,
-// light + petals, the camera pushes through) → the courtyard (scene, gold
-// mandala, lattice jharokha with the names, jhoomars, peacocks, elephants,
-// diyas, toran, gold dust) → the invitation in English + Hindi → the families
-// inside a Mughal manuscript border → the farmaan scroll with the date and a
-// mohar seal → the story → illustrated function panels → the palace venue →
-// a countdown in a gold medallion → film → masonry → good to know → RSVP →
-// blessings → the gates close on "Shubh Vivah".
+// A boho-luxe stationery suite on handmade paper. The guest is greeted by
+// name (?to=) on a wax-sealed envelope; one tap (which also starts the music)
+// cracks the seal, lifts the flap and unfolds the card → the hero: the couple
+// on a swing under a floral drape, pampas grass in the breeze, gold line-art
+// drawing itself beside their names → the invitation card (English + Hindi,
+// Shri Ganesh, the couple's portrait under a drape) → the families' place
+// cards → the save-the-date card and a flip countdown → our story, pressed
+// in an album → the functions as illustrated cards → the venue as a garden
+// folly → film → the album (masonry) → for our guests (notes, who to call,
+// shagun, live stream) → RSVP → blessings → the last page, sealed in wax,
+// with share / card download / QR.
 //
-// One long, calm scroll after one cinematic moment; every motion is
-// transform/opacity, gated on visibility, and reduced-motion aware. A
-// bilingual toggle (top-left) switches every heading and button to Hindi.
+// Every section is animated on scroll (transform/opacity only); art is
+// decoded before the opening plays; reduced motion gets instant states.
+// Light themes only (champagne · blush · powder). A bilingual toggle
+// (top-left) switches every heading and button to Hindi.
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  BlessingsWall,
-  Countdown,
-  FamiliesBlock,
-  MessageBlock,
-  RSVPBlock,
-  Reveal,
-  Section,
-  WeddingCard,
-  WeddingMasonry,
-  WeddingRoot,
-  formatEventDate,
-  formatEventTime,
-} from "../../_wedding";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { BlessingsWall, Countdown, DEFAULT_TZ_OFFSET, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, downloadWeddingIcs, formatEventTime, photoImgStyle } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
-import Gates from "./fw/Gates";
+import Envelope from "./fw/Envelope";
+import Hero from "./fw/Hero";
 import Story from "./fw/Story";
-import Courtyard from "./fw/Courtyard";
-import Farmaan from "./fw/Farmaan";
 import FloralEvents from "./fw/FloralEvents";
 import Venue from "./fw/Venue";
-import { artImg, floralArt } from "./fw/art";
+import Guests from "./fw/Guests";
+import ShareBar from "./fw/ShareBar";
 import Finale from "./fw/Finale";
+import Wipe from "./fw/Wipe";
+import { PAPER_OPACITY, pic } from "./fw/art";
 import { FW_CSS } from "./fw/css";
+import { shareInvite, shareableUrl, useGuestName } from "./fw/guest";
 import { T, readFloral, type Lang } from "./fw/model";
 
 function Film({ id, label }: { id: string; label: string }) {
   const [on, setOn] = useState(false);
   return (
-    <div className="fw-film wk-foil-border">
+    <div className="fw-film">
       {on ? (
         <iframe
           src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
@@ -62,7 +51,7 @@ function Film({ id, label }: { id: string; label: string }) {
       ) : (
         <button type="button" className="fw-film-poster" onClick={() => setOn(true)} aria-label={label}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" />
+          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" width={480} height={360} />
           <span className="fw-film-play" aria-hidden>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5.5v13l11-6.5z" />
@@ -75,26 +64,51 @@ function Film({ id, label }: { id: string; label: string }) {
   );
 }
 
+/** "20", "February", "2027", "Saturday" in the page's language. */
+function dateParts(date: string, locale: string) {
+  const [y, mo, d] = date.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, mo - 1, d, 12));
+  const f = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { timeZone: "UTC", ...o }).format(dt);
+  return { day: f({ day: "numeric" }), month: f({ month: "long" }), year: f({ year: "numeric" }), weekday: f({ weekday: "long" }) };
+}
+
 export default function FloralWeddingExperience({ data, mode, react }: ExperienceProps) {
   const m = useMemo(() => readFloral(data.extras as Record<string, unknown>, data.photos, data.recipientName, data.senderName), [data.extras, data.photos, data.recipientName, data.senderName]);
   const [lang, setLang] = useState<Lang>(m.lang);
   const s = T[lang];
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
   const couple = `${m.first} & ${m.second}`;
+  const guest = useGuestName();
   const [open, setOpen] = useState(false);
-  const look = floralArt(m.theme);
-  // Spec 7.1.11: on low-end phones drop the ambient particles and the parallax.
+  const [savedMain, setSavedMain] = useState(false);
+  // Low-end phones: drop the ambient petals and the parallax.
   const [lite] = useState(() => {
     if (typeof navigator === "undefined") return false;
     const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
     return (navigator.hardwareConcurrency || 8) <= 4 && mem !== undefined && mem <= 3;
   });
 
-  const dateLine = m.main?.date ? formatEventDate(m.main.date, locale) : "";
-  const shortDate = m.main?.date ? m.main.date.split("-").reverse().join(" · ") : "";
+  const parts = m.main?.date ? dateParts(m.main.date, locale) : null;
+  const dateLine = parts ? `${parts.weekday} · ${parts.day} ${parts.month} ${parts.year}` : "";
+  const shortDate = parts ? `${parts.day} · ${parts.month} · ${parts.year}` : "";
   const mainTime = m.main?.time ? formatEventTime(m.main.time, locale) : "";
-  // Client-only component (ssr: false), so the URL is known on the first render.
-  const [url] = useState(() => (typeof window === "undefined" ? "" : window.location.href.split("#")[0]));
+  const venueLine = [m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter((v, i, a) => v && a.indexOf(v) === i).join(" · ");
+  // Client-only component (ssr: false): the URL is known on the first render.
+  const [url] = useState(() => shareableUrl());
+
+  // ?to= → the RSVP's name field (the kit block has no default-name prop yet):
+  // set through the native setter so React's onChange sees it; never over a typed value.
+  const rsvpRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!guest || !open) return;
+    const t = window.setTimeout(() => {
+      const input = rsvpRef.current?.querySelector<HTMLInputElement>('input:not([type]), input[type="text"]');
+      if (!input || input.value) return;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, guest);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [guest, open]);
 
   const completed = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -116,19 +130,27 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
     react("opened");
   };
 
-  const bride = { ...m.bride_, title: s.brideSide };
-  const groom = { ...m.groom_, title: s.groomSide };
-  const hasFamilies = bride.names.length > 0 || groom.names.length > 0;
-  const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 👑` : `You're invited to the wedding of ${couple} 👑`;
+  const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 🌸` : `You're invited to the wedding of ${couple} 🌸`;
+  const share = () => void shareInvite(shareText, url);
+  const saveMain = m.main?.date
+    ? () => {
+        if (downloadWeddingIcs([m.main!], { couple, url, tz: DEFAULT_TZ_OFFSET }, `${m.main!.title || "wedding"}-${couple}`)) {
+          setSavedMain(true);
+          window.setTimeout(() => setSavedMain(false), 2400);
+        }
+      }
+    : undefined;
+
+  const sides = m.familyFirst === "bride" ? [{ ...m.bride_, title: s.brideSide, art: "peonyPink" as const }, { ...m.groom_, title: s.groomSide, art: "peonyBeige" as const }] : [{ ...m.groom_, title: s.groomSide, art: "peonyBeige" as const }, { ...m.bride_, title: s.brideSide, art: "peonyPink" as const }];
+  const hasFamilies = sides.some((x) => x.names.length > 0);
+  const hasGuests = m.things.length > 0 || m.contacts.length > 0 || !!m.upi || !!m.liveUrl;
+  const rootStyle = { minHeight: "100dvh", ["--fw-paper-o" as string]: String(PAPER_OPACITY[m.theme] ?? 0.6) } as CSSProperties;
 
   return (
-    <WeddingRoot theme={m.theme} className={`fw-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}`} style={{ minHeight: "100dvh" }}>
+    <WeddingRoot theme={m.theme} className={`fw-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={rootStyle}>
       <style>{FW_CSS}</style>
-      <div className="fw-backdrop" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg(look.plate, { one: true })} />
-      </div>
-      <Gates first={m.first} second={m.second} dateLine={shortDate} s={s} lang={lang} invocation={m.invocation} look={look} onOpened={onOpened} />
+      <div className="fw-paper" aria-hidden />
+      <Envelope first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} onOpened={onOpened} />
 
       <div className="fw-lang" role="group" aria-label="Language">
         <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
@@ -139,167 +161,235 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
         </button>
       </div>
 
-      {/* ── The courtyard (hero) ────────────────────────────────────────── */}
-      <Courtyard
-        open={open}
-        look={look}
-        s={s}
-        lang={lang}
-        first={m.first}
-        second={m.second}
-        photo={m.hero}
-        dateLine={dateLine}
-        time={mainTime}
-        muhurat={m.muhurat}
-        venue={[m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ")}
-      />
+      <Hero open={open} s={s} lang={lang} first={m.first} second={m.second} guest={guest} dateLine={dateLine} time={mainTime} venue={venueLine} onSaveDate={saveMain} onShare={share} saved={savedMain} />
 
-      {/* ── The invitation ──────────────────────────────────────────────── */}
-      <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal">
-        <WeddingCard paper corners="corner-mughal" className="fw-invite">
-          <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament="kalash" heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
-        </WeddingCard>
+      {/* ── The invitation card ─────────────────────────────────────────── */}
+      <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="wide" className="fw-sec fw-sec-invite">
+        <div className={`fw-invite${m.couple ? " has-portrait" : ""}`}>
+          <span className="fw-mandala" aria-hidden />
+          {m.couple && (
+            <Reveal effect="zoom" className="fw-portrait">
+              <span className="fw-portrait-pic">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={m.couple.url} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.couple)} />
+              </span>
+              <span className="fw-portrait-drape" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img {...pic("drape", { lazy: true, sizes: "(min-width: 1024px) 420px, 80vw" })} />
+              </span>
+            </Reveal>
+          )}
+          <Reveal className="fw-sheet fw-fold">
+            <span className="fw-sheet-roses is-tl" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...pic("roses", { lazy: true })} />
+            </span>
+            <span className="fw-sheet-roses is-br" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...pic("roses", { lazy: true })} />
+            </span>
+            <Wipe role="swirl" className="fw-sheet-swirl" lazy dir="rtl" sizes="300px" />
+            {m.invocation && (
+              <div className="fw-ganesha">
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img {...pic("ganesha", { lazy: true })} />
+                <p lang="hi">{s.mantra}</p>
+              </div>
+            )}
+            <p className="fw-sheet-k" lang={lang}>
+              {s.togetherWith}
+            </p>
+            <p className="fw-sheet-names">
+              {m.first} <span>&amp;</span> {m.second}
+            </p>
+            <div className={`fw-sheet-text${m.hindiMessage ? " is-two" : ""}`}>
+              <div className="fw-sheet-col">
+                {data.letter
+                  .split(/\n\s*\n/)
+                  .map((p: string) => p.trim())
+                  .filter(Boolean)
+                  .map((p: string, i: number) => (
+                    <p key={i}>{p}</p>
+                  ))}
+              </div>
+              {m.hindiMessage && (
+                <div className="fw-sheet-col is-deva" lang="hi">
+                  {m.hindiMessage
+                    .split(/\n\s*\n/)
+                    .map((p) => p.trim())
+                    .filter(Boolean)
+                    .map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
+                </div>
+              )}
+            </div>
+            <p className="fw-sheet-sign" lang={lang}>
+              {s.upasthiti}
+            </p>
+          </Reveal>
+        </div>
       </Section>
 
-      {/* ── Families, inside a Mughal manuscript border ─────────────────── */}
+      {/* ── Families: two place cards ────────────────────────────────────── */}
       {(hasFamilies || m.blessingsOf) && (
-        <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal">
-          <div className="fw-hashiya">
-            <span className="fw-band fw-band-top" aria-hidden />
-            <div className="fw-hashiya-frame">
-              <div className="fw-hashiya-in">
-                {m.blessingsOf && (
-                  <Reveal className="fw-blessings-of">
-                    <p className="wk-eyebrow" lang={lang}>
-                      {s.blessingsOf}
+        <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span>{couple}</span>} ornament={null} width="normal" className="fw-sec">
+          {m.blessingsOf && (
+            <Reveal className="fw-blessed">
+              <p className="wk-eyebrow" lang={lang}>
+                {s.blessingsOf}
+              </p>
+              <p className="fw-blessed-names">{m.blessingsOf}</p>
+            </Reveal>
+          )}
+          {hasFamilies && (
+            <div className="fw-fams">
+              {sides.map((side, i) => (
+                <Reveal key={i} className="fw-fam fw-fold" delay={i * 140}>
+                  <span className={`fw-fam-flower is-${i ? "r" : "l"}`} aria-hidden>
+                    {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                    <img {...pic(side.art, { lazy: true })} />
+                  </span>
+                  {side.photo && (
+                    <span className="fw-fam-photo">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={side.photo} alt={side.title} loading="lazy" decoding="async" />
+                    </span>
+                  )}
+                  <p className="wk-eyebrow" lang={lang}>
+                    {side.title}
+                  </p>
+                  {side.names.map((n, k) => (
+                    <p key={k} className="fw-fam-names">
+                      {n}
                     </p>
-                    <p className="fw-blessings-names">{m.blessingsOf}</p>
-                  </Reveal>
-                )}
-                {hasFamilies && <FamiliesBlock bride={bride} groom={groom} first={m.familyFirst} heading="" photos />}
-              </div>
+                  ))}
+                  {side.note && <p className="fw-fam-note">{side.note}</p>}
+                </Reveal>
+              ))}
             </div>
-            <span className="fw-band fw-band-bottom" aria-hidden />
-          </div>
+          )}
         </Section>
       )}
 
-      {/* ── The farmaan: the date ───────────────────────────────────────── */}
-      {m.main?.date && (
-        <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} title={<span lang={lang}>{s.shubh}</span>} ornament={null} width="narrow">
-          <Farmaan s={s} lang={lang} locale={locale} date={m.main.date} time={mainTime} muhurat={m.muhurat} venue={m.main.venue} first={m.first} second={m.second} />
+      {/* ── Save the date + countdown ───────────────────────────────────── */}
+      {m.main?.date && parts && (
+        <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} ornament={null} width="normal" className="fw-sec fw-sec-date">
+          <Reveal effect="zoom" className="fw-datecard">
+            <span className="fw-datecard-tile" aria-hidden />
+            <p className="fw-datecard-wd">{parts.weekday}</p>
+            <div className="fw-datecard-row">
+              <span className="fw-datecard-m">{parts.month}</span>
+              <span className="fw-datecard-d">{parts.day}</span>
+              <span className="fw-datecard-y">{parts.year}</span>
+            </div>
+            {(mainTime || m.muhurat) && <p className="fw-datecard-t">{[mainTime, m.muhurat].filter(Boolean).join(" · ")}</p>}
+            {m.main.venue && <p className="fw-datecard-v">{m.main.venue}</p>}
+          </Reveal>
+          <Reveal className="fw-count" delay={120}>
+            <p className="wk-eyebrow" lang={lang}>
+              {s.countdown}
+            </p>
+            <Countdown date={m.main.date} time={m.main.time || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
+          </Reveal>
+          {saveMain && (
+            <Reveal className="fw-center" delay={200}>
+              <button type="button" className="wk-btn wk-btn-ghost fw-btn" onClick={saveMain} lang={lang}>
+                {savedMain ? `${s.saved} ✓` : s.calendar}
+              </button>
+            </Reveal>
+          )}
         </Section>
       )}
 
       {/* ── Our story ───────────────────────────────────────────────────── */}
       {m.story.length > 0 && (
-        <Section id="story" eyebrow={<span lang={lang}>{s.storyEyebrow}</span>} title={<span lang={lang}>{s.story}</span>} ornament="divider-mandala" width="normal">
+        <Section id="story" eyebrow={<span lang={lang}>{s.storyEyebrow}</span>} title={<span lang={lang}>{s.story}</span>} ornament={null} width="normal" className="fw-sec">
           <Story chapters={m.story} />
         </Section>
       )}
 
       {/* ── Functions ───────────────────────────────────────────────────── */}
       {m.events.length > 0 && (
-        <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="normal">
-          <FloralEvents events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba }} />
+        <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament={null} width="wide" className="fw-sec">
+          <FloralEvents events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp, saved: s.saved }} />
         </Section>
       )}
 
-      {/* ── The palace venue ────────────────────────────────────────────── */}
+      {/* ── The venue ───────────────────────────────────────────────────── */}
       {m.main?.venue && (
-        <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal">
-          <Venue event={m.main} look={look} directions={s.directions} />
-        </Section>
-      )}
-
-      {/* ── Countdown, in a gold medallion ─────────────────────────────── */}
-      {m.main?.date && (
-        <Section id="countdown" eyebrow={<span lang={lang}>{s.countdown}</span>} ornament={null} width="narrow" className="fw-count">
-          <Reveal effect="zoom" className="fw-medallion">
-            <span className="fw-medallion-ring" aria-hidden>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...artImg("gold/gold-lotus-ring-frame-01", { lazy: true })} />
-            </span>
-            <span className="fw-medallion-disc" aria-hidden />
-            <div className="fw-medallion-in">
-              <Countdown date={m.main.date} time={m.main.time || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
-            </div>
-          </Reveal>
-          {(m.muhurat || dateLine) && (
-            <Reveal as="p" className="fw-count-line" delay={120}>
-              {m.muhurat || dateLine}
-            </Reveal>
-          )}
+        <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal" className="fw-sec">
+          <Venue event={m.main} directions={s.directions} gettingThere={m.gettingThere} gettingThereLabel={s.gettingThere} mapLabel={s.showMap} />
         </Section>
       )}
 
       {/* ── Pre-wedding film ────────────────────────────────────────────── */}
       {m.videoId && (
-        <Section id="film" eyebrow={<span lang={lang}>{s.film}</span>} ornament={null} width="normal">
+        <Section id="film" eyebrow={<span lang={lang}>{s.film}</span>} ornament={null} width="normal" className="fw-sec">
           <Reveal effect="zoom">
             <Film id={m.videoId} label={s.play} />
           </Reveal>
         </Section>
       )}
 
-      {/* ── Gallery ─────────────────────────────────────────────────────── */}
+      {/* ── The album ───────────────────────────────────────────────────── */}
       {m.gallery.length > 0 && (
-        <Section id="gallery" eyebrow={<span lang={lang}>{s.gallery}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament="divider-scroll" width="wide">
-          <WeddingMasonry photos={m.gallery} mask="arch" frame="foil" tileCaptions label={s.gallery} />
+        <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament={null} width="wide" className="fw-sec fw-sec-gallery">
+          <WeddingMasonry photos={m.gallery} mask="arch" frame="mat" tileCaptions label={s.gallery} />
         </Section>
       )}
 
-      {/* ── Good to know ────────────────────────────────────────────────── */}
-      {(m.things.length > 0 || m.gettingThere) && (
-        <Section id="good-to-know" eyebrow={<span lang={lang}>{s.goodToKnow}</span>} ornament={null} width="normal">
-          <ul className="fw-know">
-            {m.things.map((t, i) => (
-              <Reveal as="li" key={i} className="wk-card wk-foil-border fw-know-i" delay={i * 70}>
-                {t.head && <p className="fw-know-h">{t.head}</p>}
-                <p className="fw-know-t">{t.text}</p>
-              </Reveal>
-            ))}
-            {m.gettingThere && (
-              <Reveal as="li" className="wk-card wk-foil-border fw-know-i fw-know-wide" delay={m.things.length * 70}>
-                <p className="fw-know-h" lang={lang}>
-                  {s.gettingThere}
-                </p>
-                <p className="fw-know-t">{m.gettingThere}</p>
-              </Reveal>
-            )}
-          </ul>
+      {/* ── For our guests ──────────────────────────────────────────────── */}
+      {hasGuests && (
+        <Section id="good-to-know" eyebrow={<span lang={lang}>{s.guestsEyebrow}</span>} title={<span lang={lang}>{s.goodToKnow}</span>} ornament={null} width="normal" className="fw-sec">
+          <Guests s={s} lang={lang} things={m.things} contacts={m.contacts} upi={m.upi} liveUrl={m.liveUrl} main={m.main} couple={couple} />
         </Section>
       )}
 
       {/* ── RSVP ────────────────────────────────────────────────────────── */}
-      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow">
-        <Reveal as="p" className="fw-upasthiti">
-          <span lang={lang}>{s.upasthiti}</span>
-        </Reveal>
-        <Reveal>
-          <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
-        </Reveal>
+      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="narrow" className="fw-sec fw-sec-rsvp">
+        <span className="fw-rsvp-peony" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...pic("peonyPink", { lazy: true })} />
+        </span>
+        <div ref={rsvpRef} className="fw-rsvp">
+          {guest && (
+            <p className="fw-rsvp-dear" lang={lang}>
+              {s.dear} {guest},
+            </p>
+          )}
+          <Reveal className="fw-fold">
+            <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
+          </Reveal>
+        </div>
       </Section>
 
       {/* ── Blessings ───────────────────────────────────────────────────── */}
       {m.blessings && (
-        <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal">
+        <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament={null} width="normal" className="fw-sec fw-sec-bless">
           <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
         </Section>
       )}
 
       <div ref={endRef} />
       <Finale
-        seal={T.en.shubh}
         sealHi={T.hi.shubh}
+        seal={T.en.shubh}
         closing={s.closing}
         endLine={data.endLine}
         first={m.first}
         second={m.second}
         hashtag={m.hashtag}
         lang={lang}
-        whatsapp={s.whatsapp}
-        shareText={shareText}
+        share={
+          <ShareBar
+            s={s}
+            lang={lang}
+            shareText={shareText}
+            fileName={`${m.first}-${m.second}-invitation`}
+            card={{ first: m.first, second: m.second, dateLine, time: mainTime, venue: venueLine, invocation: m.invocation, labels: { together: s.togetherWith, married: s.gettingMarried, scan: s.scan, mantra: s.mantra } }}
+          />
+        }
       />
     </WeddingRoot>
   );

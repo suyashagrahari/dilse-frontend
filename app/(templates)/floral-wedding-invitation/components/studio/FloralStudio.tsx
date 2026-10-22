@@ -1,34 +1,37 @@
 "use client";
 
-// SCAFFOLD (wedding quartet): this started as a working copy of
-// royal-wedding-invitation so the template runs end to end. Rebuild it with
-// this template's own art (./assets.ts or ../assets.ts, served from
-// public/wedding-v3, never the CDN); light themes only.
-
-// ─── Royal Wedding Invitation — the editor (the whole form) ──────────────────
+// ─── Pampas & Peony Wedding Invitation — the editor (the whole form) ────────
 //
-// Short on purpose. On top, "Describe your wedding" (the AI fills names,
-// families, five functions with dress codes, the English + Hindi invitation,
-// the story and good-to-know). Then: the couple + the big day → functions →
-// photos (one pool of 40: the gallery; story chapters and family cards point
-// into it) → the invitation → theme & music. Everything else (story,
-// family notes/photos, good to know, film, RSVP settings, closing line,
-// password) sits behind "More details". Each section carries
-// id="vs-sec-<id>" so the sheet's side nav and Save's "jump to the gap" work.
+// A stationery-suite studio in the template's own light palette (handmade
+// ivory, dusty rose, gold). On top, "Describe your wedding" (the AI fills
+// names, families, five functions with dress codes, the English + Hindi
+// invitation, the story and one contact person). Then seven steps:
+// the couple (+ the portrait under the drape, framed with PhotoCropper) →
+// functions → photos (one pool of 40: the gallery; story chapters, family
+// cards and the portrait point into it; MasonryEditor sizes / crops / zooms
+// each) → the invitation → theme & music → guests & sharing (who to call,
+// shagun by UPI, live stream, personal ?to= links) → more details (story,
+// families, good to know, film, RSVP settings, closing line, password).
+// Each section carries id="vs-sec-<id>" so the sheet's side nav and Save's
+// "jump to the gap" work.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
 import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
+import PhotoCropper, { clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { LovePhoto } from "../../../_valentine/types";
-import { FW_LIMITS, floralWeddingDay } from "../../../_valentine/days/floral-wedding-invitation";
-import { MAIN_RE, swatchFor } from "../fw/model";
+import { API_URL } from "@/lib/config";
+import { FW_CONTACTS_MAX, FW_LIMITS, floralWeddingDay } from "../../../_valentine/days/floral-wedding-invitation";
+import { MAIN_RE, UPI_RE, phoneOf, swatchFor } from "../fw/model";
+import { cleanGuestName, copyText, personalLink, waLink } from "../fw/guest";
 
 const SLUG = "floral-wedding-invitation";
 type Row = Record<string, unknown>;
 type Chapter = { when: string; title: string; line: string; photo: number };
+type Contact = { name: string; relation: string; phone: string };
 
 const DEMO = floralWeddingDay.demo.extras;
 
@@ -43,8 +46,8 @@ const QUICK_FUNCTIONS: { title: string; dress: string; color: string }[] = [
   { title: "Cocktail", dress: "Cocktail chic", color: "#1C1C24" },
   { title: "Reception", dress: "Black tie", color: "#1C1C24" },
 ];
-const SWATCHES = ["#F2C94C", "#4F9B6A", "#E86A92", "#A3122B", "#7B3FA0", "#2E5AAC", "#EE8A2E", "#F3EBDD", "#1C1C24", "#C9A24A"];
-const AI_CHIPS = ["Make it formal", "Make it warm", "Add Hindi", "Mention our families", "Keep it short"];
+const SWATCHES = ["#F2C94C", "#9DB89A", "#E7A3AE", "#C9A0B4", "#F1E6D6", "#EE9A5E", "#A3122B", "#6F8FC2", "#2A2622", "#C9A24A"];
+const AI_CHIPS = ["Make it warm", "Make it formal", "Add Hindi", "Mention our families", "Keep it short"];
 
 const newId = (taken: Set<string>) => {
   for (;;) {
@@ -93,11 +96,12 @@ function Field({ label, hint, children, htmlFor, count }: { label: string; hint?
   );
 }
 
-function Head({ n: num, title, sub }: { n: number | string; title: string; sub?: string }) {
+function Head({ n: num, title, sub, icon }: { n: number | string; title: string; sub?: string; icon?: string }) {
   return (
-    <header className="vs-secHead">
-      <span className="vs-secN" aria-hidden>
-        {num}
+    <header className="vs-secHead fws-head">
+      <span className="vs-secN fws-secN" aria-hidden>
+        {icon ? <span className="fws-secI">{icon}</span> : num}
+        {icon && <small>{num}</small>}
       </span>
       <div style={{ minWidth: 0 }}>
         <h3 className="vs-secH">{title}</h3>
@@ -107,22 +111,45 @@ function Head({ n: num, title, sub }: { n: number | string; title: string; sub?:
   );
 }
 
-/** A photo from the pool (1-based), "none" (0), or a new upload appended to the pool. */
-function PhotoPick({ value, photos, onPick, onUpload, label }: { value: number; photos: LovePhoto[]; onPick: (k: number) => void; onUpload: (f: File) => void; label: string }) {
+/**
+ * A photo from the pool (1-based), "none" (0), or a new upload appended to the
+ * pool — and "Frame" opens PhotoCropper on it (drag to set the focus, pinch /
+ * slider to zoom) in the exact shape the guest page shows it (`aspect`).
+ */
+function PhotoPick({ value, photos, onPick, onUpload, onCrop, label, aspect }: { value: number; photos: LovePhoto[]; onPick: (k: number) => void; onUpload: (f: File) => void; onCrop?: (k: number, c: Crop) => void; label: string; aspect?: number }) {
   const [open, setOpen] = useState(false);
+  const [framing, setFraming] = useState(false);
   const cur = value >= 1 && value <= photos.length ? photos[value - 1] : null;
   const file = useRef<HTMLInputElement>(null);
   return (
     <div className="fws-pick">
-      <button type="button" className="fws-pick-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        {cur ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cur.url} alt="" />
-        ) : (
-          <span aria-hidden>＋</span>
+      <div className="fws-pick-row">
+        <button type="button" className="fws-pick-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+          {cur ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cur.url} alt="" style={{ objectPosition: `${cur.cropX ?? 50}% ${cur.cropY ?? 50}%` }} />
+          ) : (
+            <span aria-hidden>＋</span>
+          )}
+          <span>{cur ? `${label}: photo ${value}` : `${label}: add a photo`}</span>
+        </button>
+        {cur && onCrop && aspect && (
+          <button type="button" className="fws-frame" onClick={() => setFraming(true)}>
+            ✥ Frame &amp; zoom
+          </button>
         )}
-        <span>{cur ? `${label}: photo ${value}` : `${label}: add a photo`}</span>
-      </button>
+      </div>
+      {cur && onCrop && aspect && (
+        <PhotoCropper
+          open={framing}
+          src={cur.url}
+          crop={clampCrop({ x: cur.cropX ?? 50, y: cur.cropY ?? 50, scale: cur.scale ?? 100 })}
+          aspect={aspect}
+          title={label}
+          onChange={(c) => onCrop(value, c)}
+          onClose={() => setFraming(false)}
+        />
+      )}
       {open && (
         <div className="fws-pick-strip" role="listbox" aria-label={label}>
           <button type="button" className={`fws-pick-none${value === 0 ? " is-on" : ""}`} onClick={() => { onPick(0); setOpen(false); }}>
@@ -157,11 +184,69 @@ function PhotoPick({ value, photos, onPick, onUpload, label }: { value: number; 
   );
 }
 
+/** "Send to guests": a personal ?to= link per family (needs the published link). */
+function PersonalLinks({ owner, couple }: { owner: StudioProps["owner"]; couple: string }) {
+  const [base, setBase] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [copied, setCopied] = useState(false);
+  const pageId = owner?.pageId ?? null;
+  const token = owner?.token ?? null;
+  const published = !!owner?.published;
+  useEffect(() => {
+    if (!published || !pageId || !token) return;
+    let live = true;
+    fetch(`${API_URL}/${SLUG}-pages/${pageId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((j) => {
+        const u = j?.data?.shareUrl;
+        if (live && typeof u === "string" && /^https?:\/\//.test(u)) setBase(u);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [published, pageId, token]);
+  const clean = cleanGuestName(name);
+  const link = base ? personalLink(base, clean) : "";
+  const text = `${clean ? `Dear ${clean}, you're` : "You're"} invited to the wedding of ${couple} 🌸`;
+  if (!published || !base) {
+    return <p className="fws-hint fws-note">Publish your invitation first. Then come back here to make a personal link for each family: it greets them by name on the envelope.</p>;
+  }
+  return (
+    <div className="fws-links">
+      <div className="fws-links-row">
+        <input className="vs-input" value={name} maxLength={40} placeholder="e.g. Sharma family" aria-label="Guest's name" onChange={(e) => setName(e.target.value)} />
+      </div>
+      <p className="fws-link-out" aria-live="polite">
+        {link}
+      </p>
+      <div className="fws-links-row">
+        <button
+          type="button"
+          className="fws-chip"
+          onClick={async () => {
+            if (await copyText(link)) {
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1800);
+            }
+          }}
+        >
+          {copied ? "Copied ✓" : "Copy link"}
+        </button>
+        <a className="fws-chip fws-chip-wa" href={waLink(`${text}\n${link}`)} target="_blank" rel="noopener noreferrer">
+          Send on WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, owner }: StudioProps) {
   const x = mf.extras as Row;
   const events = useMemo(() => (Array.isArray(x.events) ? (x.events as Row[]) : []), [x.events]);
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
+  const contacts = useMemo(() => (Array.isArray(x.contacts) ? (x.contacts as Contact[]) : []), [x.contacts]);
   const photos = mf.photos;
   const set = updateExtra;
 
@@ -211,7 +296,16 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
     const touched = (prefix: string) => [...filled].some((p) => p.startsWith(prefix));
     const cur = latest.current.extras as Row;
     const dEvents = DEMO.events as unknown as Row[];
-    const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : []).filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
+    const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : [])
+      // A row the AI rewrote keeps none of the demo couple's details it did not write itself.
+      .map((e, i) => {
+        if (!touched(`extras.events[${i}]`)) return e;
+        const d = dEvents[i] ?? {};
+        const out = { ...e };
+        for (const k of ["time", "endTime", "venue", "address", "mapUrl", "dressCode", "dressColor", "note"]) if (!filled.has(`extras.events[${i}].${k}`) && s(e[k]) && s(e[k]) === s(d[k])) out[k] = "";
+        return out;
+      })
+      .filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
     const dStory = DEMO.story as unknown as Row[];
     const st = (Array.isArray(cur.story) ? (cur.story as Row[]) : [])
       // A moment the AI rewrote keeps none of the demo couple's words it did not write itself.
@@ -222,12 +316,24 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
         for (const k of ["when", "title", "line"]) if (!filled.has(`extras.story[${i}].${k}`) && s(c[k]) && s(c[k]) === s(d[k])) out[k] = "";
         return out;
       })
-      .filter((c, i) => touched(`extras.story[${i}]`) || !same(c, dStory[i], ["title", "line"]));
+      // The demo's last chapter ("Forever begins") is the couple's own words for any wedding: it stays.
+      .filter((c, i) => touched(`extras.story[${i}]`) || !same(c, dStory[i], ["title", "line"]) || i === dStory.length - 1);
+    const dContacts = DEMO.contacts as unknown as Row[];
+    const cs = (Array.isArray(cur.contacts) ? (cur.contacts as Row[]) : []).filter((c, i) => touched(`extras.contacts[${i}]`) || !same(c, dContacts[i], ["name", "phone"]));
     if (fill.filled.length) {
-      set("events", (evs.length ? evs : (cur.events as Row[])).map((e) => ({ ...e, time: toHHMM(s(e.time)), endTime: toHHMM(s(e.endTime)) })));
+      // The model often leaves a function's dress code empty: give it the custom one for that function (and its swatch).
+      const custom = (t: string) => QUICK_FUNCTIONS.find((q) => t.toLowerCase().includes(q.title.toLowerCase().replace(/ \(.*\)$/, "")));
+      set(
+        "events",
+        (evs.length ? evs : (cur.events as Row[])).map((e) => {
+          const q = !s(e.dressCode).trim() ? custom(s(e.title)) : undefined;
+          return { ...e, time: toHHMM(s(e.time)), endTime: toHHMM(s(e.endTime)), ...(q ? { dressCode: q.dress, dressColor: q.color } : {}) };
+        }),
+      );
       const L = latest.current.letter;
       if (/<[^>]+>/.test(L)) updateMf("letter", plain(L));
       set("story", st);
+      set("contacts", cs.map((c) => ({ name: s(c.name), relation: s(c.relation), phone: s(c.phone) })));
       if (!touched("extras.things") && JSON.stringify(cur.things) === JSON.stringify(DEMO.things)) set("things", []);
       for (const k of ["blessingsOf", "brideNote", "groomNote", "muhurat", "hashtag", "gettingThere"] as const) {
         if (!touched(`extras.${k}`) && cur[k] === DEMO[k]) set(k, "");
@@ -258,8 +364,10 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
       const cur = latest.current.extras as Row;
       const bp = where(n(cur.bridePhoto));
       const gp = where(n(cur.groomPhoto));
+      const cp = where(n(cur.couplePhoto));
       if (bp !== n(cur.bridePhoto)) set("bridePhoto", bp);
       if (gp !== n(cur.groomPhoto)) set("groomPhoto", gp);
+      if (cp !== n(cur.couplePhoto)) set("couplePhoto", cp);
       const st = (Array.isArray(cur.story) ? (cur.story as Chapter[]) : []).map((c) => ({ ...c, photo: where(n(c.photo)) }));
       if (st.some((c, i) => c.photo !== n((cur.story as Chapter[])[i]?.photo))) set("story", st);
     },
@@ -270,6 +378,12 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
     const capped = next.slice(0, FW_LIMITS.photos);
     updateMf("photos", capped);
     remapRefs(prev, capped);
+  };
+  /** PhotoCropper → the pool photo's focal point + zoom (the same fields MasonryEditor writes). */
+  const cropPhoto = (k: number, c: Crop) => {
+    const cur = latest.current.photos;
+    if (k < 1 || k > cur.length) return;
+    updateMf("photos", cur.map((p, i) => (i === k - 1 ? { ...p, cropX: Math.round(c.x), cropY: Math.round(c.y), scale: Math.round(c.scale) } : p)));
   };
   const uploadTo = async (f: File, apply: (k: number) => void) => {
     try {
@@ -308,6 +422,9 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
   };
   const [openEv, setOpenEv] = useState<number | null>(null);
 
+  // Shagun is off by default; the switch shows the fields (a saved id keeps it on).
+  const [shagunOn, setShagunOn] = useState(() => !!s(x.upiId));
+
   // ── Owner: guest replies (a saved page; StudioProps.owner) ─────────────────
   const pageId = owner?.pageId ?? null;
   const token = owner?.token ?? null;
@@ -329,7 +446,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 
       {ai?.available && fill && (
         <section className="fws-ai" aria-labelledby="fws-ai-h">
-          <p className="fws-ai-k">✦ AI</p>
+          <p className="fws-ai-k">✦ Write it for me</p>
           <h3 className="fws-ai-h" id="fws-ai-h">
             Describe your wedding in a few lines
           </h3>
@@ -340,7 +457,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
             value={desc}
             maxLength={1500}
             onChange={(e) => setDesc(e.target.value)}
-            placeholder="Ananya and Arjun are getting married on 12 Feb 2027 at The Leela Palace, Udaipur. Haldi and Mehendi on the 10th, Sangeet on the 11th, pheras at 7 pm, reception on the 13th in Delhi. We met at college in Pune in 2018. Keep it warm, a little royal, and add a Hindi line."
+            placeholder="Saanvi and Advait are getting married on 20 Feb 2027 at Amber Valley Farms, Jaipur. Haldi and Mehendi on the 18th, Sangeet on the 19th, pheras at 6:30 pm, reception on the 21st. Her parents are Ritu and Alok Malhotra, his are Shalini and Rajeev Kapoor. We met at a bus stop in Pune in 2018. For questions call Rohan (her brother) on 98290 12345. Keep it warm and add a Hindi line."
             aria-label="Describe your wedding"
           />
           <div className="fws-chips">
@@ -363,7 +480,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 
       {/* ── The couple ─────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-names" aria-label="The couple">
-        <Head n={1} title="The couple" sub="Names as you'd like them printed." />
+        <Head n={1} icon="🌸" title="The couple" sub="Names as you'd like them printed, and the big day." />
         <div className="vs-row2">
           <Field label="Bride's name" htmlFor="fws-bride">
             <input id="fws-bride" className="vs-input" value={mf.recipientName} maxLength={30} placeholder="e.g. Ananya" onChange={(e) => updateMf("recipientName", e.target.value)} />
@@ -391,6 +508,9 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
             <input id="fws-gf" className="vs-input" value={s(x.groomFamily)} maxLength={120} placeholder="e.g. Mrs. & Mr. Vikram Mehta" onChange={(e) => set("groomFamily", e.target.value)} />
           </Field>
         </div>
+        <p className="fws-sub">Your portrait under the floral drape (optional)</p>
+        <p className="fws-hint">Shown beside the invitation card. Without one, the illustrated couple on the swing carries the page.</p>
+        <PhotoPick label="Couple portrait" value={n(x.couplePhoto)} photos={photos} aspect={0.73} onPick={(k) => set("couplePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("couplePhoto", k))} onCrop={cropPhoto} />
         {main && (
           <>
             <p className="fws-sub">The big day · used for the countdown and the calendar invites ({s(main.title) || "the wedding"})</p>
@@ -411,7 +531,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 
       {/* ── Functions ──────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-details" aria-label="Functions">
-        <Head n={2} title="Functions" sub={`Add, remove or reorder (up to ${FW_LIMITS.events}). Each one gets its own map, timings, dress code and calendar button.`} />
+        <Head n={2} icon="🪔" title="Functions" sub={`Add, remove or reorder (up to ${FW_LIMITS.events}). Each one gets its own map, timings, dress code and calendar button.`} />
         <ol className="fws-evs">
           {events.map((e, i) => {
             const isOpen = openEv === i;
@@ -505,13 +625,13 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 
       {/* ── Photos ─────────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-photos" aria-label="Photos">
-        <Head n={3} title="Photos" sub={`Up to ${FW_LIMITS.photos}. Any shape works. Tap a photo to resize it or set its focus. Drag to reorder. Photos you use in your story or on a family card don't repeat in the gallery.`} />
+        <Head n={3} icon="📸" title="Photos" sub={`Up to ${FW_LIMITS.photos}. Any shape works. Tap a photo to resize it or set its focus. Drag to reorder. Photos you use in your story or on a family card don't repeat in the gallery.`} />
         <MasonryEditor photos={photos} onChange={setPhotos} max={FW_LIMITS.photos} mask="arch" />
       </section>
 
       {/* ── The invitation ─────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-letter" aria-label="Your invitation">
-        <Head n={4} title="Your invitation" sub="The words your guests read first, in English and Hindi side by side." />
+        <Head n={4} icon="✉️" title="Your invitation" sub="The words your guests read first, in English and Hindi side by side." />
         <div className="vs-row2">
           <Field label="In English" htmlFor="fws-letter" count={`${letter.length}/1500`}>
             <textarea id="fws-letter" className="vs-input vs-area fws-letter" rows={8} value={letter} maxLength={1500} placeholder={floralWeddingDay.copy.letterPlaceholder} onChange={(e) => updateMf("letter", e.target.value)} />
@@ -524,7 +644,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 
       {/* ── Theme & music ──────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-music" aria-label="Theme and music">
-        <Head n={5} title="Theme & music" sub="Light or dark, always in gold. The music plays after the guest taps the gates." />
+        <Head n={5} icon="🎵" title="Theme & music" sub="Three soft palettes on handmade paper. The music starts when the guest breaks the wax seal, with a mute button always in reach." />
         <ThemePicker themes={LIGHT_THEMES} grouped={false} value={s(x.theme) || "champagne"} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} label="Theme" />
         <p className="fws-hint" style={{ marginTop: 8 }}>
           {WEDDING_THEMES[(s(x.theme) || "champagne") as keyof typeof WEDDING_THEMES]?.blurb}
@@ -547,11 +667,76 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
         </div>
       </section>
 
+      {/* ── Guests & sharing ───────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-guests" aria-label="Guests and sharing">
+        <Head n={6} icon="💌" title="Guests & sharing" sub="Who guests can call, an optional shagun, a live stream, and a personal link for every family." />
+
+        <h4 className="fws-h4">Contact persons</h4>
+        <p className="fws-hint">Up to {FW_CONTACTS_MAX}. Guests get a call button and a WhatsApp button for each. Indian mobiles need 10 digits (+91 optional).</p>
+        <ol className="fws-contacts">
+          {contacts.map((c, i) => {
+            const bad = !!c.phone.trim() && !phoneOf(c.phone);
+            const upd = (k: keyof Contact, v: string) => set("contacts", contacts.map((q, j) => (j === i ? { ...q, [k]: v } : q)));
+            return (
+              <li key={i} className="fws-contact">
+                <div className="fws-row3 fws-row3-c">
+                  <Field label="Name" htmlFor={`fws-c${i}-n`}>
+                    <input id={`fws-c${i}-n`} className="vs-input" value={c.name} maxLength={40} placeholder="e.g. Rohan Malhotra" onChange={(e) => upd("name", e.target.value)} />
+                  </Field>
+                  <Field label="Relation" htmlFor={`fws-c${i}-r`}>
+                    <input id={`fws-c${i}-r`} className="vs-input" value={c.relation} maxLength={40} placeholder="e.g. Bride's brother" onChange={(e) => upd("relation", e.target.value)} />
+                  </Field>
+                  <Field label="Phone" htmlFor={`fws-c${i}-p`}>
+                    <input id={`fws-c${i}-p`} className={`vs-input${bad ? " fws-bad" : ""}`} type="tel" inputMode="tel" value={c.phone} maxLength={20} placeholder="+91 98290 12345" aria-invalid={bad} aria-describedby={bad ? `fws-c${i}-e` : undefined} onChange={(e) => upd("phone", e.target.value)} />
+                  </Field>
+                </div>
+                {bad && (
+                  <p className="fws-err" id={`fws-c${i}-e`}>
+                    That number won&apos;t dial. Use a 10-digit mobile (e.g. 98290 12345) or +country code.
+                  </p>
+                )}
+                <button type="button" className="fws-x" onClick={() => set("contacts", contacts.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        {contacts.length < FW_CONTACTS_MAX && (
+          <button type="button" className="fws-chip" onClick={() => set("contacts", [...contacts, { name: "", relation: "", phone: "" }])}>
+            + Add a contact
+          </button>
+        )}
+
+        <h4 className="fws-h4">Shagun (optional)</h4>
+        <label className="fws-tog">
+          <input type="checkbox" checked={shagunOn} onChange={(e) => { setShagunOn(e.target.checked); if (!e.target.checked) { set("upiId", ""); set("upiName", ""); } }} /> Offer a polite UPI option for guests who ask
+        </label>
+        {shagunOn && (
+          <div className="vs-row2">
+            <Field label="UPI ID" htmlFor="fws-upi" hint={s(x.upiId) && !UPI_RE.test(s(x.upiId)) ? <span className="fws-err-i">That doesn&apos;t look like a UPI ID (name@bank).</span> : "Guests see it with a “Send by UPI” button. We never handle the money."}>
+              <input id="fws-upi" className="vs-input" value={s(x.upiId)} maxLength={80} placeholder="e.g. saanvi.malhotra@okaxis" autoComplete="off" onChange={(e) => set("upiId", e.target.value.trim())} />
+            </Field>
+            <Field label="Name on the account" htmlFor="fws-upin">
+              <input id="fws-upin" className="vs-input" value={s(x.upiName)} maxLength={60} placeholder="e.g. Alok Malhotra" onChange={(e) => set("upiName", e.target.value)} />
+            </Field>
+          </div>
+        )}
+
+        <h4 className="fws-h4">Live stream (optional)</h4>
+        <Field label="YouTube Live / Zoom link" htmlFor="fws-live" hint={s(x.liveUrl) && !/^https:\/\//i.test(s(x.liveUrl)) ? <span className="fws-err-i">Paste the full https:// link.</span> : "The “Watch live” button opens 30 minutes before the wedding."}>
+          <input id="fws-live" className="vs-input" inputMode="url" value={s(x.liveUrl)} maxLength={300} placeholder="https://youtube.com/live/…" onChange={(e) => set("liveUrl", e.target.value.trim())} />
+        </Field>
+
+        <h4 className="fws-h4">Personal links</h4>
+        <PersonalLinks owner={owner} couple={`${mf.recipientName || "the bride"} & ${mf.senderName || "the groom"}`} />
+      </section>
+
       {/* ── More details ───────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-finish" aria-label="More details">
         <details className="fws-more">
           <summary>
-            <Head n="✦" title="More details" sub="Your story, family photos, good to know, a film, RSVP settings, the closing line and a password." />
+            <Head n={7} icon="✦" title="More details" sub="Your story, family photos, good to know, a film, RSVP settings, the closing line and a password." />
           </summary>
 
           <h4 className="fws-h4">Our story</h4>
@@ -575,6 +760,8 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
                     label="Chapter photo"
                     value={n(c.photo)}
                     photos={photos}
+                    aspect={1.25}
+                    onCrop={cropPhoto}
                     onPick={(k) => set("story", story.map((q, j) => (j === i ? { ...q, photo: k } : q)))}
                     onUpload={(f) => void uploadTo(f, (k) => set("story", (latest.current.extras.story as Chapter[]).map((q, j) => (j === i ? { ...q, photo: k } : q))))}
                   />
@@ -600,13 +787,13 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
               <Field label="Under the bride's family" htmlFor="fws-bn">
                 <input id="fws-bn" className="vs-input" value={s(x.brideNote)} maxLength={100} placeholder="e.g. Udaipur" onChange={(e) => set("brideNote", e.target.value)} />
               </Field>
-              <PhotoPick label="Bride's family photo" value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} />
+              <PhotoPick label="Bride's family photo" aspect={1} onCrop={cropPhoto} value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} />
             </div>
             <div>
               <Field label="Under the groom's family" htmlFor="fws-gn">
                 <input id="fws-gn" className="vs-input" value={s(x.groomNote)} maxLength={100} placeholder="e.g. Jaipur" onChange={(e) => set("groomNote", e.target.value)} />
               </Field>
-              <PhotoPick label="Groom's family photo" value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} />
+              <PhotoPick label="Groom's family photo" aspect={1} onCrop={cropPhoto} value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} />
             </div>
           </div>
 
@@ -657,7 +844,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
             <input type="checkbox" checked={x.blessings !== false} onChange={(e) => set("blessings", e.target.checked)} /> Show the blessings wall
           </label>
           <label className="fws-tog">
-            <input type="checkbox" checked={x.invocation !== false} onChange={(e) => set("invocation", e.target.checked)} /> Open with Shri Ganesh (off = the royal crest)
+            <input type="checkbox" checked={x.invocation !== false} onChange={(e) => set("invocation", e.target.checked)} /> Shri Ganesh on the invitation card
           </label>
           <label className="fws-tog">
             <input type="checkbox" checked={x.lang === "hi"} onChange={(e) => set("lang", e.target.checked ? "hi" : "en")} /> Open the invitation in Hindi (guests can switch)
@@ -679,34 +866,41 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 }
 
 const FWS_CSS = `
-.rs { --fws-gold: #b8892e; }
-.fws-hint { margin: 2px 0 10px; font-size: 13px; line-height: 1.45; opacity: .72; }
+.rs { --fws-gold: #b8924a; --fws-rose: #9e5a62; --fws-wine: #7a3f47; }
+.fws-head .fws-secN { position: relative; width: 44px; height: 44px; font-size: 20px; background: radial-gradient(circle at 35% 30%, #fff8f3, #f5e3da); color: var(--fws-wine); box-shadow: 0 0 0 1px rgba(184,146,74,.55), 0 6px 14px -8px rgba(122,63,71,.45); }
+.fws-secI { line-height: 1; }
+.fws-head .fws-secN small { position: absolute; right: -4px; bottom: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--fws-rose); color: #fff8f3; font: 700 10.5px/18px var(--vw-font-ui); text-align: center; }
+.fws-hint { margin: 2px 0 10px; font-size: 13px; line-height: 1.45; opacity: .76; }
+.fws-note { padding: 12px 14px; border-radius: 14px; background: var(--vw-soft); opacity: 1; }
 .fws-count { font-weight: 500; opacity: .6; }
-.fws-sub { margin: 4px 0 10px; font-size: 13px; font-weight: 700; color: var(--vw-accent); }
+.fws-sub { margin: 6px 0 8px; font-size: 13px; font-weight: 700; color: var(--vw-accent); }
 .fws-row3 { display: grid; gap: 0 10px; grid-template-columns: 1fr 1fr; }
 .fws-row3 > :last-child:nth-child(3) { grid-column: 1 / -1; }
-@media (min-width: 560px) { .fws-row3 { grid-template-columns: 1fr 1fr 1.4fr; } .fws-row3 > :last-child:nth-child(3) { grid-column: auto; } .fws-row3-tight { grid-template-columns: 1.3fr 1fr 1fr; } .fws-row3-story { grid-template-columns: 1fr 3fr; } }
-.fws-ai { position: relative; margin: 6px 0 4px; padding: 18px; border-radius: 20px; background: linear-gradient(140deg, #3a0913, #5e1424 60%, #7a1f2b); color: #fbecd4; box-shadow: 0 18px 40px -24px rgba(58,9,19,.7); }
-.fws-ai::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: linear-gradient(110deg,#8a6a1f,#e9cf7a 35%,#fff3c4 50%,#c9a43f 65%,#7a5a14); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
-.fws-ai-k { margin: 0; font: 700 11px/1 var(--vw-font-ui); letter-spacing: .24em; color: #e9cf7a; }
-.fws-ai-h { margin: 8px 0 4px; font: 600 21px/1.2 var(--vw-font-serif); }
-.fws-ai-p { margin: 0 0 12px; font-size: 13.5px; opacity: .85; }
-.fws-ai-in { background: rgba(255,248,235,.97) !important; min-height: 116px; font-size: 15px !important; line-height: 1.5 !important; }
-.fws-ai .fws-chip { background: rgba(255,236,214,.1); color: #fbecd4; border-color: rgba(233,207,122,.35); }
-.fws-ai-go { margin-top: 12px; width: 100%; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer; font: 700 15.5px/1 var(--vw-font-ui); color: #3a0913; background: linear-gradient(110deg,#c9a43f,#e9cf7a 40%,#fff3c4 55%,#d9b05c); box-shadow: 0 10px 24px -12px rgba(233,207,122,.8); }
+@media (min-width: 560px) { .fws-row3 { grid-template-columns: 1fr 1fr 1.4fr; } .fws-row3 > :last-child:nth-child(3) { grid-column: auto; } .fws-row3-tight { grid-template-columns: 1.3fr 1fr 1fr; } .fws-row3-story { grid-template-columns: 1fr 3fr; } .fws-row3-c { grid-template-columns: 1.2fr 1fr 1.2fr; } }
+.fws-ai { position: relative; margin: 6px 0 6px; padding: 20px 18px 18px; border-radius: 22px; overflow: hidden; color: #3d2a24; background: radial-gradient(120% 90% at 100% 0%, #f7e1dc 0%, transparent 55%), linear-gradient(160deg, #fffaf4, #f8ece2); box-shadow: 0 0 0 1px rgba(184,146,74,.45), 0 18px 40px -26px rgba(122,63,71,.55); }
+.fws-ai::after { content: ""; position: absolute; right: -30px; top: -26px; width: 140px; height: 140px; background: url("/wedding-v3/template3/11-pink-peony-bouquet.webp") center / contain no-repeat; opacity: .5; transform: rotate(-14deg); pointer-events: none; }
+.fws-ai > * { position: relative; z-index: 1; }
+.fws-ai-k { margin: 0; font: 700 11px/1 var(--vw-font-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--fws-gold); }
+.fws-ai-h { margin: 8px 0 4px; font: 600 22px/1.2 var(--vw-font-serif); color: var(--fws-wine); max-width: 80%; }
+.fws-ai-p { margin: 0 0 12px; font-size: 13.5px; opacity: .8; }
+.fws-ai-in { background: #fffdf9 !important; min-height: 120px; font-size: 15px !important; line-height: 1.5 !important; }
+.fws-ai-go { margin-top: 12px; width: 100%; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer; font: 700 15.5px/1 var(--vw-font-ui); letter-spacing: .02em; color: #fff8f3; background: linear-gradient(120deg, #b06e75, #8c4a52 55%, #7a3f47); box-shadow: 0 12px 26px -14px rgba(122,63,71,.8); transition: transform .2s; }
+.fws-ai-go:active { transform: scale(.98); }
 .fws-ai-go:disabled { opacity: .75; cursor: progress; }
-.fws-ai-note { margin: 10px 0 0; font-size: 13.5px; color: #ffcfc4; }
-.fws-ai-note.is-ok { color: #e9cf7a; }
+.fws-ai-note { margin: 10px 0 0; font-size: 13.5px; color: #b3261e; }
+.fws-ai-note.is-ok { color: #3f7a4d; }
 .fws-chips, .fws-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
 .fws-quick > span { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
-.fws-chip { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; }
+.fws-chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; text-decoration: none; transition: border-color .2s, transform .2s; }
 .fws-chip:hover { border-color: var(--vw-accent); }
+.fws-chip:active { transform: scale(.97); }
+.fws-chip-wa { border-color: #8fc9a2; color: #1f6b3a; }
 .fws-seg { display: flex; gap: 6px; padding: 4px; margin: 0 0 18px; border-radius: 999px; background: var(--vw-soft); width: fit-content; max-width: 100%; }
 .fws-seg button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--vw-font-ui); color: var(--vw-paper-ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 44vw; }
 .fws-seg button[aria-checked=true] { background: var(--vw-accent); color: var(--vw-accent-ink); }
 .fws-evs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.fws-ev { border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); overflow: hidden; }
-.fws-ev.is-open { border-color: var(--fws-gold); box-shadow: 0 12px 30px -22px rgba(58,9,19,.5); }
+.fws-ev { border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.fws-ev.is-open { border-color: var(--fws-gold); box-shadow: 0 12px 30px -22px rgba(122,63,71,.5); }
 .fws-ev-head { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 14px; border: 0; background: none; text-align: left; cursor: pointer; color: var(--vw-paper-ink); }
 .fws-ev-sw { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--fws-gold); }
 .fws-ev-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -721,7 +915,7 @@ const FWS_CSS = `
 .fws-sws { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 16px; }
 .fws-sw { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--vw-edge); cursor: pointer; padding: 0; }
 .fws-sw[aria-checked=true] { box-shadow: 0 0 0 2.5px var(--vw-accent); }
-.fws-sw-custom { background: conic-gradient(#f2c94c, #4f9b6a, #2e5aac, #7b3fa0, #e86a92, #a3122b, #f2c94c); overflow: hidden; }
+.fws-sw-custom { background: conic-gradient(#f2c94c, #9db89a, #6f8fc2, #c9a0b4, #e7a3ae, #a3122b, #f2c94c); overflow: hidden; }
 .fws-sw-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
 .fws-letter { min-height: 200px; font-family: var(--vw-font-serif); font-size: 16px; line-height: 1.6; }
 .fws-more > summary { list-style: none; cursor: pointer; }
@@ -729,18 +923,26 @@ const FWS_CSS = `
 .fws-more > summary .vs-secH::after { content: " ▾"; color: var(--vw-accent); }
 .fws-more[open] > summary .vs-secH::after { content: " ▴"; }
 .fws-h4 { margin: 22px 0 6px; font: 700 12px/1 var(--vw-font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--vw-accent); }
-.fws-story { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 12px; }
-.fws-ch { padding: 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); }
+.fws-story, .fws-contacts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 12px; }
+.fws-ch, .fws-contact { padding: 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); }
+.fws-bad { border-color: #c0392b !important; }
+.fws-err { margin: -6px 0 8px; font-size: 12.5px; color: #b3261e; }
+.fws-err-i { color: #b3261e; }
 .fws-thing { margin-bottom: 8px; }
 .fws-tog { display: flex; gap: 10px; align-items: center; min-height: 44px; font-size: 14.5px; cursor: pointer; }
 .fws-tog input { width: 20px; height: 20px; accent-color: var(--vw-accent); }
 .fws-pick { margin: 0 0 14px; }
+.fws-pick-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .fws-pick-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1.5px dashed var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1.2 var(--vw-font-ui); cursor: pointer; }
 .fws-pick-btn img, .fws-pick-btn > span:first-child { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
+.fws-frame { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--fws-gold); background: #fffaf3; color: var(--fws-wine); font: 700 13px/1 var(--vw-font-ui); cursor: pointer; }
 .fws-pick-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scroll-snap-type: x proximity; }
 .fws-pick-th, .fws-pick-none { flex: none; width: 64px; height: 64px; border-radius: 12px; border: 2px solid transparent; padding: 0; overflow: hidden; background: var(--vw-soft); cursor: pointer; scroll-snap-align: start; font: 600 12px/1 var(--vw-font-ui); color: var(--vw-paper-ink); }
 .fws-pick-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .fws-pick-th.is-on, .fws-pick-none.is-on { border-color: var(--vw-accent); }
+.fws-links { padding: 14px; border-radius: 16px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); }
+.fws-links-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fws-link-out { margin: 10px 0; padding: 10px 12px; border-radius: 10px; background: var(--vw-soft); font: 500 12.5px/1.4 var(--vw-font-ui); word-break: break-all; }
 .fws-dash { margin: 4px 0 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; padding: 0 14px; background: var(--vw-paper); }
 .fws-dash > summary { min-height: 52px; display: flex; align-items: center; font: 700 15px/1 var(--vw-font-ui); cursor: pointer; color: var(--vw-accent); }
 `;

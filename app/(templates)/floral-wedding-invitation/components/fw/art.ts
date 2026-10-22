@@ -1,59 +1,82 @@
-// ─── Royal: which pack art each theme wears ──────────────────────────────────
-// One small map (spec 3.2: per-theme plates + two art families, shared gold).
-// Light themes (blush / champagne / powder) get daylight scenes, the painted
-// caparisoned elephant and the watercolour Taj; dark themes (maroon / noir /
-// emerald) get the lamp-lit interiors, the gold elephant and the lake palace.
+// ─── Pampas & Peony: the art, as <img> props ─────────────────────────────────
+// Every piece comes from ../assets.ts (client/public/wedding-v3, same origin,
+// never the CDN). `pic()` returns width/height (no layout shift), lazy or
+// eager + priority, and a 1×/2× srcSet where a smaller twin of the same
+// painting exists (pampas clouds 1600/800, drape arch 1372/686, swirl 1600/720).
 
-import { art, art2x, type WeddingArtId } from "../../../_wedding/art";
-import type { WeddingThemeId } from "../../../_wedding/themes";
+import { FW_ASSETS } from "../assets";
 
-export interface FloralArt {
-  /** Full-bleed 9:16 backdrop behind the gates and every section. */
-  plate: WeddingArtId;
-  /** The courtyard seen through the open gates (dimmed, behind the jharokha). */
-  scene: WeddingArtId;
-  /** How much of the scene shows through the theme wash. */
-  sceneOpacity: number;
-  /** Both elephant arts face left; the left-hand one is mirrored to face in. */
-  elephant: WeddingArtId;
-  /** The palace painting in the venue section. */
-  venue: WeddingArtId;
-  dark: boolean;
+const T3 = FW_ASSETS.template3;
+const T8 = FW_ASSETS.template8;
+const T2 = FW_ASSETS.template2;
+
+/** Named roles → files. Components ask for a role, not a file name. */
+export const ART = {
+  paper: T3["02-paper-background-2"],
+  paperSoft: T3["04-paper-background-3"],
+  clouds: T3["03-pampas-grass-clouds-1"],
+  cloudsSm: T3["07-pampas-grass-clouds-2"],
+  swing: T3["05-couple-on-swing"],
+  drape: T3["12-floral-drape-arch-2"],
+  drapeSm: T3["06-floral-drape-arch-1"],
+  rocks: T3["08-garden-rocks"],
+  pampasCorner: T3["09-pampas-grass-corner"],
+  peonyBeige: T3["10-beige-peony"],
+  peonyPink: T3["11-pink-peony-bouquet"],
+  pampasBorder: T3["13-pampas-grass-border"],
+  swirl: T8["01-gold-line-art-floral-swirl"],
+  swirlSm: T8["01-gold-line-art-floral-swirl-720"],
+  roses: T8["02-pink-white-rose-bouquet"],
+  ganesha: T8["03-gold-ganesha"],
+  mandala: T8["04-cream-mandala-diamond-pattern-tile"],
+  garland: T2["01-garland-strand"],
+  marigoldPots: T2["02-marigold-pots"],
+  umbrella: T2["03-umbrella-guard-1"],
+  cloudWash: T2["04-cloud-texture-1"],
+  gazebo: T2["05-gazebo"],
+  goldLeaf: T2["06-gold-leaf-branch"],
+  fountain: T2["07-fountain"],
+  greenBranch: T2["08-green-branch"],
+  cloudWashSm: T2["09-cloud-texture-2"],
+  banana: T2["11-banana-leaves"],
+  peacock: T2["12-peacock"],
+  vine: T2["13-hanging-vine"],
+  coupleStanding: T2["14-couple"],
+} as const;
+
+export type ArtRole = keyof typeof ART;
+
+/** Smaller twin (same painting) for the 1× slot. */
+const SMALL: Partial<Record<ArtRole, ArtRole>> = { clouds: "cloudsSm", drape: "drapeSm", swirl: "swirlSm" };
+
+export interface PicOpts {
+  /** Below the fold. */
+  lazy?: boolean;
+  /** The opening scene (fetchpriority=high). */
+  high?: boolean;
+  /** CSS width the image is drawn at, for `sizes` (e.g. "(min-width: 1024px) 520px, 88vw"). */
+  sizes?: string;
+  alt?: string;
 }
 
-const LIGHT = { elephant: "royal/elephant-caparisoned-painted-01", venue: "scene/taj-mahal-watercolor-01", sceneOpacity: 0.55, dark: false } as const;
-const DARK = { elephant: "royal/elephant-gold-ornate-01", venue: "scene/jal-mahal-lake-palace-01", sceneOpacity: 0.46, dark: true } as const;
-
-export const FW_ART: Record<WeddingThemeId, FloralArt> = {
-  blush: { ...LIGHT, plate: "plate/royal-blush", scene: "scene/palace-corridor-arches-01" },
-  champagne: { ...LIGHT, plate: "plate/royal-champagne", scene: "scene/udaipur-city-palace-interior-01" },
-  powder: { ...LIGHT, plate: "plate/royal-powder", scene: "scene/jal-mahal-lake-palace-01" },
-  maroon: { ...DARK, plate: "plate/royal-maroon", scene: "scene/palace-corridor-arches-01" },
-  noir: { ...DARK, plate: "plate/royal-noir", scene: "scene/udaipur-city-palace-interior-01" },
-  emerald: { ...DARK, plate: "plate/royal-emerald", scene: "scene/jal-mahal-lake-palace-01" },
-};
-
-export const floralArt = (theme: WeddingThemeId): FloralArt => FW_ART[theme] ?? FW_ART.maroon;
-
-/** <img> props for one pack image: 1×/2× srcSet + intrinsic size (no layout shift). */
-export function artImg(id: WeddingArtId, opts: { lazy?: boolean; high?: boolean; one?: boolean } = {}) {
-  const a = art(id);
+/** <img> props for one piece of art. Decorative by default (alt=""). */
+export function pic(role: ArtRole, o: PicOpts = {}) {
+  const a = ART[role];
+  const small = SMALL[role] ? ART[SMALL[role]!] : null;
   return {
-    src: a.src,
-    // Soft, dimmed layers ship 1× only (spec 7.1: blurry art scales up for free).
-    ...(opts.one ? {} : { srcSet: a.srcSet }),
+    src: small && !o.high ? small.src : a.src,
+    ...(small ? { srcSet: `${small.src} ${small.w}w, ${a.src} ${a.w}w`, sizes: o.sizes ?? "100vw" } : {}),
     width: a.w,
     height: a.h,
-    alt: "",
+    alt: o.alt ?? "",
     decoding: "async" as const,
-    loading: opts.lazy ? ("lazy" as const) : ("eager" as const),
-    ...(opts.high ? { fetchPriority: "high" as const } : {}),
+    loading: o.lazy ? ("lazy" as const) : ("eager" as const),
+    draggable: false,
+    ...(o.high ? { fetchPriority: "high" as const } : {}),
   };
 }
 
-export { art, art2x };
-
-/** Wait for these <img>s to decode (spec 7.1.7), but never longer than `cap` ms. */
+/** Wait for these <img>s to decode, but never longer than `cap` ms. */
 export function decodeAll(imgs: (HTMLImageElement | null | undefined)[], cap = 1200): Promise<void> {
   const list = imgs.filter((i): i is HTMLImageElement => !!i);
   const all = Promise.all(list.map((i) => (i.decode ? i.decode().catch(() => undefined) : undefined))).then(() => undefined);
@@ -66,7 +89,5 @@ export function seeded(seed: number) {
   return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 }
 
-/** Hotlinked GIPHY stickers (never downloaded; LEDGER.md GIFS table). */
-export const GIF = {
-  dhol: "https://media.giphy.com/media/BhUsVxOppv7jcmUrDy/giphy.gif",
-} as const;
+/** Per-theme paper strength: the beige paper sits best on champagne, lighter on blush, faint on powder. */
+export const PAPER_OPACITY: Record<string, number> = { champagne: 0.92, blush: 0.6, powder: 0.38 };

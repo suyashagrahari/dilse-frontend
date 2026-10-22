@@ -1,12 +1,15 @@
 "use client";
 
-// ─── The royal story: chapters along a gold line drawn by the scroll ────────
-// One passive scroll listener, rAF-throttled and only while the section is on
-// screen, writes ONE custom property (--fw-p, 0→1) on the section; the line's
-// scaleY and the drifting ornaments read it (transform only).
+// ─── Our story: pages pressed in a keepsake album ───────────────────────────
+// A gold thread runs down the middle (drawn by the scroll: one passive,
+// rAF-throttled listener writes --fw-p 0→1 on the section, the thread's
+// scaleY reads it). Each chapter is a photo tucked into the album at a slight
+// tilt, and a page of handwriting beside it; they alternate sides from 860 px.
+// A vine hangs over the top corner and sways. Transform/opacity only.
 
 import { useEffect, useRef } from "react";
-import { Ornament, Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { pic } from "./art";
 import type { FwChapter } from "./model";
 
 export default function Story({ chapters }: { chapters: FwChapter[] }) {
@@ -26,7 +29,7 @@ export default function Story({ chapters }: { chapters: FwChapter[] }) {
       raf = 0;
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight || 1;
-      const p = Math.min(1, Math.max(0, (vh * 0.72 - r.top) / Math.max(1, r.height)));
+      const p = Math.min(1, Math.max(0, (vh * 0.7 - r.top) / Math.max(1, r.height)));
       el.style.setProperty("--fw-p", p.toFixed(4));
     };
     const onScroll = () => {
@@ -34,6 +37,7 @@ export default function Story({ chapters }: { chapters: FwChapter[] }) {
     };
     const io = new IntersectionObserver(([en]) => {
       on = en.isIntersecting;
+      el.classList.toggle("is-idle", !on);
       if (on) onScroll();
     });
     io.observe(el);
@@ -50,28 +54,39 @@ export default function Story({ chapters }: { chapters: FwChapter[] }) {
 
   return (
     <div className="fw-story" ref={ref}>
-      <span className="fw-drift fw-drift-a" aria-hidden>
-        <Ornament id="peacock" width={150} />
+      <span className="fw-vine is-l" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...pic("vine", { lazy: true })} />
       </span>
-      <span className="fw-drift fw-drift-b" aria-hidden>
-        <Ornament id="paisley" width={90} flip="x" />
+      <span className="fw-vine is-r" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...pic("vine", { lazy: true })} />
       </span>
-      <span className="fw-story-rail" aria-hidden>
+      <span className="fw-thread" aria-hidden>
         <i />
       </span>
       <ol className="fw-chapters">
         {chapters.map((c, i) => (
           <li key={i} className={`fw-ch${i % 2 ? " is-alt" : ""}${c.photo ? "" : " no-photo"}`}>
-            <span className="fw-ch-dot" aria-hidden>
-              <Ornament id="lotus" width={26} />
-            </span>
-            {c.photo && (
-              <Reveal className="fw-ch-photo" effect="zoom">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.photo.url} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+            <span className="fw-ch-knot" aria-hidden />
+            {!c.photo && (
+              <Reveal className="fw-ch-deco" effect="fade" delay={200}>
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img {...pic(i % 2 ? "peonyBeige" : "peonyPink", { lazy: true })} />
               </Reveal>
             )}
-            <Reveal className="fw-ch-text" delay={90}>
+            {c.photo && (
+              <Reveal className="fw-ch-photo" effect="zoom">
+                <span className="fw-ch-print" style={{ ["--tilt" as string]: `${i % 2 ? 2.2 : -2.4}deg` }}>
+                  <span className="fw-ch-pic">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={c.photo.url} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+                  </span>
+                  {c.when && <span className="fw-ch-stamp">{c.when}</span>}
+                </span>
+              </Reveal>
+            )}
+            <Reveal className="fw-ch-text fw-fold" delay={110}>
               {c.when && <p className="fw-ch-when">{c.when}</p>}
               {c.title && <h3 className="fw-ch-title">{c.title}</h3>}
               {c.line && <p className="fw-ch-line">{c.line}</p>}

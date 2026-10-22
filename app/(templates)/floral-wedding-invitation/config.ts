@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   category: "wedding",
   title: "Pampas & Peony Wedding Invitation ✦ — Boho Floral, Every Function",
   description:
-    "A boho floral wedding invitation on handmade paper: pampas grass drifts in, peony bouquets bloom, floral drapes frame your names, the couple sways on a swing and a gold Ganesha blesses the page, then every function with maps and dress codes, 40 photos, RSVP per function and a blessings wall. Beige and blush; the AI writes it.",
+    "A boho floral wedding invitation on handmade paper: guests break a wax seal on an envelope addressed to them, the card unfolds, pampas grass sways and the couple swings under a floral drape while gold line-art draws itself. Then every function with maps and dress codes, 40 photos you can resize, RSVP per function, who to call, a blessings wall and a downloadable card. Champagne, blush or powder; the AI writes it.",
   coverImage: "/wedding-v3/template3/card.webp",
   emoji: "🌸",
   color: "from-stone-200 to-rose-200",
@@ -17,7 +17,7 @@ export const config: TemplatePageConfig = {
   bodyText: "Pampas, peonies, a swing and every function, one link.",
   bgGradient: "from-stone-50 via-amber-50 to-rose-50",
   tabs: [
-    { id: "gates", icon: Flower, label: "Cover" },
+    { id: "envelope", icon: Flower, label: "Envelope" },
     { id: "invite", icon: Mail, label: "Invite" },
     { id: "functions", icon: CalendarHeart, label: "Functions" },
     { id: "photos", icon: ImageIcon, label: "Photos" },
