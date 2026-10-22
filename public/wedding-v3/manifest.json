@@ -1,0 +1,1123 @@
+{
+  "generated": "2026-10-22T12:37:32.151Z",
+  "note": "Converted from ~/Desktop/wedding-assets. Served from /wedding-v3/ (never the CDN).",
+  "folders": {
+    "template1": [
+      {
+        "file": "01-cloud-1.webp",
+        "src": "/wedding-v3/template1/01-cloud-1.webp",
+        "width": 800,
+        "height": 541,
+        "bytes": 96816
+      },
+      {
+        "file": "02-parchment-1.webp",
+        "src": "/wedding-v3/template1/02-parchment-1.webp",
+        "width": 1600,
+        "height": 893,
+        "bytes": 74378
+      },
+      {
+        "file": "03-gazebo.webp",
+        "src": "/wedding-v3/template1/03-gazebo.webp",
+        "width": 503,
+        "height": 800,
+        "bytes": 64922
+      },
+      {
+        "file": "04-pink-lantern.webp",
+        "src": "/wedding-v3/template1/04-pink-lantern.webp",
+        "width": 382,
+        "height": 800,
+        "bytes": 68532
+      },
+      {
+        "file": "05-gazebo-with-garden-1.webp",
+        "src": "/wedding-v3/template1/05-gazebo-with-garden-1.webp",
+        "width": 800,
+        "height": 618,
+        "bytes": 68740
+      },
+      {
+        "file": "06-gazebo-with-garden-2.webp",
+        "src": "/wedding-v3/template1/06-gazebo-with-garden-2.webp",
+        "width": 1600,
+        "height": 1235,
+        "bytes": 204584
+      },
+      {
+        "file": "07-parchment-2.webp",
+        "src": "/wedding-v3/template1/07-parchment-2.webp",
+        "width": 800,
+        "height": 447,
+        "bytes": 19088
+      },
+      {
+        "file": "08-peacock.webp",
+        "src": "/wedding-v3/template1/08-peacock.webp",
+        "width": 392,
+        "height": 800,
+        "bytes": 34050
+      },
+      {
+        "file": "09-garden-rocks.webp",
+        "src": "/wedding-v3/template1/09-garden-rocks.webp",
+        "width": 800,
+        "height": 315,
+        "bytes": 60930
+      },
+      {
+        "file": "10-cloud-2.webp",
+        "src": "/wedding-v3/template1/10-cloud-2.webp",
+        "width": 1600,
+        "height": 1082,
+        "bytes": 289884
+      },
+      {
+        "file": "11-parchment-3.webp",
+        "src": "/wedding-v3/template1/11-parchment-3.webp",
+        "width": 1800,
+        "height": 1005,
+        "bytes": 89430
+      },
+      {
+        "file": "12-pink-chhatri-umbrella.webp",
+        "src": "/wedding-v3/template1/12-pink-chhatri-umbrella.webp",
+        "width": 549,
+        "height": 800,
+        "bytes": 50856
+      },
+      {
+        "file": "13-hedge-stone-wall.webp",
+        "src": "/wedding-v3/template1/13-hedge-stone-wall.webp",
+        "width": 800,
+        "height": 514,
+        "bytes": 97764
+      },
+      {
+        "file": "14-couple-lehenga.webp",
+        "src": "/wedding-v3/template1/14-couple-lehenga.webp",
+        "width": 589,
+        "height": 800,
+        "bytes": 89208
+      },
+      {
+        "file": "15-rose-stem.webp",
+        "src": "/wedding-v3/template1/15-rose-stem.webp",
+        "width": 378,
+        "height": 800,
+        "bytes": 37400
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template1/card.webp",
+        "width": 600,
+        "height": 847,
+        "bytes": 79068,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template10": [
+      {
+        "file": "00-background-colour.webp",
+        "src": "/wedding-v3/template10/00-background-colour.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3362
+      },
+      {
+        "file": "01-lotus-cluster-pink.webp",
+        "src": "/wedding-v3/template10/01-lotus-cluster-pink.webp",
+        "width": 799,
+        "height": 800,
+        "bytes": 132622
+      },
+      {
+        "file": "02-lotus-pond-stems.webp",
+        "src": "/wedding-v3/template10/02-lotus-pond-stems.webp",
+        "width": 800,
+        "height": 773,
+        "bytes": 113976
+      },
+      {
+        "file": "03-lotus-pair-with-leaves.webp",
+        "src": "/wedding-v3/template10/03-lotus-pair-with-leaves.webp",
+        "width": 800,
+        "height": 758,
+        "bytes": 117036
+      },
+      {
+        "file": "04-banana-leaf.webp",
+        "src": "/wedding-v3/template10/04-banana-leaf.webp",
+        "width": 741,
+        "height": 800,
+        "bytes": 54822
+      },
+      {
+        "file": "05-south-indian-temple-gopuram.webp",
+        "src": "/wedding-v3/template10/05-south-indian-temple-gopuram.webp",
+        "width": 626,
+        "height": 800,
+        "bytes": 112090
+      },
+      {
+        "file": "06-hanging-embroidered-umbrella.webp",
+        "src": "/wedding-v3/template10/06-hanging-embroidered-umbrella.webp",
+        "width": 623,
+        "height": 800,
+        "bytes": 36688
+      },
+      {
+        "file": "07-marigold-garland-top-border.webp",
+        "src": "/wedding-v3/template10/07-marigold-garland-top-border.webp",
+        "width": 1091,
+        "height": 85,
+        "bytes": 13470
+      },
+      {
+        "file": "08-shri-ganeshay-namah-text.webp",
+        "src": "/wedding-v3/template10/08-shri-ganeshay-namah-text.webp",
+        "width": 282,
+        "height": 92,
+        "bytes": 6458
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template10/card.webp",
+        "width": 600,
+        "height": 852,
+        "bytes": 59734,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template11": [
+      {
+        "file": "01-banana-plant.webp",
+        "src": "/wedding-v3/template11/01-banana-plant.webp",
+        "width": 1215,
+        "height": 1600,
+        "bytes": 196712
+      },
+      {
+        "file": "02-lotus-cluster-pink.webp",
+        "src": "/wedding-v3/template11/02-lotus-cluster-pink.webp",
+        "width": 799,
+        "height": 800,
+        "bytes": 116656
+      },
+      {
+        "file": "03-stone-fountain.webp",
+        "src": "/wedding-v3/template11/03-stone-fountain.webp",
+        "width": 800,
+        "height": 754,
+        "bytes": 78472
+      },
+      {
+        "file": "04-tropical-leaf-plant.webp",
+        "src": "/wedding-v3/template11/04-tropical-leaf-plant.webp",
+        "width": 800,
+        "height": 720,
+        "bytes": 89494
+      },
+      {
+        "file": "05-lotus-tall-stems.webp",
+        "src": "/wedding-v3/template11/05-lotus-tall-stems.webp",
+        "width": 664,
+        "height": 800,
+        "bytes": 88056
+      },
+      {
+        "file": "06-cherry-blossom-branch.webp",
+        "src": "/wedding-v3/template11/06-cherry-blossom-branch.webp",
+        "width": 800,
+        "height": 504,
+        "bytes": 75410
+      },
+      {
+        "file": "07-pink-gazebo-dome.webp",
+        "src": "/wedding-v3/template11/07-pink-gazebo-dome.webp",
+        "width": 503,
+        "height": 800,
+        "bytes": 44006
+      },
+      {
+        "file": "08-hanging-lanterns-blossoms.webp",
+        "src": "/wedding-v3/template11/08-hanging-lanterns-blossoms.webp",
+        "width": 468,
+        "height": 800,
+        "bytes": 70512
+      },
+      {
+        "file": "09-peacock-with-flowers.webp",
+        "src": "/wedding-v3/template11/09-peacock-with-flowers.webp",
+        "width": 435,
+        "height": 800,
+        "bytes": 107894
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template11/card.webp",
+        "width": 600,
+        "height": 240,
+        "bytes": 19676,
+        "cardFrom": "_preview-all.png"
+      }
+    ],
+    "template12": [
+      {
+        "file": "00-background-colour-beige.webp",
+        "src": "/wedding-v3/template12/00-background-colour-beige.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3354
+      },
+      {
+        "file": "01-gold-string-lights.webp",
+        "src": "/wedding-v3/template12/01-gold-string-lights.webp",
+        "width": 1600,
+        "height": 922,
+        "bytes": 37772
+      },
+      {
+        "file": "02-gold-lotus-leaf-large.webp",
+        "src": "/wedding-v3/template12/02-gold-lotus-leaf-large.webp",
+        "width": 800,
+        "height": 765,
+        "bytes": 48688
+      },
+      {
+        "file": "03-white-gold-lotus-bloom-stem.webp",
+        "src": "/wedding-v3/template12/03-white-gold-lotus-bloom-stem.webp",
+        "width": 588,
+        "height": 800,
+        "bytes": 49608
+      },
+      {
+        "file": "04-gold-lotus-leaf-on-stem.webp",
+        "src": "/wedding-v3/template12/04-gold-lotus-leaf-on-stem.webp",
+        "width": 547,
+        "height": 800,
+        "bytes": 31088
+      },
+      {
+        "file": "05-white-gold-lotus-open.webp",
+        "src": "/wedding-v3/template12/05-white-gold-lotus-open.webp",
+        "width": 800,
+        "height": 517,
+        "bytes": 45140
+      },
+      {
+        "file": "06-gold-lotus-leaf-tilted.webp",
+        "src": "/wedding-v3/template12/06-gold-lotus-leaf-tilted.webp",
+        "width": 486,
+        "height": 800,
+        "bytes": 27176
+      },
+      {
+        "file": "07-white-gold-lotus-bud-a.webp",
+        "src": "/wedding-v3/template12/07-white-gold-lotus-bud-a.webp",
+        "width": 386,
+        "height": 800,
+        "bytes": 33228
+      },
+      {
+        "file": "08-gold-lotus-seed-pod-a.webp",
+        "src": "/wedding-v3/template12/08-gold-lotus-seed-pod-a.webp",
+        "width": 244,
+        "height": 800,
+        "bytes": 20984
+      },
+      {
+        "file": "09-gold-lotus-seed-pod-b.webp",
+        "src": "/wedding-v3/template12/09-gold-lotus-seed-pod-b.webp",
+        "width": 240,
+        "height": 800,
+        "bytes": 20428
+      },
+      {
+        "file": "10-white-gold-lotus-bud-b.webp",
+        "src": "/wedding-v3/template12/10-white-gold-lotus-bud-b.webp",
+        "width": 239,
+        "height": 800,
+        "bytes": 22220
+      },
+      {
+        "file": "11-green-arch-date-badge-shape.webp",
+        "src": "/wedding-v3/template12/11-green-arch-date-badge-shape.webp",
+        "width": 416,
+        "height": 398,
+        "bytes": 4508
+      },
+      {
+        "file": "12-cream-geometric-pattern-tile.webp",
+        "src": "/wedding-v3/template12/12-cream-geometric-pattern-tile.webp",
+        "width": 580,
+        "height": 320,
+        "bytes": 14980
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template12/card.webp",
+        "width": 600,
+        "height": 603,
+        "bytes": 45170,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template13": [
+      {
+        "file": "01-door-full-rajasthani-arch.webp",
+        "src": "/wedding-v3/template13/01-door-full-rajasthani-arch.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 460176
+      },
+      {
+        "file": "02-door-left-half.webp",
+        "src": "/wedding-v3/template13/02-door-left-half.webp",
+        "width": 506,
+        "height": 1800,
+        "bytes": 231826
+      },
+      {
+        "file": "03-door-right-half.webp",
+        "src": "/wedding-v3/template13/03-door-right-half.webp",
+        "width": 506,
+        "height": 1800,
+        "bytes": 232120
+      },
+      {
+        "file": "05-golden-border-frame.webp",
+        "src": "/wedding-v3/template13/05-golden-border-frame.webp",
+        "width": 777,
+        "height": 800,
+        "bytes": 173972
+      },
+      {
+        "file": "06-banana-leaves.webp",
+        "src": "/wedding-v3/template13/06-banana-leaves.webp",
+        "width": 800,
+        "height": 739,
+        "bytes": 78752
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template13/card.webp",
+        "width": 506,
+        "height": 900,
+        "bytes": 110854,
+        "cardFrom": "01-door-full-rajasthani-arch.jpg"
+      }
+    ],
+    "template14-couple-haldi-mehndi": [
+      {
+        "file": "02-parchment-scroll-banner.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/02-parchment-scroll-banner.webp",
+        "width": 1600,
+        "height": 668,
+        "bytes": 72198
+      },
+      {
+        "file": "03-couple-sangeet-dancing.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/03-couple-sangeet-dancing.webp",
+        "width": 748,
+        "height": 800,
+        "bytes": 132372
+      },
+      {
+        "file": "04-couple-reception-tux-gown.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/04-couple-reception-tux-gown.webp",
+        "width": 604,
+        "height": 800,
+        "bytes": 83384
+      },
+      {
+        "file": "05-couple-mehndi-orange-saree.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/05-couple-mehndi-orange-saree.webp",
+        "width": 581,
+        "height": 800,
+        "bytes": 115430
+      },
+      {
+        "file": "06-couple-engagement-ivory-lehenga.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/06-couple-engagement-ivory-lehenga.webp",
+        "width": 502,
+        "height": 800,
+        "bytes": 72032
+      },
+      {
+        "file": "07-couple-haldi-yellow.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/07-couple-haldi-yellow.webp",
+        "width": 466,
+        "height": 800,
+        "bytes": 92520
+      },
+      {
+        "file": "08-couple-wedding-red-lehenga.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/08-couple-wedding-red-lehenga.webp",
+        "width": 446,
+        "height": 800,
+        "bytes": 98428
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template14-couple-haldi-mehndi/card.webp",
+        "width": 600,
+        "height": 240,
+        "bytes": 17658,
+        "cardFrom": "_preview-all.png"
+      }
+    ],
+    "template15": [
+      {
+        "file": "01-bride-groom-hands-mehndi-mauli-thread.webp",
+        "src": "/wedding-v3/template15/01-bride-groom-hands-mehndi-mauli-thread.webp",
+        "width": 1600,
+        "height": 1248,
+        "bytes": 108978
+      },
+      {
+        "file": "02-pink-white-floral-arch.webp",
+        "src": "/wedding-v3/template15/02-pink-white-floral-arch.webp",
+        "width": 1600,
+        "height": 1188,
+        "bytes": 318112
+      },
+      {
+        "file": "03-hanging-gold-lanterns-trio.webp",
+        "src": "/wedding-v3/template15/03-hanging-gold-lanterns-trio.webp",
+        "width": 800,
+        "height": 800,
+        "bytes": 31708
+      },
+      {
+        "file": "04-urn-planter-with-greenery.webp",
+        "src": "/wedding-v3/template15/04-urn-planter-with-greenery.webp",
+        "width": 566,
+        "height": 800,
+        "bytes": 94742
+      },
+      {
+        "file": "05-gold-pearl-jhumka-hangings.webp",
+        "src": "/wedding-v3/template15/05-gold-pearl-jhumka-hangings.webp",
+        "width": 399,
+        "height": 800,
+        "bytes": 117278
+      },
+      {
+        "file": "06-havan-kund-fire-aag.webp",
+        "src": "/wedding-v3/template15/06-havan-kund-fire-aag.webp",
+        "width": 791,
+        "height": 800,
+        "bytes": 31746
+      },
+      {
+        "file": "07-white-stone-railing-balustrade.webp",
+        "src": "/wedding-v3/template15/07-white-stone-railing-balustrade.webp",
+        "width": 1600,
+        "height": 375,
+        "bytes": 26552
+      },
+      {
+        "file": "08-terracotta-carpet.webp",
+        "src": "/wedding-v3/template15/08-terracotta-carpet.webp",
+        "width": 800,
+        "height": 114,
+        "bytes": 6572
+      },
+      {
+        "file": "09-white-classic-column-pillar.webp",
+        "src": "/wedding-v3/template15/09-white-classic-column-pillar.webp",
+        "width": 431,
+        "height": 1800,
+        "bytes": 68638
+      },
+      {
+        "file": "10-ivy-curtain-hanging-greenery.webp",
+        "src": "/wedding-v3/template15/10-ivy-curtain-hanging-greenery.webp",
+        "width": 1600,
+        "height": 622,
+        "bytes": 252636
+      },
+      {
+        "file": "11-blue-gradient-background.webp",
+        "src": "/wedding-v3/template15/11-blue-gradient-background.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 13836
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template15/card.webp",
+        "width": 600,
+        "height": 468,
+        "bytes": 22792,
+        "cardFrom": "01-bride-groom-hands-mehndi-mauli-thread.png"
+      }
+    ],
+    "template2": [
+      {
+        "file": "01-garland-strand.webp",
+        "src": "/wedding-v3/template2/01-garland-strand.webp",
+        "width": 134,
+        "height": 800,
+        "bytes": 22674
+      },
+      {
+        "file": "02-marigold-pots.webp",
+        "src": "/wedding-v3/template2/02-marigold-pots.webp",
+        "width": 444,
+        "height": 800,
+        "bytes": 95610
+      },
+      {
+        "file": "03-umbrella-guard-1.webp",
+        "src": "/wedding-v3/template2/03-umbrella-guard-1.webp",
+        "width": 342,
+        "height": 800,
+        "bytes": 48282
+      },
+      {
+        "file": "04-cloud-texture-1.webp",
+        "src": "/wedding-v3/template2/04-cloud-texture-1.webp",
+        "width": 1600,
+        "height": 1600,
+        "bytes": 23478
+      },
+      {
+        "file": "05-gazebo.webp",
+        "src": "/wedding-v3/template2/05-gazebo.webp",
+        "width": 503,
+        "height": 800,
+        "bytes": 44006
+      },
+      {
+        "file": "06-gold-leaf-branch.webp",
+        "src": "/wedding-v3/template2/06-gold-leaf-branch.webp",
+        "width": 620,
+        "height": 800,
+        "bytes": 155040
+      },
+      {
+        "file": "07-fountain.webp",
+        "src": "/wedding-v3/template2/07-fountain.webp",
+        "width": 800,
+        "height": 601,
+        "bytes": 70396
+      },
+      {
+        "file": "08-green-branch.webp",
+        "src": "/wedding-v3/template2/08-green-branch.webp",
+        "width": 714,
+        "height": 800,
+        "bytes": 64396
+      },
+      {
+        "file": "09-cloud-texture-2.webp",
+        "src": "/wedding-v3/template2/09-cloud-texture-2.webp",
+        "width": 800,
+        "height": 800,
+        "bytes": 8452
+      },
+      {
+        "file": "10-umbrella-guard-2.webp",
+        "src": "/wedding-v3/template2/10-umbrella-guard-2.webp",
+        "width": 685,
+        "height": 1600,
+        "bytes": 116938
+      },
+      {
+        "file": "11-banana-leaves.webp",
+        "src": "/wedding-v3/template2/11-banana-leaves.webp",
+        "width": 570,
+        "height": 800,
+        "bytes": 47768
+      },
+      {
+        "file": "12-peacock.webp",
+        "src": "/wedding-v3/template2/12-peacock.webp",
+        "width": 702,
+        "height": 800,
+        "bytes": 72052
+      },
+      {
+        "file": "13-hanging-vine.webp",
+        "src": "/wedding-v3/template2/13-hanging-vine.webp",
+        "width": 427,
+        "height": 800,
+        "bytes": 83522
+      },
+      {
+        "file": "14-couple.webp",
+        "src": "/wedding-v3/template2/14-couple.webp",
+        "width": 465,
+        "height": 800,
+        "bytes": 86538
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template2/card.webp",
+        "width": 600,
+        "height": 847,
+        "bytes": 109176,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template3": [
+      {
+        "file": "01-paper-background-1.webp",
+        "src": "/wedding-v3/template3/01-paper-background-1.webp",
+        "width": 800,
+        "height": 450,
+        "bytes": 3826
+      },
+      {
+        "file": "02-paper-background-2.webp",
+        "src": "/wedding-v3/template3/02-paper-background-2.webp",
+        "width": 1800,
+        "height": 1013,
+        "bytes": 27784
+      },
+      {
+        "file": "03-pampas-grass-clouds-1.webp",
+        "src": "/wedding-v3/template3/03-pampas-grass-clouds-1.webp",
+        "width": 1600,
+        "height": 721,
+        "bytes": 236618
+      },
+      {
+        "file": "04-paper-background-3.webp",
+        "src": "/wedding-v3/template3/04-paper-background-3.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 21334
+      },
+      {
+        "file": "05-couple-on-swing.webp",
+        "src": "/wedding-v3/template3/05-couple-on-swing.webp",
+        "width": 800,
+        "height": 789,
+        "bytes": 97788
+      },
+      {
+        "file": "06-floral-drape-arch-1.webp",
+        "src": "/wedding-v3/template3/06-floral-drape-arch-1.webp",
+        "width": 686,
+        "height": 800,
+        "bytes": 74482
+      },
+      {
+        "file": "07-pampas-grass-clouds-2.webp",
+        "src": "/wedding-v3/template3/07-pampas-grass-clouds-2.webp",
+        "width": 800,
+        "height": 361,
+        "bytes": 71568
+      },
+      {
+        "file": "08-garden-rocks.webp",
+        "src": "/wedding-v3/template3/08-garden-rocks.webp",
+        "width": 800,
+        "height": 315,
+        "bytes": 60930
+      },
+      {
+        "file": "09-pampas-grass-corner.webp",
+        "src": "/wedding-v3/template3/09-pampas-grass-corner.webp",
+        "width": 595,
+        "height": 800,
+        "bytes": 137006
+      },
+      {
+        "file": "10-beige-peony.webp",
+        "src": "/wedding-v3/template3/10-beige-peony.webp",
+        "width": 800,
+        "height": 800,
+        "bytes": 118620
+      },
+      {
+        "file": "11-pink-peony-bouquet.webp",
+        "src": "/wedding-v3/template3/11-pink-peony-bouquet.webp",
+        "width": 728,
+        "height": 800,
+        "bytes": 119594
+      },
+      {
+        "file": "12-floral-drape-arch-2.webp",
+        "src": "/wedding-v3/template3/12-floral-drape-arch-2.webp",
+        "width": 1372,
+        "height": 1600,
+        "bytes": 225658
+      },
+      {
+        "file": "13-pampas-grass-border.webp",
+        "src": "/wedding-v3/template3/13-pampas-grass-border.webp",
+        "width": 800,
+        "height": 553,
+        "bytes": 127914
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template3/card.webp",
+        "width": 600,
+        "height": 840,
+        "bytes": 68508,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template4": [
+      {
+        "file": "00-background-colour.webp",
+        "src": "/wedding-v3/template4/00-background-colour.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3364
+      },
+      {
+        "file": "01-bride-groom-hands.webp",
+        "src": "/wedding-v3/template4/01-bride-groom-hands.webp",
+        "width": 1600,
+        "height": 746,
+        "bytes": 85084
+      },
+      {
+        "file": "02-ganesha-red.webp",
+        "src": "/wedding-v3/template4/02-ganesha-red.webp",
+        "width": 115,
+        "height": 125,
+        "bytes": 4166
+      },
+      {
+        "file": "03-corner-ornament-left.webp",
+        "src": "/wedding-v3/template4/03-corner-ornament-left.webp",
+        "width": 440,
+        "height": 490,
+        "bytes": 10300
+      },
+      {
+        "file": "04-corner-ornament-right.webp",
+        "src": "/wedding-v3/template4/04-corner-ornament-right.webp",
+        "width": 450,
+        "height": 490,
+        "bytes": 10734
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template4/card.webp",
+        "width": 600,
+        "height": 840,
+        "bytes": 35532,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template5": [
+      {
+        "file": "00-background-colour.webp",
+        "src": "/wedding-v3/template5/00-background-colour.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3364
+      },
+      {
+        "file": "01-hanging-brass-lamp.webp",
+        "src": "/wedding-v3/template5/01-hanging-brass-lamp.webp",
+        "width": 214,
+        "height": 800,
+        "bytes": 26316
+      },
+      {
+        "file": "02-couple-red-saree.webp",
+        "src": "/wedding-v3/template5/02-couple-red-saree.webp",
+        "width": 1459,
+        "height": 1600,
+        "bytes": 175070
+      },
+      {
+        "file": "03-temple-gopuram-faded.webp",
+        "src": "/wedding-v3/template5/03-temple-gopuram-faded.webp",
+        "width": 470,
+        "height": 515,
+        "bytes": 10844
+      },
+      {
+        "file": "04-ganesha-red.webp",
+        "src": "/wedding-v3/template5/04-ganesha-red.webp",
+        "width": 110,
+        "height": 135,
+        "bytes": 4768
+      },
+      {
+        "file": "05-hanging-lamps-pair.webp",
+        "src": "/wedding-v3/template5/05-hanging-lamps-pair.webp",
+        "width": 170,
+        "height": 170,
+        "bytes": 4192
+      },
+      {
+        "file": "06-divider.webp",
+        "src": "/wedding-v3/template5/06-divider.webp",
+        "width": 385,
+        "height": 55,
+        "bytes": 1460
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template5/card.webp",
+        "width": 600,
+        "height": 840,
+        "bytes": 41916,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template6": [
+      {
+        "file": "01-sky-watercolour-background.webp",
+        "src": "/wedding-v3/template6/01-sky-watercolour-background.webp",
+        "width": 1800,
+        "height": 1013,
+        "bytes": 13748
+      },
+      {
+        "file": "02-flamingo-floral-top-bottom-border.webp",
+        "src": "/wedding-v3/template6/02-flamingo-floral-top-bottom-border.webp",
+        "width": 1600,
+        "height": 1551,
+        "bytes": 410760
+      },
+      {
+        "file": "03-banana-plant-a.webp",
+        "src": "/wedding-v3/template6/03-banana-plant-a.webp",
+        "width": 1080,
+        "height": 1600,
+        "bytes": 210524
+      },
+      {
+        "file": "04-pink-gazebo-dome.webp",
+        "src": "/wedding-v3/template6/04-pink-gazebo-dome.webp",
+        "width": 1006,
+        "height": 1600,
+        "bytes": 131648
+      },
+      {
+        "file": "05-anthurium-floral-bunch.webp",
+        "src": "/wedding-v3/template6/05-anthurium-floral-bunch.webp",
+        "width": 687,
+        "height": 800,
+        "bytes": 109868
+      },
+      {
+        "file": "06-green-tree-shrub.webp",
+        "src": "/wedding-v3/template6/06-green-tree-shrub.webp",
+        "width": 800,
+        "height": 637,
+        "bytes": 102170
+      },
+      {
+        "file": "07-couple-on-sofa-mehndi.webp",
+        "src": "/wedding-v3/template6/07-couple-on-sofa-mehndi.webp",
+        "width": 800,
+        "height": 562,
+        "bytes": 100060
+      },
+      {
+        "file": "08-banana-plant-b.webp",
+        "src": "/wedding-v3/template6/08-banana-plant-b.webp",
+        "width": 540,
+        "height": 800,
+        "bytes": 72792
+      },
+      {
+        "file": "09-palm-frond.webp",
+        "src": "/wedding-v3/template6/09-palm-frond.webp",
+        "width": 501,
+        "height": 800,
+        "bytes": 107708
+      },
+      {
+        "file": "10-peacock.webp",
+        "src": "/wedding-v3/template6/10-peacock.webp",
+        "width": 392,
+        "height": 800,
+        "bytes": 34050
+      },
+      {
+        "file": "11-white-balustrade-railing.webp",
+        "src": "/wedding-v3/template6/11-white-balustrade-railing.webp",
+        "width": 800,
+        "height": 266,
+        "bytes": 24422
+      },
+      {
+        "file": "12-mountains-lake-landscape-cutout.webp",
+        "src": "/wedding-v3/template6/12-mountains-lake-landscape-cutout.webp",
+        "width": 1091,
+        "height": 470,
+        "bytes": 67510
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template6/card.webp",
+        "width": 600,
+        "height": 852,
+        "bytes": 90944,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template7": [
+      {
+        "file": "00-background-colour-teal.webp",
+        "src": "/wedding-v3/template7/00-background-colour-teal.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3368
+      },
+      {
+        "file": "00-background-colour-white.webp",
+        "src": "/wedding-v3/template7/00-background-colour-white.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3354
+      },
+      {
+        "file": "01-couple-on-marigold-swing.webp",
+        "src": "/wedding-v3/template7/01-couple-on-marigold-swing.webp",
+        "width": 940,
+        "height": 1600,
+        "bytes": 341408
+      },
+      {
+        "file": "02-mossy-tree-branch.webp",
+        "src": "/wedding-v3/template7/02-mossy-tree-branch.webp",
+        "width": 1600,
+        "height": 875,
+        "bytes": 273762
+      },
+      {
+        "file": "03-peacock-feather.webp",
+        "src": "/wedding-v3/template7/03-peacock-feather.webp",
+        "width": 108,
+        "height": 105,
+        "bytes": 4216
+      },
+      {
+        "file": "04-marigold-corner.webp",
+        "src": "/wedding-v3/template7/04-marigold-corner.webp",
+        "width": 170,
+        "height": 165,
+        "bytes": 8330
+      },
+      {
+        "file": "05-sketch-flower-line-art-right.webp",
+        "src": "/wedding-v3/template7/05-sketch-flower-line-art-right.webp",
+        "width": 399,
+        "height": 330,
+        "bytes": 12506
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template7/card.webp",
+        "width": 600,
+        "height": 852,
+        "bytes": 89320,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template8": [
+      {
+        "file": "00-background-colour.webp",
+        "src": "/wedding-v3/template8/00-background-colour.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3358
+      },
+      {
+        "file": "01-gold-line-art-floral-swirl.webp",
+        "src": "/wedding-v3/template8/01-gold-line-art-floral-swirl.webp",
+        "width": 1600,
+        "height": 1454,
+        "bytes": 316526
+      },
+      {
+        "file": "02-pink-white-rose-bouquet.webp",
+        "src": "/wedding-v3/template8/02-pink-white-rose-bouquet.webp",
+        "width": 800,
+        "height": 686,
+        "bytes": 105524
+      },
+      {
+        "file": "03-gold-ganesha.webp",
+        "src": "/wedding-v3/template8/03-gold-ganesha.webp",
+        "width": 415,
+        "height": 535,
+        "bytes": 13078
+      },
+      {
+        "file": "04-cream-mandala-diamond-pattern-tile.webp",
+        "src": "/wedding-v3/template8/04-cream-mandala-diamond-pattern-tile.webp",
+        "width": 320,
+        "height": 560,
+        "bytes": 9502
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template8/card.webp",
+        "width": 600,
+        "height": 846,
+        "bytes": 74022,
+        "cardFrom": "00-template-card.png"
+      }
+    ],
+    "template9": [
+      {
+        "file": "00-background-colour.webp",
+        "src": "/wedding-v3/template9/00-background-colour.webp",
+        "width": 1013,
+        "height": 1800,
+        "bytes": 3364
+      },
+      {
+        "file": "01-floral-gazebo-pavilion.webp",
+        "src": "/wedding-v3/template9/01-floral-gazebo-pavilion.webp",
+        "width": 800,
+        "height": 617,
+        "bytes": 68496
+      },
+      {
+        "file": "02-couple-illustration-peach.webp",
+        "src": "/wedding-v3/template9/02-couple-illustration-peach.webp",
+        "width": 575,
+        "height": 800,
+        "bytes": 69830
+      },
+      {
+        "file": "03-peony-tree-left-with-lotus-leaves.webp",
+        "src": "/wedding-v3/template9/03-peony-tree-left-with-lotus-leaves.webp",
+        "width": 300,
+        "height": 1029,
+        "bytes": 73022
+      },
+      {
+        "file": "04-peony-tree-right-with-lotus-leaves.webp",
+        "src": "/wedding-v3/template9/04-peony-tree-right-with-lotus-leaves.webp",
+        "width": 296,
+        "height": 1029,
+        "bytes": 74408
+      },
+      {
+        "file": "05-gold-lattice-arch-top-panel.webp",
+        "src": "/wedding-v3/template9/05-gold-lattice-arch-top-panel.webp",
+        "width": 1091,
+        "height": 380,
+        "bytes": 33140
+      },
+      {
+        "file": "card.webp",
+        "src": "/wedding-v3/template9/card.webp",
+        "width": 600,
+        "height": 852,
+        "bytes": 80168,
+        "cardFrom": "00-template-card.png"
+      }
+    ]
+  },
+  "totalBytes": 12426426
+}

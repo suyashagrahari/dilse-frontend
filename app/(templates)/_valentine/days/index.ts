@@ -24,6 +24,10 @@ import { digitalBouquetDay } from "./digital-bouquet";
 import { weddingInvitationDay } from "./wedding-invitation";
 import { weddingPremiumDay } from "./wedding-invitation-premium";
 import { royalWeddingDay } from "./royal-wedding-invitation";
+import { palaceDoorWeddingDay } from "./palace-door-wedding-invitation";
+import { gardenWeddingDay } from "./garden-wedding-invitation";
+import { floralWeddingDay } from "./floral-wedding-invitation";
+import { lotusWeddingDay } from "./lotus-wedding-invitation";
 import { diwaliDay } from "./happy-diwali";
 import { sorryPremiumDay } from "./sorry-premium";
 import { roseDayPremium } from "./happy-rose-day-premium";
@@ -76,6 +80,10 @@ export const DAYS: Record<DaySlug, DayConfig> = {
   "wedding-invitation": weddingInvitationDay as unknown as DayConfig,
   "wedding-invitation-premium": weddingPremiumDay as unknown as DayConfig,
   "royal-wedding-invitation": royalWeddingDay as unknown as DayConfig,
+  "palace-door-wedding-invitation": palaceDoorWeddingDay as unknown as DayConfig,
+  "garden-wedding-invitation": gardenWeddingDay as unknown as DayConfig,
+  "floral-wedding-invitation": floralWeddingDay as unknown as DayConfig,
+  "lotus-wedding-invitation": lotusWeddingDay as unknown as DayConfig,
   "happy-diwali": diwaliDay as unknown as DayConfig,
   "sorry-premium": sorryPremiumDay as unknown as DayConfig,
   // ✦ Premium twins

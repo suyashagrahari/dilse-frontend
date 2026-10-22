@@ -51,6 +51,10 @@ const ACCENTS: Record<string, string> = {
   "wedding-invitation": "#9A7B2F", // antique gold, carries white text
   "wedding-invitation-premium": "#A8445E",
   "royal-wedding-invitation": "#7A1F2B",
+  "palace-door-wedding-invitation": "#8A5A1C",
+  "garden-wedding-invitation": "#B0466A",
+  "floral-wedding-invitation": "#9E5A62",
+  "lotus-wedding-invitation": "#A3405C",
   "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its
   // accentDeep where that accent is too light to carry white button text).

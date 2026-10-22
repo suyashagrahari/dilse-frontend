@@ -33,7 +33,7 @@ export const GALLERY_LIST: TemplateListItem[] = (() => {
  * ranking: Dandiya, the bouquet, the three wedding tiers, then the ✦ premium evergreens. Only the order moves;
  * rank badges still come from what people actually made (see rankRooms).
  */
-export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "digital-bouquet", "wedding-invitation", "wedding-invitation-premium", "royal-wedding-invitation", "anniversary-premium", "happy-anniversary", "proposal-premium", "birthday-premium", "sorry-premium", "miss-you-premium", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
+export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "digital-bouquet", "wedding-invitation", "wedding-invitation-premium", "royal-wedding-invitation", "palace-door-wedding-invitation", "garden-wedding-invitation", "floral-wedding-invitation", "lotus-wedding-invitation", "anniversary-premium", "happy-anniversary", "proposal-premium", "birthday-premium", "sorry-premium", "miss-you-premium", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
 
 /**
  * Launch day per template (IST, yyyy-mm-dd). For NEW_LAUNCH_DAYS after it the
@@ -56,6 +56,10 @@ export const LAUNCHES: Readonly<Record<string, string>> = {
   "wedding-invitation": "2026-10-20",
   "wedding-invitation-premium": "2026-10-20",
   "royal-wedding-invitation": "2026-10-20",
+  "palace-door-wedding-invitation": "2026-10-23",
+  "garden-wedding-invitation": "2026-10-23",
+  "floral-wedding-invitation": "2026-10-23",
+  "lotus-wedding-invitation": "2026-10-23",
 };
 export const NEW_LAUNCH_DAYS = 10;
 

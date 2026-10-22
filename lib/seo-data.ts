@@ -3810,6 +3810,285 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Palace Door Wedding Invitation 🚪 (wedding tier, Royal's limits). Art: public/wedding-v3.
+  "palace-door-wedding-invitation": {
+    title: "Palace Door Wedding Invitation — Doors Open to Every Function, with RSVP",
+    description:
+      "An animated palace door wedding invitation: carved Rajasthani doors swing open to your names in a golden frame, a floral mandap with lanterns and a havan kund, and an illustrated couple for each function, Haldi, Mehendi, Sangeet, Wedding and Reception, with maps, RSVP per function, 40 photos and a blessings wall. One private link.",
+    category: "Wedding",
+    emoji: "🚪",
+
+    keywords: [
+      "palace door wedding invitation",
+      "door opening wedding invitation",
+      "door opening wedding invitation online",
+      "animated door wedding invite",
+      "rajasthani door wedding invitation",
+      "haveli wedding invitation",
+      "royal door opening e invite",
+      "wedding invitation doors open animation",
+      "door opening wedding invitation video alternative",
+      "haldi mehndi sangeet invitation online",
+      "wedding invitation with couple illustration",
+      "caricature wedding invitation online",
+      "mandap wedding invitation",
+      "rajasthani wedding e invite",
+      "wedding website with rsvp for every function",
+      "hindi english wedding invitation",
+      "shubh vivah e invite",
+      "online wedding card with music",
+      "whatsapp wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is a palace door wedding invitation?",
+        answer:
+          "It is a wedding invitation that opens like the carved doors of a Rajasthani haveli. On SubhSandesh, the two halves of the door swing apart to reveal the couple's names in a golden frame, then guests walk through a floral mandap with gold lanterns and jhumka hangings, the couple's story, every function with an illustrated couple of its own, the photo gallery, an RSVP and a blessings wall. It is one private link that opens on any phone.",
+      },
+      {
+        question: "Can each function have its own look?",
+        answer:
+          "Yes. Haldi, Mehendi, Sangeet, Engagement, the Wedding and the Reception each get their own illustrated couple, dressed for that function, along with its date, time, venue, Google Maps link, dress-code colour and add-to-calendar button. Up to eight functions fit on one invitation.",
+      },
+      {
+        question: "How do I make a door opening wedding invitation online?",
+        answer:
+          "Open the Palace Door Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, story, functions and an English and Hindi invitation. Add up to 40 photos, choose a light theme and a song, press Save to preview, then Publish and send the link on WhatsApp.",
+      },
+      {
+        question: "Is it better than a door opening wedding video?",
+        answer:
+          "A video plays once and is the same for everyone. This invitation does what the video does, with doors, gold and music, and adds an RSVP for every function, a map and calendar for each venue, a blessings wall and changes after sending, because the same link always shows your latest details.",
+      },
+      {
+        question: "Do guests need an app to open it?",
+        answer:
+          "No. Guests tap the link in WhatsApp, Instagram or SMS and it opens in the phone's browser, on Android and iPhone alike. It also looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Palace Door Wedding Invitation",
+      description: "Create an animated palace door wedding invitation with every function, an illustrated couple per function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Palace Door Invitation", text: "Go to the Palace Door Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, story, functions, dress codes and an English and Hindi invitation." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions and confirm each date, time, venue, map link and dress-code colour." },
+        { name: "Add Your Photos", text: "Add up to 40 photos, set each one's size and focal point, and drag them into order." },
+        { name: "Pick a Theme, Publish and Send", text: "Choose a light theme and a song, preview the doors opening, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  // Mughal Garden Wedding Invitation 🦚 (wedding tier, Royal's limits). Art: public/wedding-v3.
+  "garden-wedding-invitation": {
+    title: "Mughal Garden Wedding Invitation — Pastel Watercolour E-Invite with RSVP",
+    description:
+      "A pastel Mughal garden wedding invitation online: clouds part over pink gazebos and chhatris, a peacock and lotus fountains, then your story, up to eight functions with maps and dress codes, 40 photos, RSVP per function and a blessings wall. Painted in watercolour, sent as one private link.",
+    category: "Wedding",
+    emoji: "🦚",
+
+    keywords: [
+      "mughal garden wedding invitation",
+      "garden wedding invitation online",
+      "pastel wedding invitation",
+      "watercolour wedding invitation",
+      "watercolor wedding e invite",
+      "peacock wedding invitation",
+      "pink wedding invitation online",
+      "gazebo wedding invitation",
+      "floral garden wedding e invite",
+      "day wedding invitation",
+      "outdoor wedding invitation online",
+      "destination garden wedding invitation",
+      "mehndi invitation pastel",
+      "illustrated couple wedding invitation",
+      "wedding website with rsvp",
+      "animated wedding invitation with music",
+      "pastel shaadi card online",
+      "whatsapp wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is a Mughal garden wedding invitation?",
+        answer:
+          "It is a wedding invitation painted like a Mughal garden in soft watercolour: pink gazebos and chhatri umbrellas, a hedge-and-stone wall, lotus fountains, hanging lanterns and a peacock. On SubhSandesh the clouds part as it opens, the garden comes to life as guests scroll, and every function, your story, photos, RSVP and a blessings wall sit along the garden path. It is one private link.",
+      },
+      {
+        question: "Is it good for a day wedding or a mehndi in a garden?",
+        answer:
+          "Yes. The pastel pink, peach and green palette suits day weddings, garden mehndis, haldi by the pool and outdoor receptions. Each function gets its own date, time, venue, map link, dress-code colour and calendar button, and guests RSVP to each one separately.",
+      },
+      {
+        question: "How do I make a garden wedding invitation online?",
+        answer:
+          "Open the Mughal Garden Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, story, functions and an English and Hindi invitation. Add up to 40 photos, choose a theme and a song, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Can I add our own photos?",
+        answer:
+          "Yes, up to 40. They sit in a Pinterest-style gallery where you choose each photo's size and focal point and drag them into order, and you can use them for your story chapters and family cards too.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Mughal Garden Wedding Invitation",
+      description: "Create a pastel watercolour garden wedding invitation with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Garden Invitation", text: "Go to the Mughal Garden Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, story, functions, dress codes and an English and Hindi invitation." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions and confirm each date, time, venue, map link and dress-code colour." },
+        { name: "Add Your Photos", text: "Add up to 40 photos, set each one's size and focal point, and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme and a song, preview the garden, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  // Pampas & Peony Wedding Invitation 🌸 (wedding tier, Royal's limits). Art: public/wedding-v3.
+  "floral-wedding-invitation": {
+    title: "Pampas & Peony Floral Wedding Invitation — Boho E-Invite with RSVP",
+    description:
+      "A boho floral wedding invitation online: pampas grass, blush peonies and floral drapes on handmade paper, the couple on a swing and a gold Ganesha, then your story, up to eight functions with maps and dress codes, 40 photos, RSVP per function and a blessings wall. Beige and blush, sent as one private link.",
+    category: "Wedding",
+    emoji: "🌸",
+
+    keywords: [
+      "floral wedding invitation",
+      "floral wedding invitation online",
+      "boho wedding invitation",
+      "pampas grass wedding invitation",
+      "peony wedding invitation",
+      "beige wedding invitation",
+      "blush and beige wedding invitation",
+      "minimal floral wedding e invite",
+      "aesthetic wedding invitation online",
+      "wedding invitation with ganesha",
+      "couple on swing wedding invitation",
+      "intimate wedding invitation online",
+      "marigold mehndi invitation",
+      "wedding website with rsvp",
+      "animated floral wedding card",
+      "hindi english wedding invitation",
+      "whatsapp wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is a pampas and peony wedding invitation?",
+        answer:
+          "It is a soft, boho floral wedding invitation in beige and blush: pampas grass, peony bouquets and floral drapes on handmade paper, with the couple on a swing and a gold Ganesha at the top. On SubhSandesh the florals drift in as guests scroll, and the invitation holds your story, every function, your photos, an RSVP and a blessings wall on one private link.",
+      },
+      {
+        question: "Is it suitable for a traditional Indian wedding?",
+        answer:
+          "Yes. It opens with a gold Ganesha and carries an English and Hindi invitation, both families, the muhurat and up to eight functions, from Haldi and Mehendi with marigolds to the Pheras and Reception. The look is modern and minimal; the wording can be as traditional as you like.",
+      },
+      {
+        question: "How do I make a floral wedding invitation online?",
+        answer:
+          "Open the Pampas & Peony Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, story, functions and invitation text. Add up to 40 photos, choose a theme and a song, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Can guests RSVP for each function?",
+        answer:
+          "Yes. Guests choose which functions they will attend, how many are coming and their meal preference, and every reply reaches you by email and on your guest dashboard.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Pampas & Peony Floral Wedding Invitation",
+      description: "Create a boho floral wedding invitation with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Floral Invitation", text: "Go to the Pampas & Peony Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, story, functions, dress codes and an English and Hindi invitation." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions and confirm each date, time, venue, map link and dress-code colour." },
+        { name: "Add Your Photos", text: "Add up to 40 photos, set each one's size and focal point, and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme and a song, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  // Lotus Temple Wedding Invitation 🪷 (wedding tier, Royal's limits). Art: public/wedding-v3.
+  "lotus-wedding-invitation": {
+    title: "Lotus Temple Wedding Invitation — South Indian E-Invite with Muhurtham & RSVP",
+    description:
+      "A South Indian temple wedding invitation online: brass lamps, a lotus pond, gold string lights and the gopuram, opening with Shri Ganeshay Namah. Your muhurtham, both families, up to eight functions with maps and dress codes, 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🪷",
+
+    keywords: [
+      "lotus wedding invitation",
+      "lotus theme wedding invitation",
+      "south indian wedding invitation online",
+      "temple wedding invitation",
+      "kerala wedding invitation online",
+      "tamil wedding invitation e card",
+      "telugu wedding invitation online",
+      "kannada wedding invitation online",
+      "muhurtham invitation online",
+      "shri ganeshay namah wedding invitation",
+      "traditional wedding e invite with ganesha",
+      "brass lamp wedding invitation",
+      "white and gold wedding invitation",
+      "pink lotus wedding card",
+      "wedding website with rsvp",
+      "temple wedding e invite with music",
+      "whatsapp wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is a lotus temple wedding invitation?",
+        answer:
+          "It is a traditional South Indian style wedding invitation in white, gold and lotus pink. On SubhSandesh it opens with Shri Ganeshay Namah under gold string lights, brass lamps glow, lotuses bloom from a temple pond and the gopuram rises behind your muhurtham, then guests find your families, your story, every function, your photos, an RSVP and a blessings wall on one private link.",
+      },
+      {
+        question: "Is it suitable for Tamil, Telugu, Kannada or Kerala weddings?",
+        answer:
+          "Yes. The temple, lotus, brass lamp and marigold artwork suits South Indian weddings, and you write the function names your family uses, such as Nichayathartham, Muhurtham, Mangala Snanam or Reception. The invitation text can be in English and Hindi, and every line stays editable.",
+      },
+      {
+        question: "How do I make a temple wedding invitation online?",
+        answer:
+          "Open the Lotus Temple Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, story, functions and invitation text. Add up to 40 photos, choose a theme and a song, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Can I show the muhurtham time?",
+        answer:
+          "Yes. The muhurtham sits under the couple's names and next to the countdown, and each function has its own date, time, venue, Google Maps link, dress-code colour and add-to-calendar button.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Lotus Temple Wedding Invitation",
+      description: "Create a South Indian temple wedding invitation with the muhurtham, every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Lotus Invitation", text: "Go to the Lotus Temple Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, story, functions, dress codes and the invitation text." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions and confirm each date, time, venue, map link and dress-code colour." },
+        { name: "Add Your Photos", text: "Add up to 40 photos, set each one's size and focal point, and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme and a song, preview the lamps lighting up, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
   // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
   // 8 November). Searchers want an "online Diwali card / Diwali wishes with
   // photos" they can send on WhatsApp, and a good share is for a partner or

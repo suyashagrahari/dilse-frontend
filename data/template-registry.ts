@@ -77,6 +77,10 @@ import { config as digitalBouquetCfg } from "@/app/(templates)/digital-bouquet/c
 import { config as weddingInvitationCfg } from "@/app/(templates)/wedding-invitation/config";
 import { config as weddingPremiumCfg } from "@/app/(templates)/wedding-invitation-premium/config";
 import { config as royalWeddingCfg } from "@/app/(templates)/royal-wedding-invitation/config";
+import { config as palaceDoorWeddingCfg } from "@/app/(templates)/palace-door-wedding-invitation/config";
+import { config as gardenWeddingCfg } from "@/app/(templates)/garden-wedding-invitation/config";
+import { config as floralWeddingCfg } from "@/app/(templates)/floral-wedding-invitation/config";
+import { config as lotusWeddingCfg } from "@/app/(templates)/lotus-wedding-invitation/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
@@ -165,6 +169,14 @@ const allConfigs = [
   //    palace gates, 8 functions, 40 photos, RSVP per function, blessings wall.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until released and priced. ─
   royalWeddingCfg,
+  // ── Four more wedding designs on Royal's limits (ULTRA_PREMIUM_SLUGS): the
+  //    palace door, the Mughal garden, pampas & peony and the lotus temple.
+  //    Art lives in public/wedding-v3. Hidden on the apex (server
+  //    DEFAULT_HIDDEN) until released and priced in the admin. ────────────
+  palaceDoorWeddingCfg,
+  gardenWeddingCfg,
+  floralWeddingCfg,
+  lotusWeddingCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
@@ -301,6 +313,10 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "wedding-invitation",
   "wedding-invitation-premium",
   "royal-wedding-invitation",
+  "palace-door-wedding-invitation",
+  "garden-wedding-invitation",
+  "floral-wedding-invitation",
+  "lotus-wedding-invitation",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

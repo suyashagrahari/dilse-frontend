@@ -39,6 +39,10 @@ const STUDIOS: Record<StudioId, ComponentType<StudioProps>> = {
   weddingClassic: dynamic(() => import("../../wedding-invitation/components/studio/WeddingStudio"), { ssr: false, loading: Loading }),
   weddingPremium: dynamic(() => import("../../wedding-invitation-premium/components/studio/WeddingPremiumStudio"), { ssr: false, loading: Loading }),
   royalWedding: dynamic(() => import("../../royal-wedding-invitation/components/studio/RoyalStudio"), { ssr: false, loading: Loading }),
+  palaceDoorWedding: dynamic(() => import("../../palace-door-wedding-invitation/components/studio/PalaceDoorStudio"), { ssr: false, loading: Loading }),
+  gardenWedding: dynamic(() => import("../../garden-wedding-invitation/components/studio/GardenStudio"), { ssr: false, loading: Loading }),
+  floralWedding: dynamic(() => import("../../floral-wedding-invitation/components/studio/FloralStudio"), { ssr: false, loading: Loading }),
+  lotusWedding: dynamic(() => import("../../lotus-wedding-invitation/components/studio/LotusStudio"), { ssr: false, loading: Loading }),
 };
 
 export function DayStudio(props: StudioProps) {
