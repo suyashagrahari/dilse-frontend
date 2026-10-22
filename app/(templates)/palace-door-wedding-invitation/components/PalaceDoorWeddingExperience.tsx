@@ -1,56 +1,52 @@
 "use client";
 
-// SCAFFOLD (wedding quartet): this started as a working copy of
-// royal-wedding-invitation so the template runs end to end. Rebuild it with
-// this template's own art (./assets.ts or ../assets.ts, served from
-// public/wedding-v3, never the CDN); light themes only.
-
-// ─── Royal Wedding Invitation 👑 — the guest's experience ────────────────────
+// ─── Palace Door Wedding Invitation 🚪 — the guest's experience ──────────────
 //
-// palace gates (tap: Ganesha glows in, the carved doors swing out in 3D,
-// light + petals, the camera pushes through) → the courtyard (scene, gold
-// mandala, lattice jharokha with the names, jhoomars, peacocks, elephants,
-// diyas, toran, gold dust) → the invitation in English + Hindi → the families
-// inside a Mughal manuscript border → the farmaan scroll with the date and a
-// mohar seal → the story → illustrated function panels → the palace venue →
-// a countdown in a gold medallion → film → masonry → good to know → RSVP →
-// blessings → the gates close on "Shubh Vivah".
+// The carved haveli door (tap: it knocks, the leaves swing inward in 3D, light
+// floods through, jhumkas sway, petals fall, the music starts, the camera
+// steps through) → the ivory courtyard (floral arch, lanterns, the couple in
+// the gold frame, balustrade) → the invitation in English + Hindi → the
+// families → the auspicious day on an unrolling scroll with the havan kund and
+// a flip countdown → the story along a mauli thread → every function with its
+// own illustrated couple → the venue → film → gallery → for our guests (good
+// to know, who to call, livestream, shagun) → RSVP → blessings → the door
+// closes on "Shubh Vivah", the share bar, the hands tied with the mauli.
 //
-// One long, calm scroll after one cinematic moment; every motion is
+// Art: public/wedding-v3 (./assets.ts), served from the repo, never the CDN.
+// One long calm scroll after one cinematic moment; every motion is
 // transform/opacity, gated on visibility, and reduced-motion aware. A
 // bilingual toggle (top-left) switches every heading and button to Hindi.
+// ?to=Name greets the guest on the door and pre-fills their RSVP.
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  BlessingsWall,
-  Countdown,
-  FamiliesBlock,
-  MessageBlock,
-  RSVPBlock,
-  Reveal,
-  Section,
-  WeddingCard,
-  WeddingMasonry,
-  WeddingRoot,
-  formatEventDate,
-  formatEventTime,
-} from "../../_wedding";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
-import Gates from "./pd/Gates";
-import Story from "./pd/Story";
+import { useDayMusic } from "../../_valentine/music/context";
+import { A, PD_KIT, img } from "./assets";
 import Courtyard from "./pd/Courtyard";
-import Farmaan from "./pd/Farmaan";
-import PalaceDoorEvents from "./pd/PalaceDoorEvents";
-import Venue from "./pd/Venue";
-import { artImg, palaceDoorArt } from "./pd/art";
+import DateScroll from "./pd/DateScroll";
+import Doors from "./pd/Doors";
+import Events from "./pd/Events";
 import Finale from "./pd/Finale";
+import { Contacts, GoodToKnow, LiveButton, Shagun } from "./pd/GuestInfo";
+import ShareBar from "./pd/ShareBar";
+import Story from "./pd/Story";
 import { PD_CSS } from "./pd/css";
 import { T, readPalaceDoor, type Lang } from "./pd/model";
+import { prefillRsvpName, useGuestName } from "./pd/share";
+
+/** The kit's paper textures from this repo (public/wedding-v3/palace-door/kit); the kit's defaults point at the CDN. */
+const rootStyle = (theme: string): CSSProperties =>
+  ({
+    minHeight: "100dvh",
+    ["--wk-texture" as string]: `url("${PD_KIT.linen}")`,
+    ["--wk-paper" as string]: `url("${theme === "champagne" ? PD_KIT.silk : PD_KIT.linen}")`,
+  }) as CSSProperties;
 
 function Film({ id, label }: { id: string; label: string }) {
   const [on, setOn] = useState(false);
   return (
-    <div className="pd-film wk-foil-border">
+    <div className="pd-film">
       {on ? (
         <iframe
           src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
@@ -62,7 +58,7 @@ function Film({ id, label }: { id: string; label: string }) {
       ) : (
         <button type="button" className="pd-film-poster" onClick={() => setOn(true)} aria-label={label}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" />
+          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" width={480} height={360} />
           <span className="pd-film-play" aria-hidden>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5.5v13l11-6.5z" />
@@ -75,6 +71,20 @@ function Film({ id, label }: { id: string; label: string }) {
   );
 }
 
+/** Hanging jhumkas on a section's top corners (they sway while on screen). */
+function Jhumkas({ lazy = true }: { lazy?: boolean }) {
+  return (
+    <>
+      {[0, 1].map((i) => (
+        <span key={i} className={`pd-hang is-${i ? "r" : "l"}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.jhumka, { lazy })} />
+        </span>
+      ))}
+    </>
+  );
+}
+
 export default function PalaceDoorWeddingExperience({ data, mode, react }: ExperienceProps) {
   const m = useMemo(() => readPalaceDoor(data.extras as Record<string, unknown>, data.photos, data.recipientName, data.senderName), [data.extras, data.photos, data.recipientName, data.senderName]);
   const [lang, setLang] = useState<Lang>(m.lang);
@@ -82,8 +92,11 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
   const couple = `${m.first} & ${m.second}`;
   const [open, setOpen] = useState(false);
-  const look = palaceDoorArt(m.theme);
-  // Spec 7.1.11: on low-end phones drop the ambient particles and the parallax.
+  const music = useDayMusic();
+  const guest = useGuestName();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const rsvpRef = useRef<HTMLDivElement>(null);
+  // On low-end phones drop the ambient particles and the parallax.
   const [lite] = useState(() => {
     if (typeof navigator === "undefined") return false;
     const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
@@ -91,10 +104,10 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
   });
 
   const dateLine = m.main?.date ? formatEventDate(m.main.date, locale) : "";
-  const shortDate = m.main?.date ? m.main.date.split("-").reverse().join(" · ") : "";
+  const shortDate = m.main?.date ? formatEventDate(m.main.date, "en-IN").replace(/^[^,]+,\s*/, "") : "";
   const mainTime = m.main?.time ? formatEventTime(m.main.time, locale) : "";
-  // Client-only component (ssr: false), so the URL is known on the first render.
   const [url] = useState(() => (typeof window === "undefined" ? "" : window.location.href.split("#")[0]));
+  const venueLine = [m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ");
 
   const completed = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -111,6 +124,17 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
     return () => io.disconnect();
   }, [open, react]);
 
+  // ?to=Name → the RSVP's name box (once it is on screen and still empty).
+  useEffect(() => {
+    const el = rsvpRef.current;
+    if (!el || !guest) return;
+    const io = new IntersectionObserver(([en]) => {
+      if (en.isIntersecting) prefillRsvpName(el, guest);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [guest]);
+
   const onOpened = () => {
     setOpen(true);
     react("opened");
@@ -119,188 +143,186 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
   const bride = { ...m.bride_, title: s.brideSide };
   const groom = { ...m.groom_, title: s.groomSide };
   const hasFamilies = bride.names.length > 0 || groom.names.length > 0;
-  const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 👑` : `You're invited to the wedding of ${couple} 👑`;
+  const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 🚪` : `The palace doors are open: you're invited to the wedding of ${couple} 🚪`;
+  const hasInfo = m.things.length > 0 || !!m.gettingThere || m.contacts.length > 0 || !!m.upiId || !!m.liveUrl;
 
   return (
-    <WeddingRoot theme={m.theme} className={`pd-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}`} style={{ minHeight: "100dvh" }}>
-      <style>{PD_CSS}</style>
-      <div className="pd-backdrop" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg(look.plate, { one: true })} />
-      </div>
-      <Gates first={m.first} second={m.second} dateLine={shortDate} s={s} lang={lang} invocation={m.invocation} look={look} onOpened={onOpened} />
+    <WeddingRoot theme={m.theme} className={`pd-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={rootStyle(m.theme)}>
+      <div ref={rootRef} style={{ display: "contents" }}>
+        <style>{PD_CSS}</style>
+        <Doors first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} invocation={m.invocation} onOpened={onOpened} />
 
-      <div className="pd-lang" role="group" aria-label="Language">
-        <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
-          EN
-        </button>
-        <button type="button" aria-pressed={lang === "hi"} onClick={() => setLang("hi")} lang="hi">
-          हिं
-        </button>
-      </div>
+        <div className="pd-lang" role="group" aria-label="Language">
+          <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
+            EN
+          </button>
+          <button type="button" aria-pressed={lang === "hi"} onClick={() => setLang("hi")} lang="hi">
+            हिं
+          </button>
+        </div>
 
-      {/* ── The courtyard (hero) ────────────────────────────────────────── */}
-      <Courtyard
-        open={open}
-        look={look}
-        s={s}
-        lang={lang}
-        first={m.first}
-        second={m.second}
-        photo={m.hero}
-        dateLine={dateLine}
-        time={mainTime}
-        muhurat={m.muhurat}
-        venue={[m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ")}
-      />
+        {open && music?.available && music.blocked && !music.playing && (
+          <button type="button" className="pd-hear" onClick={() => music.start()} lang={lang}>
+            <span aria-hidden>♪</span> {lang === "hi" ? "संगीत सुनने के लिए छुएँ" : "Tap to hear the music"}
+          </button>
+        )}
 
-      {/* ── The invitation ──────────────────────────────────────────────── */}
-      <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal">
-        <WeddingCard paper corners="corner-mughal" className="pd-invite">
-          <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament="kalash" heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
-        </WeddingCard>
-      </Section>
+        <Courtyard open={open} s={s} lang={lang} first={m.first} second={m.second} photo={m.hero} dateLine={dateLine} time={mainTime} venue={venueLine} guest={guest} />
 
-      {/* ── Families, inside a Mughal manuscript border ─────────────────── */}
-      {(hasFamilies || m.blessingsOf) && (
-        <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal">
-          <div className="pd-hashiya">
-            <span className="pd-band pd-band-top" aria-hidden />
-            <div className="pd-hashiya-frame">
-              <div className="pd-hashiya-in">
-                {m.blessingsOf && (
-                  <Reveal className="pd-blessings-of">
-                    <p className="wk-eyebrow" lang={lang}>
-                      {s.blessingsOf}
-                    </p>
-                    <p className="pd-blessings-names">{m.blessingsOf}</p>
-                  </Reveal>
-                )}
-                {hasFamilies && <FamiliesBlock bride={bride} groom={groom} first={m.familyFirst} heading="" photos />}
-              </div>
-            </div>
-            <span className="pd-band pd-band-bottom" aria-hidden />
+        {/* ── The invitation ──────────────────────────────────────────────── */}
+        <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal" className="pd-sec pd-sec-invite">
+          <div className="pd-invite-wrap">
+            <Jhumkas />
+            <Reveal effect="zoom" className="pd-invite">
+              <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament="kalash" heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
+            </Reveal>
+            <span className="pd-invite-urn is-l" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...img(A.urn, { lazy: true })} />
+            </span>
+            <span className="pd-invite-urn is-r" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...img(A.urn, { lazy: true })} />
+            </span>
           </div>
         </Section>
-      )}
 
-      {/* ── The farmaan: the date ───────────────────────────────────────── */}
-      {m.main?.date && (
-        <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} title={<span lang={lang}>{s.shubh}</span>} ornament={null} width="narrow">
-          <Farmaan s={s} lang={lang} locale={locale} date={m.main.date} time={mainTime} muhurat={m.muhurat} venue={m.main.venue} first={m.first} second={m.second} />
-        </Section>
-      )}
-
-      {/* ── Our story ───────────────────────────────────────────────────── */}
-      {m.story.length > 0 && (
-        <Section id="story" eyebrow={<span lang={lang}>{s.storyEyebrow}</span>} title={<span lang={lang}>{s.story}</span>} ornament="divider-mandala" width="normal">
-          <Story chapters={m.story} />
-        </Section>
-      )}
-
-      {/* ── Functions ───────────────────────────────────────────────────── */}
-      {m.events.length > 0 && (
-        <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="normal">
-          <PalaceDoorEvents events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba }} />
-        </Section>
-      )}
-
-      {/* ── The palace venue ────────────────────────────────────────────── */}
-      {m.main?.venue && (
-        <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal">
-          <Venue event={m.main} look={look} directions={s.directions} />
-        </Section>
-      )}
-
-      {/* ── Countdown, in a gold medallion ─────────────────────────────── */}
-      {m.main?.date && (
-        <Section id="countdown" eyebrow={<span lang={lang}>{s.countdown}</span>} ornament={null} width="narrow" className="pd-count">
-          <Reveal effect="zoom" className="pd-medallion">
-            <span className="pd-medallion-ring" aria-hidden>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...artImg("gold/gold-lotus-ring-frame-01", { lazy: true })} />
-            </span>
-            <span className="pd-medallion-disc" aria-hidden />
-            <div className="pd-medallion-in">
-              <Countdown date={m.main.date} time={m.main.time || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
+        {/* ── Families ────────────────────────────────────────────────────── */}
+        {(hasFamilies || m.blessingsOf) && (
+          <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal" className="pd-sec">
+            <div className="pd-fam">
+              {m.blessingsOf && (
+                <Reveal className="pd-blessings-of">
+                  <p className="wk-eyebrow" lang={lang}>
+                    {s.blessingsOf}
+                  </p>
+                  <p className="pd-blessings-names">{m.blessingsOf}</p>
+                </Reveal>
+              )}
+              {hasFamilies && <FamiliesBlock bride={bride} groom={groom} first={m.familyFirst} heading="" photos />}
             </div>
-          </Reveal>
-          {(m.muhurat || dateLine) && (
-            <Reveal as="p" className="pd-count-line" delay={120}>
-              {m.muhurat || dateLine}
+          </Section>
+        )}
+
+        {/* ── The auspicious day + countdown ──────────────────────────────── */}
+        {m.main?.date && (
+          <Section id="date" ornament={null} width="wide" className="pd-sec pd-sec-day">
+            <DateScroll s={s} lang={lang} date={m.main.date} rawTime={m.main.time} dateLine={dateLine} time={mainTime} muhurat={m.muhurat} venue={venueLine} />
+          </Section>
+        )}
+
+        {/* ── Our story ───────────────────────────────────────────────────── */}
+        {m.story.length > 0 && (
+          <Section id="story" eyebrow={<span lang={lang}>{s.storyEyebrow}</span>} title={<span lang={lang}>{s.story}</span>} ornament="divider-mandala" width="normal" className="pd-sec pd-sec-story">
+            <Story chapters={m.story} />
+          </Section>
+        )}
+
+        {/* ── Functions ───────────────────────────────────────────────────── */}
+        {m.events.length > 0 && (
+          <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="pd-sec pd-sec-events">
+            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
+          </Section>
+        )}
+
+        {/* ── The venue ───────────────────────────────────────────────────── */}
+        {m.main?.venue && (
+          <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal" className="pd-sec pd-sec-venue">
+            <div className="pd-venue">
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-venue-pillar is-l" {...img(A.pillar, { lazy: true })} aria-hidden />
+              <Reveal effect="zoom" className="pd-venue-card">
+                <VenueCard name={m.main.venue} address={m.main.address} mapUrl={m.main.mapUrl} embed ornament={null} eyebrow={m.main.title || s.venueEyebrow} note={m.main.note || undefined} labels={{ directions: s.getDirections, showMap: s.showMap }} />
+              </Reveal>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-venue-pillar is-r" {...img(A.pillar, { lazy: true })} aria-hidden />
+            </div>
+          </Section>
+        )}
+
+        {/* ── Pre-wedding film ────────────────────────────────────────────── */}
+        {m.videoId && (
+          <Section id="film" eyebrow={<span lang={lang}>{s.film}</span>} ornament={null} width="normal" className="pd-sec">
+            <Reveal effect="zoom">
+              <Film id={m.videoId} label={s.play} />
             </Reveal>
-          )}
-        </Section>
-      )}
+          </Section>
+        )}
 
-      {/* ── Pre-wedding film ────────────────────────────────────────────── */}
-      {m.videoId && (
-        <Section id="film" eyebrow={<span lang={lang}>{s.film}</span>} ornament={null} width="normal">
-          <Reveal effect="zoom">
-            <Film id={m.videoId} label={s.play} />
-          </Reveal>
-        </Section>
-      )}
+        {/* ── Gallery ─────────────────────────────────────────────────────── */}
+        {m.gallery.length > 0 && (
+          <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament="divider-scroll" width="wide" className="pd-sec pd-sec-gallery">
+            <WeddingMasonry photos={m.gallery} mask="arch" frame="foil" tileCaptions label={s.gallery} />
+          </Section>
+        )}
 
-      {/* ── Gallery ─────────────────────────────────────────────────────── */}
-      {m.gallery.length > 0 && (
-        <Section id="gallery" eyebrow={<span lang={lang}>{s.gallery}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament="divider-scroll" width="wide">
-          <WeddingMasonry photos={m.gallery} mask="arch" frame="foil" tileCaptions label={s.gallery} />
-        </Section>
-      )}
-
-      {/* ── Good to know ────────────────────────────────────────────────── */}
-      {(m.things.length > 0 || m.gettingThere) && (
-        <Section id="good-to-know" eyebrow={<span lang={lang}>{s.goodToKnow}</span>} ornament={null} width="normal">
-          <ul className="pd-know">
-            {m.things.map((t, i) => (
-              <Reveal as="li" key={i} className="wk-card wk-foil-border pd-know-i" delay={i * 70}>
-                {t.head && <p className="pd-know-h">{t.head}</p>}
-                <p className="pd-know-t">{t.text}</p>
-              </Reveal>
-            ))}
-            {m.gettingThere && (
-              <Reveal as="li" className="wk-card wk-foil-border pd-know-i pd-know-wide" delay={m.things.length * 70}>
-                <p className="pd-know-h" lang={lang}>
-                  {s.gettingThere}
-                </p>
-                <p className="pd-know-t">{m.gettingThere}</p>
-              </Reveal>
+        {/* ── For our guests ──────────────────────────────────────────────── */}
+        {hasInfo && (
+          <Section id="good-to-know" eyebrow={<span lang={lang}>{s.infoEyebrow}</span>} title={<span lang={lang}>{s.info}</span>} ornament={null} width="normal" className="pd-sec pd-sec-info">
+            <GoodToKnow things={m.things} gettingThere={m.gettingThere} s={s} lang={lang} />
+            {m.contacts.length > 0 && (
+              <div className="pd-info-block">
+                <Reveal as="p" className="pd-info-h">
+                  <span lang={lang}>{s.callUs}</span>
+                </Reveal>
+                <Contacts contacts={m.contacts} s={s} couple={couple} />
+              </div>
             )}
-          </ul>
+            <LiveButton url={m.liveUrl} main={m.main} s={s} />
+            {m.upiId && (
+              <div className="pd-info-block">
+                <Reveal as="p" className="pd-info-h">
+                  <span lang={lang}>{s.shagun}</span>
+                </Reveal>
+                <Shagun upiId={m.upiId} upiName={m.upiName} couple={couple} s={s} />
+              </div>
+            )}
+          </Section>
+        )}
+
+        {/* ── RSVP ────────────────────────────────────────────────────────── */}
+        {/* The kit's form labels are English only, so its "Kindly reply by <date>" stays English too (no mixed-script line). */}
+        <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow" className="pd-sec pd-sec-rsvp">
+          <Reveal as="p" className="pd-upasthiti">
+            <span lang={lang}>{s.upasthiti}</span>
+          </Reveal>
+          <div ref={rsvpRef}>
+            <Reveal>
+              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale="en-IN" />
+            </Reveal>
+          </div>
         </Section>
-      )}
 
-      {/* ── RSVP ────────────────────────────────────────────────────────── */}
-      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow">
-        <Reveal as="p" className="pd-upasthiti">
-          <span lang={lang}>{s.upasthiti}</span>
-        </Reveal>
-        <Reveal>
-          <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
-        </Reveal>
-      </Section>
+        {/* ── Blessings ───────────────────────────────────────────────────── */}
+        {m.blessings && (
+          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal" className="pd-sec">
+            <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
+          </Section>
+        )}
 
-      {/* ── Blessings ───────────────────────────────────────────────────── */}
-      {m.blessings && (
-        <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal">
-          <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
-        </Section>
-      )}
-
-      <div ref={endRef} />
-      <Finale
-        seal={T.en.shubh}
-        sealHi={T.hi.shubh}
-        closing={s.closing}
-        endLine={data.endLine}
-        first={m.first}
-        second={m.second}
-        hashtag={m.hashtag}
-        lang={lang}
-        whatsapp={s.whatsapp}
-        shareText={shareText}
-      />
+        <div ref={endRef} />
+        <Finale seal={T.en.shubh} sealHi={T.hi.shubh} closing={s.closing} endLine={data.endLine} first={m.first} second={m.second} hashtag={m.hashtag} lang={lang}>
+          <ShareBar
+            s={s}
+            lang={lang}
+            shareText={shareText}
+            personal={mode === "live"}
+            fontRoot={() => rootRef.current?.closest<HTMLElement>(".pd-root") ?? null}
+            card={{
+              first: m.first,
+              second: m.second,
+              together: T.en.together,
+              getting: T.en.getting,
+              dateLine: m.main?.date ? formatEventDate(m.main.date, "en-IN") : "",
+              time: m.main?.time ? formatEventTime(m.main.time, "en-IN") : "",
+              venue: venueLine,
+              functions: m.events.map((e) => ({ title: e.title, when: e.date ? new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${e.date}T00:00:00Z`)) : "" })),
+              guest,
+              dear: T.en.dear,
+            }}
+          />
+        </Finale>
+      </div>
     </WeddingRoot>
   );
 }
