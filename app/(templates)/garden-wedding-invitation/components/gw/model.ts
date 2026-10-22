@@ -1,10 +1,10 @@
-// ─── Royal Wedding Invitation: extras → a render model ───────────────────────
+// ─── Mughal Garden Wedding Invitation: extras → a render model ───────────────
 // Untrusted (an old page, the AI fill, a hostile POST): everything is coerced.
 
 import type { LovePhoto } from "../../../_love/types";
-import { isWeddingThemeId, type WeddingThemeId } from "../../../_wedding/themes";
+import { LIGHT_THEMES, type WeddingThemeId } from "../../../_wedding/themes";
 import type { FamilySide, WeddingEvent } from "../../../_wedding/types";
-import { GW_LIMITS } from "../../../_valentine/days/garden-wedding-invitation";
+import { GW_LIMITS, gwLocalPhotos } from "../../../_valentine/days/garden-wedding-invitation";
 
 export type Lang = "en" | "hi";
 
@@ -44,9 +44,35 @@ export interface GardenModel {
   gallery: LovePhoto[];
   /** The couple's portrait in the jharokha: the first gallery photo, else any photo. */
   hero: LovePhoto | null;
-  /** Ganesha invocation before the gates open (default); false = the royal crest. */
+  /** "॥ श्री गणेशाय नमः ॥" above the names on the garden gate (default). */
   invocation: boolean;
+  /** Family members to call / WhatsApp (phone already validated + normalised). */
+  contacts: GwContact[];
+  /** Shagun: a UPI id (validated) and the payee name, or "" (the section hides). */
+  upiId: string;
+  upiName: string;
+  /** Livestream link (https only) or "". */
+  liveUrl: string;
 }
+
+export interface GwContact {
+  name: string;
+  relation: string;
+  /** As typed (for display). */
+  phone: string;
+  /** Digits only with the country code, for tel: and wa.me ("919876543210"). */
+  dial: string;
+}
+
+/** 10 digits with an optional +91 / 91 / 0 prefix → "91XXXXXXXXXX", else "". */
+export function dialOf(raw: string): string {
+  const d = raw.replace(/[^\d+]/g, "");
+  const m = d.match(/^(?:\+?91|0)?([6-9]\d{9})$/);
+  return m ? `91${m[1]}` : "";
+}
+
+/** A UPI VPA: handle@bank. */
+export const isUpiId = (v: string) => /^[a-z0-9._-]{2,256}@[a-z][a-z0-9.-]{1,63}$/i.test(v.trim());
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const num = (v: unknown, d = 0) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v) : typeof v === "string" && v.trim() && Number.isFinite(Number(v)) ? Math.round(Number(v)) : d);
@@ -86,7 +112,7 @@ export const MAIN_RE = /wedding|vivah|शादी|विवाह|phera|shaadi|
 
 export function readGarden(extras: Record<string, unknown>, photos: LovePhoto[], bride: string, groom: string): GardenModel {
   const x = extras ?? {};
-  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url);
+  const pool = gwLocalPhotos((Array.isArray(photos) ? photos : []).filter((p) => p && p.url));
   const used = new Set<number>();
   const pick = (n: unknown): LovePhoto | null => {
     const k = num(n);
@@ -143,7 +169,8 @@ export function readGarden(extras: Record<string, unknown>, photos: LovePhoto[],
   const g = groom.trim() || "Groom";
 
   return {
-    theme: isWeddingThemeId(x.theme) ? (x.theme as WeddingThemeId) : "blush",
+    // Light only: an old page (or a hostile POST) asking for a dark theme gets Blush.
+    theme: (LIGHT_THEMES as readonly string[]).includes(String(x.theme)) ? (x.theme as WeddingThemeId) : "blush",
     lang: x.lang === "hi" ? "hi" : "en",
     bride: b,
     groom: g,
@@ -168,89 +195,148 @@ export function readGarden(extras: Record<string, unknown>, photos: LovePhoto[],
     blessings: x.blessings !== false,
     gallery,
     hero: gallery[0] ?? pool[0] ?? null,
-    // No editor field yet (the schema lives in _valentine/days); honoured when one is added.
     invocation: x.invocation !== false,
+    contacts: (Array.isArray(x.contacts) ? x.contacts : [])
+      .filter(isObj)
+      .slice(0, 4)
+      .map((r) => {
+        const phone = str(r.phone, 16);
+        return { name: str(r.name, 40), relation: str(r.relation, 40), phone, dial: dialOf(phone) };
+      })
+      .filter((c) => c.name && c.dial),
+    upiId: isUpiId(str(x.upiId, 60)) ? str(x.upiId, 60) : "",
+    upiName: str(x.upiName, 60),
+    liveUrl: /^https:\/\/[^\s]+$/i.test(str(x.liveUrl, 300)) ? str(x.liveUrl, 300) : "",
   };
 }
 
-// ── Bilingual strings (copy.md) ─────────────────────────────────────────────
+// ── Bilingual strings ───────────────────────────────────────────────────────
 
-type StringsShape = { [K in "open" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide" | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "goodToKnow" | "gettingThere" | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "whatsapp" | "replyBy" | "done" | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and" | "gardenOf" | "weds" | "scroll" | "decree" | "at" | "dateEyebrow" | "venueEyebrow" | "upasthiti"]: string } & { units: { d: string; h: string; m: string; s: string } };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- the list is the type
+const KEYS = [
+  "open", "dear", "invitedYou", "together", "shubh", "invitation", "blessingsOf", "families", "brideSide", "groomSide",
+  "countdown", "dateEyebrow", "story", "storyEyebrow", "events", "eventsEyebrow", "film", "filmEyebrow", "gallery", "galleryEyebrow",
+  "goodToKnow", "notesEyebrow", "gettingThere", "rsvp", "rsvpEyebrow", "rsvpIntro", "blessings", "blessingsEyebrow", "blessingsIntro",
+  "closing", "whatsapp", "share", "copy", "copied", "card", "cardMaking", "qr", "qrHint", "close", "saveDate", "saved", "done",
+  "directions", "calendar", "saveAll", "dress", "tba", "play", "and", "weds", "scroll", "venueEyebrow", "map", "upasthiti",
+  "contacts", "contactsIntro", "call", "chat", "shagun", "shagunIntro", "upiPay", "upiCopy", "upiCopied", "live", "liveSoon", "liveOver", "muted", "sound",
+] as const;
+type StringsShape = { [K in (typeof KEYS)[number]]: string } & { units: { d: string; h: string; m: string; s: string } };
 
 export const T: Record<Lang, StringsShape> = {
   en: {
-    open: "Tap to open the gates",
-    invited: "You're invited",
+    open: "Open the garden gate",
+    dear: "Dear",
+    invitedYou: "you are warmly invited",
+    together: "Together with their families",
     shubh: "Shubh Vivah",
     invitation: "The invitation",
     blessingsOf: "With the blessings of",
-    families: "Our families",
+    families: "Two families, one garden",
     brideSide: "The bride's family",
     groomSide: "The groom's family",
-    countdown: "Counting down to forever",
+    countdown: "Until the pheras",
+    dateEyebrow: "The auspicious day",
     story: "Our story",
-    storyEyebrow: "Chapters",
+    storyEyebrow: "How we bloomed",
     events: "The celebrations",
     eventsEyebrow: "Functions",
     film: "Our film",
+    filmEyebrow: "Before the big day",
     gallery: "Moments",
+    galleryEyebrow: "From our album",
     goodToKnow: "Good to know",
+    notesEyebrow: "Garden notes",
     gettingThere: "Getting there",
     rsvp: "Will you join us?",
     rsvpEyebrow: "Kindly respond",
-    blessingsEyebrow: "Aashirvaad",
     rsvpIntro: "One reply for your family. Tick the functions you'll attend.",
     blessings: "Leave your blessings",
+    blessingsEyebrow: "Aashirvaad",
     blessingsIntro: "A line from you, kept by the couple forever.",
     closing: "With love",
     whatsapp: "Share on WhatsApp",
-    replyBy: "Kindly reply by",
-    units: { d: "Days", h: "Hours", m: "Minutes", s: "Seconds" },
+    share: "Share",
+    copy: "Copy link",
+    copied: "Link copied",
+    card: "Save the invite card",
+    cardMaking: "Painting your card…",
+    qr: "Show QR code",
+    qrHint: "Scan to open the invitation",
+    close: "Close",
+    saveDate: "Save the date",
+    saved: "Saved",
     done: "Just married",
-    directions: "Get directions",
+    directions: "Directions",
     calendar: "Add to calendar",
     saveAll: "Save all dates",
     dress: "Dress code",
     tba: "Time to be announced",
     play: "Play the film",
     and: "&",
-    gardenOf: "The royal wedding of",
-    weds: "weds",
-    scroll: "Enter the palace",
-    decree: "By the grace of the Almighty, on the auspicious day of",
-    at: "at",
-    dateEyebrow: "The auspicious day",
-    venueEyebrow: "The palace",
+    weds: "&",
+    scroll: "Stroll into the garden",
+    venueEyebrow: "The venue",
+    map: "Show the map",
     upasthiti: "Aapki upasthiti prarthaniya hai",
+    contacts: "Call the family",
+    contactsIntro: "Questions about travel, stay or timings? We're a call away.",
+    call: "Call",
+    chat: "WhatsApp",
+    shagun: "Shagun",
+    shagunIntro: "Your blessings are all we wish for. For those who have asked:",
+    upiPay: "Pay by UPI",
+    upiCopy: "Copy UPI id",
+    upiCopied: "UPI id copied",
+    live: "Watch live",
+    liveSoon: "The livestream opens 30 minutes before the pheras",
+    liveOver: "Watch the livestream",
+    muted: "Music off",
+    sound: "Music on",
+    units: { d: "Days", h: "Hours", m: "Minutes", s: "Seconds" },
   },
   hi: {
-    open: "द्वार खोलने के लिए छुएँ",
-    invited: "आप सादर आमंत्रित हैं",
+    open: "बाग़ का द्वार खोलें",
+    dear: "प्रिय",
+    invitedYou: "आप सादर आमंत्रित हैं",
+    together: "परिवारों के आशीर्वाद से",
     shubh: "शुभ विवाह",
     invitation: "निमंत्रण",
     blessingsOf: "के आशीर्वाद से",
-    families: "हमारा परिवार",
+    families: "दो परिवार, एक बाग़",
     brideSide: "वधू पक्ष",
     groomSide: "वर पक्ष",
-    countdown: "शुभ घड़ी में बाकी",
+    countdown: "फेरों में बाकी",
+    dateEyebrow: "शुभ मुहूर्त",
     story: "हमारी कहानी",
-    storyEyebrow: "अध्याय",
+    storyEyebrow: "कैसे खिला यह रिश्ता",
     events: "शुभ कार्यक्रम",
     eventsEyebrow: "कार्यक्रम",
     film: "हमारी फ़िल्म",
+    filmEyebrow: "शादी से पहले",
     gallery: "यादें",
+    galleryEyebrow: "हमारे एल्बम से",
     goodToKnow: "ज़रूरी जानकारी",
+    notesEyebrow: "बाग़ की बातें",
     gettingThere: "कैसे पहुँचें",
     rsvp: "क्या आप पधारेंगे?",
     rsvpEyebrow: "कृपया उत्तर दें",
-    blessingsEyebrow: "आशीर्वाद",
     rsvpIntro: "पूरे परिवार की ओर से एक जवाब। जिन कार्यक्रमों में आएँगे, उन्हें चुनें।",
     blessings: "अपना आशीर्वाद दें",
+    blessingsEyebrow: "आशीर्वाद",
     blessingsIntro: "आपकी एक पंक्ति, जिसे दूल्हा-दुल्हन हमेशा सँजोकर रखेंगे।",
     closing: "सप्रेम",
     whatsapp: "WhatsApp पर भेजें",
-    replyBy: "कृपया जवाब दें",
-    units: { d: "दिन", h: "घंटे", m: "मिनट", s: "सेकंड" },
+    share: "भेजें",
+    copy: "लिंक कॉपी करें",
+    copied: "लिंक कॉपी हो गया",
+    card: "निमंत्रण कार्ड सहेजें",
+    cardMaking: "कार्ड बन रहा है…",
+    qr: "QR कोड दिखाएँ",
+    qrHint: "निमंत्रण खोलने के लिए स्कैन करें",
+    close: "बंद करें",
+    saveDate: "तिथि सहेजें",
+    saved: "सहेजा गया",
     done: "विवाह संपन्न",
     directions: "रास्ता देखें",
     calendar: "कैलेंडर में जोड़ें",
@@ -259,14 +345,26 @@ export const T: Record<Lang, StringsShape> = {
     tba: "समय की सूचना जल्द",
     play: "फ़िल्म चलाएँ",
     and: "संग",
-    gardenOf: "शुभ विवाह",
     weds: "संग",
-    scroll: "महल में पधारें",
-    decree: "ईश्वर की कृपा से, शुभ तिथि",
-    at: "समय",
-    dateEyebrow: "शुभ मुहूर्त",
+    scroll: "बाग़ में पधारें",
     venueEyebrow: "विवाह स्थल",
+    map: "नक्शा देखें",
     upasthiti: "आपकी उपस्थिति प्रार्थनीय है",
+    contacts: "परिवार से बात करें",
+    contactsIntro: "यात्रा, ठहरने या समय के बारे में कुछ पूछना हो तो फ़ोन करें।",
+    call: "कॉल",
+    chat: "WhatsApp",
+    shagun: "शगुन",
+    shagunIntro: "आपका आशीर्वाद ही सबसे बड़ा उपहार है। जिन्होंने पूछा है, उनके लिए:",
+    upiPay: "UPI से भेजें",
+    upiCopy: "UPI आईडी कॉपी करें",
+    upiCopied: "UPI आईडी कॉपी हो गई",
+    live: "लाइव देखें",
+    liveSoon: "लाइव प्रसारण फेरों से 30 मिनट पहले शुरू होगा",
+    liveOver: "लाइव प्रसारण देखें",
+    muted: "संगीत बंद",
+    sound: "संगीत चालू",
+    units: { d: "दिन", h: "घंटे", m: "मिनट", s: "सेकंड" },
   },
 };
 export type Strings = StringsShape;

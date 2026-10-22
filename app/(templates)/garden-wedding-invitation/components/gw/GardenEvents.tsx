@@ -1,83 +1,68 @@
 "use client";
 
-// ─── The functions as illustrated panels (spec 6.3 scene 6) ──────────────────
-// Each function is its own panel: an arched "window" with a vignette picked
-// from its title (haldi = the museum marigold painting, mehendi = the floral
-// medallion, sangeet = the miniature dhol player GIF, baraat = the gold palki,
-// pheras = the pietra-dura arch, reception = a jhoomar …) over the details the
-// kit's EventsTimeline shows (time, venue, dress-code swatch, note, map and
-// calendar), plus "Save all dates". Same behaviour, the Royal look.
+// ─── The functions: garden cards, each with its own little painting ──────────
+// Every function is an arched card: a watercolour vignette picked from its
+// title (mehendi = the couple on the sofa, sangeet = the lanterns, haldi = the
+// chhatri umbrellas, the pheras = the flowering gazebo …) on a wash of its
+// dress-code colour, then the date, time, venue, dress-code swatch and note,
+// and its own Directions / Add to calendar / Share buttons. The main function
+// also gets "Watch live" when the sender added a livestream. One column on
+// phones, two on tablets, three on wide screens.
 
 import { useState } from "react";
 import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, formatEventDate, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
-import type { WeddingArtId } from "../../../_wedding/art";
-import { GIF, artImg } from "./art";
+import { GW, gwImg, type WeddingAsset } from "../assets";
+import { shareableUrl, whatsappUrl } from "./guest";
 import { MAIN_RE } from "./model";
+import { ICON, Icon, WhatsAppGlyph } from "./ShareBar";
 
 interface Vignette {
-  art: WeddingArtId;
-  /** "paint" = an opaque painting that fills the window; "line" = a cutout on the theme glow. */
-  kind: "paint" | "line";
-  gif?: string;
-  /** Crop into a painting past its museum mount. */
-  zoom?: number;
+  art: WeddingAsset;
+  /** How the art sits in the window: "stand" = bottom-anchored, "hang" = from the top. */
+  fit: "stand" | "hang";
+  flip?: boolean;
 }
 
 const VIGNETTES: [RegExp, Vignette][] = [
-  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, { art: "museum/indian-marigold", kind: "paint", zoom: 1.75 }],
-  [/mehendi|mehndi|henna|मेहंदी/i, { art: "museum/spread-floral-medallion", kind: "paint", zoom: 1.35 }],
-  [/sangeet|garba|dandiya|music|dance|cocktail|संगीत/i, { art: "museum/floral-canopy-gold-leaf", kind: "paint", gif: GIF.dhol, zoom: 1.15 }],
-  [/baraat|barat|procession|ghudchadi|sehra|milni|बारात/i, { art: "royal/palki-doli-gold-line-01", kind: "line" }],
-  [/reception|dinner|party|gala|banquet|स्वागत/i, { art: "royal/jhoomar-chandelier-gold-01", kind: "line" }],
-  [/tilak|roka|engagement|sagai|ring|सगाई/i, { art: "royal/kalash-line-01", kind: "line" }],
-  [MAIN_RE, { art: "royal/mughal-pietra-dura-arch-01", kind: "line" }],
+  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, { art: GW.chhatri, fit: "stand" }],
+  [/mehendi|mehndi|henna|मेहंदी/i, { art: GW.coupleSofa, fit: "stand" }],
+  [/sangeet|garba|dandiya|music|dance|संगीत/i, { art: GW.lanterns, fit: "hang" }],
+  [/cocktail|party|after/i, { art: GW.palm, fit: "stand" }],
+  [/baraat|barat|procession|ghudchadi|sehra|milni|बारात/i, { art: GW.peacockFlowers, fit: "stand" }],
+  [/reception|dinner|gala|banquet|स्वागत/i, { art: GW.couplePeach, fit: "stand" }],
+  [/tilak|roka|engagement|sagai|ring|सगाई/i, { art: GW.rose, fit: "stand" }],
+  [MAIN_RE, { art: GW.pavilion, fit: "stand" }],
 ];
-const FALLBACK: Vignette = { art: "museum/lotus-canopy", kind: "paint", zoom: 1.3 };
-const vignetteFor = (title: string): Vignette => VIGNETTES.find(([re]) => re.test(title))?.[1] ?? FALLBACK;
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
-  );
-}
-const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
-const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
-const CLOCK = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2";
-
-function Art({ v }: { v: Vignette }) {
-  const [gifOk, setGifOk] = useState(true);
-  return (
-    <div className={`gw-ev-art is-${v.kind}`} aria-hidden>
-      <span className="gw-ev-win">
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-ev-img" {...artImg(v.art, { lazy: true })} style={v.zoom ? { transform: `scale(${v.zoom})` } : undefined} />
-      </span>
-      {v.gif && gifOk && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="gw-ev-gif" src={v.gif} alt="" width={200} height={200} loading="lazy" decoding="async" onError={() => setGifOk(false)} />
-      )}
-    </div>
-  );
-}
+const FALLBACKS: Vignette[] = [
+  { art: GW.lotus, fit: "stand" },
+  { art: GW.anthurium, fit: "stand" },
+  { art: GW.gazeboDome, fit: "stand" },
+];
+const vignetteFor = (title: string, i: number): Vignette => VIGNETTES.find(([re]) => re.test(title))?.[1] ?? FALLBACKS[i % FALLBACKS.length];
 
 export interface GardenEventsProps {
   events: readonly WeddingEvent[];
   couple: string;
-  url?: string;
   locale: string;
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string };
+  lang: "en" | "hi";
+  mainId?: string;
+  live?: { url: string; open: boolean; label: string; soon: string };
+  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; share: string; saved: string };
 }
 
-export default function GardenEvents({ events, couple, url, locale, labels: l }: GardenEventsProps) {
+export default function GardenEvents({ events, couple, locale, lang, mainId, live, labels: l }: GardenEventsProps) {
   const [flash, setFlash] = useState<string | null>(null);
   const list = events.filter((e) => e.title || e.venue || e.date);
   if (!list.length) return null;
   const save = (es: readonly WeddingEvent[], key: string, name: string) => {
-    const ok = downloadWeddingIcs(es, { couple, url, tz: DEFAULT_TZ_OFFSET }, name);
+    const ok = downloadWeddingIcs(es, { couple, url: shareableUrl(), tz: DEFAULT_TZ_OFFSET }, name);
     setFlash(ok ? key : `${key}:err`);
     window.setTimeout(() => setFlash(null), 2200);
+  };
+  const share = (e: WeddingEvent) => {
+    const when = [formatEventDate(e.date, locale), formatEventTime(e.time, locale)].filter(Boolean).join(", ");
+    const text = [`${e.title} · ${couple}`, when, e.venue, e.dressCode ? `${l.dress}: ${e.dressCode}` : "", shareableUrl()].filter(Boolean).join("\n");
+    window.open(whatsappUrl(text), "_blank", "noopener,noreferrer");
   };
   return (
     <div className="gw-evs">
@@ -89,23 +74,31 @@ export default function GardenEvents({ events, couple, url, locale, labels: l }:
           const map = mapLink(e);
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
+          const v = vignetteFor(e.title, i);
+          const isMain = !!mainId && e.id === mainId;
           return (
-            <Reveal as="li" key={key} effect="zoom" className={`gw-ev${i % 2 ? " is-alt" : ""}`}>
-              <article className="gw-ev-card">
-                <Art v={vignetteFor(e.title)} />
-                <span className="gw-ev-no" aria-hidden>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
+            <Reveal as="li" key={key} effect="rise" delay={(i % 3) * 90} className={`gw-ev${isMain ? " is-main" : ""}`}>
+              <article className="gw-ev-card" style={swatch ? { ["--gw-sw" as string]: swatch } : undefined}>
+                <div className={`gw-ev-art is-${v.fit}`} aria-hidden>
+                  <span className="gw-ev-wash" />
+                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                  <img className="gw-ev-img" {...gwImg(v.art, { lazy: true })} />
+                  <span className="gw-ev-no">{String(i + 1).padStart(2, "0")}</span>
+                </div>
                 <div className="gw-ev-body">
-                  {date && <p className="wk-eyebrow wk-ev-date">{date}</p>}
+                  {date && (
+                    <p className="wk-eyebrow gw-ev-date" lang={lang}>
+                      {date}
+                    </p>
+                  )}
                   <h3 className="gw-ev-title">{e.title}</h3>
                   <p className="gw-ev-line">
-                    <Icon d={CLOCK} />
-                    {time ? `${time}${end ? ` – ${end}` : ""}` : l.tba}
+                    <Icon d={ICON.clock} size={16} />
+                    <span lang={lang}>{time ? `${time}${end ? ` – ${end}` : ""}` : l.tba}</span>
                   </p>
                   {(e.venue || e.address) && (
                     <p className="gw-ev-line">
-                      <Icon d={PIN} />
+                      <Icon d={ICON.pin} size={16} />
                       <span>
                         {e.venue && <b>{e.venue}</b>}
                         {e.address && <span className="gw-ev-addr">{e.address}</span>}
@@ -114,24 +107,41 @@ export default function GardenEvents({ events, couple, url, locale, labels: l }:
                   )}
                   {e.dressCode && (
                     <p className="gw-ev-line gw-ev-dress">
-                      {swatch && <span className="gw-ev-swatch" style={{ background: swatch }} aria-hidden />}
+                      {swatch ? <span className="gw-ev-swatch" style={{ background: swatch }} aria-hidden /> : <Icon d={ICON.image} size={16} />}
                       <span>
-                        <span className="wk-ev-k">{l.dress}</span> {e.dressCode}
+                        <span className="gw-ev-k" lang={lang}>
+                          {l.dress}
+                        </span>{" "}
+                        {e.dressCode}
                       </span>
                     </p>
                   )}
                   {e.note && <p className="gw-ev-note">{e.note}</p>}
-                  {(map || e.date) && (
-                    <div className="gw-ev-actions">
-                      {map && (
-                        <a className="wk-btn wk-btn-ghost wk-btn-sm" href={map} target="_blank" rel="noopener noreferrer">
-                          <Icon d={PIN} /> {l.directions}
+                  <div className="gw-ev-actions">
+                    {map && (
+                      <a className="gw-pill" href={map} target="_blank" rel="noopener noreferrer" lang={lang}>
+                        <Icon d={ICON.pin} size={15} /> {l.directions}
+                      </a>
+                    )}
+                    {e.date && (
+                      <button type="button" className="gw-pill" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)} lang={lang}>
+                        <Icon d={flash === key ? ICON.check : ICON.cal} size={15} /> {flash === key ? l.saved : l.calendar}
+                      </button>
+                    )}
+                    <button type="button" className="gw-pill gw-pill-icon" onClick={() => share(e)} aria-label={`${l.share}: ${e.title}`}>
+                      <WhatsAppGlyph size={16} />
+                    </button>
+                  </div>
+                  {isMain && live && (
+                    <div className="gw-ev-live">
+                      {live.open ? (
+                        <a className="wk-btn wk-btn-sm gw-live-btn" href={live.url} target="_blank" rel="noopener noreferrer" lang={lang}>
+                          <span className="gw-live-dot" aria-hidden /> {live.label}
                         </a>
-                      )}
-                      {e.date && (
-                        <button type="button" className="wk-btn wk-btn-ghost wk-btn-sm" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                          <Icon d={CAL} /> {flash === key ? "Saved ✓" : l.calendar}
-                        </button>
+                      ) : (
+                        <p className="gw-ev-livesoon" lang={lang}>
+                          <Icon d={ICON.live} size={15} /> {live.soon}
+                        </p>
                       )}
                     </div>
                   )}
@@ -143,8 +153,8 @@ export default function GardenEvents({ events, couple, url, locale, labels: l }:
       </ol>
       {list.filter((e) => e.date).length > 1 && (
         <div className="gw-ev-all">
-          <button type="button" className="wk-btn" onClick={() => save(list, "all", `wedding-${couple}`)}>
-            <Icon d={CAL} /> {flash === "all" ? "Saved ✓" : l.saveAll}
+          <button type="button" className="wk-btn" onClick={() => save(list.filter((e) => e.date), "all", `wedding-${couple}`)} lang={lang}>
+            <Icon d={flash === "all" ? ICON.check : ICON.cal} /> {flash === "all" ? l.saved : l.saveAll}
           </button>
         </div>
       )}
