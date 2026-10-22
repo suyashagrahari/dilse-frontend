@@ -1,25 +1,24 @@
 "use client";
 
-// ─── The courtyard (the hero, spec 6.3 scene 3) ──────────────────────────────
-// Five planes, back to front: the palace scene seen through the gates (dimmed
-// under the theme wash) and a slowly turning gold mandala → the gold lattice
-// jharokha that frames the names → jhoomars swaying from the ceiling and a
-// gold-line peacock on each side → caparisoned elephants that walk in from the
-// edges → the parapet with lit diyas, the toran above, gold dust drifting.
-// The entrance is staged by `open` (CSS transitions with delays); the loops
-// pause whenever the hero is off screen; one rAF-throttled scroll listener
-// writes --pd-hy for the parallax exit (each plane reads it at its own rate).
+// ─── The courtyard (what the door opens onto; the hero) ──────────────────────
+// An ivory palace courtyard in the morning: an ivy curtain along the cornice,
+// gold lanterns on long chains, the pink-and-white floral arch framing the
+// couple's portrait in the gold round frame (or, with no photo, the
+// illustrated couple in wedding red), the names, the date and the venue, and a
+// white stone balustrade with urns in the foreground, a terracotta carpet
+// leading in. Desktop: the arch on the left, the words on the right, pillars
+// at the edges. Everything enters once the door has opened; three depth
+// layers drift on scroll (one rAF-throttled listener, transform only).
 
-import { useEffect, useMemo, useRef } from "react";
-import { Monogram, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
-import type { LovePhoto } from "../../../_love/types";
-import Toran from "./Toran";
-import { artImg, seeded, type PalaceDoorArt } from "./art";
+import { useEffect, useRef } from "react";
+import { useWeddingReducedMotion } from "../../../_wedding";
+import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
+import type { LovePhoto } from "../../../_valentine/types";
+import { A, img } from "../assets";
 import type { Strings } from "./model";
 
 export interface CourtyardProps {
   open: boolean;
-  look: PalaceDoorArt;
   s: Strings;
   lang: "en" | "hi";
   first: string;
@@ -27,34 +26,33 @@ export interface CourtyardProps {
   photo: LovePhoto | null;
   dateLine: string;
   time: string;
-  muhurat: string;
   venue: string;
+  guest: string;
 }
 
-export default function Courtyard({ open, look, s, lang, first, second, photo, dateLine, time, muhurat, venue }: CourtyardProps) {
+export default function Courtyard({ open, s, lang, first, second, photo, dateLine, time, venue, guest }: CourtyardProps) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
-  const dust = useMemo(() => {
-    const r = seeded(73);
-    return Array.from({ length: 8 }, () => ({ left: 6 + r() * 88, top: 30 + r() * 60, delay: -r() * 12, dur: 9 + r() * 6, dx: (r() - 0.5) * 70, size: 3 + r() * 4 }));
-  }, []);
 
+  // Parallax: one passive listener, rAF-throttled, only while the hero is on screen.
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || reduce) return;
+    const weak = typeof navigator !== "undefined" && (navigator.hardwareConcurrency || 8) <= 4 && window.matchMedia("(pointer: coarse)").matches;
+    if (weak) return;
     let raf = 0;
     let on = true;
     const tick = () => {
       raf = 0;
-      const y = Math.max(0, Math.min(window.scrollY, el.offsetHeight));
-      el.style.setProperty("--pd-hy", `${y.toFixed(1)}px`);
+      const y = Math.max(0, Math.min(window.innerHeight * 1.2, -el.getBoundingClientRect().top));
+      el.style.setProperty("--pd-sy", y.toFixed(1));
     };
     const onScroll = () => {
-      if (on && !raf && !reduce) raf = requestAnimationFrame(tick);
+      if (on && !raf) raf = requestAnimationFrame(tick);
     };
     const io = new IntersectionObserver(([en]) => {
       on = en.isIntersecting;
-      el.classList.toggle("is-idle", !on);
+      if (on) onScroll();
     });
     io.observe(el);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -66,107 +64,96 @@ export default function Courtyard({ open, look, s, lang, first, second, photo, d
   }, [reduce]);
 
   return (
-    <header ref={ref} className={`pd-court${open ? " is-open" : ""}`}>
-      <div className="pd-court-back" aria-hidden>
+    <section ref={ref} className={`pd-court${open ? " is-on" : ""}`} aria-label={`${first} ${s.and} ${second}`}>
+      <div className="pd-court-sky" aria-hidden />
+      <div className="pd-court-far" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="pd-court-scene" {...artImg(look.scene, { one: true })} style={{ opacity: look.sceneOpacity }} />
-        <span className="pd-court-wash" />
-        <span className="pd-court-mandala">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...artImg("gold/gold-mandala-metallic-01", { one: true })} />
-        </span>
+        <img className="pd-court-pillar is-l" {...img(A.pillar)} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="pd-court-pillar is-r" {...img(A.pillar)} />
       </div>
-
-      <Toran className="pd-toran-court" count={13} seed={9} />
-
-      <span className="pd-jhoomar pd-jhoomar-l" aria-hidden>
-        <i />
+      <div className="pd-court-ivy" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg("royal/jhoomar-chandelier-gold-02")} />
+        <img {...img(A.ivy)} />
+      </div>
+      <span className="pd-court-lan is-l" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img(A.lanterns)} />
       </span>
-      <span className="pd-jhoomar pd-jhoomar-r" aria-hidden>
-        <i />
+      <span className="pd-court-lan is-r" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg("royal/jhoomar-chandelier-gold-02")} />
+        <img {...img(A.lanterns)} />
       </span>
 
-      <div className="pd-court-arch">
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="pd-court-frame" {...artImg("gold/gold-arch-lattice-frame-01")} />
-        <div className="pd-court-in">
-          <div className="pd-court-crest">
-            {photo ? (
-              <span className="pd-portrait">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.url} alt={`${first} ${s.and} ${second}`} decoding="async" style={photoImgStyle(photo)} />
+      <div className="pd-court-stage">
+        <div className={`pd-court-arch${photo ? "" : " has-art"}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img className="pd-court-flowers" {...img(A.arch)} />
+          {photo ? (
+            <div className="pd-portrait">
+              <span className="pd-portrait-disc">
+                <CroppedPhoto photo={photo} alt={`${first} ${s.and} ${second}`} eager className="pd-portrait-photo" />
               </span>
-            ) : (
-              open && <Monogram a={first} b={second} variant="crest" size={78} />
-            )}
-          </div>
-          <p className="wk-eyebrow pd-court-k" lang={lang}>
-            {s.palaceDoorOf}
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-portrait-ring" {...img(A.frame)} />
+            </div>
+          ) : (
+            <div className="pd-portrait is-art">
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-portrait-ring" {...img(A.frame)} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-portrait-carpet" {...img(A.carpet)} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="pd-portrait-art" {...img(A.coupleWedding)} alt={`${first} ${s.and} ${second}`} />
+            </div>
+          )}
+        </div>
+
+        <div className="pd-court-text">
+          {guest && (
+            <p className="pd-court-dear" lang={lang}>
+              {s.dear} {guest}, {s.invited}
+            </p>
+          )}
+          <p className="wk-eyebrow pd-court-eyebrow" lang={lang}>
+            {s.together}
           </p>
           <h1 className="pd-court-names">
             <span className="pd-court-n wk-foil-text wk-shimmer">{first}</span>
-            <span className="pd-amp" lang={lang}>
-              {s.weds}
+            <span className="pd-court-amp" aria-hidden>
+              &amp;
             </span>
             <span className="pd-court-n wk-foil-text wk-shimmer">{second}</span>
-            <span className="pd-sweep" aria-hidden />
           </h1>
+          <p className="pd-court-getting" lang={lang}>
+            {s.getting}
+          </p>
+          {(dateLine || venue) && (
+            <div className="pd-court-when">
+              {dateLine && <p className="pd-court-date">{dateLine}</p>}
+              {time && <p className="pd-court-time">{time}</p>}
+              {venue && <p className="pd-court-venue">{venue}</p>}
+            </div>
+          )}
+          <a className="pd-court-down" href="#invitation" lang={lang}>
+            <span>{lang === "hi" ? "भीतर पधारें" : "Step inside"}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </a>
         </div>
       </div>
 
-      <span className="pd-peacock pd-peacock-l" aria-hidden>
+      <div className="pd-court-front" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg("royal/peacock-ornate-01")} />
-      </span>
-      <span className="pd-peacock pd-peacock-r" aria-hidden>
+        <img className="pd-court-carpet" {...img(A.carpet)} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg("royal/peacock-ornate-01")} />
-      </span>
-
-      <div className="pd-court-meta">
-        {dateLine && (
-          <p className="pd-cartouche">
-            <span>{dateLine}</span>
-            {time && <small>{time}</small>}
-          </p>
-        )}
-        {muhurat && <p className="pd-court-muhurat">{muhurat}</p>}
-        {venue && <p className="pd-court-venue">{venue}</p>}
+        <img className="pd-court-rail" {...img(A.balustrade)} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="pd-court-urn is-l" {...img(A.urn)} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="pd-court-urn is-r" {...img(A.urn)} />
       </div>
-
-      <span className="pd-eleph pd-eleph-l" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg(look.elephant)} />
-      </span>
-      <span className="pd-eleph pd-eleph-r" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...artImg(look.elephant)} />
-      </span>
-
-      <div className="pd-parapet" aria-hidden>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span key={i} className="pd-diya pd-diya-sm" style={{ ["--i" as string]: i }}>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...artImg("royal/diya-clay-flame-01")} />
-            <i className="pd-flame" />
-          </span>
-        ))}
-      </div>
-
-      <div className="pd-dust" aria-hidden>
-        {dust.map((d, i) => (
-          <i key={i} style={{ left: `${d.left}%`, top: `${d.top}%`, width: d.size, height: d.size, animationDelay: `${d.delay}s`, animationDuration: `${d.dur}s`, ["--dx" as string]: `${d.dx}px` }} />
-        ))}
-      </div>
-
-      <span className="pd-scroll-cue" aria-hidden>
-        <i className="pd-bell" />
-        <b lang={lang}>{s.scroll}</b>
-      </span>
-    </header>
+    </section>
   );
 }

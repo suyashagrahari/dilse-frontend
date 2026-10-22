@@ -1,18 +1,23 @@
 // ─── Palace Door Wedding Invitation 🚪 (wedding tier, same limits as Royal) ───
 //
-// carved Rajasthani doors swing open, a floral mandap with lanterns, an illustrated couple for every function.
-// Scaffolded from palace-door-wedding-invitation: the same fields, limits, studio
-// form and RSVP/blessings plumbing; the guest page and studio live in
-// app/(templates)/palace-door-wedding-invitation/components. Art: public/wedding-v3 (see
-// components/assets.ts), served from the repo, never from the CDN.
+// A carved Rajasthani haveli door, closed, with the couple's monogram in a gold
+// round frame. One tap: the two leaves swing inward on their hinges in 3D, warm
+// light spills through, jhumkas sway, petals fall, the music starts, and the
+// guest steps into an ivory palace courtyard where the invitation unfolds. Each
+// function shows its own illustrated couple (haldi, mehendi, sangeet, wedding,
+// reception, engagement).
 //
 // Field mapping on the engine: recipientName = the bride, senderName = the
 // groom, letter = the English invitation, endLine = the closing line,
-// photos = ONE pool of up to 40 (story chapters and family cards point into it
-// by 1-based index).
+// photos = ONE pool of up to 40 (the couple's portrait, story chapters and
+// family cards point into it by 1-based index; the rest is the gallery).
 //
-// Server twin: server/src/config/weddingDays/palace-door-wedding-invitation.ts; keys and limits
-// must match (valentineDays.test.ts pins them). Light themes only.
+// Art lives in the repo (public/wedding-v3, see components/assets.ts) and is
+// served from the site's own origin, never the CDN.
+//
+// Server twin: server/src/config/weddingDays/palace-door-wedding-invitation.ts;
+// keys and limits must match (valentineDays.test.ts PINNED_KEYS pins them).
+// Light themes only.
 
 import type { DayConfig, LovePhoto } from "../types";
 import type { DayTheme } from "../theme";
@@ -23,74 +28,81 @@ import { WEDDING_TIER_LIMITS, type WeddingEvent } from "../../_wedding/types";
 
 const SLUG = "palace-door-wedding-invitation" as const;
 export const PD_LIMITS = WEDDING_TIER_LIMITS[SLUG];
+/** Family members guests can call (tap to call / WhatsApp). */
+export const PD_MAX_CONTACTS = 4;
 
 export const PD_THEME_LABELS: Record<string, string> = {
-  blush: "Blush Pink",
-  champagne: "Champagne",
-  powder: "Powder Blue",
-  maroon: "Royal Maroon & Gold",
-  noir: "Black & Gold",
-  emerald: "Emerald & Gold",
+  blush: "Rose Haveli",
+  champagne: "Sandstone & Gold",
+  powder: "Lake Palace Blue",
 };
 
-/** Verified YouTube uploads (oEmbed 200 + embeddable, 2026-10-19). The shehnai plays by default. */
+/**
+ * Verified YouTube uploads (oEmbed 200, 2026-10-22; wq-research.md §5).
+ * The palace door opens to "Saajanji Ghar Aaye" by default: the groom's family
+ * arriving at the haveli door.
+ */
 export const PD_SONGS: readonly SongSuggestion[] = [
+  { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Kuch Kuch Hota Hai" },
   { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
   { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal" },
-  { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
-  { id: "3qpxJEp4Ec4", title: "Kudmayi", artist: "Shahid Mallya" },
-  { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "Lata Mangeshkar, Udit Narayan" },
+  { id: "3qpxJEp4Ec4", title: "Kudmayi", artist: "Rocky Aur Rani" },
+  { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "DDLJ" },
   { id: "jCEdTq3j-0U", title: "Gallan Goodiyaan", artist: "Dil Dhadakne Do" },
-  { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
-  { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh" },
-  { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Arijit Singh, Harshdeep Kaur" },
+  { id: "V7LwfY5U5WI", title: "Ranjha", artist: "Shershaah" },
+  { id: "BddP6PYo2gs", title: "Kesariya", artist: "Brahmastra" },
+  { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Yeh Jawaani Hai Deewani" },
   { id: "Ptk_1Dc2iPY", title: "Canon in D", artist: "Brooklyn Duo" },
   { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
 ];
 
-/** The editor chrome (form sheet, top bar): ivory paper, maroon ink, gold. The guest page wears extras.theme. */
+/** The editor chrome (form sheet, top bar): ivory paper, sandstone, warm gold, a sienna accent. The guest page wears extras.theme. */
 const THEME: DayTheme = {
-  bg: "linear-gradient(180deg, #FFFBF3 0%, #F8EEDD 60%, #F1E2C6 100%)",
-  base: "#FBF4E6",
+  bg: "linear-gradient(180deg, #FFFCF5 0%, #FAF1E1 55%, #F3E3C5 100%)",
+  base: "#FBF5E9",
   paper: "#FFFDF8",
-  glass: "rgba(255,253,248,.82)",
-  ink: "#3B0F18",
-  inkSoft: "#7A5048",
-  paperInk: "#3B0F18",
-  accent: "#8E1B2E",
-  accentDeep: "#5E0F1E",
-  accentInk: "#FFF6E3",
-  soft: "#F6E7CF",
-  edge: "#E3CDA6",
+  glass: "rgba(255,253,248,.84)",
+  ink: "#3A2414",
+  inkSoft: "#7A5A40",
+  paperInk: "#3A2414",
+  accent: "#9A4A1F",
+  accentDeep: "#6E3213",
+  accentInk: "#FFF8EC",
+  soft: "#F7EBD6",
+  edge: "#E8D3AE",
   gold: "#C9A24A",
   dark: false,
   particles: ["✨", "🌼", "🪔"],
-  confetti: ["#C9A24A", "#E9CF7A", "#8E1B2E", "#FFF3C4"],
+  confetti: ["#C9A24A", "#E9CF7A", "#E8892B", "#E86A92", "#FFF3C4"],
 };
 
 /** Five functions to start from; the sender can add up to eight (Roka, Baraat, Cocktail…). */
 export const PD_DEMO_EVENTS: WeddingEvent[] = [
-  { id: "haldi", title: "Haldi", date: "2027-02-10", time: "10:00", endTime: "13:00", venue: "The Courtyard, Jagmandir", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "A morning of turmeric, laughter and sunshine. Wear yellow and be ready to get a little messy." },
-  { id: "mehendi", title: "Mehendi", date: "2027-02-10", time: "16:30", endTime: "20:00", venue: "Zenana Mahal Lawns", address: "City Palace, Udaipur", mapUrl: "", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna, music and plenty of chai. Come get your hands painted." },
-  { id: "sangeet", title: "Sangeet", date: "2027-02-11", time: "19:30", endTime: "23:30", venue: "Durbar Hall", address: "Fateh Prakash Palace, Udaipur", mapUrl: "", dressCode: "Indo-western glam", dressColor: "#7B3FA0", note: "Music, dance performances and family rivalries settled on the dance floor." },
-  { id: "wedding", title: "Wedding (Pheras)", date: "2027-02-12", time: "19:00", endTime: "23:30", venue: "Jagmandir Island Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Traditional festive", dressColor: "#A3122B", note: "The baraat arrives at 7 pm; the pheras begin at the shubh muhurat, 9:15 pm." },
-  { id: "reception", title: "Reception", date: "2027-02-13", time: "20:00", endTime: "23:59", venue: "The Leela Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Black tie", dressColor: "#1C1C24", note: "Dinner, toasts and dancing to celebrate the newlyweds." },
+  { id: "haldi", title: "Haldi", date: "2027-02-10", time: "10:00", endTime: "13:00", venue: "The Haveli Courtyard", address: "Samode Haveli, Gangapole, Jaipur", mapUrl: "", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "Turmeric, marigolds and a lot of laughter. Wear yellow and don't mind a little mess." },
+  { id: "mehendi", title: "Mehendi", date: "2027-02-10", time: "16:30", endTime: "20:00", venue: "The Zenana Garden", address: "Samode Haveli, Gangapole, Jaipur", mapUrl: "", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna artists, folk singers and endless chai. Come and get your hands painted." },
+  { id: "sangeet", title: "Sangeet", date: "2027-02-11", time: "19:30", endTime: "23:30", venue: "Durbar Hall, Samode Palace", address: "Samode, Rajasthan", mapUrl: "", dressCode: "Indo-western glam", dressColor: "#7B3FA0", note: "Both families on one dance floor. Practise your steps, there will be a competition." },
+  { id: "wedding", title: "Wedding (Pheras)", date: "2027-02-12", time: "19:00", endTime: "23:30", venue: "The Palace Courtyard, Samode Palace", address: "Samode, Rajasthan", mapUrl: "", dressCode: "Traditional festive", dressColor: "#A3122B", note: "The baraat reaches the palace door at 7 pm; the pheras begin at the shubh muhurat, 9:15 pm." },
+  { id: "reception", title: "Reception", date: "2027-02-13", time: "20:00", endTime: "23:59", venue: "Rambagh Palace Lawns", address: "Bhawani Singh Road, Jaipur", mapUrl: "", dressCode: "Black tie", dressColor: "#1C1C24", note: "Dinner under the stars, toasts and dancing to welcome the newlyweds home." },
 ];
 
-/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
+/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), already hosted on our CDN (nothing new is uploaded). */
 const DEMO_CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
 export { DEMO_CDN as PD_DEMO_CDN };
 
-/** 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it). */
+/**
+ * 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out
+ * of it). The demo has no portrait (couplePhoto 0): the courtyard shows the
+ * illustrated couple in wedding red under the gold frame until one is picked.
+ */
 export const PD_DEMO_PHOTOS: LovePhoto[] = [
   { url: `${DEMO_CDN}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
-  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
   { url: `${DEMO_CDN}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
   { url: `${DEMO_CDN}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
+  { url: `${DEMO_CDN}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35, caption: "Just us", span: "tall" },
   { url: `${DEMO_CDN}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
   { url: `${DEMO_CDN}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
   { url: `${DEMO_CDN}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
   { url: `${DEMO_CDN}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
@@ -99,10 +111,16 @@ export const PD_DEMO_PHOTOS: LovePhoto[] = [
   { url: `${DEMO_CDN}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
   { url: `${DEMO_CDN}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
   { url: `${DEMO_CDN}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35 },
   { url: `${DEMO_CDN}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
   { url: `${DEMO_CDN}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
 ];
+
+export interface PdContact {
+  name: string;
+  relation: string;
+  phone: string;
+}
 
 export interface PdExtras {
   theme: string;
@@ -116,21 +134,29 @@ export interface PdExtras {
   blessingsOf: string;
   bridePhoto: number;
   groomPhoto: number;
+  couplePhoto: number;
   muhurat: string;
   hashtag: string;
   events: WeddingEvent[];
   story: { when: string; title: string; line: string; photo: number }[];
   things: string[];
   gettingThere: string;
+  contacts: PdContact[];
+  upiId: string;
+  upiName: string;
+  liveUrl: string;
   videoUrl: string;
   rsvpBy: string;
   maxGuests: number;
   rsvpMeal: boolean;
   blessings: boolean;
+  invocation: boolean;
   [k: string]: unknown;
 }
 
 const ev = (k: string, label: string, max: number, placeholder?: string) => ({ key: k, kind: "text" as const, label, max, placeholder });
+
+const evDone = (mf: { extras: Record<string, unknown> }) => Array.isArray(mf.extras.events) && (mf.extras.events as { title?: string; date?: string }[]).some((e) => !!e.title && !!e.date);
 
 export const palaceDoorWeddingDay: DayConfig<PdExtras> = {
   slug: SLUG,
@@ -153,18 +179,20 @@ export const palaceDoorWeddingDay: DayConfig<PdExtras> = {
     editAfterPublish: true,
     nav: [
       { id: "names", label: "The couple", emoji: "🚪" },
-      { id: "details", label: "Functions", emoji: "🪔" },
+      { id: "details", label: "Functions", emoji: "🪔", done: evDone },
       { id: "photos", label: "Photos", emoji: "📸" },
       { id: "letter", label: "Invitation", emoji: "✉️" },
-      { id: "music", label: "Theme & music", emoji: "🎵" },
-      { id: "finish", label: "More details", emoji: "✦" },
+      { id: "story", label: "Our story", emoji: "💞", done: () => null },
+      { id: "guests", label: "Guest info", emoji: "🧭", done: () => null },
+      { id: "music", label: "Look & music", emoji: "🎵" },
+      { id: "finish", label: "RSVP & send", emoji: "✦" },
     ],
   },
   music: {
     audioOnly: true,
     compact: true,
     suggestions: PD_SONGS,
-    suggestionsNote: "Shehnai, filmi wedding songs and a few English ones · or paste any YouTube link",
+    suggestionsNote: "Filmi wedding songs, shehnai and a few English ones · or paste any YouTube link",
   },
   extras: [
     { key: "theme", kind: "enum", label: "Theme", default: "champagne", hidden: true, options: LIGHT_THEMES.map((id) => ({ value: id, label: PD_THEME_LABELS[id] ?? id })) },
@@ -178,6 +206,7 @@ export const palaceDoorWeddingDay: DayConfig<PdExtras> = {
     { key: "blessingsOf", kind: "text", max: 160, label: "With the blessings of", hidden: true },
     { key: "bridePhoto", kind: "number", min: 0, max: PD_LIMITS.photos, default: 0, label: "Bride's family photo", hidden: true },
     { key: "groomPhoto", kind: "number", min: 0, max: PD_LIMITS.photos, default: 0, label: "Groom's family photo", hidden: true },
+    { key: "couplePhoto", kind: "number", min: 0, max: PD_LIMITS.photos, default: 0, label: "The couple's portrait", hidden: true },
     { key: "muhurat", kind: "text", max: 60, label: "Muhurat", hidden: true },
     { key: "hashtag", kind: "text", max: 40, label: "Wedding hashtag", hidden: true },
     {
@@ -194,81 +223,97 @@ export const palaceDoorWeddingDay: DayConfig<PdExtras> = {
     },
     { key: "things", kind: "list", maxItems: PD_LIMITS.faq, itemMax: 180, label: "Good to know", hidden: true },
     { key: "gettingThere", kind: "longtext", max: 500, label: "Getting there", hidden: true },
+    {
+      key: "contacts", kind: "objlist", maxItems: PD_MAX_CONTACTS, label: "Who to call", itemTitle: "Contact", hidden: true,
+      item: [ev("name", "Name", 40), ev("relation", "Relation", 40), ev("phone", "Phone", 16)],
+    },
+    { key: "upiId", kind: "text", max: 60, label: "UPI ID for shagun", hidden: true },
+    { key: "upiName", kind: "text", max: 60, label: "Name on the UPI account", hidden: true },
+    { key: "liveUrl", kind: "text", max: 300, label: "Livestream link", hidden: true },
     { key: "videoUrl", kind: "text", max: 200, label: "Pre-wedding film", hidden: true },
     { key: "rsvpBy", kind: "text", max: 10, label: "Reply by", input: "date", hidden: true },
     { key: "maxGuests", kind: "number", min: 1, max: 10, default: 4, label: "Guests per reply", hidden: true },
     { key: "rsvpMeal", kind: "bool", default: true, label: "Ask for meal preference", hidden: true },
     { key: "blessings", kind: "bool", default: true, label: "Blessings wall", hidden: true },
-    { key: "invocation", kind: "bool", default: true, label: "Open with Shri Ganesh", hidden: true },
+    { key: "invocation", kind: "bool", default: true, label: "Shri Ganesh on the door", hidden: true },
   ],
   theme: THEME,
   demo: {
-    recipientName: "Aanya",
-    senderName: "Vihaan",
+    recipientName: "Ishita",
+    senderName: "Kabir",
     petName: "",
     letter:
-      "By the grace of the Almighty and with the blessings of our elders, the Rathore and Singhania families joyfully invite you to the wedding of Aanya and Vihaan.\n\nFive days by Lake Pichola, a little haldi, a lot of dancing and the seven pheras under the stars. Your presence is our greatest honour.",
+      "With the blessings of the Almighty and our elders, the Rathore and Shekhawat families joyfully invite you to the wedding of their children, Ishita and Kabir.\n\nFour days in the old havelis of Jaipur: haldi in the courtyard, mehendi in the garden, a sangeet that will go on too late, and seven pheras under the stars. The doors are open, and your place is with us.",
     photos: PD_DEMO_PHOTOS.map((p) => ({ ...p })),
     gifs: {},
     music: true,
     musicMode: "youtube",
-    musicYoutubeId: "OzEL4CwbPew",
+    musicYoutubeId: "8XtXLVylOoU",
     musicStart: 0,
-    endLine: "With love and gratitude, the Rathore & Singhania families",
+    endLine: "With love and gratitude, the Rathore & Shekhawat families",
     extras: {
       theme: "champagne",
       lang: "en",
       nameOrder: "bride",
       hindiMessage:
-        "सर्वशक्तिमान की कृपा और बड़ों के आशीर्वाद से, आन्या और विहान के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। आपकी उपस्थिति ही हमारा सौभाग्य है।",
-      brideFamily: "Mrs. Meera & Mr. Raghuveer Singh Rathore",
-      groomFamily: "Mrs. Nandini & Mr. Arvind Singhania",
-      brideNote: "Udaipur",
+        "ईश्वर की असीम कृपा और बड़ों के आशीर्वाद से, इशिता एवं कबीर के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। आपकी उपस्थिति ही हमारा सौभाग्य है।",
+      brideFamily: "Mrs. Sunita & Mr. Mahendra Singh Rathore",
+      groomFamily: "Mrs. Anjali & Mr. Vikram Singh Shekhawat",
+      brideNote: "Jodhpur",
       groomNote: "Jaipur",
-      blessingsOf: "Smt. Kamla Devi & Late Shri Bhanwar Singh Rathore",
+      blessingsOf: "Smt. Bhanwari Devi & Late Shri Prithvi Singh Rathore",
       bridePhoto: 0,
       groomPhoto: 0,
+      couplePhoto: 0,
       muhurat: "Shubh muhurat 9:15 pm",
-      hashtag: "#AanyaWedsVihaan",
+      hashtag: "#IshKabirKiShaadi",
       events: PD_DEMO_EVENTS.map((e) => ({ ...e })),
       story: [
-        { when: "2019", title: "Two strangers at a book fair", line: "We reached for the same copy of a Ruskin Bond. Neither of us let go, so we split the bill and the book.", photo: 0 },
-        { when: "2021", title: "The long-distance years", line: "Jaipur to Bengaluru, two time zones of busy, one rule: never sleep on a fight, never skip the goodnight call.", photo: 0 },
-        { when: "2025", title: "The question by the lake", line: "Sunset at Lake Pichola, a ring hidden in a kulhad of chai. She said yes before he could finish the sentence.", photo: 17 },
-        { when: "2027", title: "Forever begins", line: "Now our families become one. Come and bless us.", photo: 18 },
+        { when: "2018", title: "A wrong turn in Jodhpur", line: "He was lost in the blue lanes of the old city; she was the only one who stopped to point the way, and then walked him there herself.", photo: 0 },
+        { when: "2021", title: "Letters between two cities", line: "Jaipur to Pune, a lockdown, and a habit of handwritten letters that neither of them admits to keeping. Both kept every one.", photo: 0 },
+        { when: "2025", title: "A ring at the haveli door", line: "He knocked on the carved door of her grandmother's haveli with a ring in his pocket. Her dadi answered first, and said yes on her behalf.", photo: 17 },
+        { when: "2027", title: "The doors open", line: "Now two families become one. Come in, bless us, and dance with us.", photo: 18 },
       ],
       things: [
-        "Stay: Rooms for out-of-town guests are held at The Leela Palace from 9 to 14 Feb.",
-        "Weather: February evenings by the lake get cool, so bring a shawl.",
-        "Getting around: Boats to Jagmandir leave the City Palace jetty every 15 minutes from 6 pm.",
-        "Contact: For anything at all, call Kabir (Vihaan's brother) on +91 98290 00000.",
+        "Stay: Rooms for out-of-town guests are held at Samode Haveli from 9 to 14 February.",
+        "Weather: February nights in Jaipur are cool, so bring a shawl.",
+        "Getting around: Shuttles leave Samode Haveli for the palace every 30 minutes from 5 pm.",
+        "Children: Little ones are very welcome; there is a play corner at every function.",
       ],
-      gettingThere: "Udaipur's Maharana Pratap Airport is 25 minutes from the city. Our hospitality desk will meet you at arrivals and at Udaipur City railway station.",
+      gettingThere: "Jaipur International Airport is 30 minutes from Samode Haveli and 75 minutes from Samode Palace. Our hospitality desk will meet you at arrivals and at Jaipur Junction railway station.",
+      contacts: [
+        { name: "Yash Rathore", relation: "Ishita's brother", phone: "+91 98290 11223" },
+        { name: "Meenal Shekhawat", relation: "Kabir's sister", phone: "+91 98280 44556" },
+      ],
+      upiId: "",
+      upiName: "",
+      liveUrl: "",
       videoUrl: "",
       rsvpBy: "2027-01-15",
       maxGuests: 4,
       rsvpMeal: true,
       blessings: true,
+      invocation: true,
     },
   },
   copy: {
-    recipientPlaceholder: "e.g. Ananya",
-    senderPlaceholder: "e.g. Arjun",
+    recipientPlaceholder: "e.g. Ishita",
+    senderPlaceholder: "e.g. Kabir",
     petNamePlaceholder: "",
-    letterPlaceholder: "Together with their families, Ananya and Arjun request the honour of your presence at the celebration of their marriage…",
+    letterPlaceholder: "With the blessings of our elders, the Sharma and Mehta families invite you to the wedding of Ananya and Arjun…",
     letterHint: "The words your guests read first.",
     photosHint: "Any shape works. Tap a photo to resize it or set its focus. Drag to reorder.",
     captionHint: "caption — e.g. the roka",
     noteHint: "",
     endLinePlaceholder: "With love, the Sharma & Mehta families",
-    endLineHint: "The closing line under the Shubh Vivah seal.",
+    endLineHint: "The closing line as the palace doors close.",
     sheetTitle: "Your palace door invitation",
     sheetSub: "Describe your wedding and we'll fill in everything. Change any of it.",
     extrasTitle: "Functions",
-    extrasSub: "Every function with its own map, timings and dress code.",
-    publishing: "Getting your invitation ready…",
+    extrasSub: "Every function with its own couple illustration, map, timings and dress code.",
+    publishing: "Opening the palace doors…",
     storyTitle: "Describe your wedding 🚪",
     replyText: "",
   },
-  share: { title: "The palace doors are opening 🚪 You're invited", accent: "#8A5A1C" },
+  share: { title: "The palace doors are open 🚪 You're invited", accent: "#9A4A1F" },
 };

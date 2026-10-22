@@ -1,15 +1,32 @@
-// The 1200\u00d7630 link preview for /palace-door-wedding-invitation (WhatsApp, X, iMessage, Slack).
-// Rendered once at build time by next/og: light ivory, drawn in SVG (no emoji,
-// no network fonts, no remote images).
+// The 1200x630 link preview for /palace-door-wedding-invitation (WhatsApp, X, iMessage, Slack).
+// Rendered once at build time by next/og from the template's own art in the
+// repo (public/wedding-v3/palace-door/og-*: small PNG/JPEG copies of the door,
+// the gold frame, the jhumkas and the banana leaves, because satori does not
+// read webp). Read from disk, never fetched. ASCII only in this file: the
+// webpack dev loader rejects other characters in opengraph-image modules.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "Palace Door Wedding Invitation \u2014 carved Rajasthani doors swing open, a floral mandap with lanterns, an illustrated couple for every function, every function with RSVP and a blessings wall, on one link";
+export const alt = "Palace Door Wedding Invitation: a carved Rajasthani haveli door swings open onto an ivory palace courtyard, every function with its own illustrated couple, RSVP and a blessings wall, on one link";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const GOLD = "#A8742E";
 
+function dataUri(file: string, mime: string): string {
+  try {
+    return `data:${mime};base64,${readFileSync(join(process.cwd(), "public/wedding-v3/palace-door", file)).toString("base64")}`;
+  } catch {
+    return "";
+  }
+}
+
 export default function OpengraphImage() {
+  const door = dataUri("og-door.jpg", "image/jpeg");
+  const frame = dataUri("og-frame.png", "image/png");
+  const leaves = dataUri("og-leaves.png", "image/png");
+  const jhumka = dataUri("og-jhumka.png", "image/png");
   return new ImageResponse(
     (
       <div
@@ -17,34 +34,45 @@ export default function OpengraphImage() {
           width: "100%",
           height: "100%",
           display: "flex",
+          position: "relative",
           alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 80px 0 90px",
-          background: "radial-gradient(circle at 70% 45%, #FFF8EA 0%, #F6E6C8 60%, #EBD3A6 100%)",
-          color: "#5A3A12",
+          background: "radial-gradient(circle at 70% 40%, #FFF9EC 0%, #F4E6C6 58%, #E6D0A0 100%)",
+          color: "#3A2414",
           fontFamily: "serif",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", maxWidth: 660 }}>
-          <div style={{ fontSize: 22, letterSpacing: 8, color: GOLD, fontWeight: 700, fontFamily: "sans-serif" }}>{"SHUBH VIVAH \u00b7 THE DOORS OPEN"}</div>
-          <div style={{ display: "flex", flexDirection: "column", fontSize: 70, fontWeight: 700, lineHeight: 1.04, marginTop: 20 }}>
+        {door && (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <img src={door} width={330} height={586} style={{ position: "absolute", left: 92, top: 22, borderRadius: 6, boxShadow: "0 30px 60px rgba(70,40,10,.35)" }} />
+        )}
+        {frame && (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <img src={frame} width={170} height={175} style={{ position: "absolute", left: 172, top: 150 }} />
+        )}
+        <div style={{ position: "absolute", left: 172, top: 150, width: 170, height: 175, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 118, height: 118, borderRadius: 60, background: "#FFF8E8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52, color: "#8A5A1C", fontStyle: "italic" }}>
+            {"I & K"}
+          </div>
+        </div>
+        {jhumka && (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <img src={jhumka} width={100} height={200} style={{ position: "absolute", left: 16, top: -8 }} />
+        )}
+        {leaves && (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <img src={leaves} width={240} height={222} style={{ position: "absolute", left: -40, bottom: -40 }} />
+        )}
+        <div style={{ display: "flex", flexDirection: "column", marginLeft: 500, maxWidth: 640 }}>
+          <div style={{ fontSize: 22, letterSpacing: 8, color: GOLD, fontWeight: 700, fontFamily: "sans-serif" }}>{"SHUBH VIVAH - THE DOORS OPEN"}</div>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 70, fontWeight: 700, lineHeight: 1.04, marginTop: 18 }}>
             <span>Palace Door</span>
             <span>Wedding Invitation</span>
           </div>
-          <div style={{ fontSize: 28, lineHeight: 1.42, marginTop: 24, color: "#7E6040", fontFamily: "sans-serif" }}>
-            Carved doors open to your names in gold, every function with its own couple, RSVP and a blessings wall.
+          <div style={{ fontSize: 27, lineHeight: 1.42, marginTop: 22, color: "#6A4A30", fontFamily: "sans-serif" }}>
+            A carved haveli door swings open onto your courtyard: every function with its own couple, RSVP and blessings.
           </div>
-          <div style={{ fontSize: 24, marginTop: 30, color: GOLD, fontWeight: 700, fontFamily: "sans-serif" }}>subhsandesh.in</div>
+          <div style={{ fontSize: 24, marginTop: 28, color: GOLD, fontWeight: 700, fontFamily: "sans-serif" }}>subhsandesh.in</div>
         </div>
-        <svg width="340" height="460" viewBox="0 0 300 400">
-          <path d="M40 390 V170 C40 100 95 52 150 44 C205 52 260 100 260 170 V390 Z" fill="none" stroke={GOLD} strokeWidth="7" />
-          <path d="M62 390 V178 C62 118 106 78 150 70 C194 78 238 118 238 178 V390 Z" fill="#FFFFFF" fillOpacity="0.55" stroke={GOLD} strokeWidth="2" />
-          <path d="M150 300 C120 270 112 238 150 196 C188 238 180 270 150 300 Z" fill={GOLD} fillOpacity="0.85" />
-          <path d="M150 300 C112 292 92 266 98 236 C124 246 142 266 150 300 Z" fill={GOLD} fillOpacity="0.55" />
-          <path d="M150 300 C188 292 208 266 202 236 C176 246 158 266 150 300 Z" fill={GOLD} fillOpacity="0.55" />
-          <path d="M150 18 L160 40 L140 40 Z" fill={GOLD} />
-          <path d="M20 392 H280" stroke={GOLD} strokeWidth="5" />
-        </svg>
       </div>
     ),
     size,
