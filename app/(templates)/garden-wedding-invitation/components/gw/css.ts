@@ -195,8 +195,10 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-invite { --pad: clamp(20px, 5.5vw, 60px); position: relative; max-width: 900px; margin: 0 auto; padding: 0 var(--pad) clamp(30px, 5vw, 52px); border-radius: 28px; background: var(--wk-surface-solid); border: 1px solid color-mix(in srgb, var(--wk-gold) 45%, transparent); box-shadow: var(--wk-shadow); }
 .gw-invite-crown { display: block; width: calc(100% + 2 * var(--pad)); max-width: none; height: auto; margin: 0 calc(-1 * var(--pad)); border-radius: 27px 27px 0 0; }
 .gw-invite-in { position: relative; z-index: 1; margin-top: clamp(-30px, -3vw, -14px); }
-.gw-invite .wk-msg-heading { color: var(--wk-accent); margin-bottom: 12px; }
+.gw-invite .wk-msg-heading { color: var(--wk-accent); margin-bottom: 12px; word-spacing: .18em; }
 .gw-invite .wk-msg-text { font-size: clamp(17px, 4.4vw, 20px); line-height: 1.75; }
+/* The Hindi column is shorter than the English one: centre it against it instead of leaving it hanging at the top. */
+@media (min-width: 860px) { .gw-invite .wk-msg.is-two .wk-msg-text:last-child { align-self: center; } }
 .gw-invite-rose, .gw-invite-bunch { position: absolute; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1s var(--gw-ease) .3s, transform 1.4s var(--gw-ease) .3s; }
 .gw-invite-rose { left: clamp(-34px, -3vw, -14px); bottom: -34px; height: clamp(120px, 24vw, 250px); transform: translateY(30px) rotate(-14deg); }
 .gw-invite-bunch { right: clamp(-70px, -5vw, -22px); top: clamp(-70px, -5vw, -30px); width: clamp(84px, 14vw, 170px); transform: translateX(30px); }
@@ -215,7 +217,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-blessings-of { text-align: center; margin: 0 auto 26px; max-width: 560px; }
 .gw-blessings-names { margin: 0; font: italic 500 clamp(19px, 4.6vw, 24px)/1.45 var(--wk-font-display); }
 .gw-fam { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; }
-.gw-fam .wk-family { padding: 26px 18px 24px; border-radius: 160px 160px 22px 22px / 110px 110px 22px 22px; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); }
+.gw-fam .wk-family { padding: 34px 18px 24px; border-radius: 50% 50% 22px 22px / 56px 56px 22px 22px; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); }
 .gw-fam .wk-family-names { font-size: clamp(19px, 4.6vw, 23px); }
 
 /* ── The day: date card, countdown, fountain ─────────────────────────── */
@@ -309,9 +311,12 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 
 /* ── Venue ────────────────────────────────────────────────────────────── */
 .gw-venue-arch { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: 50% 50% 22px 22px / 30% 30% 22px 22px; border: 6px solid var(--wk-surface-solid); box-shadow: var(--wk-shadow); background: var(--gw-sky2); }
-.gw-venue-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+/* Phones crop the wide lake panel to its right side: the peacock on the balustrade and the pink dome. */
+.gw-venue-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 96% 50%; }
 .gw-balustrade { position: absolute; left: 0; right: 0; bottom: 0; height: 21%; background: url("${GW.balustrade.src}") repeat-x 0 100% / auto 100%; filter: drop-shadow(0 -4px 8px rgba(80,60,60,.12)); }
 .gw-glints { position: absolute; inset: 52% 18% 24% 18%; }
+/* Phones show the right of the panel (peacock + dome): keep the glints on the open water to the left of the peacock. */
+@media (max-width: 719px) { .gw-glints { inset: 50% 68% 26% 3%; } }
 .gw-glints i { position: absolute; width: 18px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.95); opacity: 0; }
 .gw-glints i:nth-child(1) { left: 6%; top: 20%; } .gw-glints i:nth-child(2) { left: 30%; top: 55%; } .gw-glints i:nth-child(3) { left: 52%; top: 30%; } .gw-glints i:nth-child(4) { left: 72%; top: 62%; } .gw-glints i:nth-child(5) { left: 88%; top: 18%; }
 .gw-venue.is-on .gw-glints i { animation: gw-glint 3.2s ease-in-out infinite; }
@@ -390,6 +395,8 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* ── Finale ───────────────────────────────────────────────────────────── */
 .gw-finale { position: relative; overflow: hidden; isolation: isolate; padding: clamp(40px, 8vw, 80px) 16px clamp(90px, 14vw, 140px); text-align: center; background: linear-gradient(180deg, var(--wk-bg) 0%, color-mix(in srgb, #fbe2dc 70%, var(--wk-bg)) 30%, color-mix(in srgb, #f1d3dd 80%, var(--wk-bg)) 66%, color-mix(in srgb, #e3d4ea 70%, var(--wk-bg)) 100%); }
 .gw-sky-lanterns { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+/* On a phone the side lanes sit under the text column: keep the lanterns a soft glow there. */
+@media (max-width: 599px) { .gw-sky-lanterns { opacity: .6; } }
 .gw-sky-lanterns i { position: absolute; bottom: -50px; border-radius: 42% 42% 30% 30%; background: radial-gradient(circle at 50% 72%, #fff6d2, #ffc978 46%, #ef9566 86%); box-shadow: 0 0 22px 4px rgba(255,190,120,.55); opacity: 0; }
 .gw-finale.is-on .gw-sky-lanterns i { animation-name: gw-rise, gw-lsway; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; animation-direction: normal, alternate; }
 .gw-finale-stage { position: relative; height: clamp(280px, 62vw, 520px); max-width: 1000px; margin: 0 auto; }

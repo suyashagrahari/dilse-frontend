@@ -20,7 +20,7 @@ export default async function OpengraphImage() {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", fontFamily: "serif", color: INK }}>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <img src={src} width={1200} height={630} style={{ position: "absolute", left: 0, top: 0, width: 1200, height: 630 }} />
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 0 0 80px", width: 640, height: "100%" }}>
           <div style={{ fontSize: 22, letterSpacing: 7, color: ROSE, fontWeight: 700, fontFamily: "sans-serif" }}>{"SHUBH VIVAH \u00b7 IN THE GARDEN"}</div>

@@ -4,7 +4,7 @@
 import type { LovePhoto } from "../../../_love/types";
 import { LIGHT_THEMES, type WeddingThemeId } from "../../../_wedding/themes";
 import type { FamilySide, WeddingEvent } from "../../../_wedding/types";
-import { GW_LIMITS } from "../../../_valentine/days/garden-wedding-invitation";
+import { GW_LIMITS, gwLocalPhotos } from "../../../_valentine/days/garden-wedding-invitation";
 
 export type Lang = "en" | "hi";
 
@@ -112,7 +112,7 @@ export const MAIN_RE = /wedding|vivah|शादी|विवाह|phera|shaadi|
 
 export function readGarden(extras: Record<string, unknown>, photos: LovePhoto[], bride: string, groom: string): GardenModel {
   const x = extras ?? {};
-  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url);
+  const pool = gwLocalPhotos((Array.isArray(photos) ? photos : []).filter((p) => p && p.url));
   const used = new Set<number>();
   const pick = (n: unknown): LovePhoto | null => {
     const k = num(n);

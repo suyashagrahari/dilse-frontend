@@ -25,7 +25,7 @@ import MusicPicker from "../../../_valentine/editor/MusicPicker";
 import PhotoCropper, { clampCrop, cropImgStyle, type Crop } from "../../../_valentine/editor/PhotoCropper";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { LovePhoto } from "../../../_valentine/types";
-import { GW_LIMITS, gardenWeddingDay } from "../../../_valentine/days/garden-wedding-invitation";
+import { GW_LIMITS, gardenWeddingDay, gwLocalPhotos, gwStoredUrl } from "../../../_valentine/days/garden-wedding-invitation";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { GW } from "../assets";
 import { MAIN_RE, dialOf, isUpiId, swatchFor } from "../gw/model";
@@ -266,7 +266,8 @@ export default function GardenStudio({ mf, updateMf, updateExtra, ai, password, 
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
   const contacts = useMemo(() => (Array.isArray(x.contacts) ? (x.contacts as Contact[]) : []), [x.contacts]);
-  const photos = mf.photos;
+  // Demo art is stored as https://subhsandesh.in/wedding-v3/… and shown from this host's public/.
+  const photos = useMemo(() => gwLocalPhotos(mf.photos), [mf.photos]);
   const set = updateExtra;
 
   // ── Every function keeps a stable id (RSVPs refer to it) ──────────────────
@@ -382,7 +383,7 @@ export default function GardenStudio({ mf, updateMf, updateExtra, ai, password, 
   );
   const setPhotos = (next: LovePhoto[]) => {
     const prev = latest.current.photos;
-    const capped = next.slice(0, GW_LIMITS.photos);
+    const capped = next.slice(0, GW_LIMITS.photos).map((p) => (gwStoredUrl(p.url) === p.url ? p : { ...p, url: gwStoredUrl(p.url) }));
     updateMf("photos", capped);
     remapRefs(prev, capped);
   };

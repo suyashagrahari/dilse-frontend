@@ -81,9 +81,23 @@ export const GW_DEMO_EVENTS: WeddingEvent[] = [
   { id: "reception", title: "Reception", date: "2027-02-21", time: "20:00", endTime: "23:59", venue: "The Polo Bar Lawns", address: "Rambagh Palace, Jaipur", mapUrl: "", dressCode: "Evening formal", dressColor: "#2E5AAC", note: "Dinner under the stars, a few toasts and dancing to celebrate the newlyweds." },
 ];
 
-/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
-const DEMO_CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
+/**
+ * Demo photos (CC0 / public domain, media-src/templates/wedding/ATTRIBUTION.md, rw-*) ship IN THE
+ * REPO under public/wedding-v3/demo, never on the CDN or S3. The engine and the server keep only
+ * https photo links, so a draft stores them on the site's own domain; every render maps that back
+ * to the same-origin path (gwLocalUrl), so local, staging and prod each serve their own copy.
+ */
+const SITE_ORIGIN = "https://subhsandesh.in";
+const DEMO_CDN = `${SITE_ORIGIN}/wedding-v3/demo`;
 export { DEMO_CDN as GW_DEMO_CDN };
+const REPO_ART_RE = /^https:\/\/(?:www\.)?subhsandesh\.in(\/wedding-v3\/[^?#\s]+)$/i;
+/** A stored repo-art link → the same-origin path this host serves from public/. Anything else is unchanged. */
+export const gwLocalUrl = (url: string): string => REPO_ART_RE.exec(url)?.[1] ?? url;
+/** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
+export const gwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
+/** Map a photo list for rendering (same array back when nothing changes). */
+export const gwLocalPhotos = (photos: LovePhoto[]): LovePhoto[] =>
+  photos.some((p) => p && gwLocalUrl(p.url) !== p.url) ? photos.map((p) => (p && gwLocalUrl(p.url) !== p.url ? { ...p, url: gwLocalUrl(p.url) } : p)) : photos;
 
 /** 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it). */
 export const GW_DEMO_PHOTOS: LovePhoto[] = [

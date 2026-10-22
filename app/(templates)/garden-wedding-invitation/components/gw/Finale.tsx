@@ -15,7 +15,8 @@ import Petals from "./Petals";
 
 const LANTERNS = (() => {
   const r = seeded(17);
-  return Array.from({ length: 9 }, () => ({ left: 4 + r() * 92, size: 14 + r() * 16, delay: -r() * 14, dur: 12 + r() * 8, sway: 8 + r() * 18 }));
+  // Two side lanes (2–26% and 74–98%) so no lantern drifts across the names and the share bar.
+  return Array.from({ length: 9 }, (_, i) => ({ left: (i % 2 ? 74 : 2) + r() * 24, size: 14 + r() * 16, delay: -r() * 14, dur: 12 + r() * 8, sway: 8 + r() * 18 }));
 })();
 
 export interface FinaleProps {
