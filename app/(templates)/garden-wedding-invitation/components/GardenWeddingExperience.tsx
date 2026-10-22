@@ -20,7 +20,7 @@
 // A personal link (?to=Sharma%20family) greets the guest by name and fills the
 // RSVP name.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   BlessingsWall,
   FamiliesBlock,
@@ -49,6 +49,12 @@ import Venue from "./gw/Venue";
 import { GW_CSS } from "./gw/css";
 import { prefillInput, useGuestName } from "./gw/guest";
 import { T, readGarden, type Lang } from "./gw/model";
+
+/** The kit's paper textures, from this repo's public/wedding-v3/gw-kit (the kit's own defaults point at the CDN). */
+const LINEN = 'url("/wedding-v3/gw-kit/linen-overlay.webp")';
+const SILK = 'url("/wedding-v3/gw-kit/paper-silk-light.webp")';
+const gwTextures = (theme: string): CSSProperties =>
+  ({ minHeight: "100dvh", ["--wk-texture" as string]: LINEN, ["--wk-paper" as string]: theme === "champagne" ? SILK : LINEN }) as CSSProperties;
 
 /** A key that changes when a section appears or disappears (the observer re-collects them). */
 const hasSections = (m: ReturnType<typeof readGarden>) => [m.blessings, !!m.main?.date, m.things.length > 0, m.contacts.length > 0, !!m.upiId, !!m.videoId].join("");
@@ -182,7 +188,7 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
   const live = m.liveUrl ? { url: m.liveUrl, open: liveOpen, label: s.live, soon: s.liveSoon } : undefined;
 
   return (
-    <WeddingRoot theme={m.theme} className={`gw-root is-${mode}${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={{ minHeight: "100dvh" }}>
+    <WeddingRoot theme={m.theme} className={`gw-root is-${mode}${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={gwTextures(m.theme)}>
       <style>{GW_CSS}</style>
       <Gate first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} invocation={m.invocation} onOpened={onOpened} />
 

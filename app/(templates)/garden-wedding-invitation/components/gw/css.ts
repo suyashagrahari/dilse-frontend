@@ -35,6 +35,11 @@ export const GW_CSS = `
 /* The engine's music icon: a 44px control, top right under the brand mark, on the live page (research P0 #3). */
 body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-top)) + 56px) !important; right: 12px !important; left: auto !important; bottom: auto !important; z-index: 96 !important; transform: scale(1.1) !important; transform-origin: 100% 0 !important; }
 
+body:has(.gw-root) .vm-icon { box-shadow: 0 10px 22px -12px rgba(110,40,58,.55), 0 0 0 1px rgba(192,138,92,.55) !important; }
+body:has(.gw-root) .vm-icon-btn { color: #a94e63 !important; background: radial-gradient(circle at 50% 38%, #fffdfb, #f8e6e8 72%) !important; }
+body:has(.gw-root) .vm-icon-eq i { background: #a94e63 !important; }
+body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !important; }
+
 /* ── The gate ─────────────────────────────────────────────────────────── */
 .gw-gate { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; overflow: hidden; padding: 70px 16px 40px; }
 .gw-gate-veil { position: absolute; inset: 0; background: linear-gradient(180deg, #dcebf6 0%, #f7f1f2 52%, #f7e3e8 100%); transition: opacity .9s var(--gw-ease) .5s; }
@@ -47,10 +52,10 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 .gw-gc-l { top: 2%; left: -22%; width: min(84vw, 640px); }
 .gw-gc-r { top: 9%; right: -26%; width: min(92vw, 720px); }
 .gw-gate.is-ready .gw-gc img { animation: gw-float 14s ease-in-out infinite alternate; }
-.gw-gleaf { position: absolute; z-index: 2; bottom: -1svh; height: max(96svh, 560px); -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%); }
+.gw-gleaf { position: absolute; z-index: 2; bottom: -1svh; mix-blend-mode: multiply; height: max(96svh, 560px); -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%); }
 .gw-gleaf-tree { display: block; height: 100%; width: auto; }
-.gw-gleaf-l { left: -64px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to right, transparent 0, #000 22%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to right, transparent 0, #000 22%); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-gleaf-r { right: -64px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to left, transparent 0, #000 22%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to left, transparent 0, #000 22%); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-gleaf-l { left: -64px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-gleaf-r { right: -64px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); -webkit-mask-composite: source-in; mask-composite: intersect; }
 .gw-gleaf-flower { position: absolute; bottom: -2%; width: auto; }
 .gw-gleaf-l .gw-gleaf-flower { left: 34%; height: 30%; }
 .gw-gleaf-r .gw-gleaf-flower { right: 42%; height: 36%; }
@@ -202,7 +207,7 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 
 /* ── Families ─────────────────────────────────────────────────────────── */
 .gw-sec-fam::before { background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gw-sky) 45%, transparent) 50%, transparent); }
-.gw-fam-tree { position: absolute; z-index: 0; bottom: 0; height: 78%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%); mask-image: linear-gradient(to bottom, transparent, #000 18%); display: none; opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
+.gw-fam-tree { position: absolute; z-index: 0; bottom: 0; height: 78%; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent), linear-gradient(to right, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent), linear-gradient(to right, transparent, #000 30%, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; display: none; opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-fam-tree img { display: block; height: 100%; width: auto; }
 .gw-fam-tree-l { left: -40px; transform: translateX(-40px); }
 .gw-fam-tree-r { right: -40px; transform: translateX(40px); }
@@ -215,7 +220,7 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 
 /* ── The day: date card, countdown, fountain ─────────────────────────── */
 .gw-sec-day::before { background: radial-gradient(70% 60% at 50% 70%, color-mix(in srgb, var(--gw-sky) 70%, transparent), transparent 75%); }
-.gw-day { display: grid; gap: clamp(22px, 4vw, 34px); justify-items: center; }
+.gw-day { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(22px, 4vw, 34px); justify-items: center; }
 .gw-day-card { width: min(100%, 380px); padding: 46px 22px 28px; text-align: center; border-radius: 190px 190px 26px 26px / 150px 150px 26px 26px; background: var(--wk-surface-solid); border: 1px solid color-mix(in srgb, var(--wk-gold) 50%, transparent); box-shadow: var(--wk-shadow); }
 .gw-day-week { margin: 0; font: 600 13px/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-accent); }
 .gw-day-num { margin: 6px 0 0; font: 500 clamp(96px, 26vw, 140px)/.95 var(--wk-font-display); }
@@ -225,7 +230,7 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 .gw-day-time { margin: 0; font: 600 16px/1.4 var(--wk-font-sans); }
 .gw-day-muhurat { margin: 2px 0 0; font: italic 400 18px/1.4 var(--wk-font-display); color: var(--wk-accent); }
 .gw-day-venue { margin: 6px 0 0; font: 500 14px/1.45 var(--wk-font-sans); color: var(--wk-muted); }
-.gw-day-count { width: min(100%, 560px); padding: 22px 14px 18px; text-align: center; border-radius: 24px; background: color-mix(in srgb, var(--wk-surface-solid) 82%, transparent); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); }
+.gw-day-count { width: min(100%, 560px); min-width: 0; box-sizing: border-box; padding: 22px 14px 18px; text-align: center; border-radius: 24px; background: color-mix(in srgb, var(--wk-surface-solid) 82%, transparent); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); }
 @media (max-width: 520px) {
   .gw-day-count { padding: 18px 6px 14px; }
   .gw-day-count .wk-countdown { gap: 3px; }
@@ -392,13 +397,13 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 .gw-fin-pav-img { display: block; width: 100%; height: 100%; }
 .gw-fin-couple { position: absolute; left: 50%; bottom: 15%; height: 56%; translate: -50% 0; opacity: 0; transform: translateY(10px); transition: opacity 1.2s var(--gw-ease) .7s, transform 1.4s var(--gw-ease) .7s; }
 .gw-fin-couple img { display: block; height: 100%; width: auto; }
-.gw-fin-tree { position: absolute; bottom: 0; height: 92%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%); mask-image: linear-gradient(to bottom, transparent, #000 18%); opacity: 0; transition: opacity 1.2s var(--gw-ease) .2s, transform 1.6s var(--gw-ease) .2s; }
+.gw-fin-tree { position: absolute; bottom: 0; height: 92%; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%); mask-image: linear-gradient(to bottom, transparent, #000 18%); opacity: 0; transition: opacity 1.2s var(--gw-ease) .2s, transform 1.6s var(--gw-ease) .2s; }
 .gw-fin-tree img { display: block; height: 100%; width: auto; }
-.gw-fin-tree-l { left: -60px; transform: translateX(-50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to right, transparent, #000 30%); mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to right, transparent, #000 30%); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-fin-tree-r { right: -60px; transform: translateX(50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to left, transparent, #000 30%); mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to left, transparent, #000 30%); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-fin-tree-l { left: -60px; transform: translateX(-50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to right, transparent, #000 36%, #000 64%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to right, transparent, #000 36%, #000 64%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-fin-tree-r { right: -60px; transform: translateX(50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to left, transparent, #000 36%, #000 64%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to left, transparent, #000 36%, #000 64%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
 .gw-finale.is-bloom .gw-fin-pav, .gw-finale.is-bloom .gw-fin-couple, .gw-finale.is-bloom .gw-fin-tree { opacity: 1; transform: none; }
 .gw-fin-petals { position: absolute; inset: -20% 0 0; pointer-events: none; }
-.gw-finale-in { position: relative; max-width: 640px; margin: 18px auto 0; }
+.gw-finale-in { position: relative; z-index: 2; max-width: 640px; margin: 18px auto 0; }
 .gw-seal-line { display: grid; gap: 2px; margin: 0 0 14px; }
 .gw-seal-line b { font: 400 clamp(40px, 10vw, 58px)/1.25 var(--wk-font-deva); background: var(--wk-foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
 .gw-seal-line small { font: 600 12px/1 var(--wk-font-caps); letter-spacing: .4em; text-transform: uppercase; color: var(--wk-gold-ink); }
@@ -447,6 +452,23 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 @keyframes gw-petal-burst { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0) scale(.4); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate3d(var(--tx), var(--ty), 0) rotate(var(--spin)) scale(1); } }
 @keyframes gw-fade { from { opacity: 0; } }
 @keyframes gw-pop { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+
+@media (max-width: 599px) {
+  .gw-hero-text { top: max(78px, 10svh); }
+  .gw-blossom { width: min(52vw, 440px); top: -5%; }
+  .gw-hang-r { height: min(15svh, 140px); right: -4%; }
+  .gw-hero-text .wk-eyebrow { max-width: 34ch; letter-spacing: .12em; }
+}
+/* Tablets: the blossom branch and the left lantern stay in the corner, off the names. */
+@media (min-width: 600px) and (max-width: 899px) {
+  .gw-blossom { width: min(38vw, 320px); left: -8%; top: -4%; }
+  .gw-hang-l { height: min(13svh, 130px); left: 2%; }
+  .gw-hero-text { top: max(84px, 9svh); }
+}
+@media (max-width: 380px) {
+  .gw-names { font-size: clamp(44px, 13.6vw, 56px); }
+  .gw-share-hero .gw-pill { padding: 0 12px; }
+}
 
 /* ── Wider screens ────────────────────────────────────────────────────── */
 @media (min-width: 600px) {
@@ -503,6 +525,7 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
   .gw-ch.no-photo .gw-ch-line { margin: 0 auto; }
   .gw-ch.no-photo .gw-ch-dot { top: -18px; translate: -50% 0; }
   .gw-drift { opacity: .95; }
+  .gw-venue { max-width: 1000px; margin: 0 auto; }
   .gw-venue-cols { grid-template-columns: 1.15fr 1fr; align-items: start; }
   .gw-venue-text { text-align: left; }
   .gw-venue-btns { justify-content: flex-start; }
