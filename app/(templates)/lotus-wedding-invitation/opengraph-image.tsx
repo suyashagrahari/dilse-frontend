@@ -1,50 +1,41 @@
-// The 1200\u00d7630 link preview for /lotus-wedding-invitation (WhatsApp, X, iMessage, Slack).
-// Rendered once at build time by next/og: light ivory, drawn in SVG (no emoji,
-// no network fonts, no remote images).
+// The 1200x630 link preview for /lotus-wedding-invitation (WhatsApp, X, iMessage, Slack).
+// Rendered once at build time by next/og. The art is the owner's (gold string
+// lights, brass lamps, the couple before the faded gopuram, pink lotuses),
+// pre-composed into public/wedding-v3/lotus/og-base.jpg because next/og
+// cannot decode WebP; the words are drawn on top. Served from the repo, never
+// the CDN. Keep this file ASCII-only (the webpack dev loader rejects others).
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "Lotus Temple Wedding Invitation \u2014 brass lamps, a lotus pond, gold string lights and the temple gopuram in white, gold and lotus pink, every function with RSVP and a blessings wall, on one link";
+export const alt = "Lotus Temple Wedding Invitation: a lotus blooming in a temple pond, brass lamps, gold string lights and the gopuram, with every function, RSVP and a blessings wall on one link";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const GOLD = "#A3405C";
+const ROSE = "#8C3550";
+const SAGE = "#4E6E5D";
 
-export default function OpengraphImage() {
+export default async function OpengraphImage() {
+  const base = await readFile(path.join(process.cwd(), "public/wedding-v3/lotus/og-base.jpg"));
+  const src = `data:image/jpeg;base64,${base.toString("base64")}`;
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 80px 0 90px",
-          background: "radial-gradient(circle at 70% 45%, #FFFDF6 0%, #F8EEDB 58%, #F3DCE2 100%)",
-          color: "#4A2A2F",
-          fontFamily: "serif",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", maxWidth: 660 }}>
-          <div style={{ fontSize: 22, letterSpacing: 8, color: GOLD, fontWeight: 700, fontFamily: "sans-serif" }}>SHRI GANESHAY NAMAH</div>
-          <div style={{ display: "flex", flexDirection: "column", fontSize: 70, fontWeight: 700, lineHeight: 1.04, marginTop: 20 }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", fontFamily: "serif", color: "#3A2C14" }}>
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
+        <img src={src} width={1200} height={630} style={{ position: "absolute", left: 0, top: 0 }} />
+        <div style={{ position: "absolute", left: 70, top: 150, width: 610, display: "flex", flexDirection: "column" }}>
+          <div style={{ fontSize: 20, letterSpacing: 7, color: SAGE, fontWeight: 700, fontFamily: "sans-serif" }}>SHRI GANESHAY NAMAH</div>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 56, lineHeight: 1.08, marginTop: 16, color: ROSE }}>
             <span>Lotus Temple</span>
             <span>Wedding Invitation</span>
           </div>
-          <div style={{ fontSize: 28, lineHeight: 1.42, marginTop: 24, color: "#76585C", fontFamily: "sans-serif" }}>
-            Brass lamps, a lotus pond and the gopuram, your muhurtham, every function with maps and RSVP, and a blessings wall.
+          <div style={{ fontSize: 23, lineHeight: 1.45, marginTop: 20, width: 540, color: "#5A5040", fontFamily: "sans-serif" }}>
+            A lotus blooms, the brass lamps light up and your muhurtham, every function, RSVP and blessings follow. One link.
           </div>
-          <div style={{ fontSize: 24, marginTop: 30, color: GOLD, fontWeight: 700, fontFamily: "sans-serif" }}>subhsandesh.in</div>
+          <div style={{ display: "flex", marginTop: 26 }}>
+            <div style={{ display: "flex", padding: "10px 22px", borderRadius: 999, background: SAGE, color: "#FFFDF6", fontSize: 22, fontWeight: 700, fontFamily: "sans-serif" }}>subhsandesh.in</div>
+          </div>
         </div>
-        <svg width="340" height="460" viewBox="0 0 300 400">
-          <path d="M40 390 V170 C40 100 95 52 150 44 C205 52 260 100 260 170 V390 Z" fill="none" stroke={GOLD} strokeWidth="7" />
-          <path d="M62 390 V178 C62 118 106 78 150 70 C194 78 238 118 238 178 V390 Z" fill="#FFFFFF" fillOpacity="0.55" stroke={GOLD} strokeWidth="2" />
-          <path d="M150 300 C120 270 112 238 150 196 C188 238 180 270 150 300 Z" fill={GOLD} fillOpacity="0.85" />
-          <path d="M150 300 C112 292 92 266 98 236 C124 246 142 266 150 300 Z" fill={GOLD} fillOpacity="0.55" />
-          <path d="M150 300 C188 292 208 266 202 236 C176 246 158 266 150 300 Z" fill={GOLD} fillOpacity="0.55" />
-          <path d="M150 18 L160 40 L140 40 Z" fill={GOLD} />
-          <path d="M20 392 H280" stroke={GOLD} strokeWidth="5" />
-        </svg>
       </div>
     ),
     size,

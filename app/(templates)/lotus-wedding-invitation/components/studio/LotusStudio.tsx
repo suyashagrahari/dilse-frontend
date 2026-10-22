@@ -1,30 +1,29 @@
 "use client";
 
-// SCAFFOLD (wedding quartet): this started as a working copy of
-// royal-wedding-invitation so the template runs end to end. Rebuild it with
-// this template's own art (./assets.ts or ../assets.ts, served from
-// public/wedding-v3, never the CDN); light themes only.
-
-// ─── Royal Wedding Invitation — the editor (the whole form) ──────────────────
+// ─── Lotus Temple Wedding Invitation — the editor (the whole form) ───────────
 //
-// Short on purpose. On top, "Describe your wedding" (the AI fills names,
-// families, five functions with dress codes, the English + Hindi invitation,
-// the story and good-to-know). Then: the couple + the big day → functions →
+// On top, "Describe your wedding" (the AI fills names, families, five
+// functions, the English + Hindi invitation, the story, family contacts and
+// good-to-know). Then six steps: the couple + the big day → functions →
 // photos (one pool of 40: the gallery; story chapters and family cards point
-// into it) → the invitation → theme & music. Everything else (story,
-// family notes/photos, good to know, film, RSVP settings, closing line,
-// password) sits behind "More details". Each section carries
+// into it, and each can be framed with PhotoCropper) → the invitation →
+// theme & music → guests & more (story, families, good to know, contacts,
+// shagun, livestream, film, RSVP settings, closing line, password, and the
+// personal ?to= links once the page is published). Each section carries
 // id="vs-sec-<id>" so the sheet's side nav and Save's "jump to the gap" work.
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { MasonryEditor, RsvpDashboard } from "../../../_wedding";
 import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
+import PhotoCropper, { clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
+import { API_URL } from "@/lib/config";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { LovePhoto } from "../../../_valentine/types";
-import { LW_LIMITS, lotusWeddingDay } from "../../../_valentine/days/lotus-wedding-invitation";
-import { MAIN_RE, swatchFor } from "../lw/model";
+import { LW_LIMITS, LW_THEME_LABELS, lotusWeddingDay, lwLocalUrl, lwStoredUrl } from "../../../_valentine/days/lotus-wedding-invitation";
+import { MAIN_RE, isUpiId, normalisePhone, swatchFor } from "../lw/model";
+import { personalLink } from "../lw/guest";
 
 const SLUG = "lotus-wedding-invitation";
 type Row = Record<string, unknown>;
@@ -44,7 +43,18 @@ const QUICK_FUNCTIONS: { title: string; dress: string; color: string }[] = [
   { title: "Reception", dress: "Black tie", color: "#1C1C24" },
 ];
 const SWATCHES = ["#F2C94C", "#4F9B6A", "#E86A92", "#A3122B", "#7B3FA0", "#2E5AAC", "#EE8A2E", "#F3EBDD", "#1C1C24", "#C9A24A"];
-const AI_CHIPS = ["Make it formal", "Make it warm", "Add Hindi", "Mention our families", "Keep it short"];
+const AI_CHIPS = ["Make it formal", "Make it warm", "A temple wedding", "Mention our families", "Keep it short"];
+type Contact = { name: string; relation: string; phone: string };
+/** PhotoCropper renders in a portal (outside the sheet), so it gets the lotus palette explicitly. */
+const CROP_THEME = {
+  "--vw-accent": "#4E6E5D",
+  "--vw-accent-deep": "#2F4A3E",
+  "--vw-accent-ink": "#FFFDF6",
+  "--vw-edge": "#DCCFAE",
+  "--vw-paper": "#FFFDF8",
+  "--vw-paper-ink": "#2A3A32",
+  "--vw-soft": "#EEF2EA",
+} as CSSProperties;
 
 const newId = (taken: Set<string>) => {
   for (;;) {
@@ -108,21 +118,42 @@ function Head({ n: num, title, sub }: { n: number | string; title: string; sub?:
 }
 
 /** A photo from the pool (1-based), "none" (0), or a new upload appended to the pool. */
-function PhotoPick({ value, photos, onPick, onUpload, label }: { value: number; photos: LovePhoto[]; onPick: (k: number) => void; onUpload: (f: File) => void; label: string }) {
+function PhotoPick({ value, photos, onPick, onUpload, onFrame, label }: { value: number; photos: LovePhoto[]; onPick: (k: number) => void; onUpload: (f: File) => void; onFrame: (k: number, c: Crop) => void; label: string }) {
   const [open, setOpen] = useState(false);
+  const [framing, setFraming] = useState(false);
   const cur = value >= 1 && value <= photos.length ? photos[value - 1] : null;
   const file = useRef<HTMLInputElement>(null);
+  const crop: Crop = clampCrop({ x: cur?.cropX ?? 50, y: cur?.cropY ?? 50, scale: cur?.scale ?? 100 });
   return (
     <div className="lws-pick">
-      <button type="button" className="lws-pick-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        {cur ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cur.url} alt="" />
-        ) : (
-          <span aria-hidden>＋</span>
+      <div className="lws-pick-row">
+        <button type="button" className="lws-pick-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+          {cur ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cur.url} alt="" style={{ objectPosition: `${crop.x}% ${crop.y}%` }} />
+          ) : (
+            <span aria-hidden>＋</span>
+          )}
+          <span>{cur ? `${label}: photo ${value}` : `${label}: add a photo`}</span>
+        </button>
+        {cur && (
+          <button type="button" className="lws-frame-btn" onClick={() => setFraming(true)}>
+            ✥ Frame &amp; zoom
+          </button>
         )}
-        <span>{cur ? `${label}: photo ${value}` : `${label}: add a photo`}</span>
-      </button>
+      </div>
+      {cur && (
+        <PhotoCropper
+          open={framing}
+          src={cur.url}
+          crop={crop}
+          aspect={0.8}
+          title={`${label}: drag to move, pinch or slide to zoom`}
+          themeStyle={CROP_THEME}
+          onChange={(c) => onFrame(value, c)}
+          onClose={() => setFraming(false)}
+        />
+      )}
       {open && (
         <div className="lws-pick-strip" role="listbox" aria-label={label}>
           <button type="button" className={`lws-pick-none${value === 0 ? " is-on" : ""}`} onClick={() => { onPick(0); setOpen(false); }}>
@@ -157,12 +188,42 @@ function PhotoPick({ value, photos, onPick, onUpload, label }: { value: number; 
   );
 }
 
+/** The three lotus palettes as the guest page paints them (the kit's picker shows its own champagne/blush/powder cards). */
+const LOTUS_SWATCHES: Record<string, { bg: string; ink: string; accent: string; blurb: string }> = {
+  champagne: { bg: "linear-gradient(160deg, #FFFCF5, #F3EEDF)", ink: "#7E2943", accent: "#4E6E5D", blurb: "Ivory paper, lotus-leaf sage and temple gold" },
+  blush: { bg: "linear-gradient(160deg, #FFFBFA, #F9E6EB)", ink: "#7E2943", accent: "#9C3A57", blurb: "Soft lotus pink with rose and gold" },
+  powder: { bg: "linear-gradient(160deg, #FBFDFE, #E7F0F3)", ink: "#7E2943", accent: "#48707A", blurb: "A still pond: pale blue-green and gold" },
+};
+function LotusThemePicker({ value, onChange, sample }: { value: string; onChange: (id: string) => void; sample: string }) {
+  return (
+    <div className="lws-themes" role="radiogroup" aria-label="Theme">
+      {LIGHT_THEMES.map((id) => {
+        const sw = LOTUS_SWATCHES[id];
+        if (!sw) return null;
+        const on = value === id;
+        return (
+          <button key={id} type="button" role="radio" aria-checked={on} className={`lws-theme${on ? " is-on" : ""}`} onClick={() => onChange(id)}>
+            <span className="lws-theme-card" style={{ background: sw.bg }}>
+              <span className="lws-theme-lotus" aria-hidden>🪷</span>
+              <span className="lws-theme-names" style={{ color: sw.ink }}>{sample}</span>
+              <span className="lws-theme-bar" style={{ background: sw.accent }} />
+            </span>
+            <b>{LW_THEME_LABELS[id] ?? id}</b>
+            <small>{sw.blurb}</small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, owner }: StudioProps) {
   const x = mf.extras as Row;
   const events = useMemo(() => (Array.isArray(x.events) ? (x.events as Row[]) : []), [x.events]);
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
-  const photos = mf.photos;
+  // Demo photos live in public/wedding-v3 and are stored as https on the site domain: show this host's copy.
+  const photos = useMemo(() => mf.photos.map((p) => (lwLocalUrl(p.url) === p.url ? p : { ...p, url: lwLocalUrl(p.url) })), [mf.photos]);
   const set = updateExtra;
 
   // ── Every function keeps a stable id (RSVPs refer to it) ──────────────────
@@ -211,7 +272,18 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
     const touched = (prefix: string) => [...filled].some((p) => p.startsWith(prefix));
     const cur = latest.current.extras as Row;
     const dEvents = DEMO.events as unknown as Row[];
-    const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : []).filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
+    const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : [])
+      // A function the AI rewrote keeps none of the demo couple's address, note or timings it did not write itself.
+      .map((e, i) => {
+        if (!touched(`extras.events[${i}]`)) return e;
+        const d = dEvents[i] ?? {};
+        const out: Row = { ...e };
+        for (const k of ["endTime", "address", "mapUrl", "dressCode", "dressColor", "note", "venue", "time"]) if (!filled.has(`extras.events[${i}].${k}`) && s(e[k]) && s(e[k]) === s(d[k])) out[k] = "";
+        // A row the AI dated but did not name (a thin description) is the wedding itself, never the demo's haldi.
+        if (!filled.has(`extras.events[${i}].title`) && s(e.title) === s(d.title)) out.title = i === 0 ? "Wedding" : "";
+        return out;
+      })
+      .filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
     const dStory = DEMO.story as unknown as Row[];
     const st = (Array.isArray(cur.story) ? (cur.story as Row[]) : [])
       // A moment the AI rewrote keeps none of the demo couple's words it did not write itself.
@@ -222,16 +294,30 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
         for (const k of ["when", "title", "line"]) if (!filled.has(`extras.story[${i}].${k}`) && s(c[k]) && s(c[k]) === s(d[k])) out[k] = "";
         return out;
       })
-      .filter((c, i) => touched(`extras.story[${i}]`) || !same(c, dStory[i], ["title", "line"]));
+      // The demo's closing "Forever begins" chapter suits every wedding: it stays.
+      .filter((c, i) => touched(`extras.story[${i}]`) || s(c.title) === "Forever begins" || !same(c, dStory[i], ["title", "line"]));
+    // Contacts: the AI writes "Kabir (Rohan's brother)"; split the relation out, drop the demo's people.
+    const dContacts = (DEMO.contacts ?? []) as unknown as Row[];
+    const cs = (Array.isArray(cur.contacts) ? (cur.contacts as Row[]) : [])
+      .map((c, i) => {
+        if (!touched(`extras.contacts[${i}]`)) return same(c, dContacts[i], ["name", "phone"]) ? null : c;
+        const m = s(c.name).match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+        const relation = filled.has(`extras.contacts[${i}].name`) ? (m ? m[2].trim() : "") : s(c.relation);
+        return { name: m ? m[1].trim() : s(c.name), relation, phone: s(c.phone) };
+      })
+      .filter((c): c is Row => !!c && !!s(c.name));
     if (fill.filled.length) {
       set("events", (evs.length ? evs : (cur.events as Row[])).map((e) => ({ ...e, time: toHHMM(s(e.time)), endTime: toHHMM(s(e.endTime)) })));
       const L = latest.current.letter;
       if (/<[^>]+>/.test(L)) updateMf("letter", plain(L));
       set("story", st);
+      set("contacts", cs);
       if (!touched("extras.things") && JSON.stringify(cur.things) === JSON.stringify(DEMO.things)) set("things", []);
-      for (const k of ["blessingsOf", "brideNote", "groomNote", "muhurat", "hashtag", "gettingThere"] as const) {
+      for (const k of ["blessingsOf", "brideNote", "groomNote", "muhurat", "hashtag", "gettingThere", "brideFamily", "groomFamily", "hindiMessage"] as const) {
         if (!touched(`extras.${k}`) && cur[k] === DEMO[k]) set(k, "");
       }
+      // The demo's closing line names the demo's families.
+      if (!filled.has("endLine") && latest.current.endLine === lotusWeddingDay.demo.endLine) updateMf("endLine", "");
     }
   }, [fill, fill?.generating, fill?.mode, fill?.error, fill?.filled, set, updateMf]);
 
@@ -267,7 +353,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
   );
   const setPhotos = (next: LovePhoto[]) => {
     const prev = latest.current.photos;
-    const capped = next.slice(0, LW_LIMITS.photos);
+    const capped = next.slice(0, LW_LIMITS.photos).map((p) => (lwStoredUrl(p.url) === p.url ? p : { ...p, url: lwStoredUrl(p.url) }));
     updateMf("photos", capped);
     remapRefs(prev, capped);
   };
@@ -284,6 +370,39 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
       /* compressImage explains itself in the photos section; a picker upload just doesn't land */
     }
   };
+
+  const frame = (k: number, c: Crop) => {
+    const cur = latest.current.photos;
+    if (k < 1 || k > cur.length) return;
+    updateMf("photos", cur.map((p, i) => (i === k - 1 ? { ...p, cropX: Math.round(c.x), cropY: Math.round(c.y), scale: Math.round(c.scale) } : p)));
+  };
+
+  // ── Contacts, shagun, live ─────────────────────────────────────────────────
+  const contacts = useMemo(() => (Array.isArray(x.contacts) ? (x.contacts as Contact[]) : []), [x.contacts]);
+  const setContact = (i: number, k: keyof Contact, v: string) => set("contacts", contacts.map((c, j) => (j === i ? { ...c, [k]: v } : c)));
+  const upiId = s(x.upiId);
+  const liveUrl = s(x.liveUrl);
+
+  // ── Personal links (?to=): the published link, read from the owner's page ──
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [linkFlash, setLinkFlash] = useState(false);
+  useEffect(() => {
+    const id = owner?.pageId;
+    const tok = owner?.token;
+    if (!id || !tok || !owner?.published) return;
+    let alive = true;
+    fetch(`${API_URL}/${SLUG}-pages/${id}`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then((r) => r.json())
+      .then((j) => {
+        if (alive && j?.data?.shareUrl) setShareUrl(String(j.data.shareUrl));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [owner?.pageId, owner?.token, owner?.published]);
+  const guestLink = shareUrl ? personalLink(shareUrl, guestName) : "";
 
   // ── Functions ──────────────────────────────────────────────────────────────
   const mainIdx = Math.max(0, events.findIndex((e) => MAIN_RE.test(s(e.title))));
@@ -340,7 +459,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
             value={desc}
             maxLength={1500}
             onChange={(e) => setDesc(e.target.value)}
-            placeholder="Ananya and Arjun are getting married on 12 Feb 2027 at The Leela Palace, Udaipur. Haldi and Mehendi on the 10th, Sangeet on the 11th, pheras at 7 pm, reception on the 13th in Delhi. We met at college in Pune in 2018. Keep it warm, a little royal, and add a Hindi line."
+            placeholder="Meenakshi and Arjun are getting married on 14 Feb 2027 at Sri Kapali Kalyana Mandapam, Chennai. Haldi and Mehendi on the 12th, Sangeet on the 13th, the muhurtham at 9:05 am, reception that evening. We met at college in Pune in 2018. Keep it warm and traditional, and add a Hindi line."
             aria-label="Describe your wedding"
           />
           <div className="lws-chips">
@@ -524,11 +643,8 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
 
       {/* ── Theme & music ──────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-music" aria-label="Theme and music">
-        <Head n={5} title="Theme & music" sub="Light or dark, always in gold. The music plays after the guest taps the gates." />
-        <ThemePicker themes={LIGHT_THEMES} grouped={false} value={s(x.theme) || "champagne"} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} label="Theme" />
-        <p className="lws-hint" style={{ marginTop: 8 }}>
-          {WEDDING_THEMES[(s(x.theme) || "champagne") as keyof typeof WEDDING_THEMES]?.blurb}
-        </p>
+        <Head n={5} title="Theme & music" sub="Three light palettes, always in gold. The song starts when the guest taps the lotus, with a mute button always in reach." />
+        <LotusThemePicker value={s(x.theme) || "champagne"} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} />
         <div style={{ marginTop: 18 }}>
           <MusicPicker
             value={mf}
@@ -549,9 +665,9 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
 
       {/* ── More details ───────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-finish" aria-label="More details">
-        <details className="lws-more">
+        <details className="lws-more" open>
           <summary>
-            <Head n="✦" title="More details" sub="Your story, family photos, good to know, a film, RSVP settings, the closing line and a password." />
+            <Head n={6} title="Guests & more" sub="Your story, families, good to know, people to call, shagun, a livestream, RSVP settings, the closing line, a password and personal links." />
           </summary>
 
           <h4 className="lws-h4">Our story</h4>
@@ -577,6 +693,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
                     photos={photos}
                     onPick={(k) => set("story", story.map((q, j) => (j === i ? { ...q, photo: k } : q)))}
                     onUpload={(f) => void uploadTo(f, (k) => set("story", (latest.current.extras.story as Chapter[]).map((q, j) => (j === i ? { ...q, photo: k } : q))))}
+                    onFrame={frame}
                   />
                   <button type="button" className="lws-x" onClick={() => set("story", story.filter((_, j) => j !== i))}>
                     Remove
@@ -600,13 +717,13 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
               <Field label="Under the bride's family" htmlFor="lws-bn">
                 <input id="lws-bn" className="vs-input" value={s(x.brideNote)} maxLength={100} placeholder="e.g. Udaipur" onChange={(e) => set("brideNote", e.target.value)} />
               </Field>
-              <PhotoPick label="Bride's family photo" value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} />
+              <PhotoPick label="Bride's family photo" value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} onFrame={frame} />
             </div>
             <div>
               <Field label="Under the groom's family" htmlFor="lws-gn">
                 <input id="lws-gn" className="vs-input" value={s(x.groomNote)} maxLength={100} placeholder="e.g. Jaipur" onChange={(e) => set("groomNote", e.target.value)} />
               </Field>
-              <PhotoPick label="Groom's family photo" value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} />
+              <PhotoPick label="Groom's family photo" value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} onFrame={frame} />
             </div>
           </div>
 
@@ -630,7 +747,52 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
             <textarea id="lws-gt" className="vs-input vs-area" rows={3} value={s(x.gettingThere)} maxLength={500} placeholder="Airport, station, shuttles, who meets guests…" onChange={(e) => set("gettingThere", e.target.value)} />
           </Field>
 
+          <h4 className="lws-h4">People to call</h4>
+          <p className="lws-hint">Up to 4 family members. Guests get a call button and a WhatsApp button for each.</p>
+          <ol className="lws-story">
+            {contacts.map((c, i) => {
+              const bad = !!c.phone && !normalisePhone(c.phone);
+              return (
+                <li key={i} className="lws-ch lws-contact">
+                  <div className="lws-row3">
+                    <Field label="Name" htmlFor={`lws-c${i}-n`}>
+                      <input id={`lws-c${i}-n`} className="vs-input" value={c.name} maxLength={40} placeholder="e.g. Kabir" onChange={(e) => setContact(i, "name", e.target.value)} />
+                    </Field>
+                    <Field label="Relation" htmlFor={`lws-c${i}-r`}>
+                      <input id={`lws-c${i}-r`} className="vs-input" value={c.relation} maxLength={40} placeholder="e.g. Groom's brother" onChange={(e) => setContact(i, "relation", e.target.value)} />
+                    </Field>
+                    <Field label="Phone" htmlFor={`lws-c${i}-p`} hint={bad ? <span className="lws-err">A 10-digit mobile number, with or without +91.</span> : undefined}>
+                      <input id={`lws-c${i}-p`} className="vs-input" type="tel" inputMode="tel" value={c.phone} maxLength={20} placeholder="+91 98XXX XXXXX" aria-invalid={bad} onChange={(e) => setContact(i, "phone", e.target.value)} />
+                    </Field>
+                  </div>
+                  <button type="button" className="lws-x" onClick={() => set("contacts", contacts.filter((_, j) => j !== i))}>
+                    Remove
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          {contacts.length < 4 && (
+            <button type="button" className="lws-chip" onClick={() => set("contacts", [...contacts, { name: "", relation: "", phone: "" }])}>
+              + Add a person
+            </button>
+          )}
+
+          <h4 className="lws-h4">Shagun (optional)</h4>
+          <p className="lws-hint">Off unless you add a UPI ID. Guests see a polite line (“your blessings are enough…”), a UPI button on phones and a copyable ID. We never handle the money.</p>
+          <div className="vs-row2">
+            <Field label="UPI ID" htmlFor="lws-upi" hint={upiId && !isUpiId(upiId) ? <span className="lws-err">That doesn&apos;t look like a UPI ID (name@bank).</span> : undefined}>
+              <input id="lws-upi" className="vs-input" value={upiId} maxLength={60} placeholder="e.g. ananya.iyer@okhdfcbank" autoComplete="off" onChange={(e) => set("upiId", e.target.value.trim())} />
+            </Field>
+            <Field label="Name on the account" htmlFor="lws-upin">
+              <input id="lws-upin" className="vs-input" value={s(x.upiName)} maxLength={60} placeholder="e.g. Ananya Iyer" onChange={(e) => set("upiName", e.target.value)} />
+            </Field>
+          </div>
+
           <h4 className="lws-h4">Extras</h4>
+          <Field label="Livestream link (optional)" htmlFor="lws-live" hint={liveUrl && !/^https:\/\//i.test(liveUrl) ? <span className="lws-err">Paste the full https:// link.</span> : "YouTube Live or Zoom. The “Watch live” button switches on 30 minutes before the main ceremony."}>
+            <input id="lws-live" className="vs-input" inputMode="url" value={liveUrl} maxLength={300} placeholder="https://youtube.com/live/…" onChange={(e) => set("liveUrl", e.target.value.trim())} />
+          </Field>
           <div className="vs-row2">
             <Field label="Pre-wedding film (YouTube link)" htmlFor="lws-vid">
               <input id="lws-vid" className="vs-input" inputMode="url" value={s(x.videoUrl)} maxLength={200} placeholder="https://youtu.be/…" onChange={(e) => set("videoUrl", e.target.value.trim())} />
@@ -657,7 +819,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
             <input type="checkbox" checked={x.blessings !== false} onChange={(e) => set("blessings", e.target.checked)} /> Show the blessings wall
           </label>
           <label className="lws-tog">
-            <input type="checkbox" checked={x.invocation !== false} onChange={(e) => set("invocation", e.target.checked)} /> Open with Shri Ganesh (off = the royal crest)
+            <input type="checkbox" checked={x.invocation !== false} onChange={(e) => set("invocation", e.target.checked)} /> Open with “Shri Ganeshay Namah” and Ganesha
           </label>
           <label className="lws-tog">
             <input type="checkbox" checked={x.lang === "hi"} onChange={(e) => set("lang", e.target.checked ? "hi" : "en")} /> Open the invitation in Hindi (guests can switch)
@@ -672,6 +834,39 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
               <input id="lws-pw" className="vs-input" value={password.value} maxLength={128} placeholder="e.g. the bride's nickname" autoComplete="off" onChange={(e) => password.set(e.target.value)} />
             </Field>
           )}
+
+          <h4 className="lws-h4">Send to guests</h4>
+          <div className="lws-guest">
+            <p className="lws-hint">Type a family&apos;s name to get their own link. The lotus opens with “Dear Sharma family, you are invited”, and their RSVP is already signed.</p>
+            <div className="lws-guest-row">
+              <input className="vs-input" value={guestName} maxLength={40} placeholder="e.g. Sharma family" aria-label="Guest name for a personal link" onChange={(e) => setGuestName(e.target.value)} disabled={!shareUrl} />
+            </div>
+            {shareUrl ? (
+              <>
+                <p className="lws-guest-link">{guestLink}</p>
+                <div className="lws-ev-tools">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(guestLink).then(() => {
+                        setLinkFlash(true);
+                        window.setTimeout(() => setLinkFlash(false), 2000);
+                      });
+                    }}
+                  >
+                    {linkFlash ? "Copied ✓" : "Copy link"}
+                  </button>
+                  <a className="lws-wa" href={`https://wa.me/?text=${encodeURIComponent(`🪷 ${guestName ? `Dear ${guestName}, ` : ""}you're invited to the wedding of ${mf.recipientName} & ${mf.senderName}\n${guestLink}`)}`} target="_blank" rel="noopener noreferrer">
+                    Send on WhatsApp
+                  </a>
+                </div>
+              </>
+            ) : (
+              <p className="lws-hint">
+                <b>Publish first.</b> Personal links appear here once your invitation is live.
+              </p>
+            )}
+          </div>
         </details>
       </section>
     </div>
@@ -679,21 +874,22 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
 }
 
 const LWS_CSS = `
-.rs { --lws-gold: #b8892e; }
+.rs { --lws-gold: #b8892e; --lws-sage: #4E6E5D; --lws-pink: #9C3A57; }
 .lws-hint { margin: 2px 0 10px; font-size: 13px; line-height: 1.45; opacity: .72; }
 .lws-count { font-weight: 500; opacity: .6; }
 .lws-sub { margin: 4px 0 10px; font-size: 13px; font-weight: 700; color: var(--vw-accent); }
 .lws-row3 { display: grid; gap: 0 10px; grid-template-columns: 1fr 1fr; }
 .lws-row3 > :last-child:nth-child(3) { grid-column: 1 / -1; }
 @media (min-width: 560px) { .lws-row3 { grid-template-columns: 1fr 1fr 1.4fr; } .lws-row3 > :last-child:nth-child(3) { grid-column: auto; } .lws-row3-tight { grid-template-columns: 1.3fr 1fr 1fr; } .lws-row3-story { grid-template-columns: 1fr 3fr; } }
-.lws-ai { position: relative; margin: 6px 0 4px; padding: 18px; border-radius: 20px; background: linear-gradient(140deg, #3a0913, #5e1424 60%, #7a1f2b); color: #fbecd4; box-shadow: 0 18px 40px -24px rgba(58,9,19,.7); }
+.lws-ai { position: relative; overflow: hidden; margin: 6px 0 4px; padding: 20px 18px 18px; border-radius: 22px; background: radial-gradient(70% 90% at 100% 0%, rgba(240,162,186,.35), transparent 60%), linear-gradient(140deg, #2F4A3E, #4E6E5D 60%, #6F8F7D); color: #FBF4E2; box-shadow: 0 18px 40px -24px rgba(47,74,62,.8); }
+.lws-ai::after { content: "🪷"; position: absolute; right: 14px; top: 10px; font-size: 34px; opacity: .5; }
 .lws-ai::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: linear-gradient(110deg,#8a6a1f,#e9cf7a 35%,#fff3c4 50%,#c9a43f 65%,#7a5a14); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
 .lws-ai-k { margin: 0; font: 700 11px/1 var(--vw-font-ui); letter-spacing: .24em; color: #e9cf7a; }
 .lws-ai-h { margin: 8px 0 4px; font: 600 21px/1.2 var(--vw-font-serif); }
 .lws-ai-p { margin: 0 0 12px; font-size: 13.5px; opacity: .85; }
 .lws-ai-in { background: rgba(255,248,235,.97) !important; min-height: 116px; font-size: 15px !important; line-height: 1.5 !important; }
 .lws-ai .lws-chip { background: rgba(255,236,214,.1); color: #fbecd4; border-color: rgba(233,207,122,.35); }
-.lws-ai-go { margin-top: 12px; width: 100%; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer; font: 700 15.5px/1 var(--vw-font-ui); color: #3a0913; background: linear-gradient(110deg,#c9a43f,#e9cf7a 40%,#fff3c4 55%,#d9b05c); box-shadow: 0 10px 24px -12px rgba(233,207,122,.8); }
+.lws-ai-go { margin-top: 12px; width: 100%; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer; font: 700 15.5px/1 var(--vw-font-ui); color: #2F4A3E; background: linear-gradient(110deg,#c9a43f,#e9cf7a 40%,#fff3c4 55%,#d9b05c); box-shadow: 0 10px 24px -12px rgba(233,207,122,.8); }
 .lws-ai-go:disabled { opacity: .75; cursor: progress; }
 .lws-ai-note { margin: 10px 0 0; font-size: 13.5px; color: #ffcfc4; }
 .lws-ai-note.is-ok { color: #e9cf7a; }
@@ -706,7 +902,7 @@ const LWS_CSS = `
 .lws-seg button[aria-checked=true] { background: var(--vw-accent); color: var(--vw-accent-ink); }
 .lws-evs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .lws-ev { border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); overflow: hidden; }
-.lws-ev.is-open { border-color: var(--lws-gold); box-shadow: 0 12px 30px -22px rgba(58,9,19,.5); }
+.lws-ev.is-open { border-color: var(--lws-gold); box-shadow: 0 12px 30px -22px rgba(47,74,62,.5); }
 .lws-ev-head { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 14px; border: 0; background: none; text-align: left; cursor: pointer; color: var(--vw-paper-ink); }
 .lws-ev-sw { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--lws-gold); }
 .lws-ev-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -738,9 +934,30 @@ const LWS_CSS = `
 .lws-pick-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1.5px dashed var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1.2 var(--vw-font-ui); cursor: pointer; }
 .lws-pick-btn img, .lws-pick-btn > span:first-child { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
 .lws-pick-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scroll-snap-type: x proximity; }
+.lws-themes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .lws-themes { grid-template-columns: 1fr; } }
+.lws-theme { display: flex; flex-direction: column; gap: 3px; padding: 8px 8px 12px; border-radius: 16px; border: 2px solid var(--vw-edge, #DCCFAE); background: var(--vw-paper, #FFFDF8); text-align: left; cursor: pointer; color: var(--vw-paper-ink, #2A3A32); font: 500 12.5px/1.35 var(--vw-font-ui); }
+.lws-theme.is-on { border-color: var(--vw-accent, #4E6E5D); box-shadow: 0 10px 24px -16px rgba(47,74,62,.7); }
+.lws-theme:focus-visible { outline: 3px solid #C9A24A; outline-offset: 2px; }
+.lws-theme b { margin-top: 6px; font-size: 14px; }
+.lws-theme small { font-size: 12px; opacity: .75; }
+.lws-theme-card { position: relative; display: grid; place-items: center; gap: 4px; height: 96px; border-radius: 11px; border: 1px solid rgba(201,162,74,.5); padding: 10px 0 16px; }
+.lws-theme-lotus { font-size: 20px; line-height: 1; }
+.lws-theme-names { font: italic 500 20px/1 Georgia, serif; }
+.lws-theme-bar { position: absolute; left: 24%; right: 24%; bottom: 10px; height: 3px; border-radius: 3px; }
 .lws-pick-th, .lws-pick-none { flex: none; width: 64px; height: 64px; border-radius: 12px; border: 2px solid transparent; padding: 0; overflow: hidden; background: var(--vw-soft); cursor: pointer; scroll-snap-align: start; font: 600 12px/1 var(--vw-font-ui); color: var(--vw-paper-ink); }
 .lws-pick-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .lws-pick-th.is-on, .lws-pick-none.is-on { border-color: var(--vw-accent); }
 .lws-dash { margin: 4px 0 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; padding: 0 14px; background: var(--vw-paper); }
+.lws-pick-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lws-frame-btn { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--lws-sage); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; }
+.lws-err { color: #b3261e; opacity: 1; }
+.lws-contact { display: grid; gap: 4px; }
+.lws-contact .lws-x { justify-self: start; }
+.lws-guest { padding: 14px; border-radius: 18px; border: 1.5px dashed var(--vw-edge); background: linear-gradient(140deg, #FFFDF8, #F3F6F0); }
+.lws-guest-row { margin-bottom: 8px; }
+.lws-guest-link { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--vw-edge); font: 500 12.5px/1.4 ui-monospace, monospace; word-break: break-all; }
+.lws-wa { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #25D366; color: #fff; font: 700 13px/1 var(--vw-font-ui); text-decoration: none; }
+.vs-secN { background: linear-gradient(140deg, #6F8F7D, #4E6E5D) !important; color: #FFFDF6 !important; }
 .lws-dash > summary { min-height: 52px; display: flex; align-items: center; font: 700 15px/1 var(--vw-font-ui); cursor: pointer; color: var(--vw-accent); }
 `;

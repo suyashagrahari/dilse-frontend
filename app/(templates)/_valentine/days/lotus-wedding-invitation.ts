@@ -1,10 +1,12 @@
 // ─── Lotus Temple Wedding Invitation 🪷 (wedding tier, same limits as Royal) ───
 //
-// brass lamps, a lotus pond, gold string lights and the temple gopuram in white, gold and lotus pink.
-// Scaffolded from lotus-wedding-invitation: the same fields, limits, studio
-// form and RSVP/blessings plumbing; the guest page and studio live in
-// app/(templates)/lotus-wedding-invitation/components. Art: public/wedding-v3 (see
-// components/assets.ts), served from the repo, never from the CDN.
+// A lotus blooms in a still temple pond, brass lamps light one by one, gold
+// string lights twinkle over "Shri Ganeshay Namah" and a sage arch badge
+// carries the date; ivory, lotus-leaf sage, lotus pink and temple gold.
+// Royal's fields, limits and RSVP/blessings plumbing, plus family contacts,
+// shagun (UPI) and a livestream link. The guest page and studio live in
+// app/(templates)/lotus-wedding-invitation/components. Art: public/wedding-v3
+// (see components/assets.ts), served from the repo, never from the CDN.
 //
 // Field mapping on the engine: recipientName = the bride, senderName = the
 // groom, letter = the English invitation, endLine = the closing line,
@@ -25,83 +27,99 @@ const SLUG = "lotus-wedding-invitation" as const;
 export const LW_LIMITS = WEDDING_TIER_LIMITS[SLUG];
 
 export const LW_THEME_LABELS: Record<string, string> = {
-  blush: "Blush Pink",
-  champagne: "Champagne",
-  powder: "Powder Blue",
-  maroon: "Royal Maroon & Gold",
-  noir: "Black & Gold",
-  emerald: "Emerald & Gold",
+  blush: "Lotus Pink",
+  champagne: "Temple Ivory",
+  powder: "Pond Blue",
 };
 
-/** Verified YouTube uploads (oEmbed 200 + embeddable, 2026-10-19). The shehnai plays by default. */
+/**
+ * Verified YouTube uploads (oEmbed 200 + embeddable, re-checked 2026-10-22,
+ * wq-research.md §5). The shehnai plays by default: the temple-morning mood.
+ */
 export const LW_SONGS: readonly SongSuggestion[] = [
   { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
-  { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal" },
-  { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
   { id: "3qpxJEp4Ec4", title: "Kudmayi", artist: "Shahid Mallya" },
+  { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh" },
+  { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
+  { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal" },
+  { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
   { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "Lata Mangeshkar, Udit Narayan" },
   { id: "jCEdTq3j-0U", title: "Gallan Goodiyaan", artist: "Dil Dhadakne Do" },
-  { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
-  { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh" },
   { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Arijit Singh, Harshdeep Kaur" },
   { id: "Ptk_1Dc2iPY", title: "Canon in D", artist: "Brooklyn Duo" },
   { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
 ];
 
-/** The editor chrome (form sheet, top bar): ivory paper, maroon ink, gold. The guest page wears extras.theme. */
+/** The editor chrome (form sheet, top bar): ivory paper, lotus-leaf sage, lotus pink, gold. The guest page wears extras.theme. */
 const THEME: DayTheme = {
-  bg: "linear-gradient(180deg, #FFFBF3 0%, #F8EEDD 60%, #F1E2C6 100%)",
-  base: "#FBF4E6",
+  bg: "linear-gradient(180deg, #FFFCF5 0%, #F7F1E4 55%, #EEF1E8 100%)",
+  base: "#FBF7EE",
   paper: "#FFFDF8",
-  glass: "rgba(255,253,248,.82)",
-  ink: "#3B0F18",
-  inkSoft: "#7A5048",
-  paperInk: "#3B0F18",
-  accent: "#8E1B2E",
-  accentDeep: "#5E0F1E",
-  accentInk: "#FFF6E3",
-  soft: "#F6E7CF",
-  edge: "#E3CDA6",
+  glass: "rgba(255,253,248,.84)",
+  ink: "#2A3A32",
+  inkSoft: "#5F6E66",
+  paperInk: "#2A3A32",
+  accent: "#4E6E5D",
+  accentDeep: "#2F4A3E",
+  accentInk: "#FFFDF6",
+  soft: "#EEF2EA",
+  edge: "#DCCFAE",
   gold: "#C9A24A",
   dark: false,
-  particles: ["✨", "🌼", "🪔"],
-  confetti: ["#C9A24A", "#E9CF7A", "#8E1B2E", "#FFF3C4"],
+  particles: ["🪷", "✨", "🪔"],
+  confetti: ["#C9A24A", "#F1D58A", "#E0779A", "#6F8F7D"],
 };
 
-/** Five functions to start from; the sender can add up to eight (Roka, Baraat, Cocktail…). */
+/** Four functions to start from (a Tamil–Punjabi wedding in Chennai); the sender can add up to eight. */
 export const LW_DEMO_EVENTS: WeddingEvent[] = [
-  { id: "haldi", title: "Haldi", date: "2027-02-10", time: "10:00", endTime: "13:00", venue: "The Courtyard, Jagmandir", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "A morning of turmeric, laughter and sunshine. Wear yellow and be ready to get a little messy." },
-  { id: "mehendi", title: "Mehendi", date: "2027-02-10", time: "16:30", endTime: "20:00", venue: "Zenana Mahal Lawns", address: "City Palace, Udaipur", mapUrl: "", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna, music and plenty of chai. Come get your hands painted." },
-  { id: "sangeet", title: "Sangeet", date: "2027-02-11", time: "19:30", endTime: "23:30", venue: "Durbar Hall", address: "Fateh Prakash Palace, Udaipur", mapUrl: "", dressCode: "Indo-western glam", dressColor: "#7B3FA0", note: "Music, dance performances and family rivalries settled on the dance floor." },
-  { id: "wedding", title: "Wedding (Pheras)", date: "2027-02-12", time: "19:00", endTime: "23:30", venue: "Jagmandir Island Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Traditional festive", dressColor: "#A3122B", note: "The baraat arrives at 7 pm; the pheras begin at the shubh muhurat, 9:15 pm." },
-  { id: "reception", title: "Reception", date: "2027-02-13", time: "20:00", endTime: "23:59", venue: "The Leela Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Black tie", dressColor: "#1C1C24", note: "Dinner, toasts and dancing to celebrate the newlyweds." },
+  { id: "haldi", title: "Haldi & Mehendi", date: "2027-02-10", time: "10:00", endTime: "14:00", venue: "The Courtyard, Taj Fisherman's Cove", address: "Covelong Beach, East Coast Road, Chennai", mapUrl: "", dressCode: "Yellows and greens", dressColor: "#F2C94C", note: "Turmeric, henna, filter coffee and a lot of laughter by the sea." },
+  { id: "sangeet", title: "Sangeet", date: "2027-02-10", time: "19:00", endTime: "23:30", venue: "Fisherman's Cove Lawns", address: "Covelong Beach, East Coast Road, Chennai", mapUrl: "", dressCode: "Indo-western glam", dressColor: "#E86A92", note: "Two families, one dance floor: bhangra meets kuthu." },
+  { id: "muhurtham", title: "Muhurtham (Wedding)", date: "2027-02-11", time: "07:30", endTime: "10:30", venue: "Sri Kapali Kalyana Mandapam", address: "Mylapore, Chennai", mapUrl: "", dressCode: "Traditional silks", dressColor: "#B8892E", note: "The thaali is tied at the muhurtham, 9:05 am. Breakfast is served from 7 am." },
+  { id: "reception", title: "Reception", date: "2027-02-12", time: "19:30", endTime: "23:00", venue: "The Leela Palace", address: "MRC Nagar, Chennai", mapUrl: "", dressCode: "Evening formal", dressColor: "#6F8F7D", note: "Dinner, toasts and dancing with the newlyweds." },
 ];
 
-/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
-const DEMO_CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
-export { DEMO_CDN as LW_DEMO_CDN };
+/**
+ * Demo photos (CC0 / Unsplash licence, media-src/templates/wedding/demo) ship IN THE REPO under
+ * public/wedding-v3/lotus/demo, never on the CDN or S3. The engine and the server keep only https
+ * links, so a draft stores them on the site's own domain; every render maps that back to the
+ * same-origin path (lwLocalUrl), so local, staging and prod each serve their own copy.
+ */
+const SITE_ORIGIN = "https://subhsandesh.in";
+const DEMO_BASE = `${SITE_ORIGIN}/wedding-v3/lotus/demo`;
+const REPO_ART_RE = /^https:\/\/(?:www\.)?subhsandesh\.in(\/wedding-v3\/[^?#\s]+)$/i;
+const LEGACY_DEMO_RE = /^https:\/\/cdn\.subhsandesh\.in\/gifts-media\/templates\/wedding\/demo\/(rw-(?:0[1-9]|1[0-8])\.webp)$/i;
+/** A stored repo-art link → the same-origin path this host serves from public/. Anything else is unchanged. */
+export const lwLocalUrl = (url: string): string => {
+  const own = REPO_ART_RE.exec(url);
+  if (own) return own[1];
+  // Drafts saved before the demo photos moved into the repo still point at the old CDN copies.
+  const old = LEGACY_DEMO_RE.exec(url);
+  return old ? `/wedding-v3/lotus/demo/${old[1]}` : url;
+};
+/** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
+export const lwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
 /** 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it). */
 export const LW_DEMO_PHOTOS: LovePhoto[] = [
-  { url: `${DEMO_CDN}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
-  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
-  { url: `${DEMO_CDN}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
-  { url: `${DEMO_CDN}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
-  { url: `${DEMO_CDN}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
-  { url: `${DEMO_CDN}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
-  { url: `${DEMO_CDN}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
-  { url: `${DEMO_CDN}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
+  { url: `${DEMO_BASE}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
+  { url: `${DEMO_BASE}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
+  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
+  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
+  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
+  { url: `${DEMO_BASE}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
 ];
 
 export interface LwExtras {
@@ -127,6 +145,11 @@ export interface LwExtras {
   maxGuests: number;
   rsvpMeal: boolean;
   blessings: boolean;
+  invocation: boolean;
+  contacts: { name: string; relation: string; phone: string }[];
+  upiId: string;
+  upiName: string;
+  liveUrl: string;
   [k: string]: unknown;
 }
 
@@ -157,7 +180,7 @@ export const lotusWeddingDay: DayConfig<LwExtras> = {
       { id: "photos", label: "Photos", emoji: "📸" },
       { id: "letter", label: "Invitation", emoji: "✉️" },
       { id: "music", label: "Theme & music", emoji: "🎵" },
-      { id: "finish", label: "More details", emoji: "✦" },
+      { id: "finish", label: "Guests & more", emoji: "✦" },
     ],
   },
   music: {
@@ -200,59 +223,74 @@ export const lotusWeddingDay: DayConfig<LwExtras> = {
     { key: "rsvpMeal", kind: "bool", default: true, label: "Ask for meal preference", hidden: true },
     { key: "blessings", kind: "bool", default: true, label: "Blessings wall", hidden: true },
     { key: "invocation", kind: "bool", default: true, label: "Open with Shri Ganesh", hidden: true },
+    {
+      key: "contacts", kind: "objlist", maxItems: 4, label: "Family contacts", itemTitle: "Contact", hidden: true,
+      item: [ev("name", "Name", 40), ev("relation", "Relation", 40), ev("phone", "Phone", 20)],
+    },
+    { key: "upiId", kind: "text", max: 60, label: "UPI ID for shagun", hidden: true },
+    { key: "upiName", kind: "text", max: 60, label: "Name on the UPI account", hidden: true },
+    { key: "liveUrl", kind: "text", max: 300, label: "Livestream link", hidden: true },
   ],
   theme: THEME,
   demo: {
-    recipientName: "Aanya",
-    senderName: "Vihaan",
+    recipientName: "Ananya",
+    senderName: "Rohan",
     petName: "",
     letter:
-      "By the grace of the Almighty and with the blessings of our elders, the Rathore and Singhania families joyfully invite you to the wedding of Aanya and Vihaan.\n\nFive days by Lake Pichola, a little haldi, a lot of dancing and the seven pheras under the stars. Your presence is our greatest honour.",
+      "With the blessings of the Almighty and our elders, the Iyer and Malhotra families joyfully invite you to celebrate the wedding of Ananya and Rohan.\n\nThree days by the sea in Chennai: haldi in the sunshine, a sangeet under the stars and the sacred muhurtham at the mandapam. Your presence will make our celebration complete.",
     photos: LW_DEMO_PHOTOS.map((p) => ({ ...p })),
     gifs: {},
     music: true,
     musicMode: "youtube",
     musicYoutubeId: "OzEL4CwbPew",
     musicStart: 0,
-    endLine: "With love and gratitude, the Rathore & Singhania families",
+    endLine: "With love and gratitude, the Iyer & Malhotra families",
     extras: {
       theme: "champagne",
       lang: "en",
       nameOrder: "bride",
       hindiMessage:
-        "सर्वशक्तिमान की कृपा और बड़ों के आशीर्वाद से, आन्या और विहान के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। आपकी उपस्थिति ही हमारा सौभाग्य है।",
-      brideFamily: "Mrs. Meera & Mr. Raghuveer Singh Rathore",
-      groomFamily: "Mrs. Nandini & Mr. Arvind Singhania",
-      brideNote: "Udaipur",
-      groomNote: "Jaipur",
-      blessingsOf: "Smt. Kamla Devi & Late Shri Bhanwar Singh Rathore",
+        "ईश्वर की असीम कृपा और बड़ों के आशीर्वाद से, अनन्या और रोहन के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। आपकी उपस्थिति ही हमारा सौभाग्य है।",
+      brideFamily: "Mrs. Lakshmi & Mr. Venkatesh Iyer",
+      groomFamily: "Mrs. Neelam & Mr. Rajiv Malhotra",
+      brideNote: "Mylapore, Chennai",
+      groomNote: "Vasant Vihar, New Delhi",
+      blessingsOf: "Smt. Kamakshi Ammal & Late Shri R. Subramaniam Iyer",
       bridePhoto: 0,
       groomPhoto: 0,
-      muhurat: "Shubh muhurat 9:15 pm",
-      hashtag: "#AanyaWedsVihaan",
+      muhurat: "Muhurtham 9:05 to 10:15 am",
+      hashtag: "#AnanyaRohanForever",
       events: LW_DEMO_EVENTS.map((e) => ({ ...e })),
       story: [
-        { when: "2019", title: "Two strangers at a book fair", line: "We reached for the same copy of a Ruskin Bond. Neither of us let go, so we split the bill and the book.", photo: 0 },
-        { when: "2021", title: "The long-distance years", line: "Jaipur to Bengaluru, two time zones of busy, one rule: never sleep on a fight, never skip the goodnight call.", photo: 0 },
-        { when: "2025", title: "The question by the lake", line: "Sunset at Lake Pichola, a ring hidden in a kulhad of chai. She said yes before he could finish the sentence.", photo: 17 },
-        { when: "2027", title: "Forever begins", line: "Now our families become one. Come and bless us.", photo: 18 },
+        { when: "2018", title: "A berth on the Grand Trunk Express", line: "Delhi to Chennai, thirty-three hours, one packet of murukku shared between two strangers. By Nagpur they had swapped playlists.", photo: 0 },
+        { when: "2021", title: "Filter coffee and chai", line: "Bengaluru and Delhi, two cities and one rule: a video call every night, coffee for her, chai for him.", photo: 0 },
+        { when: "2025", title: "The question at Marina Beach", line: "Sunrise, a jasmine string in his pocket and a ring tied into it. She said yes before he finished the sentence.", photo: 17 },
+        { when: "2027", title: "Forever begins", line: "Now our two families become one. Come and bless us.", photo: 18 },
       ],
       things: [
-        "Stay: Rooms for out-of-town guests are held at The Leela Palace from 9 to 14 Feb.",
-        "Weather: February evenings by the lake get cool, so bring a shawl.",
-        "Getting around: Boats to Jagmandir leave the City Palace jetty every 15 minutes from 6 pm.",
-        "Contact: For anything at all, call Kabir (Vihaan's brother) on +91 98290 00000.",
+        "Stay: Rooms for out-of-town guests are held at Taj Fisherman's Cove from 9 to 13 February.",
+        "Muhurtham: It is an early-morning ceremony. Breakfast is served at the mandapam from 7 am.",
+        "Shuttles: Cars run between the hotel and every venue, every 20 minutes.",
+        "Weather: February in Chennai is warm, around 30°C by noon. Light silks and cottons are perfect.",
       ],
-      gettingThere: "Udaipur's Maharana Pratap Airport is 25 minutes from the city. Our hospitality desk will meet you at arrivals and at Udaipur City railway station.",
+      gettingThere: "Chennai International Airport is 40 minutes from Covelong and 25 minutes from Mylapore. Our hospitality desk will meet you at arrivals and at Chennai Central station.",
       videoUrl: "",
       rsvpBy: "2027-01-15",
       maxGuests: 4,
       rsvpMeal: true,
       blessings: true,
+      invocation: true,
+      contacts: [
+        { name: "Karthik Iyer", relation: "Bride's brother", phone: "+91 98400 00001" },
+        { name: "Simran Malhotra", relation: "Groom's sister", phone: "+91 98100 00002" },
+      ],
+      upiId: "",
+      upiName: "",
+      liveUrl: "",
     },
   },
   copy: {
-    recipientPlaceholder: "e.g. Ananya",
+    recipientPlaceholder: "e.g. Meenakshi",
     senderPlaceholder: "e.g. Arjun",
     petNamePlaceholder: "",
     letterPlaceholder: "Together with their families, Ananya and Arjun request the honour of your presence at the celebration of their marriage…",
@@ -270,5 +308,5 @@ export const lotusWeddingDay: DayConfig<LwExtras> = {
     storyTitle: "Describe your wedding 🪷",
     replyText: "",
   },
-  share: { title: "The lamps are lit 🪷 You're invited to our wedding", accent: "#A3405C" },
+  share: { title: "The lamps are lit 🪷 You're invited to our wedding", accent: "#4E6E5D" },
 };

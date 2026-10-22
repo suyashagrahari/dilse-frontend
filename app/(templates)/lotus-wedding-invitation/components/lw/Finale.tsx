@@ -1,21 +1,16 @@
 "use client";
 
-// ─── The finale: the palace gates close softly on "Shubh Vivah" ──────────────
-// The same carved doors as the opening, at a smaller scale, stand open with
-// lamplight behind; when the gate is 60% on screen they swing shut (rotateY
-// ±78° → 0, 1.4 s), "शुभ विवाह · Shubh Vivah" settles onto the closed doors and
-// a last shower of petals falls. Diya lanterns rise behind (only while the
-// section is on screen). Reduced motion: doors closed, lanterns hang still.
+// ─── The finale: the lotus blooms once more over "Shubh Vivah" ───────────────
+// Gold lights across the top, a pair of brass lamps glowing, pink lotuses in
+// the corners. When the pond is 50% on screen the lotus opens (the same SVG as
+// the opening) and a few petals drift up; then the seal, the names, the
+// closing line, the hashtag and a WhatsApp share. Reduced motion: already open.
 
-import { useEffect, useRef, useState } from "react";
-import { Ornament, PetalBurst, Reveal, useWeddingReducedMotion } from "../../../_wedding";
-import Door from "./Door";
-import { seeded } from "./art";
-
-const LANTERNS = (() => {
-  const r = seeded(17);
-  return Array.from({ length: 10 }, () => ({ left: 4 + r() * 92, size: 16 + r() * 18, delay: -r() * 14, dur: 11 + r() * 8, sway: 8 + r() * 18 }));
-})();
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
+import LotusBloom from "./LotusBloom";
+import { Icon, WA, openWhatsApp } from "./Actions";
+import { img, seeded } from "./art";
 
 export interface FinaleProps {
   seal: string;
@@ -32,10 +27,15 @@ export interface FinaleProps {
 
 export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, whatsapp, shareText }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
-  const gateRef = useRef<HTMLDivElement>(null);
+  const pondRef = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
   const [on, setOn] = useState(false);
-  const [closed, setClosed] = useState(false);
+  const [bloom, setBloom] = useState(false);
+  const drift = useMemo(() => {
+    const r = seeded(19);
+    return Array.from({ length: 10 }, () => ({ left: 6 + r() * 88, size: 9 + r() * 10, delay: -r() * 12, dur: 10 + r() * 8, dx: (r() - 0.5) * 80 }));
+  }, []);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -44,86 +44,78 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
     return () => io.disconnect();
   }, []);
   useEffect(() => {
-    if (reduce) return;
-    const el = gateRef.current;
+    const el = pondRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([en]) => {
         if (en.isIntersecting) {
-          setClosed(true);
+          setBloom(true);
           io.disconnect();
         }
       },
-      { threshold: 0.6 },
+      { threshold: 0.5 },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [reduce]);
-
-  const shut = closed || reduce;
-  const share = () => {
-    const url = typeof window !== "undefined" ? window.location.href.split("#")[0] : "";
-    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}`)}`, "_blank", "noopener,noreferrer");
-  };
+  }, []);
 
   return (
     <section ref={ref} className={`lw-finale${on ? " is-on" : ""}`} aria-label={seal}>
-      <div className="lw-lanterns" aria-hidden>
-        {LANTERNS.map((l, i) => (
-          <i
-            key={i}
-            className="lw-lantern"
-            style={{ left: `${l.left}%`, width: l.size, height: l.size * 1.3, animationDelay: `${l.delay}s, ${l.delay}s`, animationDuration: `${l.dur}s, ${3 + (i % 4)}s`, ["--sway" as string]: `${l.sway}px` }}
-          />
+      <div className="lw-finale-lights" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lights", { lazy: true })} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lights", { lazy: true })} className="lw-lights-b" />
+      </div>
+      <div className="lw-finale-lamps" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lampsPair", { lazy: true })} className="lw-finale-lamp lw-finale-lamp-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lampsPair", { lazy: true })} className="lw-finale-lamp lw-finale-lamp-r" />
+      </div>
+      <div className="lw-drift" aria-hidden>
+        {drift.map((d, i) => (
+          <i key={i} style={{ left: `${d.left}%`, width: d.size, height: d.size * 1.6, animationDelay: `${d.delay}s`, animationDuration: `${d.dur}s`, ["--dx" as string]: `${d.dx}px` }} />
         ))}
       </div>
       <div className="lw-finale-in">
-        <div ref={gateRef} className={`lw-close${shut ? " is-closed" : ""}`}>
-          <div className="lw-arch lw-arch-sm">
-            <div className="lw-light" aria-hidden />
-            <div className="lw-doors">
-              <Door side="left" lazy />
-              <Door side="right" lazy />
-            </div>
-            <Ornament id="jharokha-arch" className="lw-arch-frame" shimmer />
-            <p className="lw-close-seal">
-              <b lang="hi">{sealHi}</b>
-              <small>{seal}</small>
-            </p>
-          </div>
-          {closed && !reduce && (
-            <div className="lw-close-petals">
-              <PetalBurst kind={["marigold-petal", "rose-petal", "gold-confetti"]} count={10} mode="fall" seed={23} />
-            </div>
-          )}
+        <div ref={pondRef} className="lw-finale-pond">
+          <span className="lw-pond-water" aria-hidden />
+          <span className="lw-ripple" aria-hidden />
+          <span className="lw-ripple" aria-hidden />
+          <LotusBloom open={bloom || reduce} />
         </div>
-        <Reveal as="p" className="wk-eyebrow" delay={120}>
+        <Reveal as="p" className="lw-seal">
+          <b lang="hi">{sealHi}</b>
+          <small>{seal}</small>
+        </Reveal>
+        <Reveal as="p" className="lw-eyebrow" delay={100}>
           <span lang={lang}>{closing}</span>
         </Reveal>
-        <Reveal as="p" className="lw-finale-names wk-foil-text wk-shimmer" delay={200}>
+        <Reveal as="p" className="lw-finale-names" delay={180}>
           {first} <span>&amp;</span> {second}
         </Reveal>
         {endLine && (
-          <Reveal as="p" className="lw-finale-line" delay={260}>
+          <Reveal as="p" className="lw-finale-line" delay={240}>
             {endLine}
           </Reveal>
         )}
         {hashtag && (
-          <Reveal as="p" className="lw-hashtag" delay={300}>
+          <Reveal as="p" className="lw-hashtag" delay={280}>
             {hashtag}
           </Reveal>
         )}
-        <Reveal delay={340}>
-          <button type="button" className="wk-btn wk-btn-lg lw-wa" onClick={share} lang={lang}>
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="currentColor">
-              <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3a.5.5 0 0 0 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.6-.3z" />
-            </svg>
-            {whatsapp}
+        <Reveal delay={320}>
+          <button type="button" className="lw-btn is-lg" onClick={() => openWhatsApp(shareText)} lang={lang}>
+            <Icon d={WA} fill size={18} /> <span>{whatsapp}</span>
           </button>
         </Reveal>
       </div>
-      <div className="lw-palace" aria-hidden>
-        <Ornament id="elephant-pair" width="min(560px, 92vw)" />
+      <div className="lw-finale-foot" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lotusCluster", { lazy: true })} className="lw-finale-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lotusPair", { lazy: true })} className="lw-finale-r" />
       </div>
     </section>
   );
