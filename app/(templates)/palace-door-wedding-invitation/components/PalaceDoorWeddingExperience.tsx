@@ -18,11 +18,11 @@
 // bilingual toggle (top-left) switches every heading and button to Hindi.
 // ?to=Name greets the guest on the door and pre-fills their RSVP.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
-import { A, img } from "./assets";
+import { A, PD_KIT, img } from "./assets";
 import Courtyard from "./pd/Courtyard";
 import DateScroll from "./pd/DateScroll";
 import Doors from "./pd/Doors";
@@ -34,6 +34,14 @@ import Story from "./pd/Story";
 import { PD_CSS } from "./pd/css";
 import { T, readPalaceDoor, type Lang } from "./pd/model";
 import { prefillRsvpName, useGuestName } from "./pd/share";
+
+/** The kit's paper textures from this repo (public/wedding-v3/palace-door/kit); the kit's defaults point at the CDN. */
+const rootStyle = (theme: string): CSSProperties =>
+  ({
+    minHeight: "100dvh",
+    ["--wk-texture" as string]: `url("${PD_KIT.linen}")`,
+    ["--wk-paper" as string]: `url("${theme === "champagne" ? PD_KIT.silk : PD_KIT.linen}")`,
+  }) as CSSProperties;
 
 function Film({ id, label }: { id: string; label: string }) {
   const [on, setOn] = useState(false);
@@ -139,7 +147,7 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
   const hasInfo = m.things.length > 0 || !!m.gettingThere || m.contacts.length > 0 || !!m.upiId || !!m.liveUrl;
 
   return (
-    <WeddingRoot theme={m.theme} className={`pd-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={{ minHeight: "100dvh" }}>
+    <WeddingRoot theme={m.theme} className={`pd-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={rootStyle(m.theme)}>
       <div ref={rootRef} style={{ display: "contents" }}>
         <style>{PD_CSS}</style>
         <Doors first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} invocation={m.invocation} onOpened={onOpened} />
@@ -213,7 +221,7 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
         {/* ── Functions ───────────────────────────────────────────────────── */}
         {m.events.length > 0 && (
           <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="pd-sec pd-sec-events">
-            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba }} />
+            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
           </Section>
         )}
 
@@ -224,7 +232,7 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="pd-venue-pillar is-l" {...img(A.pillar, { lazy: true })} aria-hidden />
               <Reveal effect="zoom" className="pd-venue-card">
-                <VenueCard name={m.main.venue} address={m.main.address} mapUrl={m.main.mapUrl} embed ornament={null} note={m.main.note || undefined} />
+                <VenueCard name={m.main.venue} address={m.main.address} mapUrl={m.main.mapUrl} embed ornament={null} eyebrow={m.main.title || s.venueEyebrow} note={m.main.note || undefined} labels={{ directions: s.getDirections, showMap: s.showMap }} />
               </Reveal>
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="pd-venue-pillar is-r" {...img(A.pillar, { lazy: true })} aria-hidden />
@@ -273,13 +281,14 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
         )}
 
         {/* ── RSVP ────────────────────────────────────────────────────────── */}
+        {/* The kit's form labels are English only, so its "Kindly reply by <date>" stays English too (no mixed-script line). */}
         <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow" className="pd-sec pd-sec-rsvp">
           <Reveal as="p" className="pd-upasthiti">
             <span lang={lang}>{s.upasthiti}</span>
           </Reveal>
           <div ref={rsvpRef}>
             <Reveal>
-              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
+              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale="en-IN" />
             </Reveal>
           </div>
         </Section>

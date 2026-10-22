@@ -42,7 +42,7 @@ export interface EventsProps {
   couple: string;
   url?: string;
   locale: string;
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string };
+  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; saved: string };
 }
 
 export default function Events({ events, couple, url, locale, labels: l }: EventsProps) {
@@ -110,14 +110,17 @@ export default function Events({ events, couple, url, locale, labels: l }: Event
                         </a>
                       )}
                       {e.date && (
-                        <button type="button" className="pd-btn pd-btn-ghost" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                          <Icon d={CAL} /> {flash === key ? "Saved ✓" : l.calendar}
-                        </button>
-                      )}
-                      {gcal && (
-                        <a className="pd-btn pd-btn-ghost" href={gcal} target="_blank" rel="noopener noreferrer" aria-label={`Google Calendar: ${e.title}`}>
-                          <Icon d={CAL} /> Google
-                        </a>
+                        // One pill, two calendars: the .ics file (Apple, Outlook) and Google.
+                        <span className="pd-ev-cal">
+                          <button type="button" className="pd-btn pd-btn-ghost" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
+                            <Icon d={CAL} /> {flash === key ? l.saved : l.calendar}
+                          </button>
+                          {gcal && (
+                            <a className="pd-btn pd-btn-ghost" href={gcal} target="_blank" rel="noopener noreferrer" aria-label={`Google Calendar: ${e.title}`} title="Google Calendar">
+                              Google
+                            </a>
+                          )}
+                        </span>
                       )}
                     </div>
                   )}
@@ -130,7 +133,7 @@ export default function Events({ events, couple, url, locale, labels: l }: Event
       {list.filter((e) => e.date).length > 1 && (
         <Reveal className="pd-ev-all">
           <button type="button" className="pd-btn pd-btn-gold" onClick={() => save(list, "all", `wedding-${couple}`)}>
-            <Icon d={CAL} /> {flash === "all" ? "Saved ✓" : l.saveAll}
+            <Icon d={CAL} /> {flash === "all" ? l.saved : l.saveAll}
           </button>
         </Reveal>
       )}

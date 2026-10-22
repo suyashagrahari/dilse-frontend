@@ -18,7 +18,8 @@
 // frame of the entrance or the swing. Reduced motion: a 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PetalBurst, initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import Petals from "./Petals";
 import { useDayMusic } from "../../../_valentine/music/context";
 import { A, LEAF_BOX, decodeAll, img, seeded } from "../assets";
 import type { Strings } from "./model";
@@ -204,7 +205,7 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
 
       {swinging && !reduce && (
         <div className="pd-gate-petals" aria-hidden>
-          <PetalBurst kind={["marigold-petal", "rose-petal", "marigold-petal", "gold-confetti"]} count={22} mode="burst" seed={7} />
+          <Petals kind={["marigold-petal", "rose-petal", "marigold-petal", "gold-confetti"]} count={22} mode="burst" seed={7} />
         </div>
       )}
     </div>

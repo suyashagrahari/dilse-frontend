@@ -28,7 +28,7 @@ import PhotoCropper, { CROP_DEFAULT, clampCrop, type Crop } from "../../../_vale
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import { themeVars } from "../../../_valentine/theme";
 import type { LovePhoto } from "../../../_valentine/types";
-import { PD_LIMITS, PD_MAX_CONTACTS, PD_THEME_LABELS, palaceDoorWeddingDay } from "../../../_valentine/days/palace-door-wedding-invitation";
+import { PD_LIMITS, PD_MAX_CONTACTS, PD_THEME_LABELS, palaceDoorWeddingDay, pdLocalUrl, pdStoredUrl } from "../../../_valentine/days/palace-door-wedding-invitation";
 import { MAIN_RE, isUpiId, phoneOf, swatchFor } from "../pd/model";
 import { personalUrl } from "../pd/share";
 
@@ -218,7 +218,8 @@ export default function PalaceDoorStudio({ day, mf, updateMf, updateExtra, ai, p
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
   const contacts = useMemo(() => (Array.isArray(x.contacts) ? (x.contacts as Contact[]) : []), [x.contacts]);
-  const photos = mf.photos;
+  // Shown same-origin (repo demo art is stored as an https link on the site's domain); handed back stored.
+  const photos = useMemo(() => mf.photos.map((p) => (pdLocalUrl(p.url) === p.url ? p : { ...p, url: pdLocalUrl(p.url) })), [mf.photos]);
   const set = updateExtra;
   const themeStyle = useMemo(() => themeVars(day.theme), [day.theme]);
 
@@ -327,7 +328,7 @@ export default function PalaceDoorStudio({ day, mf, updateMf, updateExtra, ai, p
   );
   const setPhotos = (next: LovePhoto[]) => {
     const prev = latest.current.photos;
-    const capped = next.slice(0, PD_LIMITS.photos);
+    const capped = next.slice(0, PD_LIMITS.photos).map((p) => (pdStoredUrl(p.url) === p.url ? p : { ...p, url: pdStoredUrl(p.url) }));
     updateMf("photos", capped);
     remapRefs(prev, capped);
   };

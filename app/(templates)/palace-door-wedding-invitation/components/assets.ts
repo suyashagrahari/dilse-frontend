@@ -50,6 +50,21 @@ export const PD_ASSETS = {
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
+/**
+ * The kit's paper textures and petal particles, copied from media-src into
+ * public/wedding-v3/palace-door/kit (the kit's own defaults point at the CDN).
+ */
+export const PD_KIT = {
+  linen: "/wedding-v3/palace-door/kit/linen-overlay.webp",
+  silk: "/wedding-v3/palace-door/kit/paper-silk-light.webp",
+  petals: {
+    "marigold-petal": "/wedding-v3/palace-door/kit/marigold-petal.webp",
+    "rose-petal": "/wedding-v3/palace-door/kit/rose-petal.webp",
+    "gold-confetti": "/wedding-v3/palace-door/kit/gold-confetti.webp",
+  },
+} as const;
+export type PdPetal = keyof typeof PD_KIT.petals;
+
 /** The gallery card (also the template's coverImage). */
 export const PD_CARD = "/wedding-v3/template13/card.webp";
 

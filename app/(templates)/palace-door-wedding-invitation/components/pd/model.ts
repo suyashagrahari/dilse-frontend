@@ -4,7 +4,7 @@
 import type { LovePhoto } from "../../../_love/types";
 import { isWeddingThemeId, LIGHT_THEMES, type WeddingThemeId } from "../../../_wedding/themes";
 import type { FamilySide, WeddingEvent } from "../../../_wedding/types";
-import { PD_LIMITS, PD_MAX_CONTACTS } from "../../../_valentine/days/palace-door-wedding-invitation";
+import { PD_LIMITS, PD_MAX_CONTACTS, pdLocalUrl } from "../../../_valentine/days/palace-door-wedding-invitation";
 
 export type Lang = "en" | "hi";
 
@@ -119,7 +119,8 @@ export const MAIN_RE = /wedding|vivah|शादी|विवाह|phera|shaadi|
 
 export function readPalaceDoor(extras: Record<string, unknown>, photos: LovePhoto[], bride: string, groom: string): PalaceDoorModel {
   const x = extras ?? {};
-  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url);
+  // Repo art (the demo photos) is stored as an https link on the site's domain and served same-origin here.
+  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url).map((p) => (pdLocalUrl(p.url) === p.url ? p : { ...p, url: pdLocalUrl(p.url) }));
   const used = new Set<number>();
   const pick = (n: unknown): LovePhoto | null => {
     const k = num(n);
@@ -234,7 +235,7 @@ type Keys =
   | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
   | "upasthiti" | "callUs" | "callUsEyebrow" | "call" | "chat" | "shagun" | "shagunEyebrow" | "shagunLine" | "pay" | "copy" | "copied"
   | "live" | "liveSoon" | "share" | "copyLink" | "card" | "cardMaking" | "inviteSomeone" | "inviteName" | "inviteSend"
-  | "together" | "welcome" | "infoEyebrow" | "info";
+  | "together" | "welcome" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "saved";
 
 type StringsShape = { [K in Keys]: string } & { units: { d: string; h: string; m: string; s: string } };
 
@@ -302,6 +303,9 @@ export const T: Record<Lang, StringsShape> = {
     welcome: "Padharo mhare des",
     infoEyebrow: "For our guests",
     info: "Good to know",
+    getDirections: "Get directions",
+    showMap: "Show map",
+    saved: "Saved ✓",
   },
   hi: {
     open: "द्वार खोलने के लिए छुएँ",
@@ -366,6 +370,9 @@ export const T: Record<Lang, StringsShape> = {
     welcome: "पधारो म्हारे देस",
     infoEyebrow: "अतिथियों के लिए",
     info: "ज़रूरी जानकारी",
+    getDirections: "रास्ता देखें",
+    showMap: "नक्शा दिखाएँ",
+    saved: "सहेजा गया ✓",
   },
 };
 export type Strings = StringsShape;

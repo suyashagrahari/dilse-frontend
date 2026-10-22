@@ -9,7 +9,8 @@
 // is simply closed.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { PetalBurst, Reveal, initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import { Reveal, initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import Petals from "./Petals";
 import { A, LEAF_BOX, img } from "../assets";
 
 export interface FinaleProps {
@@ -78,7 +79,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
         </div>
         {closed && !reduce && (
           <div className="pd-close-petals" aria-hidden>
-            <PetalBurst kind={["marigold-petal", "rose-petal", "gold-confetti"]} count={12} mode="fall" seed={23} />
+            <Petals kind={["marigold-petal", "rose-petal", "gold-confetti"]} count={12} mode="fall" seed={23} />
           </div>
         )}
       </div>
@@ -102,7 +103,11 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
           {hashtag}
         </Reveal>
       )}
-      {children && <Reveal delay={340}>{children}</Reveal>}
+      {children && (
+        <Reveal delay={340} className="pd-finale-share">
+          {children}
+        </Reveal>
+      )}
       <div className="pd-hands" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...img(A.hands, { lazy: true })} />
