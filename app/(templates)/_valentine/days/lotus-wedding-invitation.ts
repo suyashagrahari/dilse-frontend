@@ -79,30 +79,47 @@ export const LW_DEMO_EVENTS: WeddingEvent[] = [
   { id: "reception", title: "Reception", date: "2027-02-12", time: "19:30", endTime: "23:00", venue: "The Leela Palace", address: "MRC Nagar, Chennai", mapUrl: "", dressCode: "Evening formal", dressColor: "#6F8F7D", note: "Dinner, toasts and dancing with the newlyweds." },
 ];
 
-/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
-const DEMO_CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
-export { DEMO_CDN as LW_DEMO_CDN };
+/**
+ * Demo photos (CC0 / Unsplash licence, media-src/templates/wedding/demo) ship IN THE REPO under
+ * public/wedding-v3/lotus/demo, never on the CDN or S3. The engine and the server keep only https
+ * links, so a draft stores them on the site's own domain; every render maps that back to the
+ * same-origin path (lwLocalUrl), so local, staging and prod each serve their own copy.
+ */
+const SITE_ORIGIN = "https://subhsandesh.in";
+const DEMO_BASE = `${SITE_ORIGIN}/wedding-v3/lotus/demo`;
+const REPO_ART_RE = /^https:\/\/(?:www\.)?subhsandesh\.in(\/wedding-v3\/[^?#\s]+)$/i;
+const LEGACY_DEMO_RE = /^https:\/\/cdn\.subhsandesh\.in\/gifts-media\/templates\/wedding\/demo\/(rw-(?:0[1-9]|1[0-8])\.webp)$/i;
+/** A stored repo-art link → the same-origin path this host serves from public/. Anything else is unchanged. */
+export const lwLocalUrl = (url: string): string => {
+  const own = REPO_ART_RE.exec(url);
+  if (own) return own[1];
+  // Drafts saved before the demo photos moved into the repo still point at the old CDN copies.
+  const old = LEGACY_DEMO_RE.exec(url);
+  return old ? `/wedding-v3/lotus/demo/${old[1]}` : url;
+};
+/** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
+export const lwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
 /** 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it). */
 export const LW_DEMO_PHOTOS: LovePhoto[] = [
-  { url: `${DEMO_CDN}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
-  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
-  { url: `${DEMO_CDN}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
-  { url: `${DEMO_CDN}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
-  { url: `${DEMO_CDN}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
-  { url: `${DEMO_CDN}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
-  { url: `${DEMO_CDN}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
-  { url: `${DEMO_CDN}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
+  { url: `${DEMO_BASE}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
+  { url: `${DEMO_BASE}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
+  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
+  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
+  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
+  { url: `${DEMO_BASE}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
 ];
 
 export interface LwExtras {

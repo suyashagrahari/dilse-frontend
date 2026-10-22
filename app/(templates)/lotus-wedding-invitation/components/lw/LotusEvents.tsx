@@ -19,7 +19,7 @@ export interface LotusEventsProps {
   events: readonly WeddingEvent[];
   couple: string;
   locale: string;
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; whatsapp: string };
+  labels: { directions: string; calendar: string; calShort: string; gcal: string; saveAll: string; dress: string; tba: string; whatsapp: string };
 }
 
 function parts(date: string, locale: string) {
@@ -101,17 +101,17 @@ export default function LotusEvents({ events, couple, locale, labels: l }: Lotus
                       </Btn>
                     )}
                     {e.date && (
-                      <Btn icon={CAL} ghost className="is-sm" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                        {flash === key ? "Saved ✓" : l.calendar}
+                      <Btn icon={CAL} ghost className="is-sm" label={`${l.calendar}: ${e.title}`} onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
+                        {flash === key ? "Saved ✓" : l.calShort}
                       </Btn>
                     )}
                     {e.date && (
                       <a className="lw-ev-g" href={googleCalendarUrl(e, { couple, url: pageUrl(), tz: DEFAULT_TZ_OFFSET })} target="_blank" rel="noopener noreferrer" aria-label={`${e.title}: Google Calendar`}>
-                        Google
+                        <Icon d={CAL} size={15} /> <span>{l.gcal}</span>
                       </a>
                     )}
-                    <button type="button" className="lw-round is-wa is-sm" onClick={() => openWhatsApp(shareLine)} aria-label={`${l.whatsapp}: ${e.title}`}>
-                      <Icon d={WA} fill size={16} />
+                    <button type="button" className="lw-ev-wa" onClick={() => openWhatsApp(shareLine)} aria-label={`${l.whatsapp}: ${e.title}`}>
+                      <Icon d={WA} fill size={16} /> <span>WhatsApp</span>
                     </button>
                   </div>
                 </div>

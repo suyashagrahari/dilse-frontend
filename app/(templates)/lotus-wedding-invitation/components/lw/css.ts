@@ -18,6 +18,8 @@ export const LW_CSS = `
   --lw-card: #FFFDF8; --lw-line: rgba(201,162,74,.38);
   /* The kit's tokens arrive as inline styles on this element; !important lets the lotus palette win. */
   --wk-accent: var(--lw-sage-d) !important; --wk-accent-ink: #FFFDF6 !important; --wk-surface-2: #F7F4EC !important; --wk-border: rgba(111,143,125,.28) !important;
+  /* The kit's linen + silk textures live on the CDN; this page's paper is the owner's in-repo geometric tile instead. */
+  --wk-texture: none !important; --wk-paper: none !important;
   overflow-x: clip; color: var(--wk-ink); font-variant-numeric: lining-nums;
 }
 /* Cormorant's default figures are old-style ("11" reads "II"); every font shorthand resets the variant. */
@@ -34,7 +36,7 @@ export const LW_CSS = `
 
 /* ── Shared type + buttons ─────────────────────────────── */
 .lw-eyebrow { margin: 0 0 10px; font: 600 12.5px/1.5 var(--wk-font-caps); letter-spacing: .28em; text-transform: uppercase; color: var(--lw-sage-d); }
-.lw-root.is-hi .lw-eyebrow { font-family: var(--wk-font-deva); letter-spacing: .06em; font-size: 15px; }
+.lw-root.is-hi .lw-eyebrow { font-family: var(--wk-font-deva); letter-spacing: .02em; font-size: 15px; }
 .lw-h2 { margin: 0; font: 500 clamp(34px, 6.4vw, 58px)/1.08 var(--wk-font-display); color: var(--lw-pink-ink); letter-spacing: -.005em; text-wrap: balance; }
 .lw-root.is-hi .lw-h2 { font-family: var(--wk-font-deva); font-size: clamp(30px, 5.6vw, 48px); line-height: 1.3; }
 .lw-h3 { margin: 0 0 18px; font: 500 clamp(24px, 4.4vw, 34px)/1.2 var(--wk-font-display); color: var(--lw-pink-ink); text-align: center; }
@@ -77,6 +79,8 @@ export const LW_CSS = `
 .lw-open-lights { position: absolute; z-index: 3; top: clamp(10px, 2.6vw, 26px); left: -2%; right: -2%; display: flex; opacity: 0; translate: 0 -24px; transition: opacity 1.2s var(--lw-soft) .25s, translate 1.4s var(--lw-ease) .25s; pointer-events: none; }
 .lw-open.is-ready .lw-open-lights { opacity: 1; translate: 0 0; }
 .lw-open-lights img { width: 100%; height: clamp(120px, 30vw, 300px); object-fit: cover; object-position: 50% 0; }
+/* On wide screens the strands would hang through the names: shorter, and faded out at the ends. */
+@media (min-width: 960px) { .lw-open-lights img { height: clamp(150px, 17vw, 240px); -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); } }
 
 .lw-twinkle { position: absolute; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: radial-gradient(circle, #FFF6CF 0 22%, rgba(255,214,120,.65) 40%, rgba(255,214,120,0) 70%); opacity: .2; animation: lw-twinkle 3s ease-in-out infinite; }
 @keyframes lw-twinkle { 0%, 100% { opacity: .15; scale: .7; } 50% { opacity: 1; scale: 1.25; } }
@@ -92,6 +96,8 @@ export const LW_CSS = `
 .lw-lamp-3 { right: 3%; --lw-lamp-y: 4%; }
 @media (min-width: 700px) { .lw-lamp-0 { --lw-lamp-y: -14%; } .lw-lamp-3 { --lw-lamp-y: -8%; } .lw-lamp-1 { --lw-lamp-y: -30%; } .lw-lamp-2 { --lw-lamp-y: -24%; } }
 @media (min-width: 1280px) { .lw-lamp { width: clamp(62px, 4.6vw, 88px); } }
+/* Keep the right-hand lamp clear of the brand mark / top-bar pill that sits in the top-right corner. */
+@media (min-width: 700px) { .lw-lamp-3 { right: max(3%, 92px); } .lw-lamp-2 { right: max(15%, 200px); } }
 @media (min-width: 700px) { .lw-lamp-1, .lw-lamp-2 { display: block; } }
 @keyframes lw-lamp-sway { from { rotate: -2.2deg; } to { rotate: 2.2deg; } }
 .lw-lamp-glow { position: absolute; left: 50%; bottom: 0; width: 320%; aspect-ratio: 1; translate: -50% 42%; border-radius: 50%; background: radial-gradient(circle, rgba(255,214,120,.62), rgba(255,190,90,.18) 40%, transparent 66%); opacity: 0; transition: opacity 1s var(--lw-soft) calc(var(--i) * .28s); }
@@ -110,6 +116,8 @@ export const LW_CSS = `
 @media (max-width: 699px) { .lw-open-side img { opacity: 0 !important; } .lw-open.is-ready .lw-open-side img { opacity: .55 !important; } }
 
 .lw-open-copy { position: relative; z-index: 4; text-align: center; max-width: 640px; }
+/* An ivory halo so the hanging string-light strands pass behind the names instead of through them. */
+.lw-open-copy::before { content: ""; position: absolute; inset: -12% -22%; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, rgba(251,246,234,.97) 62%, rgba(251,246,234,0)); }
 .lw-open-copy > * { opacity: 0; translate: 0 14px; transition: opacity .9s var(--lw-soft), translate 1s var(--lw-ease); }
 .lw-open.is-ready .lw-open-copy > * { opacity: 1; translate: 0 0; }
 .lw-open.is-ready .lw-open-copy > :nth-child(2) { transition-delay: .55s; }
@@ -123,7 +131,7 @@ export const LW_CSS = `
 .lw-open-names i { font: italic 400 .48em var(--wk-font-display); color: var(--lw-gold-d); }
 .lw-open-date { margin: 0; font: 600 12.5px/1.4 var(--wk-font-sans); letter-spacing: .32em; text-transform: uppercase; color: var(--lw-sage-d); }
 
-.lw-open-stage { position: relative; z-index: 3; width: min(94vw, 700px, 64vh); aspect-ratio: 1.3; margin: 8px 0; opacity: 0; translate: 0 30px; transition: opacity 1.2s var(--lw-soft) .6s, translate 1.4s var(--lw-ease) .6s; }
+.lw-open-stage { position: relative; z-index: 3; width: min(94vw, 700px, 58vh); aspect-ratio: 1.3; margin: 8px 0; opacity: 0; translate: 0 30px; transition: opacity 1.2s var(--lw-soft) .6s, translate 1.4s var(--lw-ease) .6s; }
 .lw-open.is-ready .lw-open-stage { opacity: 1; translate: 0 0; }
 .lw-pond { position: absolute; left: -6%; right: -6%; bottom: 0; height: 44%; }
 .lw-pond-water { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(50% 50% at 50% 46%, rgba(196,222,211,.95), rgba(176,208,196,.75) 55%, rgba(176,208,196,0) 72%); }
@@ -196,14 +204,14 @@ export const LW_CSS = `
   .lw-hero-words { order: 2; text-align: left; justify-self: start; padding-right: 150px; }
 }
 @media (min-width: 1280px) { .lw-hero-words { padding-right: 190px; } }
-@media (min-width: 960px) { .lw-hero-art { z-index: 1; } .lw-hero-words { z-index: 2; } .lw-hero-pond-r { right: -2%; width: 40%; } }
+@media (min-width: 960px) { .lw-hero-art { z-index: 1; } .lw-hero-words { z-index: 2; } }
 @media (min-width: 960px) and (max-width: 1279px) { .lw-hero-words { padding-right: 128px; } }
 .lw-in { opacity: 0; translate: 0 18px; transition: opacity 1s var(--lw-soft), translate 1.1s var(--lw-ease); transition-delay: calc(var(--d, 0ms) + .25s); }
 .lw-hero.is-on .lw-in { opacity: 1; translate: 0 0; }
 .lw-hero-ganesha { display: block; width: 52px; height: auto; margin: 0 auto 14px; }
 .lw-hero-dear { margin: 0 0 6px; font: italic 500 clamp(18px, 3.6vw, 22px)/1.35 var(--wk-font-display); color: var(--lw-pink-d); }
 .lw-hero-kicker { margin: 0; font: 600 12.5px/1.5 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--lw-sage-d); }
-.lw-root.is-hi .lw-hero-kicker { font-family: var(--wk-font-deva); letter-spacing: .04em; font-size: 16px; }
+.lw-root.is-hi .lw-hero-kicker { font-family: var(--wk-font-deva); letter-spacing: .02em; font-size: 16px; }
 .lw-hero-names { margin: 10px 0 6px; font: 400 clamp(58px, 15vw, 108px)/.98 var(--wk-font-script); color: var(--lw-pink-ink); }
 .lw-hero-names > span { display: block; }
 .lw-hero-names > i { display: block; margin: -.08em 0 -.02em; font: italic 400 .38em/1.2 var(--wk-font-display); color: var(--lw-gold-d); }
@@ -237,6 +245,8 @@ export const LW_CSS = `
 .lw-hero-pond { position: absolute; bottom: -3%; height: auto; opacity: 0; translate: 0 50px; transition: opacity 1.2s var(--lw-soft), translate 1.6s var(--lw-ease); }
 .lw-hero-pond-l { left: -12%; width: 46%; transition-delay: .75s; }
 .lw-hero-pond-r { right: -12%; width: 46%; transform: scaleX(-1); transition-delay: .9s; }
+/* Two columns: keep the right-hand lotus inside the art column, clear of the names and the date line. */
+@media (min-width: 960px) { .lw-hero-pond-r { right: 4%; width: 34%; } }
 .lw-hero.is-on .lw-hero-pond { opacity: 1; translate: 0 calc(var(--lw-sy) * -.04px); }
 .lw-hero-water { position: absolute; left: -14%; right: -14%; bottom: -2%; height: 16%; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, rgba(196,222,211,.85), rgba(196,222,211,0) 72%); }
 .lw-hero-scroll { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: max-content; margin: 34px auto 0; font: 600 11px/1 var(--wk-font-sans); letter-spacing: .3em; text-transform: uppercase; color: var(--lw-sage-d); text-decoration: none; opacity: 0; transition: opacity 1s 1.8s; }
@@ -266,7 +276,7 @@ export const LW_CSS = `
 .lw-fam-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .lw-fam-icon img { display: block; height: 110px; width: auto; margin: 0 auto 10px; }
 .lw-fam-t { margin: 0 0 8px; font: 600 12px/1.4 var(--wk-font-caps); letter-spacing: .26em; text-transform: uppercase; color: var(--lw-sage-d); }
-.lw-root.is-hi .lw-fam-t { font-family: var(--wk-font-deva); letter-spacing: .04em; font-size: 15px; }
+.lw-root.is-hi .lw-fam-t { font-family: var(--wk-font-deva); letter-spacing: .02em; font-size: 15px; }
 .lw-fam-n { margin: 0; font: 500 clamp(21px, 3.8vw, 25px)/1.35 var(--wk-font-display); color: var(--lw-pink-ink); }
 .lw-fam-note { margin: 6px 0 0; font: 500 14px/1.4 var(--wk-font-sans); color: var(--wk-muted); letter-spacing: .04em; }
 .lw-fam-mid { display: none; }
@@ -293,9 +303,10 @@ export const LW_CSS = `
 @media (min-width: 960px) { .lw-story { grid-template-columns: minmax(300px, .8fr) 1.2fr; gap: clamp(40px, 5vw, 80px); align-items: start; } }
 .lw-story-art { position: relative; width: min(58%, 240px); margin: 0 auto; }
 @media (min-width: 960px) { .lw-story-art { width: 100%; max-width: 380px; height: 100%; } .lw-story-pin { position: sticky; top: 14vh; } }
-.lw-story-pin { position: relative; padding-top: 16%; }
-.lw-story-branch { position: absolute; z-index: 2; top: 0; left: -18%; width: 136%; height: auto; pointer-events: none; }
-.lw-story-swing { position: relative; display: block; width: 92%; height: auto; margin: 0 auto; transform-origin: 50% 0; animation: lw-swing 4.8s ease-in-out infinite alternate; }
+.lw-story-pin { position: relative; padding-top: 24%; }
+/* The branch sits BEHIND the swing: its low twigs used to cover the groom's face. */
+.lw-story-branch { position: absolute; z-index: 0; top: 0; left: -18%; width: 136%; height: auto; pointer-events: none; }
+.lw-story-swing { position: relative; z-index: 1; display: block; width: 92%; height: auto; margin: 0 auto; transform-origin: 50% 0; animation: lw-swing 4.8s ease-in-out infinite alternate; }
 @keyframes lw-swing { from { rotate: -1.8deg; } to { rotate: 1.8deg; } }
 .lw-story-feather { position: absolute; z-index: 3; bottom: 4%; right: -2%; width: 54px; height: auto; rotate: -24deg; }
 .lw-story-body { position: relative; padding-left: 46px; }
@@ -318,9 +329,11 @@ export const LW_CSS = `
 .lw-umbrella-l { left: clamp(-10px, 1vw, 30px); }
 .lw-umbrella-r { right: clamp(-10px, 1vw, 30px); animation-delay: -2.8s; }
 @media (max-width: 699px) { .lw-umbrella { top: -46px; width: 64px; opacity: .9; } }
-.lw-ev-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 26px; }
-@media (min-width: 700px) { .lw-ev-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1100px) { .lw-ev-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; } }
+/* Flex, not grid, so a last row with fewer cards (4 functions on 3 columns) sits centred instead of hanging left. */
+.lw-ev-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
+.lw-ev-list > * { flex: 0 0 100%; min-width: 0; }
+@media (min-width: 700px) { .lw-ev-list > * { flex-basis: calc((100% - 26px) / 2); } }
+@media (min-width: 1100px) { .lw-ev-list { gap: 30px; } .lw-ev-list > * { flex-basis: calc((100% - 60px) / 3); } }
 .lw-ev { min-width: 0; }
 .lw-ev-card { position: relative; height: 100%; padding: 0 0 22px; background: var(--lw-card); border: 1px solid var(--lw-line); border-radius: 28px; box-shadow: 0 26px 50px -38px rgba(60,40,10,.55); transition: transform .45s var(--lw-ease), box-shadow .45s; }
 @media (hover: hover) { .lw-ev-card:hover { transform: translateY(-4px); box-shadow: 0 34px 60px -36px rgba(60,40,10,.55); } }
@@ -330,8 +343,14 @@ export const LW_CSS = `
 .lw-ev.is-main .lw-ev-arch { background: radial-gradient(80% 70% at 50% 0%, rgba(255,255,255,.22), transparent 60%), linear-gradient(165deg, #E39AB1, #A3405C); }
 .lw-ev-day { font: 500 52px/1 var(--wk-font-display); background: linear-gradient(180deg, #FFF3C6, #E2BC63); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lw-ev-mon { font: 600 12.5px/1.2 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; }
+/* Tracking pulls Devanagari's joined letters apart ("फ़ र ०"): in Hindi the month, the opening date and the seal sit untracked in the Devanagari face. */
+.lw-root.is-hi .lw-ev-mon, .lw-root.is-hi .lw-open-date, .lw-root.is-hi .lw-seal small { font-family: var(--wk-font-deva); letter-spacing: .02em; }
+.lw-root.is-hi .lw-ev-mon { font-size: 14px; }
+.lw-root.is-hi .wk-cd-label, .lw-root.is-hi .wk-rsvp-by { font-family: var(--wk-font-deva); letter-spacing: .02em; }
 .lw-ev-wd { font: italic 500 14px/1.2 var(--wk-font-display); opacity: .9; }
-.lw-ev-body { padding: 18px 20px 0; }
+/* A column, so each card's actions sit on its bottom edge and line up across a row whatever the note length. */
+.lw-ev-card { display: flex; flex-direction: column; }
+.lw-ev-body { flex: 1; display: flex; flex-direction: column; padding: 18px 20px 0; }
 .lw-ev-title { margin: 0 0 12px; font: 500 clamp(25px, 4vw, 29px)/1.15 var(--wk-font-display); color: var(--lw-pink-ink); }
 .lw-ev-line { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 9px; font: 400 14.5px/1.45 var(--wk-font-sans); color: var(--wk-ink); }
 .lw-ev-line > svg { flex: none; margin-top: 2px; color: var(--lw-sage-d); }
@@ -340,8 +359,12 @@ export const LW_CSS = `
 .lw-ev-swatch { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--lw-gold); }
 .lw-ev-k { font-weight: 700; color: var(--lw-sage-d); }
 .lw-ev-note { margin: 12px 0 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--lw-pink); font: italic 400 16px/1.55 var(--wk-font-display); color: var(--wk-muted); }
-.lw-ev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
-.lw-ev-g { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--lw-sage) 45%, transparent); font: 700 14px/1 var(--wk-font-sans); color: var(--lw-sage-ink); text-decoration: none; background: rgba(255,253,246,.82); }
+.lw-ev-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding-top: 16px; }
+.lw-ev-actions > * { justify-content: center; width: 100%; min-width: 0; white-space: nowrap; }
+.lw-ev-actions > * > span { overflow: hidden; text-overflow: ellipsis; }
+.lw-ev-wa { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 0; cursor: pointer; font: 700 14px/1 var(--wk-font-sans); color: #fff; background: #1FA855; box-shadow: 0 10px 20px -14px rgba(18,120,60,.9); }
+.lw-ev-wa:focus-visible, .lw-ev-g:focus-visible { outline: 3px solid var(--lw-gold); outline-offset: 3px; }
+.lw-ev-g { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--lw-sage) 45%, transparent); font: 700 14px/1 var(--wk-font-sans); color: var(--lw-sage-ink); text-decoration: none; background: rgba(255,253,246,.82); }
 .lw-ev-all { display: flex; justify-content: center; margin-top: 32px; }
 
 /* ══ Venue ═══════════════════════════════════════════════ */

@@ -83,6 +83,12 @@ const MONTHS_HI = ["जनवरी", "फ़रवरी", "मार्च", "
 export default function LotusWeddingExperience({ data, mode, react }: ExperienceProps) {
   const m = useMemo(() => readLotus(data.extras as Record<string, unknown>, data.photos, data.recipientName, data.senderName), [data.extras, data.photos, data.recipientName, data.senderName]);
   const [lang, setLang] = useState<Lang>(m.lang);
+  // The studio preview follows the "Opens in" setting when the sender changes it.
+  const [langFrom, setLangFrom] = useState<Lang>(m.lang);
+  if (langFrom !== m.lang) {
+    setLangFrom(m.lang);
+    setLang(m.lang);
+  }
   const s = T[lang];
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
   const couple = `${m.first} & ${m.second}`;
@@ -257,7 +263,7 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
             <img {...img("umbrella", { lazy: true })} className="lw-umbrella lw-umbrella-r" />
           </div>
           <Head eyebrow={s.eventsEyebrow} title={s.events} lang={lang} />
-          <LotusEvents events={m.events} couple={couple} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp }} />
+          <LotusEvents events={m.events} couple={couple} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, calShort: s.calShort, gcal: s.gcal, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp }} />
         </Section>
       )}
 

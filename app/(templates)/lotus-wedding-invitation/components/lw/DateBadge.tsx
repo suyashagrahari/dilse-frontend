@@ -13,6 +13,9 @@ const SHAPE =
 const INNER =
   "M10 0 V110 C10 124 22 130 32 133 C46 137 54 148 54 162 V170 C54 182 66 189 80 194 C92 199 98 210 100 224 C102 210 108 199 120 194 C134 189 146 182 146 170 V162 C146 148 154 137 168 133 C178 130 190 124 190 110 V0";
 
+/** Tracking splits Devanagari's joined letters, so a Hindi month is set untracked in the Devanagari face. */
+const DEVA_RE = /[\u0900-\u097F]/;
+
 export default function DateBadge({ month, day, year, className }: { month: string; day: string; year?: string; className?: string }) {
   const uid = useId().replace(/:/g, "");
   return (
@@ -31,7 +34,7 @@ export default function DateBadge({ month, day, year, className }: { month: stri
       </defs>
       <path d={SHAPE} fill={`url(#${uid}s)`} />
       <path d={INNER} fill="none" stroke={`url(#${uid}f)`} strokeWidth="1.3" opacity=".8" />
-      <text x="100" y="44" textAnchor="middle" fill={`url(#${uid}f)`} style={{ font: "600 26px var(--wk-font-display)", letterSpacing: "4px" }}>
+      <text x="100" y="44" textAnchor="middle" fill={`url(#${uid}f)`} style={DEVA_RE.test(month) ? { font: "600 25px var(--wk-font-deva)", letterSpacing: "0" } : { font: "600 26px var(--wk-font-display)", letterSpacing: "4px" }}>
         {month}
       </text>
       <text x="100" y="104" textAnchor="middle" fill={`url(#${uid}f)`} style={{ font: "500 66px/1 var(--wk-font-display)", fontVariantNumeric: "lining-nums" }}>

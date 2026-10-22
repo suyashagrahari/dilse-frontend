@@ -4,7 +4,7 @@
 import type { LovePhoto } from "../../../_love/types";
 import { isWeddingThemeId, LIGHT_THEMES, type WeddingThemeId } from "../../../_wedding/themes";
 import type { WeddingEvent } from "../../../_wedding/types";
-import { LW_LIMITS } from "../../../_valentine/days/lotus-wedding-invitation";
+import { LW_LIMITS, lwLocalUrl } from "../../../_valentine/days/lotus-wedding-invitation";
 
 export type Lang = "en" | "hi";
 
@@ -122,7 +122,8 @@ export const MAIN_RE = /wedding|vivah|शादी|विवाह|phera|shaadi|
 
 export function readLotus(extras: Record<string, unknown>, photos: LovePhoto[], bride: string, groom: string): LotusModel {
   const x = extras ?? {};
-  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url);
+  // Repo art (the demo photos) is stored as https on the site domain; serve it from this host.
+  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url).map((p) => (lwLocalUrl(p.url) === p.url ? p : { ...p, url: lwLocalUrl(p.url) }));
   const used = new Set<number>();
   const pick = (n: unknown): LovePhoto | null => {
     const k = num(n);
@@ -287,7 +288,9 @@ type Key =
   | "shareEyebrow"
   | "scroll"
   | "replyBy"
-  | "muhurat";
+  | "muhurat"
+  | "calShort"
+  | "gcal";
 type StringsShape = { [K in Key]: string } & { units: { d: string; h: string; m: string; s: string } };
 
 export const T: Record<Lang, StringsShape> = {
@@ -332,6 +335,8 @@ export const T: Record<Lang, StringsShape> = {
     saveDate: "Save the date",
     saveAll: "Save all dates",
     calendar: "Add to calendar",
+    calShort: "Calendar",
+    gcal: "Google Cal",
     directions: "Directions",
     dress: "Dress code",
     tba: "Time to be announced",
@@ -397,6 +402,8 @@ export const T: Record<Lang, StringsShape> = {
     saveDate: "तिथि सहेजें",
     saveAll: "सभी तिथियाँ सहेजें",
     calendar: "कैलेंडर में जोड़ें",
+    calShort: "कैलेंडर",
+    gcal: "Google Cal",
     directions: "रास्ता देखें",
     dress: "पोशाक",
     tba: "समय की सूचना जल्द",

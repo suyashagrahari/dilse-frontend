@@ -13,7 +13,7 @@
 // id="vs-sec-<id>" so the sheet's side nav and Save's "jump to the gap" work.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
+import { MasonryEditor, RsvpDashboard } from "../../../_wedding";
 import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
@@ -21,7 +21,7 @@ import PhotoCropper, { clampCrop, type Crop } from "../../../_valentine/editor/P
 import { API_URL } from "@/lib/config";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { LovePhoto } from "../../../_valentine/types";
-import { LW_LIMITS, lotusWeddingDay } from "../../../_valentine/days/lotus-wedding-invitation";
+import { LW_LIMITS, LW_THEME_LABELS, lotusWeddingDay, lwLocalUrl, lwStoredUrl } from "../../../_valentine/days/lotus-wedding-invitation";
 import { MAIN_RE, isUpiId, normalisePhone, swatchFor } from "../lw/model";
 import { personalLink } from "../lw/guest";
 
@@ -188,12 +188,42 @@ function PhotoPick({ value, photos, onPick, onUpload, onFrame, label }: { value:
   );
 }
 
+/** The three lotus palettes as the guest page paints them (the kit's picker shows its own champagne/blush/powder cards). */
+const LOTUS_SWATCHES: Record<string, { bg: string; ink: string; accent: string; blurb: string }> = {
+  champagne: { bg: "linear-gradient(160deg, #FFFCF5, #F3EEDF)", ink: "#7E2943", accent: "#4E6E5D", blurb: "Ivory paper, lotus-leaf sage and temple gold" },
+  blush: { bg: "linear-gradient(160deg, #FFFBFA, #F9E6EB)", ink: "#7E2943", accent: "#9C3A57", blurb: "Soft lotus pink with rose and gold" },
+  powder: { bg: "linear-gradient(160deg, #FBFDFE, #E7F0F3)", ink: "#7E2943", accent: "#48707A", blurb: "A still pond: pale blue-green and gold" },
+};
+function LotusThemePicker({ value, onChange, sample }: { value: string; onChange: (id: string) => void; sample: string }) {
+  return (
+    <div className="lws-themes" role="radiogroup" aria-label="Theme">
+      {LIGHT_THEMES.map((id) => {
+        const sw = LOTUS_SWATCHES[id];
+        if (!sw) return null;
+        const on = value === id;
+        return (
+          <button key={id} type="button" role="radio" aria-checked={on} className={`lws-theme${on ? " is-on" : ""}`} onClick={() => onChange(id)}>
+            <span className="lws-theme-card" style={{ background: sw.bg }}>
+              <span className="lws-theme-lotus" aria-hidden>🪷</span>
+              <span className="lws-theme-names" style={{ color: sw.ink }}>{sample}</span>
+              <span className="lws-theme-bar" style={{ background: sw.accent }} />
+            </span>
+            <b>{LW_THEME_LABELS[id] ?? id}</b>
+            <small>{sw.blurb}</small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, owner }: StudioProps) {
   const x = mf.extras as Row;
   const events = useMemo(() => (Array.isArray(x.events) ? (x.events as Row[]) : []), [x.events]);
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
-  const photos = mf.photos;
+  // Demo photos live in public/wedding-v3 and are stored as https on the site domain: show this host's copy.
+  const photos = useMemo(() => mf.photos.map((p) => (lwLocalUrl(p.url) === p.url ? p : { ...p, url: lwLocalUrl(p.url) })), [mf.photos]);
   const set = updateExtra;
 
   // ── Every function keeps a stable id (RSVPs refer to it) ──────────────────
@@ -323,7 +353,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
   );
   const setPhotos = (next: LovePhoto[]) => {
     const prev = latest.current.photos;
-    const capped = next.slice(0, LW_LIMITS.photos);
+    const capped = next.slice(0, LW_LIMITS.photos).map((p) => (lwStoredUrl(p.url) === p.url ? p : { ...p, url: lwStoredUrl(p.url) }));
     updateMf("photos", capped);
     remapRefs(prev, capped);
   };
@@ -429,7 +459,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
             value={desc}
             maxLength={1500}
             onChange={(e) => setDesc(e.target.value)}
-            placeholder="Ananya and Arjun are getting married on 12 Feb 2027 at The Leela Palace, Udaipur. Haldi and Mehendi on the 10th, Sangeet on the 11th, pheras at 7 pm, reception on the 13th in Delhi. We met at college in Pune in 2018. Keep it warm, a little royal, and add a Hindi line."
+            placeholder="Meenakshi and Arjun are getting married on 14 Feb 2027 at Sri Kapali Kalyana Mandapam, Chennai. Haldi and Mehendi on the 12th, Sangeet on the 13th, the muhurtham at 9:05 am, reception that evening. We met at college in Pune in 2018. Keep it warm and traditional, and add a Hindi line."
             aria-label="Describe your wedding"
           />
           <div className="lws-chips">
@@ -614,10 +644,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
       {/* ── Theme & music ──────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-music" aria-label="Theme and music">
         <Head n={5} title="Theme & music" sub="Three light palettes, always in gold. The song starts when the guest taps the lotus, with a mute button always in reach." />
-        <ThemePicker themes={LIGHT_THEMES} grouped={false} value={s(x.theme) || "champagne"} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} label="Theme" />
-        <p className="lws-hint" style={{ marginTop: 8 }}>
-          {WEDDING_THEMES[(s(x.theme) || "champagne") as keyof typeof WEDDING_THEMES]?.blurb}
-        </p>
+        <LotusThemePicker value={s(x.theme) || "champagne"} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} />
         <div style={{ marginTop: 18 }}>
           <MusicPicker
             value={mf}
@@ -907,6 +934,17 @@ const LWS_CSS = `
 .lws-pick-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1.5px dashed var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1.2 var(--vw-font-ui); cursor: pointer; }
 .lws-pick-btn img, .lws-pick-btn > span:first-child { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
 .lws-pick-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scroll-snap-type: x proximity; }
+.lws-themes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .lws-themes { grid-template-columns: 1fr; } }
+.lws-theme { display: flex; flex-direction: column; gap: 3px; padding: 8px 8px 12px; border-radius: 16px; border: 2px solid var(--vw-edge, #DCCFAE); background: var(--vw-paper, #FFFDF8); text-align: left; cursor: pointer; color: var(--vw-paper-ink, #2A3A32); font: 500 12.5px/1.35 var(--vw-font-ui); }
+.lws-theme.is-on { border-color: var(--vw-accent, #4E6E5D); box-shadow: 0 10px 24px -16px rgba(47,74,62,.7); }
+.lws-theme:focus-visible { outline: 3px solid #C9A24A; outline-offset: 2px; }
+.lws-theme b { margin-top: 6px; font-size: 14px; }
+.lws-theme small { font-size: 12px; opacity: .75; }
+.lws-theme-card { position: relative; display: grid; place-items: center; gap: 4px; height: 96px; border-radius: 11px; border: 1px solid rgba(201,162,74,.5); padding: 10px 0 16px; }
+.lws-theme-lotus { font-size: 20px; line-height: 1; }
+.lws-theme-names { font: italic 500 20px/1 Georgia, serif; }
+.lws-theme-bar { position: absolute; left: 24%; right: 24%; bottom: 10px; height: 3px; border-radius: 3px; }
 .lws-pick-th, .lws-pick-none { flex: none; width: 64px; height: 64px; border-radius: 12px; border: 2px solid transparent; padding: 0; overflow: hidden; background: var(--vw-soft); cursor: pointer; scroll-snap-align: start; font: 600 12px/1 var(--vw-font-ui); color: var(--vw-paper-ink); }
 .lws-pick-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .lws-pick-th.is-on, .lws-pick-none.is-on { border-color: var(--vw-accent); }
