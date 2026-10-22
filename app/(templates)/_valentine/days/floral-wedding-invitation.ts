@@ -5,7 +5,7 @@
 // under a floral drape, gold line-art that draws itself. Same limits, RSVP and
 // blessings plumbing as Royal; the guest page and studio live in
 // app/(templates)/floral-wedding-invitation/components. Art: public/wedding-v3 (see
-// components/assets.ts), served from the repo, never from the CDN.
+// components/assets.ts), served from the repo, never from the CDN (demo photos too).
 //
 // Field mapping on the engine: recipientName = the bride, senderName = the
 // groom, letter = the English invitation, endLine = the closing line,
@@ -81,9 +81,20 @@ export const FW_DEMO_EVENTS: WeddingEvent[] = [
   { id: "reception", title: "Reception", date: "2027-02-21", time: "19:30", endTime: "23:30", venue: "The Ivory Ballroom", address: "Tonk Road, Jaipur", mapUrl: "", dressCode: "Black tie, a touch of gold", dressColor: "#2A2622", note: "Dinner, toasts and dancing to celebrate the newlyweds." },
 ];
 
-/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
-const DEMO_CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
-export { DEMO_CDN as FW_DEMO_CDN };
+/**
+ * Demo photos (CC0 / public domain, listed in media-src/templates/wedding/ATTRIBUTION.md under
+ * rw-*) ship IN THE REPO under public/wedding-v3/floral/demo, never on the CDN or S3. The engine
+ * and the server keep only https links, so a draft stores them on the site's own domain; every
+ * render maps that back to the same-origin path (fwLocalUrl), so local, staging and prod each
+ * serve their own copy.
+ */
+const SITE_ORIGIN = "https://subhsandesh.in";
+const DEMO_CDN = `${SITE_ORIGIN}/wedding-v3/floral/demo`;
+const REPO_ART_RE = /^https:\/\/(?:www\.)?subhsandesh\.in(\/wedding-v3\/[^?#\s]+)$/i;
+/** A stored repo-art link → the same-origin path this host serves from public/. Anything else is unchanged. */
+export const fwLocalUrl = (url: string): string => REPO_ART_RE.exec(url)?.[1] ?? url;
+/** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
+export const fwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
 /** 16 is the couple portrait under the floral drape; 17 and 18 are story chapters 3 and 4; the rest fill the gallery. */
 export const FW_DEMO_PHOTOS: LovePhoto[] = [

@@ -99,7 +99,6 @@ export const FW_CSS = `
 .fw-env-pocket::before { content: ""; position: absolute; inset: 0; clip-path: polygon(0 100%, 50% 52%, 100% 100%); background: linear-gradient(0deg, rgba(255,255,255,.22), rgba(120,80,50,.08)); }
 .fw-env-pocket::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(120,80,50,.07), transparent 28%, transparent 72%, rgba(120,80,50,.07)); }
 .fw-env-to { position: absolute; left: 8%; right: 8%; bottom: 7%; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
-.fw-env-to small { font: 500 clamp(9px, 2.3vw, 11px)/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
 .fw-env-to b { font: 400 clamp(22px, 6vw, 32px)/1.1 var(--wk-font-script); color: var(--fw-script); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fw-env-flap { position: absolute; left: 0; right: 0; top: 0; height: 58%; z-index: 5; transform-origin: 50% 0; transform-style: preserve-3d; transition: transform .85s cubic-bezier(.5,0,.25,1); }
 .fw-env-flap i { position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
@@ -142,6 +141,11 @@ export const FW_CSS = `
 
 /* ── language toggle ───────────────────────────────────────────────────── */
 .fw-lang { position: fixed; top: calc(12px + var(--vw-top-space, 0px)); left: 12px; z-index: 90; display: flex; padding: 3px; border-radius: 999px; background: rgba(255,252,246,.88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid var(--wk-border); box-shadow: 0 8px 20px -14px rgba(80,50,30,.5); }
+.fw-lang { transition: transform .4s var(--fw-ease), opacity .3s; }
+/* With music on, the engine's round music button takes the top-left corner and the pill sits beside it. */
+body:has(.vm-icon) .fw-lang { left: 60px; }
+.fw-lang.is-tucked { transform: translateY(calc(-100% - 16px - var(--vw-top-space, 0px))); opacity: 0; pointer-events: none; }
+.fw-lang:focus-within { transform: none; opacity: 1; pointer-events: auto; }
 .fw-lang button { min-width: 44px; min-height: 40px; padding: 0 10px; border: 0; border-radius: 999px; background: none; font: 600 13px/1 var(--wk-font-sans); color: var(--wk-ink); cursor: pointer; transition: background-color .25s, color .25s; }
 .fw-lang button[aria-pressed="true"] { background: var(--fw-script); color: #fff8f4; }
 
@@ -161,13 +165,13 @@ export const FW_CSS = `
 .fw-hero-par { position: absolute; inset: 0; transform: translate3d(0, calc(var(--fw-hy, 0px) * .1), 0); }
 .fw-hero-glow { position: absolute; inset: 14% 4% 2%; border-radius: 50% 50% 18% 18%; background: radial-gradient(ellipse at 50% 58%, rgba(255,246,240,.98), rgba(246,214,206,.5) 46%, transparent 72%); opacity: 0; transition: opacity 1.6s ease .1s; }
 .fw-hero-drape, .fw-fin-drape { position: absolute; inset: 0; }
-.fw-hero-drape img, .fw-fin-drape img { display: block; width: 100%; height: 100%; }
+.fw-hero-drape img, .fw-fin-drape img { display: block; width: 100%; height: 100%; -webkit-mask-image: linear-gradient(180deg, #000 84%, transparent 99%); mask-image: linear-gradient(180deg, #000 84%, transparent 99%); }
 .fw-hero-drape img { opacity: 0; transform: scale(.94) translate3d(0, 14px, 0); transform-origin: 50% 100%; transition: opacity 1.3s ease, transform 1.6s var(--fw-ease); }
 .fw-hero-swing, .fw-fin-swing { position: absolute; left: 13%; right: 13%; bottom: 3%; }
 .fw-hero-swing { opacity: 0; transform: translate3d(0, -26px, 0); transition: opacity 1.2s ease .45s, transform 1.6s var(--fw-ease) .45s; }
 .fw-hero-swing-in { display: block; transform-origin: 50% 6%; animation: fw-swing 5.2s ease-in-out infinite; }
 .fw-hero-swing-in img { display: block; width: 100%; height: auto; }
-.fw-hero-rocks { position: absolute; right: -16%; bottom: -3%; width: 46%; opacity: 0; transform: translate3d(24px, 0, 0); transition: opacity 1.1s ease .8s, transform 1.4s var(--fw-ease) .8s; }
+.fw-hero-rocks { position: absolute; right: -6%; bottom: -3%; width: 46%; opacity: 0; transform: translate3d(24px, 0, 0); transition: opacity 1.1s ease .8s, transform 1.4s var(--fw-ease) .8s; }
 .fw-hero-rocks img { display: block; width: 100%; height: auto; }
 .fw-hero.is-open .fw-hero-glow { opacity: 1; }
 .fw-hero.is-open .fw-hero-drape img, .fw-hero.is-open .fw-hero-swing, .fw-hero.is-open .fw-hero-rocks { opacity: 1; transform: none; }
@@ -205,6 +209,7 @@ export const FW_CSS = `
   .fw-hero-actions { justify-content: flex-start; }
   .fw-hero-date { justify-content: flex-start; padding-left: 0; padding-right: 0; }
   .fw-hero-swirl { top: -70px; right: -6%; }
+  .fw-hero-rocks { right: -16%; }
 }
 
 /* ── section chrome ────────────────────────────────────────────────────── */
@@ -213,7 +218,7 @@ export const FW_CSS = `
 
 /* ── the invitation card ───────────────────────────────────────────────── */
 .fw-invite { position: relative; display: grid; gap: clamp(26px, 6vw, 40px); justify-items: center; }
-.fw-mandala { position: absolute; inset: 10% -16px; z-index: 0; background: ${u("mandala")} center / 120px auto repeat; opacity: .5; -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
+.fw-mandala { position: absolute; inset: 10% -16px; z-index: 0; background: ${u("mandala")} center / 120px auto repeat; opacity: .5; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 100%); }
 .fw-portrait { position: relative; z-index: 1; width: min(76vw, 400px); aspect-ratio: 1372 / 1600; }
 .fw-portrait-pic { position: absolute; left: 15%; right: 13%; top: 13%; bottom: 2.5%; overflow: hidden; border-radius: 999px 999px 6px 6px; background: var(--wk-placeholder); box-shadow: 0 20px 40px -26px rgba(80,50,30,.55); }
 .fw-portrait-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -282,6 +287,16 @@ export const FW_CSS = `
 .fw-datecard-t { margin: 8px 0 0; font: italic 500 clamp(17px, 4.4vw, 20px)/1.4 var(--wk-font-display); color: var(--wk-ink); }
 .fw-datecard-v { margin: 8px 0 0; font: 500 12px/1.4 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--wk-muted); }
 .fw-count { margin-top: clamp(30px, 6vw, 44px); text-align: center; }
+/* The days card can hold three digits ("120"): the kit's flip is sized for two. */
+.fw-count .wk-cd-unit:first-child .wk-flip, .fw-count .wk-cd-unit:first-child .wk-roll { min-width: clamp(74px, 20vw, 118px); }
+@media (min-width: 1024px) {
+  /* Desktop: the date card and the countdown side by side, not a phone column. */
+  .fw-sec-date { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "head head" "card count" "card cta"; column-gap: clamp(40px, 5vw, 72px); align-items: center; }
+  .fw-sec-date > .wk-section-head { grid-area: head; }
+  .fw-sec-date > .fw-datecard { grid-area: card; width: 100%; max-width: none; margin: 0; }
+  .fw-sec-date > .fw-count { grid-area: count; align-self: end; margin-top: 0; }
+  .fw-sec-date > .fw-center { grid-area: cta; align-self: start; }
+}
 
 /* ── story ─────────────────────────────────────────────────────────────── */
 .fw-story { position: relative; padding-top: 10px; }
@@ -315,10 +330,11 @@ export const FW_CSS = `
 }
 
 /* ── functions ─────────────────────────────────────────────────────────── */
-.fw-ev-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 26px; }
-@media (min-width: 720px) { .fw-ev-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 26px; } }
-@media (min-width: 1240px) { .fw-ev-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.fw-ev { display: flex; }
+/* Flex, not grid: a last row that isn't full (5 functions on 3 columns) sits centred. */
+.fw-ev-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
+.fw-ev { display: flex; flex: 0 0 100%; min-width: 0; }
+@media (min-width: 720px) { .fw-ev-list { gap: 30px 26px; } .fw-ev { flex-basis: calc((100% - 26px) / 2); } }
+@media (min-width: 1240px) { .fw-ev { flex-basis: calc((100% - 52px) / 3); } }
 .fw-ev-card { position: relative; width: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 8px; background: #fffaf3; border: 1px solid var(--wk-border); box-shadow: 0 26px 50px -38px rgba(60,40,20,.55), 0 2px 6px -4px rgba(60,40,20,.15); transition: transform .4s var(--fw-ease), box-shadow .4s; }
 .fw-root[data-wk-theme="powder"] .fw-ev-card { background: #fdfcfa; }
 .fw-ev-card::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(184,146,74,.32); border-radius: 4px; pointer-events: none; }
@@ -443,6 +459,15 @@ export const FW_CSS = `
 .fw-qr svg { width: min(240px, 70vw); height: auto; }
 .fw-qr-h { margin: 0; font: italic 500 17px/1.4 var(--wk-font-display); color: var(--wk-ink); }
 
+/* ── the engine's music button (rendered outside .fw-root): stationery palette, top-left ── */
+body .vm-icon { top: calc(16px + var(--vw-top-space, 0px)); bottom: auto; box-shadow: 0 8px 20px -12px rgba(80,50,30,.55), 0 0 0 1px rgba(184,146,74,.55); }
+body .vm-icon-btn { color: #8c4a52; background: radial-gradient(circle at 50% 38%, #fffaf3, #f1e2d0 78%); }
+body .vm-icon-btn:focus-visible { outline-color: #b8924a; }
+body .vm-icon-ring { background: conic-gradient(from 0deg, #b8924a, transparent 30%, #d9a3a6 52%, transparent 78%, #b8924a); }
+body .vm-icon-eq i { background: #8c4a52; }
+body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-btn { color: #49597d; }
+body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; }
+
 /* ── lite + reduced motion ─────────────────────────────────────────────── */
 .fw-root.is-lite .fw-breeze, .fw-root.is-lite .fw-petals { display: none; }
 .fw-root.is-lite .fw-hero-par, .fw-root.is-lite .fw-hero-clouds { transform: none; }
@@ -450,6 +475,7 @@ export const FW_CSS = `
   .fw-root *, .fw-root *::before, .fw-root *::after { animation: none !important; }
   .fw-wipe-clip, .fw-wipe-clip img, .fw-hero [class*="fw-hi-"], .fw-hero-drape img, .fw-hero-swing, .fw-hero-rocks, .fw-hero-glow, .fw-ev-img, .fw-wax { transition: none !important; transform: none !important; opacity: 1 !important; }
   .fw-wax-ring, .fw-breeze, .fw-petals { display: none; }
+  .fw-lang { transition: none; }
   .fw-hero-par, .fw-hero-clouds { transform: none !important; }
   .fw-hero-clouds { transform: translate3d(-50%, 0, 0) !important; }
 }

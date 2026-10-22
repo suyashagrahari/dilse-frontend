@@ -87,9 +87,12 @@ export default function Finale({ sealHi, seal, closing, endLine, first, second, 
             <small aria-hidden>{seal}</small>
           </p>
         </div>
-        <Reveal as="p" className="wk-eyebrow" delay={120}>
-          <span lang={lang}>{closing}</span>
-        </Reveal>
+        {/* "With love" over the names, unless the sender's own closing line already opens with it. */}
+        {!(endLine ?? "").trim().toLowerCase().startsWith(closing.toLowerCase()) && (
+          <Reveal as="p" className="wk-eyebrow" delay={120}>
+            <span lang={lang}>{closing}</span>
+          </Reveal>
+        )}
         <Reveal as="p" className="fw-fin-names" delay={200}>
           {first} <span>&amp;</span> {second}
         </Reveal>

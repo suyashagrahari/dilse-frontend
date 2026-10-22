@@ -4,7 +4,7 @@
 import type { LovePhoto } from "../../../_love/types";
 import { isWeddingThemeId, LIGHT_THEMES, type WeddingThemeId } from "../../../_wedding/themes";
 import type { FamilySide, WeddingEvent } from "../../../_wedding/types";
-import { FW_CONTACTS_MAX, FW_LIMITS } from "../../../_valentine/days/floral-wedding-invitation";
+import { FW_CONTACTS_MAX, FW_LIMITS, fwLocalUrl } from "../../../_valentine/days/floral-wedding-invitation";
 
 export type Lang = "en" | "hi";
 
@@ -53,6 +53,9 @@ export interface FloralModel {
   blessings: boolean;
   /** Photos not used by a story chapter, a family card or the couple portrait. */
   gallery: LovePhoto[];
+  /** The family cards' photos with their focal point / zoom (bride_.photo / groom_.photo carry only the url). */
+  bridePic: LovePhoto | null;
+  groomPic: LovePhoto | null;
   /** The couple's portrait under the floral drape (extras.couplePhoto); null = the illustration only. */
   couple: LovePhoto | null;
   /** Ganesha invocation on the invitation card (default). */
@@ -122,7 +125,8 @@ export const UPI_RE = /^[a-z0-9._-]{2,256}@[a-z][a-z0-9.-]{1,64}$/i;
 
 export function readFloral(extras: Record<string, unknown>, photos: LovePhoto[], bride: string, groom: string): FloralModel {
   const x = extras ?? {};
-  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url);
+  // Demo / repo art is stored as https://subhsandesh.in/wedding-v3/…: every host serves its own copy.
+  const pool = (Array.isArray(photos) ? photos : []).filter((p) => p && p.url).map((p) => (fwLocalUrl(p.url) === p.url ? p : { ...p, url: fwLocalUrl(p.url) }));
   const used = new Set<number>();
   const pick = (n: unknown): LovePhoto | null => {
     const k = num(n);
@@ -201,6 +205,8 @@ export function readFloral(extras: Record<string, unknown>, photos: LovePhoto[],
     bride_: { title: "", names: [str(x.brideFamily, 120)].filter(Boolean), note: str(x.brideNote, 100), photo: bridePhoto?.url },
     groom_: { title: "", names: [str(x.groomFamily, 120)].filter(Boolean), note: str(x.groomNote, 100), photo: groomPhoto?.url },
     familyFirst: order,
+    bridePic: bridePhoto,
+    groomPic: groomPhoto,
     blessingsOf: str(x.blessingsOf, 160),
     muhurat: str(x.muhurat, 60),
     hashtag: str(x.hashtag, 40),

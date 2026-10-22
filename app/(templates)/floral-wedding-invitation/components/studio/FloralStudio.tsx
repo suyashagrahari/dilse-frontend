@@ -24,7 +24,7 @@ import PhotoCropper, { clampCrop, type Crop } from "../../../_valentine/editor/P
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { LovePhoto } from "../../../_valentine/types";
 import { API_URL } from "@/lib/config";
-import { FW_CONTACTS_MAX, FW_LIMITS, floralWeddingDay } from "../../../_valentine/days/floral-wedding-invitation";
+import { FW_CONTACTS_MAX, FW_LIMITS, floralWeddingDay, fwLocalUrl, fwStoredUrl } from "../../../_valentine/days/floral-wedding-invitation";
 import { MAIN_RE, UPI_RE, phoneOf, swatchFor } from "../fw/model";
 import { cleanGuestName, copyText, personalLink, waLink } from "../fw/guest";
 
@@ -247,7 +247,8 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
   const contacts = useMemo(() => (Array.isArray(x.contacts) ? (x.contacts as Contact[]) : []), [x.contacts]);
-  const photos = mf.photos;
+  // Demo / repo art is stored as https://subhsandesh.in/wedding-v3/…; the studio shows this host's own copy.
+  const photos = useMemo(() => mf.photos.map((p) => (fwLocalUrl(p.url) === p.url ? p : { ...p, url: fwLocalUrl(p.url) })), [mf.photos]);
   const set = updateExtra;
 
   // ── Every function keeps a stable id (RSVPs refer to it) ──────────────────
@@ -375,7 +376,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
   );
   const setPhotos = (next: LovePhoto[]) => {
     const prev = latest.current.photos;
-    const capped = next.slice(0, FW_LIMITS.photos);
+    const capped = next.slice(0, FW_LIMITS.photos).map((p) => (fwStoredUrl(p.url) === p.url ? p : { ...p, url: fwStoredUrl(p.url) }));
     updateMf("photos", capped);
     remapRefs(prev, capped);
   };

@@ -148,11 +148,9 @@ export default function Envelope({ first, second, dateLine, guest, s, lang, onOp
           </div>
           <div className="fw-env-pocket" aria-hidden>
             <span className="fw-env-to">
+              {/* Addressed to the guest (the "Dear …," greeting sits above the envelope; a second "Dear" here crowded the seal). */}
               {guest ? (
-                <>
-                  <small lang={lang}>{s.dear}</small>
-                  <b>{guest}</b>
-                </>
+                <b>{guest}</b>
               ) : (
                 <b>
                   {first} &amp; {second}

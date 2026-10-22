@@ -110,6 +110,30 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
     return () => window.clearTimeout(t);
   }, [guest, open]);
 
+  // The EN / हिं pill tucks away while the guest scrolls down (it sat over the section
+  // headings on phones) and comes back on the way up or near the top.
+  const [tucked, setTucked] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    let last = window.scrollY;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        if (Math.abs(y - last) < 8) return;
+        setTucked(y > 160 && y > last);
+        last = y;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [open]);
+
   const completed = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -141,10 +165,14 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
       }
     : undefined;
 
-  const sides = m.familyFirst === "bride" ? [{ ...m.bride_, title: s.brideSide, art: "peonyPink" as const }, { ...m.groom_, title: s.groomSide, art: "peonyBeige" as const }] : [{ ...m.groom_, title: s.groomSide, art: "peonyBeige" as const }, { ...m.bride_, title: s.brideSide, art: "peonyPink" as const }];
+  const brideSide = { ...m.bride_, title: s.brideSide, art: "peonyPink" as const, pic: m.bridePic };
+  const groomSide = { ...m.groom_, title: s.groomSide, art: "peonyBeige" as const, pic: m.groomPic };
+  const sides = m.familyFirst === "bride" ? [brideSide, groomSide] : [groomSide, brideSide];
   const hasFamilies = sides.some((x) => x.names.length > 0);
   const hasGuests = m.things.length > 0 || m.contacts.length > 0 || !!m.upi || !!m.liveUrl;
-  const rootStyle = { minHeight: "100dvh", ["--fw-paper-o" as string]: String(PAPER_OPACITY[m.theme] ?? 0.6) } as CSSProperties;
+  // The kit's linen / silk textures live on the CDN: this page wears its own handmade paper
+  // (.fw-paper, from public/wedding-v3), so both are switched off here.
+  const rootStyle = { minHeight: "100dvh", ["--fw-paper-o" as string]: String(PAPER_OPACITY[m.theme] ?? 0.6), ["--wk-texture" as string]: "none", ["--wk-paper" as string]: "none" } as CSSProperties;
 
   return (
     <WeddingRoot theme={m.theme} className={`fw-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}${open ? " is-open" : ""}`} style={rootStyle}>
@@ -152,7 +180,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
       <div className="fw-paper" aria-hidden />
       <Envelope first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} onOpened={onOpened} />
 
-      <div className="fw-lang" role="group" aria-label="Language">
+      <div className={`fw-lang${tucked ? " is-tucked" : ""}`} role="group" aria-label="Language">
         <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
           EN
         </button>
@@ -250,10 +278,10 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
                     {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                     <img {...pic(side.art, { lazy: true })} />
                   </span>
-                  {side.photo && (
+                  {side.pic && (
                     <span className="fw-fam-photo">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={side.photo} alt={side.title} loading="lazy" decoding="async" />
+                      <img src={side.pic.url} alt={side.title} loading="lazy" decoding="async" style={photoImgStyle(side.pic)} />
                     </span>
                   )}
                   <p className="wk-eyebrow" lang={lang}>
