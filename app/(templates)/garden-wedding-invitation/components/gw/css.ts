@@ -394,8 +394,8 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
 .gw-fin-couple img { display: block; height: 100%; width: auto; }
 .gw-fin-tree { position: absolute; bottom: 0; height: 92%; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%); mask-image: linear-gradient(to bottom, transparent, #000 18%); opacity: 0; transition: opacity 1.2s var(--gw-ease) .2s, transform 1.6s var(--gw-ease) .2s; }
 .gw-fin-tree img { display: block; height: 100%; width: auto; }
-.gw-fin-tree-l { left: -60px; transform: translateX(-50px); }
-.gw-fin-tree-r { right: -60px; transform: translateX(50px); }
+.gw-fin-tree-l { left: -60px; transform: translateX(-50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to right, transparent, #000 30%); mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to right, transparent, #000 30%); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-fin-tree-r { right: -60px; transform: translateX(50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to left, transparent, #000 30%); mask-image: linear-gradient(to bottom, transparent, #000 22%), linear-gradient(to left, transparent, #000 30%); -webkit-mask-composite: source-in; mask-composite: intersect; }
 .gw-finale.is-bloom .gw-fin-pav, .gw-finale.is-bloom .gw-fin-couple, .gw-finale.is-bloom .gw-fin-tree { opacity: 1; transform: none; }
 .gw-fin-petals { position: absolute; inset: -20% 0 0; pointer-events: none; }
 .gw-finale-in { position: relative; max-width: 640px; margin: 18px auto 0; }
@@ -510,7 +510,7 @@ body:has(.gw-root.is-live) .vm-icon { top: calc(max(12px, env(safe-area-inset-to
   .gw-know-i:first-child:nth-last-child(4), .gw-know-i:first-child:nth-last-child(4) ~ .gw-know-i { grid-column: span 1; }
   .gw-gal-leaf { display: block; }
   .gw-rsvp-peacock, .gw-bless-hang { display: block; }
-  .gw-fin-tree-l { left: 4%; } .gw-fin-tree-r { right: 4%; }
+  .gw-fin-tree-l { left: 0; } .gw-fin-tree-r { right: 0; }
 }
 @media (min-width: 1120px) {
   .gw-ev-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
