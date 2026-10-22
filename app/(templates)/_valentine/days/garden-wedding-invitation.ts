@@ -1,10 +1,12 @@
 // ─── Mughal Garden Wedding Invitation 🦚 (wedding tier, same limits as Royal) ───
 //
-// pink gazebos, a peacock, lotus fountains and lanterns in a pastel watercolour garden.
-// Scaffolded from garden-wedding-invitation: the same fields, limits, studio
-// form and RSVP/blessings plumbing; the guest page and studio live in
-// app/(templates)/garden-wedding-invitation/components. Art: public/wedding-v3 (see
-// components/assets.ts), served from the repo, never from the CDN.
+// A pastel watercolour Mughal garden: clouds part over a pink gazebo where the
+// couple stands, a peacock struts along the hedge, lanterns sway, the fountain
+// plays and cherry-blossom petals drift. Royal's fields and limits plus three
+// garden extras: family contacts (tap to call / WhatsApp), an optional shagun
+// UPI line and an optional livestream link. The guest page and the studio live
+// in app/(templates)/garden-wedding-invitation/components. Art: public/wedding-v3
+// (see components/assets.ts), served from the repo, never from S3 or the CDN.
 //
 // Field mapping on the engine: recipientName = the bride, senderName = the
 // groom, letter = the English invitation, endLine = the closing line,
@@ -33,15 +35,16 @@ export const GW_THEME_LABELS: Record<string, string> = {
   emerald: "Emerald & Gold",
 };
 
-/** Verified YouTube uploads (oEmbed 200 + embeddable, 2026-10-19). The shehnai plays by default. */
+/** Verified YouTube uploads (oEmbed 200 + embeddable, re-checked 2026-10-22, wq-research.md §5).
+ *  The garden opens on Din Shagna Da (pastel, the bride's entry). */
 export const GW_SONGS: readonly SongSuggestion[] = [
-  { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
   { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal" },
-  { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
   { id: "3qpxJEp4Ec4", title: "Kudmayi", artist: "Shahid Mallya" },
+  { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
+  { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
+  { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
   { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "Lata Mangeshkar, Udit Narayan" },
   { id: "jCEdTq3j-0U", title: "Gallan Goodiyaan", artist: "Dil Dhadakne Do" },
-  { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
   { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh" },
   { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Arijit Singh, Harshdeep Kaur" },
   { id: "Ptk_1Dc2iPY", title: "Canon in D", artist: "Brooklyn Duo" },
@@ -49,33 +52,33 @@ export const GW_SONGS: readonly SongSuggestion[] = [
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
 ];
 
-/** The editor chrome (form sheet, top bar): ivory paper, maroon ink, gold. The guest page wears extras.theme. */
+/** The editor chrome (form sheet, top bar): ivory, blush rose, sage and soft gold. The guest page wears extras.theme. */
 const THEME: DayTheme = {
-  bg: "linear-gradient(180deg, #FFFBF3 0%, #F8EEDD 60%, #F1E2C6 100%)",
-  base: "#FBF4E6",
-  paper: "#FFFDF8",
-  glass: "rgba(255,253,248,.82)",
-  ink: "#3B0F18",
-  inkSoft: "#7A5048",
-  paperInk: "#3B0F18",
-  accent: "#8E1B2E",
-  accentDeep: "#5E0F1E",
-  accentInk: "#FFF6E3",
-  soft: "#F6E7CF",
-  edge: "#E3CDA6",
-  gold: "#C9A24A",
+  bg: "linear-gradient(180deg, #FFFAF6 0%, #FBEDEE 55%, #EEF4EC 100%)",
+  base: "#FCF3F1",
+  paper: "#FFFDFB",
+  glass: "rgba(255,253,251,.84)",
+  ink: "#3E1F27",
+  inkSoft: "#7E5F66",
+  paperInk: "#3E1F27",
+  accent: "#A94E63",
+  accentDeep: "#7E3347",
+  accentInk: "#FFF8F6",
+  soft: "#F7E6E3",
+  edge: "#EBD3D3",
+  gold: "#C08A5C",
   dark: false,
-  particles: ["✨", "🌼", "🪔"],
-  confetti: ["#C9A24A", "#E9CF7A", "#8E1B2E", "#FFF3C4"],
+  particles: ["🌸", "✨", "🦚"],
+  confetti: ["#F4B6C6", "#C08A5C", "#9DB89A", "#BFD8EC"],
 };
 
 /** Five functions to start from; the sender can add up to eight (Roka, Baraat, Cocktail…). */
 export const GW_DEMO_EVENTS: WeddingEvent[] = [
-  { id: "haldi", title: "Haldi", date: "2027-02-10", time: "10:00", endTime: "13:00", venue: "The Courtyard, Jagmandir", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "A morning of turmeric, laughter and sunshine. Wear yellow and be ready to get a little messy." },
-  { id: "mehendi", title: "Mehendi", date: "2027-02-10", time: "16:30", endTime: "20:00", venue: "Zenana Mahal Lawns", address: "City Palace, Udaipur", mapUrl: "", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna, music and plenty of chai. Come get your hands painted." },
-  { id: "sangeet", title: "Sangeet", date: "2027-02-11", time: "19:30", endTime: "23:30", venue: "Durbar Hall", address: "Fateh Prakash Palace, Udaipur", mapUrl: "", dressCode: "Indo-western glam", dressColor: "#7B3FA0", note: "Music, dance performances and family rivalries settled on the dance floor." },
-  { id: "wedding", title: "Wedding (Pheras)", date: "2027-02-12", time: "19:00", endTime: "23:30", venue: "Jagmandir Island Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Traditional festive", dressColor: "#A3122B", note: "The baraat arrives at 7 pm; the pheras begin at the shubh muhurat, 9:15 pm." },
-  { id: "reception", title: "Reception", date: "2027-02-13", time: "20:00", endTime: "23:59", venue: "The Leela Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Black tie", dressColor: "#1C1C24", note: "Dinner, toasts and dancing to celebrate the newlyweds." },
+  { id: "haldi", title: "Haldi", date: "2027-02-18", time: "10:30", endTime: "13:30", venue: "The Bagh Lawns, Samode Bagh", address: "Samode Bagh, Jaipur", mapUrl: "", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "Turmeric, marigolds and a lot of laughter under the garden chhatris. Wear yellow and expect to get a little messy." },
+  { id: "mehendi", title: "Mehendi", date: "2027-02-18", time: "16:30", endTime: "20:00", venue: "The Lotus Pond Pavilion", address: "Samode Bagh, Jaipur", mapUrl: "", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna, folk songs and endless chai by the lotus pond. Come get your hands painted." },
+  { id: "sangeet", title: "Sangeet", date: "2027-02-19", time: "19:30", endTime: "23:30", venue: "The Lantern Courtyard", address: "Rambagh Palace, Jaipur", mapUrl: "", dressCode: "Pastel Indo-western", dressColor: "#E86A92", note: "Both families take the stage. Bring your dancing shoes and your best filmi moves." },
+  { id: "wedding", title: "Wedding (Pheras)", date: "2027-02-20", time: "18:30", endTime: "23:30", venue: "The Mughal Gardens, Rambagh Palace", address: "Bhawani Singh Road, Jaipur", mapUrl: "", dressCode: "Traditional, soft pastels", dressColor: "#F4C9D4", note: "The baraat arrives at 6:30 pm; the pheras begin at the shubh muhurat, 8:40 pm, under the garden gazebo." },
+  { id: "reception", title: "Reception", date: "2027-02-21", time: "20:00", endTime: "23:59", venue: "The Polo Bar Lawns", address: "Rambagh Palace, Jaipur", mapUrl: "", dressCode: "Evening formal", dressColor: "#2E5AAC", note: "Dinner under the stars, a few toasts and dancing to celebrate the newlyweds." },
 ];
 
 /** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
@@ -127,6 +130,14 @@ export interface GwExtras {
   maxGuests: number;
   rsvpMeal: boolean;
   blessings: boolean;
+  invocation: boolean;
+  /** 1–4 family members guests can call or WhatsApp (phone: 10 digits, optional +91). */
+  contacts: { name: string; relation: string; phone: string }[];
+  /** Optional shagun: a UPI id + the name it belongs to (off when empty). */
+  upiId: string;
+  upiName: string;
+  /** Optional livestream (YouTube / Zoom, https only); "Watch live" opens 30 min before the main event. */
+  liveUrl: string;
   [k: string]: unknown;
 }
 
@@ -157,14 +168,14 @@ export const gardenWeddingDay: DayConfig<GwExtras> = {
       { id: "photos", label: "Photos", emoji: "📸" },
       { id: "letter", label: "Invitation", emoji: "✉️" },
       { id: "music", label: "Theme & music", emoji: "🎵" },
-      { id: "finish", label: "More details", emoji: "✦" },
+      { id: "finish", label: "Guests & more", emoji: "🌸" },
     ],
   },
   music: {
     audioOnly: true,
     compact: true,
     suggestions: GW_SONGS,
-    suggestionsNote: "Shehnai, filmi wedding songs and a few English ones · or paste any YouTube link",
+    suggestionsNote: "Garden-soft filmi songs, the shehnai and a few English ones · or paste any YouTube link",
   },
   extras: [
     { key: "theme", kind: "enum", label: "Theme", default: "blush", hidden: true, options: LIGHT_THEMES.map((id) => ({ value: id, label: GW_THEME_LABELS[id] ?? id })) },
@@ -200,69 +211,84 @@ export const gardenWeddingDay: DayConfig<GwExtras> = {
     { key: "rsvpMeal", kind: "bool", default: true, label: "Ask for meal preference", hidden: true },
     { key: "blessings", kind: "bool", default: true, label: "Blessings wall", hidden: true },
     { key: "invocation", kind: "bool", default: true, label: "Open with Shri Ganesh", hidden: true },
+    {
+      key: "contacts", kind: "objlist", maxItems: 4, label: "Family contacts", itemTitle: "Contact", hidden: true,
+      item: [ev("name", "Name", 40), ev("relation", "Relation", 40), ev("phone", "Phone", 16)],
+    },
+    { key: "upiId", kind: "text", max: 60, label: "Shagun UPI id", hidden: true },
+    { key: "upiName", kind: "text", max: 60, label: "UPI name", hidden: true },
+    { key: "liveUrl", kind: "text", max: 300, label: "Livestream link", hidden: true },
   ],
   theme: THEME,
   demo: {
-    recipientName: "Aanya",
-    senderName: "Vihaan",
+    recipientName: "Ishita",
+    senderName: "Kabir",
     petName: "",
     letter:
-      "By the grace of the Almighty and with the blessings of our elders, the Rathore and Singhania families joyfully invite you to the wedding of Aanya and Vihaan.\n\nFive days by Lake Pichola, a little haldi, a lot of dancing and the seven pheras under the stars. Your presence is our greatest honour.",
+      "With the blessings of our elders, the Khanna and Malhotra families joyfully invite you to celebrate the wedding of Ishita and Kabir.\n\nFour days in the gardens of Jaipur: haldi under the chhatris, mehendi by the lotus pond, a sangeet full of filmi dancing and the seven pheras beneath the gazebo. Your presence will make it complete.",
     photos: GW_DEMO_PHOTOS.map((p) => ({ ...p })),
     gifs: {},
     music: true,
     musicMode: "youtube",
-    musicYoutubeId: "OzEL4CwbPew",
+    musicYoutubeId: "1LVpuWpRs3I",
     musicStart: 0,
-    endLine: "With love and gratitude, the Rathore & Singhania families",
+    endLine: "With love and gratitude, the Khanna & Malhotra families",
     extras: {
       theme: "blush",
       lang: "en",
       nameOrder: "bride",
       hindiMessage:
-        "सर्वशक्तिमान की कृपा और बड़ों के आशीर्वाद से, आन्या और विहान के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। आपकी उपस्थिति ही हमारा सौभाग्य है।",
-      brideFamily: "Mrs. Meera & Mr. Raghuveer Singh Rathore",
-      groomFamily: "Mrs. Nandini & Mr. Arvind Singhania",
-      brideNote: "Udaipur",
-      groomNote: "Jaipur",
-      blessingsOf: "Smt. Kamla Devi & Late Shri Bhanwar Singh Rathore",
+        "बड़ों के आशीर्वाद और ईश्वर की कृपा से, इशिता और कबीर के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। आपकी उपस्थिति ही हमारा सौभाग्य है।",
+      brideFamily: "Mrs. Radhika & Mr. Sameer Khanna",
+      groomFamily: "Mrs. Anjali & Mr. Vivek Malhotra",
+      brideNote: "Jaipur",
+      groomNote: "New Delhi",
+      blessingsOf: "Smt. Kaushalya Devi & Late Shri Harbans Lal Khanna",
       bridePhoto: 0,
       groomPhoto: 0,
-      muhurat: "Shubh muhurat 9:15 pm",
-      hashtag: "#AanyaWedsVihaan",
+      muhurat: "Shubh muhurat 8:40 pm",
+      hashtag: "#IshKabirKaBagh",
       events: GW_DEMO_EVENTS.map((e) => ({ ...e })),
       story: [
-        { when: "2019", title: "Two strangers at a book fair", line: "We reached for the same copy of a Ruskin Bond. Neither of us let go, so we split the bill and the book.", photo: 0 },
-        { when: "2021", title: "The long-distance years", line: "Jaipur to Bengaluru, two time zones of busy, one rule: never sleep on a fight, never skip the goodnight call.", photo: 0 },
-        { when: "2025", title: "The question by the lake", line: "Sunset at Lake Pichola, a ring hidden in a kulhad of chai. She said yes before he could finish the sentence.", photo: 17 },
-        { when: "2027", title: "Forever begins", line: "Now our families become one. Come and bless us.", photo: 18 },
+        { when: "2018", title: "A borrowed umbrella", line: "A Jaipur monsoon, one umbrella and two strangers at the Amer Fort bus stop. He walked her home and forgot to ask her name.", photo: 0 },
+        { when: "2020", title: "Letters across a lockdown", line: "Delhi to Jaipur, a year of video calls, handwritten letters and one very patient postman.", photo: 0 },
+        { when: "2025", title: "A ring in the rose garden", line: "Sunset at the Ram Niwas Bagh, a ring tucked inside a rose. She said yes before he could kneel.", photo: 17 },
+        { when: "2027", title: "Forever begins", line: "Now our families become one, and we would love you in the garden with us.", photo: 18 },
       ],
       things: [
-        "Stay: Rooms for out-of-town guests are held at The Leela Palace from 9 to 14 Feb.",
-        "Weather: February evenings by the lake get cool, so bring a shawl.",
-        "Getting around: Boats to Jagmandir leave the City Palace jetty every 15 minutes from 6 pm.",
-        "Contact: For anything at all, call Kabir (Vihaan's brother) on +91 98290 00000.",
+        "Stay: Rooms for out-of-town guests are held at Samode Bagh and Rambagh Palace from 17 to 22 Feb.",
+        "Weather: February evenings in Jaipur are cool, so bring a shawl.",
+        "Getting around: Shuttles run between both venues every 30 minutes from 9 am.",
+        "Kids: Little ones are very welcome; there is a garden play corner at every function.",
       ],
-      gettingThere: "Udaipur's Maharana Pratap Airport is 25 minutes from the city. Our hospitality desk will meet you at arrivals and at Udaipur City railway station.",
+      gettingThere: "Jaipur International Airport is 20 minutes from Rambagh Palace and 50 from Samode Bagh. Our hospitality desk will meet you at arrivals and at Jaipur Junction.",
       videoUrl: "",
-      rsvpBy: "2027-01-15",
+      rsvpBy: "2027-01-20",
       maxGuests: 4,
       rsvpMeal: true,
       blessings: true,
+      invocation: true,
+      contacts: [
+        { name: "Rohan Khanna", relation: "Bride's brother", phone: "+91 98765 43210" },
+        { name: "Neha Malhotra", relation: "Groom's cousin", phone: "+91 98765 01234" },
+      ],
+      upiId: "",
+      upiName: "",
+      liveUrl: "",
     },
   },
   copy: {
-    recipientPlaceholder: "e.g. Ananya",
-    senderPlaceholder: "e.g. Arjun",
+    recipientPlaceholder: "e.g. Ishita",
+    senderPlaceholder: "e.g. Kabir",
     petNamePlaceholder: "",
-    letterPlaceholder: "Together with their families, Ananya and Arjun request the honour of your presence at the celebration of their marriage…",
+    letterPlaceholder: "Together with their families, Ishita and Kabir request the honour of your presence at the celebration of their marriage…",
     letterHint: "The words your guests read first.",
     photosHint: "Any shape works. Tap a photo to resize it or set its focus. Drag to reorder.",
     captionHint: "caption — e.g. the roka",
     noteHint: "",
     endLinePlaceholder: "With love, the Sharma & Mehta families",
-    endLineHint: "The closing line under the Shubh Vivah seal.",
-    sheetTitle: "Your mughal garden invitation",
+    endLineHint: "The closing line under the gazebo at the very end.",
+    sheetTitle: "Your Mughal garden invitation",
     sheetSub: "Describe your wedding and we'll fill in everything. Change any of it.",
     extrasTitle: "Functions",
     extrasSub: "Every function with its own map, timings and dress code.",

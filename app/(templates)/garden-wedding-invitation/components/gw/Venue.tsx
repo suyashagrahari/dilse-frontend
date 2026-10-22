@@ -1,54 +1,76 @@
 "use client";
 
-// ─── The palace venue (spec 6.3 scene 7) ─────────────────────────────────────
-// A palace painting in a cusped gold arch (lake palace at dusk on dark themes,
-// the watercolour Taj on light ones), lamp twinkles over its windows (≤ 12 SVG
-// circles, opacity loops only, paused off screen), then the venue and a map.
+// ─── The venue: a lake garden seen over a white balustrade ───────────────────
+// The watercolour lake (mountains, lotus, a pink dome and a peacock) in a wide
+// arch, a white balustrade along its foot, sunlight glints on the water
+// (opacity loops, only while on screen), then the venue, its address,
+// Directions and a tap-to-load map (no Google request until the guest asks),
+// and "Getting there" beside it on wide screens.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Reveal, mapLink, type WeddingEvent } from "../../../_wedding";
-import { artImg, seeded, type GardenArt } from "./art";
+import { GW, gwImg } from "../assets";
+import { useOnScreen } from "./art";
+import { ICON, Icon } from "./ShareBar";
 
-export default function Venue({ event, look, directions }: { event: WeddingEvent; look: GardenArt; directions: string }) {
+export interface VenueProps {
+  event: WeddingEvent;
+  lang: "en" | "hi";
+  gettingThere: string;
+  labels: { directions: string; map: string; gettingThere: string };
+}
+
+export default function Venue({ event, lang, gettingThere, labels: l }: VenueProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([en]) => setOn(en.isIntersecting));
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  const dots = useMemo(() => {
-    const r = seeded(41);
-    // Lamps in the band of windows across the middle of the lake palace.
-    return Array.from({ length: 12 }, () => ({ x: 8 + r() * 84, y: 38 + r() * 14, r: 0.35 + r() * 0.45, d: 1.5 + r() * 1.5, delay: -r() * 3 }));
-  }, []);
-  const map = mapLink(event);
+  const on = useOnScreen(ref);
+  const [map, setMap] = useState(false);
+  const link = mapLink(event);
+  const q = [event.venue, event.address].filter(Boolean).join(", ");
   return (
     <div ref={ref} className={`gw-venue${on ? " is-on" : ""}`}>
       <Reveal effect="zoom" className="gw-venue-arch">
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-venue-img" {...artImg(look.venue, { lazy: true })} />
-        <svg className="gw-venue-tw" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-          {dots.map((d, i) => (
-            <circle key={i} cx={d.x} cy={d.y} r={d.r} style={{ animationDuration: `${d.d}s`, animationDelay: `${d.delay}s` }} />
-          ))}
-        </svg>
-        <span className="gw-venue-glow" aria-hidden />
+        <img className="gw-venue-img" {...gwImg(GW.lake, { lazy: true })} />
+        <span className="gw-glints" aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+        <span className="gw-balustrade" aria-hidden />
       </Reveal>
-      <Reveal className="gw-venue-text" delay={120}>
-        <h3 className="gw-venue-name wk-foil-text">{event.venue}</h3>
-        {event.address && <p className="gw-venue-addr">{event.address}</p>}
-        {map && (
-          <a className="wk-btn" href={map} target="_blank" rel="noopener noreferrer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-              <path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z" />
-            </svg>
-            {directions}
-          </a>
+      <div className="gw-venue-cols">
+        <Reveal className="gw-venue-text" delay={100}>
+          <h3 className="gw-venue-name wk-foil-text">{event.venue}</h3>
+          {event.address && <p className="gw-venue-addr">{event.address}</p>}
+          <div className="gw-venue-btns">
+            {link && (
+              <a className="wk-btn" href={link} target="_blank" rel="noopener noreferrer" lang={lang}>
+                <Icon d={ICON.pin} /> {l.directions}
+              </a>
+            )}
+            {q && !map && (
+              <button type="button" className="wk-btn wk-btn-ghost" onClick={() => setMap(true)} lang={lang}>
+                {l.map}
+              </button>
+            )}
+          </div>
+          {map && q && (
+            <div className="gw-venue-map">
+              <iframe title={q} src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            </div>
+          )}
+        </Reveal>
+        {gettingThere && (
+          <Reveal className="gw-venue-travel wk-card" delay={180}>
+            <p className="gw-know-h" lang={lang}>
+              {l.gettingThere}
+            </p>
+            <p className="gw-know-t">{gettingThere}</p>
+          </Reveal>
         )}
-      </Reveal>
+      </div>
     </div>
   );
 }

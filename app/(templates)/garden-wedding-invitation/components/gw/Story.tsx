@@ -1,13 +1,29 @@
 "use client";
 
-// ─── The royal story: chapters along a gold line drawn by the scroll ────────
+// ─── Our story: chapters along a garden vine the scroll grows ────────────────
 // One passive scroll listener, rAF-throttled and only while the section is on
-// screen, writes ONE custom property (--gw-p, 0→1) on the section; the line's
-// scaleY and the drifting ornaments read it (transform only).
+// screen, writes ONE custom property (--gw-p, 0→1) on the section; the vine's
+// scaleY and the drifting cherry branch read it (transform only). Each chapter
+// photo sits in an arched frame (the sender's crop + zoom kept), the text
+// rises in beside it; phones read one column, wide screens alternate sides.
 
 import { useEffect, useRef } from "react";
-import { Ornament, Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { GW, gwImg } from "../assets";
 import type { GwChapter } from "./model";
+
+function Bud() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden focusable="false">
+      <circle cx="13" cy="13" r="12" fill="#fffaf8" stroke="currentColor" strokeWidth="1.2" />
+      <g fill="#f4b6c6" stroke="#b4596c" strokeWidth=".8">
+        <path d="M13 6c2.6 2.6 2.6 6.4 0 9.6-2.6-3.2-2.6-7 0-9.6z" />
+        <path d="M13 15.6c-1.6-2.9-4.6-4.6-7.6-4.3.6 3.3 3.6 5.2 7.6 4.3zM13 15.6c1.6-2.9 4.6-4.6 7.6-4.3-.6 3.3-3.6 5.2-7.6 4.3z" />
+      </g>
+      <path d="M8.5 19h9" stroke="#9db89a" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default function Story({ chapters }: { chapters: GwChapter[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -51,10 +67,12 @@ export default function Story({ chapters }: { chapters: GwChapter[] }) {
   return (
     <div className="gw-story" ref={ref}>
       <span className="gw-drift gw-drift-a" aria-hidden>
-        <Ornament id="peacock" width={150} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...gwImg(GW.blossom, { lazy: true })} />
       </span>
       <span className="gw-drift gw-drift-b" aria-hidden>
-        <Ornament id="paisley" width={90} flip="x" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...gwImg(GW.rose, { lazy: true })} />
       </span>
       <span className="gw-story-rail" aria-hidden>
         <i />
@@ -63,7 +81,7 @@ export default function Story({ chapters }: { chapters: GwChapter[] }) {
         {chapters.map((c, i) => (
           <li key={i} className={`gw-ch${i % 2 ? " is-alt" : ""}${c.photo ? "" : " no-photo"}`}>
             <span className="gw-ch-dot" aria-hidden>
-              <Ornament id="lotus" width={26} />
+              <Bud />
             </span>
             {c.photo && (
               <Reveal className="gw-ch-photo" effect="zoom">

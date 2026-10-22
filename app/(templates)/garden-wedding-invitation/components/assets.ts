@@ -25,6 +25,9 @@ export const GW_ASSETS = {
     "14-couple-lehenga": { src: "/wedding-v3/template1/14-couple-lehenga.webp", w: 589, h: 800 },
     "15-rose-stem": { src: "/wedding-v3/template1/15-rose-stem.webp", w: 378, h: 800 },
     "card": { src: "/wedding-v3/template1/card.webp", w: 600, h: 847 },
+    // Derived for this template (scratchpad derive.cjs): a lighter cloud and the OG backdrop.
+    "gw-cloud-2-900": { src: "/wedding-v3/template1/gw-cloud-2-900.webp", w: 900, h: 609 },
+    "gw-og": { src: "/wedding-v3/template1/gw-og.jpg", w: 1200, h: 630 },
   },
   "template6": {
     "01-sky-watercolour-background": { src: "/wedding-v3/template6/01-sky-watercolour-background.webp", w: 1800, h: 1013 },
@@ -40,6 +43,10 @@ export const GW_ASSETS = {
     "11-white-balustrade-railing": { src: "/wedding-v3/template6/11-white-balustrade-railing.webp", w: 800, h: 266 },
     "12-mountains-lake-landscape-cutout": { src: "/wedding-v3/template6/12-mountains-lake-landscape-cutout.webp", w: 1091, h: 470 },
     "card": { src: "/wedding-v3/template6/card.webp", w: 600, h: 852 },
+    // Derived: the flamingo band alone, the lake view above the sofa couple, a phone-sized banana plant.
+    "gw-flamingo-top": { src: "/wedding-v3/template6/gw-flamingo-top.webp", w: 960, h: 346 },
+    "gw-lake-venue": { src: "/wedding-v3/template6/gw-lake-venue.webp", w: 1091, h: 380 },
+    "gw-banana-a-800": { src: "/wedding-v3/template6/gw-banana-a-800.webp", w: 540, h: 800 },
   },
   "template11": {
     "01-banana-plant": { src: "/wedding-v3/template11/01-banana-plant.webp", w: 1215, h: 1600 },
@@ -52,6 +59,7 @@ export const GW_ASSETS = {
     "08-hanging-lanterns-blossoms": { src: "/wedding-v3/template11/08-hanging-lanterns-blossoms.webp", w: 468, h: 800 },
     "09-peacock-with-flowers": { src: "/wedding-v3/template11/09-peacock-with-flowers.webp", w: 435, h: 800 },
     "card": { src: "/wedding-v3/template11/card.webp", w: 600, h: 240 },
+    "gw-banana-800": { src: "/wedding-v3/template11/gw-banana-800.webp", w: 608, h: 800 },
   },
   "template9": {
     "00-background-colour": { src: "/wedding-v3/template9/00-background-colour.webp", w: 1013, h: 1800 },
@@ -61,8 +69,74 @@ export const GW_ASSETS = {
     "04-peony-tree-right-with-lotus-leaves": { src: "/wedding-v3/template9/04-peony-tree-right-with-lotus-leaves.webp", w: 296, h: 1029 },
     "05-gold-lattice-arch-top-panel": { src: "/wedding-v3/template9/05-gold-lattice-arch-top-panel.webp", w: 1091, h: 380 },
     "card": { src: "/wedding-v3/template9/card.webp", w: 600, h: 852 },
+    // Derived: the lattice band and arch crown above the panel's baked-in text.
+    "gw-lattice-top": { src: "/wedding-v3/template9/gw-lattice-top.webp", w: 1091, h: 150 },
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
 /** The gallery card (also the template's coverImage). */
 export const GW_CARD = "/wedding-v3/template1/card.webp";
+
+const T1 = GW_ASSETS.template1;
+const T6 = GW_ASSETS.template6;
+const T11 = GW_ASSETS.template11;
+const T9 = GW_ASSETS.template9;
+
+/** The pieces the garden is built from, by role. */
+export const GW = {
+  sky: T6["01-sky-watercolour-background"],
+  cloudA: T1["01-cloud-1"],
+  cloudB: T1["gw-cloud-2-900"],
+  gazebo: T1["05-gazebo-with-garden-1"],
+  gazebo2x: T1["06-gazebo-with-garden-2"],
+  gazeboDome: T11["07-pink-gazebo-dome"],
+  pavilion: T9["01-floral-gazebo-pavilion"],
+  couple: T1["14-couple-lehenga"],
+  coupleSofa: T6["07-couple-on-sofa-mehndi"],
+  couplePeach: T9["02-couple-illustration-peach"],
+  peacock: T1["08-peacock"],
+  peacockFlowers: T11["09-peacock-with-flowers"],
+  lantern: T1["04-pink-lantern"],
+  lanterns: T11["08-hanging-lanterns-blossoms"],
+  chhatri: T1["12-pink-chhatri-umbrella"],
+  hedge: T1["13-hedge-stone-wall"],
+  rocks: T1["09-garden-rocks"],
+  rose: T1["15-rose-stem"],
+  bananaL: T11["gw-banana-800"],
+  bananaR: T6["gw-banana-a-800"],
+  bananaB: T6["08-banana-plant-b"],
+  palm: T6["09-palm-frond"],
+  anthurium: T6["05-anthurium-floral-bunch"],
+  shrub: T6["06-green-tree-shrub"],
+  balustrade: T6["11-white-balustrade-railing"],
+  lake: T6["gw-lake-venue"],
+  flamingos: T6["gw-flamingo-top"],
+  lotus: T11["02-lotus-cluster-pink"],
+  lotusStems: T11["05-lotus-tall-stems"],
+  fountain: T11["03-stone-fountain"],
+  leaf: T11["04-tropical-leaf-plant"],
+  blossom: T11["06-cherry-blossom-branch"],
+  peonyL: T9["03-peony-tree-left-with-lotus-leaves"],
+  peonyR: T9["04-peony-tree-right-with-lotus-leaves"],
+  lattice: T9["gw-lattice-top"],
+  og: T1["gw-og"],
+} as const;
+
+/**
+ * <img> props for one asset: intrinsic width/height (no layout shift), async
+ * decode, lazy below the fold, high priority for the opening scene, and an
+ * optional 2× source (the 800 / 1600 gazebo pair).
+ */
+export function gwImg(a: WeddingAsset, o: { lazy?: boolean; high?: boolean; alt?: string; hi?: WeddingAsset; sizes?: string } = {}) {
+  return {
+    src: a.src,
+    ...(o.hi ? { srcSet: `${a.src} ${a.w}w, ${o.hi.src} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
+    width: a.w,
+    height: a.h,
+    alt: o.alt ?? "",
+    decoding: "async" as const,
+    loading: o.lazy ? ("lazy" as const) : ("eager" as const),
+    ...(o.high ? { fetchPriority: "high" as const } : {}),
+    draggable: false,
+  };
+}
