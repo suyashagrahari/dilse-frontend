@@ -1,72 +1,72 @@
-// ─── Royal: which pack art each theme wears ──────────────────────────────────
-// One small map (spec 3.2: per-theme plates + two art families, shared gold).
-// Light themes (blush / champagne / powder) get daylight scenes, the painted
-// caparisoned elephant and the watercolour Taj; dark themes (maroon / noir /
-// emerald) get the lamp-lit interiors, the gold elephant and the lake palace.
+// ─── Lotus Temple: the owner's art, served from /public/wedding-v3 ───────────
+// Every image here lives in the repo (client/public/wedding-v3/<folder>/) and is
+// served from the site's own origin. Nothing comes from S3 or the CDN.
 
-import { art, art2x, type WeddingArtId } from "../../../_wedding/art";
-import type { WeddingThemeId } from "../../../_wedding/themes";
+import { LW_ASSETS, type WeddingAsset } from "../assets";
 
-export interface LotusArt {
-  /** Full-bleed 9:16 backdrop behind the gates and every section. */
-  plate: WeddingArtId;
-  /** The courtyard seen through the open gates (dimmed, behind the jharokha). */
-  scene: WeddingArtId;
-  /** How much of the scene shows through the theme wash. */
-  sceneOpacity: number;
-  /** Both elephant arts face left; the left-hand one is mirrored to face in. */
-  elephant: WeddingArtId;
-  /** The palace painting in the venue section. */
-  venue: WeddingArtId;
-  dark: boolean;
-}
+/** The pieces this template uses, by a short name. */
+export const A = {
+  lights: LW_ASSETS.template12["01-gold-string-lights"],
+  leafLarge: LW_ASSETS.template12["02-gold-lotus-leaf-large"],
+  bloomStem: LW_ASSETS.template12["03-white-gold-lotus-bloom-stem"],
+  leafStem: LW_ASSETS.template12["04-gold-lotus-leaf-on-stem"],
+  bloomOpen: LW_ASSETS.template12["05-white-gold-lotus-open"],
+  leafTilt: LW_ASSETS.template12["06-gold-lotus-leaf-tilted"],
+  budA: LW_ASSETS.template12["07-white-gold-lotus-bud-a"],
+  podA: LW_ASSETS.template12["08-gold-lotus-seed-pod-a"],
+  podB: LW_ASSETS.template12["09-gold-lotus-seed-pod-b"],
+  budB: LW_ASSETS.template12["10-white-gold-lotus-bud-b"],
+  tile: LW_ASSETS.template12["12-cream-geometric-pattern-tile"],
+  lotusCluster: LW_ASSETS.template10["01-lotus-cluster-pink"],
+  pondStems: LW_ASSETS.template10["02-lotus-pond-stems"],
+  lotusPair: LW_ASSETS.template10["03-lotus-pair-with-leaves"],
+  banana: LW_ASSETS.template10["04-banana-leaf"],
+  gopuram: LW_ASSETS.template10["05-south-indian-temple-gopuram"],
+  umbrella: LW_ASSETS.template10["06-hanging-embroidered-umbrella"],
+  garland: LW_ASSETS.template10["07-marigold-garland-top-border"],
+  shriGanesh: LW_ASSETS.template10["08-shri-ganeshay-namah-text"],
+  lamp: LW_ASSETS.template5["01-hanging-brass-lamp"],
+  couple: LW_ASSETS.template5["02-couple-red-saree"],
+  gopuramFaded: LW_ASSETS.template5["03-temple-gopuram-faded"],
+  ganesha: LW_ASSETS.template5["04-ganesha-red"],
+  lampsPair: LW_ASSETS.template5["05-hanging-lamps-pair"],
+  divider: LW_ASSETS.template5["06-divider"],
+  hands: LW_ASSETS.template4["01-bride-groom-hands"],
+  ganeshaLotus: LW_ASSETS.template4["02-ganesha-red"],
+  cornerL: LW_ASSETS.template4["03-corner-ornament-left"],
+  cornerR: LW_ASSETS.template4["04-corner-ornament-right"],
+  // Right-sized copies of the owner's art (public/wedding-v3/lotus/): the originals are 1600px for a ≤520px slot.
+  swing: { src: "/wedding-v3/lotus/couple-on-marigold-swing-760.webp", w: 760, h: 1294 },
+  branch: { src: "/wedding-v3/lotus/mossy-tree-branch-1000.webp", w: 1000, h: 547 },
+  feather: LW_ASSETS.template7["03-peacock-feather"],
+} satisfies Record<string, WeddingAsset>;
 
-const LIGHT = { elephant: "royal/elephant-caparisoned-painted-01", venue: "scene/taj-mahal-watercolor-01", sceneOpacity: 0.55, dark: false } as const;
-const DARK = { elephant: "royal/elephant-gold-ornate-01", venue: "scene/jal-mahal-lake-palace-01", sceneOpacity: 0.46, dark: true } as const;
+export type ArtKey = keyof typeof A;
 
-export const LW_ART: Record<WeddingThemeId, LotusArt> = {
-  blush: { ...LIGHT, plate: "plate/royal-blush", scene: "scene/palace-corridor-arches-01" },
-  champagne: { ...LIGHT, plate: "plate/royal-champagne", scene: "scene/udaipur-city-palace-interior-01" },
-  powder: { ...LIGHT, plate: "plate/royal-powder", scene: "scene/jal-mahal-lake-palace-01" },
-  maroon: { ...DARK, plate: "plate/royal-maroon", scene: "scene/palace-corridor-arches-01" },
-  noir: { ...DARK, plate: "plate/royal-noir", scene: "scene/udaipur-city-palace-interior-01" },
-  emerald: { ...DARK, plate: "plate/royal-emerald", scene: "scene/jal-mahal-lake-palace-01" },
-};
-
-export const lotusArt = (theme: WeddingThemeId): LotusArt => LW_ART[theme] ?? LW_ART.maroon;
-
-/** <img> props for one pack image: 1×/2× srcSet + intrinsic size (no layout shift). */
-export function artImg(id: WeddingArtId, opts: { lazy?: boolean; high?: boolean; one?: boolean } = {}) {
-  const a = art(id);
+/** <img> props for one piece: intrinsic size (no layout shift), lazy or eager. */
+export function img(key: ArtKey, opts: { lazy?: boolean; high?: boolean } = {}) {
+  const a = A[key];
   return {
     src: a.src,
-    // Soft, dimmed layers ship 1× only (spec 7.1: blurry art scales up for free).
-    ...(opts.one ? {} : { srcSet: a.srcSet }),
     width: a.w,
     height: a.h,
     alt: "",
     decoding: "async" as const,
     loading: opts.lazy ? ("lazy" as const) : ("eager" as const),
+    draggable: false,
     ...(opts.high ? { fetchPriority: "high" as const } : {}),
   };
 }
 
-export { art, art2x };
-
-/** Wait for these <img>s to decode (spec 7.1.7), but never longer than `cap` ms. */
+/** Wait for these <img>s to decode, but never longer than `cap` ms. */
 export function decodeAll(imgs: (HTMLImageElement | null | undefined)[], cap = 1200): Promise<void> {
   const list = imgs.filter((i): i is HTMLImageElement => !!i);
   const all = Promise.all(list.map((i) => (i.decode ? i.decode().catch(() => undefined) : undefined))).then(() => undefined);
   return Promise.race([all, new Promise<void>((r) => window.setTimeout(r, cap))]);
 }
 
-/** A seeded PRNG so particle layouts render identically every time. */
+/** A seeded PRNG so particle layouts render identically every time (no hydration drift). */
 export function seeded(seed: number) {
   let s = seed >>> 0 || 1;
   return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 }
-
-/** Hotlinked GIPHY stickers (never downloaded; LEDGER.md GIFS table). */
-export const GIF = {
-  dhol: "https://media.giphy.com/media/BhUsVxOppv7jcmUrDy/giphy.gif",
-} as const;
