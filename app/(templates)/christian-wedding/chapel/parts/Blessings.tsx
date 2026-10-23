@@ -196,7 +196,7 @@ export default function Blessings({ wishes, shareId, mode, couple }: { wishes: W
         )}
       </Reveal>
       {list.length > 0 && (
-        <ul className="cw-wall">
+        <ul className={`cw-wall n${Math.min(list.length, 3)}`}>
           {list.slice(0, 60).map((w, i) => (
             <Reveal as="li" key={`${w.name}-${i}`} className="cw-wish" delay={(i % 3) * 70}>
               <span className="cw-wish-q" aria-hidden>

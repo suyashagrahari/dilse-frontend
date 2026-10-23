@@ -87,7 +87,9 @@ body:has(.cw-root) .vm-icon-ring { background: conic-gradient(from 0deg, #c2a165
 
 .cw-gate-copy { position: absolute; z-index: 10; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 1.6svh); width: min(94vw, 560px); transform: translateX(-50%); text-align: center; padding: 1.4svh 18px 3svh; display: flex; flex-direction: column; align-items: center; gap: .55svh; pointer-events: none;
   background: radial-gradient(closest-side, rgba(251,247,239,.97) 0%, rgba(251,247,239,.9) 52%, rgba(251,247,239,.55) 78%, rgba(251,247,239,0) 100%); transition: opacity .5s ease, transform .7s var(--cw-ease); }
-.cw-gate-dear { margin: 0; font: italic 500 clamp(15px, 2.3svh, 19px)/1.25 var(--wk-font-display); color: #6f655a; }
+.cw-gate-dear { margin: 0; max-width: calc(100vw - 172px); font: italic 500 clamp(15px, 2.3svh, 19px)/1.25 var(--wk-font-display); color: #6f655a; text-wrap: balance; }
+@media (min-width: 760px) { .cw-gate-dear { max-width: none; } }
+.cw-gate-dear .cw-nowrap { white-space: nowrap; }
 .cw-gate-dear b { font-style: normal; font-weight: 600; color: #a9646d; }
 .cw-gate-eyebrow { margin: 0; font: 600 clamp(10.5px, 1.5svh, 13px)/1.2 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: #6f8a6c; }
 .cw-gate-names { margin: 0; font: 400 clamp(38px, 6.4svh, 66px)/1.02 var(--wk-font-script); color: #3b342c; text-wrap: balance; text-shadow: 0 1px 0 rgba(255,255,255,.8), 0 0 18px rgba(255,250,238,.95); }
@@ -256,7 +258,7 @@ body:has(.cw-root) .vm-icon-ring { background: conic-gradient(from 0deg, #c2a165
 .cw-person-line { margin: 8px auto 0; max-width: 26rem; font: 400 16px/1.6 var(--wk-font-sans); color: var(--wk-muted); }
 
 /* ── Order of service ──────────────────────────────────────────────────── */
-.cw-service { max-width: 760px; padding-top: calc(min(700px, 112vw) * .3 + 34px); }
+.cw-service.cw-sec { max-width: 760px; padding-top: calc(min(700px, 112vw) * .3 + 34px); }
 .cw-service-ivy { position: absolute; top: 0; left: 50%; width: min(700px, 112vw); height: auto; transform: translateX(-50%); pointer-events: none; opacity: .9;
   -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 78%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 30%, transparent 78%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); mask-composite: intersect; }
 .cw-service-list { list-style: none; margin: 0 auto; padding: 22px 18px; max-width: 560px; border-radius: 24px; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: 0 22px 44px -32px rgba(70,55,30,.6); position: relative; }
@@ -376,6 +378,9 @@ body:has(.cw-root) .vm-icon-ring { background: conic-gradient(from 0deg, #c2a165
 .cw-bless-done p { margin: 0; font: 400 16px/1.5 var(--wk-font-sans); color: var(--wk-muted); }
 .cw-bless-done b { font: 600 19px/1.3 var(--wk-font-display); color: var(--wk-ink); }
 .cw-wall { list-style: none; margin: 0 auto; padding: 0; columns: 1; column-gap: 16px; max-width: 1060px; }
+.cw-wall.n1 { max-width: 520px; columns: 1 !important; }
+.cw-wall.n2 { max-width: 760px; columns: 2 !important; }
+@container cwpage (max-width: 699px) { .cw-wall.n2 { columns: 1 !important; } }
 .cw-wish { break-inside: avoid; position: relative; margin: 0 0 16px; padding: 22px 18px 16px; border-radius: 20px; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); }
 .cw-wish:nth-child(3n+2) { background: var(--cw-sage-soft); }
 .cw-wish:nth-child(3n+3) { background: var(--cw-rose-soft); }
@@ -432,8 +437,10 @@ body:has(.cw-root) .vm-icon-ring { background: conic-gradient(from 0deg, #c2a165
   .cw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; width: 100%; }
   .cw-hero-art { width: min(42vw, 520px); }
   .cw-hero-names { font-size: clamp(72px, 7vw, 110px); }
-  .cw-hero-pampas { width: 300px; }
+  .cw-hero-pampas { width: min(18vw, 250px); bottom: -40px; opacity: .75; }
+  .cw-hero-copy { position: relative; z-index: 2; }
   .cw-ev-grid.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cw-ev-grid.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 900px; }
   .cw-wall { columns: 3; }
   .cw-know { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cw-church-col { height: 440px; }

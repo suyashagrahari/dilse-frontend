@@ -300,7 +300,7 @@ export default function ChapelDoors({ first, second, dateLine, guest, replayKey 
       <div className="cw-gate-copy">
         {guest && (
           <p className="cw-gate-dear">
-            Dear <b>{guest}</b>, you are invited
+            Dear <b>{guest}</b>, <span className="cw-nowrap">you are invited</span>
           </p>
         )}
         <p className="cw-gate-eyebrow">Join us at the altar</p>

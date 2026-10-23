@@ -29,7 +29,7 @@ export default function Events({ events, couple, icons }: { events: WeddingEvent
   return (
     <section className="cw-sec cw-events" id="events" aria-labelledby="cw-events-h">
       <Heading eyebrow="Celebrate with us" title="The wedding days" id="cw-events-h" />
-      <ul className={`cw-ev-grid n${Math.min(events.length, 3)}`}>
+      <ul className={`cw-ev-grid n${events.length === 4 ? 4 : Math.min(events.length, 3)}`}>
         {events.map((e, i) => {
           const d = e.date ? dayParts(e.date) : null;
           const time = e.time ? formatEventTime(e.time, "en-IN") : "Time to be announced";
