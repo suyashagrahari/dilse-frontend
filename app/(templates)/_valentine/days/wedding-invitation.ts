@@ -168,9 +168,9 @@ export const WI_DEMO_PHOTOS: LovePhoto[] = [
   { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Bangles & henna", span: "wide" },
   { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35, caption: "Just us" },
   { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 40 },
-  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "The rings" },
-  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, span: "wide" },
+  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 40, span: "tall" },
+  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "The rings", span: "wide" },
+  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50 },
   { url: `${DEMO_BASE}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 55 },
   { url: `${DEMO_BASE}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
 ];
