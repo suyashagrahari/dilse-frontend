@@ -134,7 +134,7 @@ export default function RSVPBlock({
     onSubmitted?.(clean);
   };
 
-  const first = draft.guestName.trim().split(/\s+/)[0] || "";
+  const first = /^the\s/i.test(draft.guestName.trim()) ? draft.guestName.trim() : draft.guestName.trim().split(/\s+/)[0] || "";
   if (phase === "done") {
     const yes = draft.attending === "yes";
     const maybe = draft.attending === "maybe";
