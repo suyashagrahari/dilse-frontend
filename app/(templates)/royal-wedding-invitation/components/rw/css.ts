@@ -171,14 +171,14 @@ export const RW_CSS = `
 .rw-court-sunburst { position: absolute; left: 50%; top: 44%; width: 96%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%) scale(.7); opacity: 0; background: radial-gradient(closest-side, rgba(255,248,226,.95) 0%, rgba(255,236,190,.6) 40%, rgba(255,228,180,0) 72%), repeating-conic-gradient(from 0deg, rgba(214,170,80,.22) 0deg 5deg, rgba(214,170,80,0) 5deg 15deg); -webkit-mask: radial-gradient(closest-side, #000 35%, transparent 100%); mask: radial-gradient(closest-side, #000 35%, transparent 100%); transition: transform 1.6s var(--rw-ease) .2s, opacity 1.2s ease .2s; }
 .rw-court.is-open .rw-court-sunburst { transform: translate(-50%,-50%); opacity: 1; animation: rw-turn 80s linear 1.8s infinite; }
 @keyframes rw-turn { from { rotate: 0deg; } to { rotate: 360deg; } }
-.rw-court-chhatri { position: absolute; bottom: 6%; height: 72%; width: auto; opacity: 0; transition: transform 1.3s var(--rw-ease) .45s, opacity 1s ease .45s; filter: drop-shadow(6px 12px 12px rgba(120,40,60,.16)); }
+.rw-court-chhatri { position: absolute; bottom: 6%; height: 72%; width: auto; opacity: 0; transition: transform 1.3s var(--rw-ease) .25s, opacity .8s ease .25s; filter: drop-shadow(6px 12px 12px rgba(120,40,60,.16)); }
 .rw-court-chhatri.is-l { left: -3%; transform: translate3d(-24%, 10%, 0) rotate(-4deg); transform-origin: 50% 100%; }
 .rw-court-chhatri.is-r { right: -3%; transform: translate3d(24%, 10%, 0) scaleX(-1) rotate(-4deg); transform-origin: 50% 100%; }
 .rw-court.is-open .rw-court-chhatri.is-l { opacity: 1; transform: rotate(-4deg); }
 .rw-court.is-open .rw-court-chhatri.is-r { opacity: 1; transform: scaleX(-1) rotate(-4deg); }
 .rw-court-couple { position: absolute; left: 50%; bottom: 3%; height: 90%; aspect-ratio: 446 / 800; transform: translateX(-50%); }
-.rw-court-carpet { position: absolute; left: -48%; width: 196%; bottom: -3%; height: auto; max-width: none; opacity: 0; transform: scaleX(.5); transition: transform 1s var(--rw-ease) .7s, opacity .8s ease .7s; }
-.rw-court-pair { position: absolute; left: 0; bottom: 2%; width: 100%; height: auto; opacity: 0; transform: translateY(10%); transition: transform 1.3s var(--rw-ease) .6s, opacity 1s ease .6s; filter: drop-shadow(0 14px 14px rgba(90,40,10,.28)); }
+.rw-court-carpet { position: absolute; left: -48%; width: 196%; bottom: -3%; height: auto; max-width: none; opacity: 0; transform: scaleX(.5); transition: transform 1s var(--rw-ease) .2s, opacity .6s ease .2s; }
+.rw-court-pair { position: absolute; left: 0; bottom: 2%; width: 100%; height: auto; opacity: 0; transform: translateY(6%); transition: transform 1.1s var(--rw-ease) .08s, opacity .45s ease .08s; filter: drop-shadow(0 14px 14px rgba(90,40,10,.28)); }
 .rw-court.is-open .rw-court-carpet { opacity: 1; transform: none; }
 .rw-court.is-open .rw-court-pair { opacity: 1; transform: none; }
 .rw-portrait { position: absolute; left: 50%; top: 6%; width: 50%; aspect-ratio: 4 / 5; transform: translateX(-50%) scale(.86); opacity: 0; border-radius: clamp(14px, 2vw, 20px); overflow: hidden; background: #F2DCAC; box-shadow: 0 0 0 1px color-mix(in srgb, var(--wk-gold) 70%, transparent), 0 0 0 6px var(--wk-surface-solid), 0 0 0 7px color-mix(in srgb, var(--wk-gold) 50%, transparent), 0 24px 40px -22px rgba(90,40,20,.6); transition: transform 1.2s cubic-bezier(.34,1.4,.64,1) .55s, opacity .8s ease .55s; }
