@@ -17,6 +17,7 @@ import StoryReview from "@/components/story/StoryReview";
 import type { StoryFill } from "@/components/story/storyFillContract";
 import { QUICK_FUNCTIONS, normalisePhone } from "../../lib/model";
 import { A } from "../../lib/art";
+import { setFillSource } from "../../lib/factCheck";
 
 const KEY = "ss:guided-wedding:v1";
 
@@ -211,12 +212,16 @@ export default function AiWeddingSheet({ fill, open, onClose, onManual }: { fill
       setTouched(true);
       return;
     }
-    fill.generateGuided?.({ people, story: composeWeddingStory(a), hints });
+    const story = composeWeddingStory(a);
+    setFillSource(story);
+    fill.generateGuided?.({ people, story, hints });
   };
   const generateOwn = () => {
     const text = a.freeText.trim();
     if (text.length < 20) return;
-    fill.generateGuided?.({ people, story: [namesOk ? `Bride: ${a.bride.trim()}. Groom: ${a.groom.trim()}.` : "", text].filter(Boolean).join("\n"), hints });
+    const story = [namesOk ? `Bride: ${a.bride.trim()}. Groom: ${a.groom.trim()}.` : "", text].filter(Boolean).join("\n");
+    setFillSource(story);
+    fill.generateGuided?.({ people, story, hints });
   };
 
   if (!open || !fill.schema) return null;

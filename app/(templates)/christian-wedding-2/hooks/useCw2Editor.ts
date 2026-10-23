@@ -21,6 +21,7 @@ import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { DEMO, fromDoc, namesOf, newEventId, toBody, type Cw2Data } from "../lib/model";
+import { factCheck, takeFillSource } from "../lib/factCheck";
 import type { Wish } from "../components/Wishes";
 
 const SLUG = "christian-wedding-2";
@@ -121,7 +122,8 @@ export function useCw2Editor() {
     slug: SLUG,
     demo: DEMO,
     current: mf,
-    onFilled: (n) => setMf(tidyAfterFill(n)),
+    // A fresh generation is checked against the words that were sent (one-shot; edits pass straight through).
+    onFilled: (n) => setMf(factCheck(tidyAfterFill(n), takeFillSource())),
     namePaths: { recipient: "brideName", sender: "groomName" },
   });
 
