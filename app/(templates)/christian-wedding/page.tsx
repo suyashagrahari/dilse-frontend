@@ -29,6 +29,7 @@ const DOCK_CSS = `
 .cwp-btn.is-main { border-color: transparent; color: #fffdf8; background: linear-gradient(110deg, #7d9a7a, #5b7659); box-shadow: 0 10px 22px -12px rgba(40,50,30,.7); }
 .cwp-btn:disabled { opacity: .7; }
 body:has(.cwp-dock) .cw-page { padding-bottom: 96px; }
+@media (max-width: 400px) { .cwp-dock { gap: 6px; padding: 5px; } .cwp-btn { padding: 0 12px; font-size: 14px; gap: 5px; } }
 @media (prefers-reduced-motion: reduce) { .cwp-dock { animation: none; } }
 `;
 

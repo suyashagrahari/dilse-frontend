@@ -152,11 +152,12 @@ select.cwe-input { background-image: linear-gradient(45deg, transparent 50%, cur
 .cwe-full:has(.cw-gate) .cwe-full-bar { display: none; }
 
 .cwe-pane { display: none; }
-body:has(.cwe) .vm-icon { left: auto !important; right: 12px !important; top: auto !important; bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; z-index: 160 !important; transform: scale(1.1) !important; box-shadow: 0 10px 22px -12px rgba(80,60,30,.55), 0 0 0 1px rgba(194,161,101,.6) !important; }
+body:has(.cwe) .vm-icon { left: auto !important; right: 12px !important; top: calc(env(safe-area-inset-top, 0px) + 6px) !important; bottom: auto !important; z-index: 160 !important; transform: none !important; box-shadow: 0 10px 22px -12px rgba(80,60,30,.55), 0 0 0 1px rgba(194,161,101,.6) !important; }
 body:has(.cwe) .vm-icon-btn { color: #87683a !important; background: radial-gradient(circle at 50% 38%, #fffdf8, #f3ead9 72%) !important; }
 body:has(.cwe) .vm-icon-eq i { background: #87683a !important; }
-@media (min-width: 1024px) { body:has(.cwe) .vm-icon { bottom: 20px !important; right: 20px !important; } }
+@media (min-width: 1024px) { body:has(.cwe) .vm-icon { top: auto !important; bottom: 20px !important; right: 20px !important; transform: scale(1.1) !important; } }
 .cwe-top-save { display: none; }
+@media (max-width: 1023px) { .cwe-top { padding-right: 64px; min-height: calc(56px + env(safe-area-inset-top, 0px)); } }
 
 @media (max-width: 370px) { .cwe-hide-xs { display: none; } }
 
