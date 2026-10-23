@@ -12,22 +12,23 @@
 // planned by the server: the picker shows how many each intent reaches, and
 // everyone not included is listed with the reason. Nobody is skipped silently.
 //
-// CONNECT OR PITCH. A personal first email is a Connect note by default: a
-// hello asking to connect — nothing about SubhSandesh, no numbers, no links,
-// no screenshot (those are saved for after they reply). Pitch is the earlier
-// first email. A follow-up to a Connect note stays a hello; the Reply, once
-// they answer, gives the full context.
+// CONNECT ONLY. Every first email is a personal Connect note: a hello asking
+// to connect — nothing about SubhSandesh, no numbers, no links, no screenshot
+// (those are saved for after they reply). The server enforces it, so there is
+// no style or Pitch picker. A follow-up to a Connect note stays a hello; the
+// Reply, once they answer, gives the full context.
 //
 // TWO DRAFTS. Generate writes two angles (A / B); switch between them, or
 // Regenerate for a fresh pair.
 //
 // The right-hand side is the server's own verdict, refreshed as you type: the
-// Inbox check, the spam check that gates Send, and the exact email one chosen
-// recipient will receive — From "Yash from SubhSandesh <yash@subhsandesh.in>"
-// as the server reports it, signed by Yash, sent on the quiet SES lane.
+// Spam and Promotions risk scores (with what raises them, and "Make it more
+// personal" to rewrite it lower), the Inbox check, the spam check that gates
+// Send, and the exact email one chosen recipient will receive — From
+// "Suyash <suyash@subhsandesh.in>" as the server reports it.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, BarChart3, CheckCircle2, Clock, Eye, ImageIcon, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, Clock, Eye, Gauge, ImageIcon, Inbox, Info, Loader2, MessageCircleQuestion, Send, ShieldCheck, Sparkles, Users, Wand2, XCircle } from "lucide-react";
 import { A } from "../../adminKit";
 import { KIND_LABEL, SOURCE_LABEL, Sheet, ago, api, senderLine, when, type DeployStatus, type FirstTouch, type JobKind, type OutreachStyle, type Proof } from "./shared";
 
@@ -49,6 +50,16 @@ interface EligibleRow {
   sentDates?: string[];
   recent?: string;
   notInterested?: boolean;
+}
+
+type RiskLevel = "low" | "medium" | "high";
+interface Deliverability {
+  spam: number;
+  promotions: number;
+  spamLevel: RiskLevel;
+  promotionsLevel: RiskLevel;
+  factors: { id: string; affects: "spam" | "promotions" | "both"; points: number; label: string; fix: string }[];
+  good: string[];
 }
 
 interface Preview {
@@ -75,6 +86,8 @@ interface Preview {
   image?: { url: string; alt: string; source: string; mime: string } | null;
   proof?: { id: string; allowedNumbers?: string[]; attach: boolean } | null;
   inboxCheck?: { ok: boolean; label: string; warn?: boolean }[];
+  /** Spam / Promotions risk for this recipient's email, 0–100. */
+  deliverability?: Deliverability;
   personalBlocked?: string;
   eligible: EligibleRow[];
   skipped: { id: string; name: string; reason: string }[];
@@ -91,8 +104,7 @@ interface Draft {
   subjectFallback?: boolean;
 }
 
-const STYLE_LABEL: Record<OutreachStyle, string> = { personal: "Personal (recommended)", classic: "Classic" };
-const TOUCH_LABEL: Record<FirstTouch, string> = { connect: "Connect (recommended)", pitch: "Pitch" };
+const LEVEL_LABEL: Record<RiskLevel, string> = { low: "Low", medium: "Medium", high: "High" };
 
 /**
  * "Show our numbers" / "Attach the screenshot", remembered per kind of email.
@@ -153,14 +165,16 @@ export default function Composer({
   const [draftIdx, setDraftIdx] = useState(0);
   const [aiBody, setAiBody] = useState<string | null>(null);
   const [note, setNote] = useState("");
-  const [busy, setBusy] = useState<"gen" | "send" | null>(null);
+  const [busy, setBusy] = useState<"gen" | "send" | "improve" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewFor, setPreviewFor] = useState<string>("");
   const [checking, setChecking] = useState(false);
   const [mobileTab, setMobileTab] = useState<"write" | "preview">("write");
-  const [style, setStyle] = useState<OutreachStyle>(status?.defaultStyle || "personal");
-  const [touch, setTouch] = useState<FirstTouch>(status?.defaultTouch || "connect");
+  // First emails are always personal Connect notes (the server enforces it).
+  const style: OutreachStyle = "personal";
+  const touch: FirstTouch = "connect";
   const [intent, setIntent] = useState<JobKind | null>(initialIntent || null);
   const [allowNI, setAllowNI] = useState<boolean>(!!initialAllowNotInterested);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -229,26 +243,38 @@ export default function Composer({
     setMobileTab("write");
   }, [token, ids, note, style, touch, intent, allowNI, applyDraft, numbersOn, proof]);
 
+  // "Make it more personal": the server rewrites with the prospect model and
+  // only hands it back when it passes the spam check and scores lower.
+  const improve = useCallback(async () => {
+    setBusy("improve");
+    setErr(null);
+    setNotice(null);
+    const r = await api<{ data: { improved: boolean; subject: string; body: string; before: Deliverability; after: Deliverability; reason?: string } }>(token, "/prospects/improve", {
+      body: { ids, prospectId: previewFor || undefined, subject, body, style, touch, intent: intent || undefined, allowNotInterested: allowNI || undefined, ...proofBody },
+    });
+    setBusy(null);
+    if (!r.ok) {
+      setErr(r.data.error || "Could not rewrite the email");
+      return;
+    }
+    const d = r.data.data;
+    if (!d.improved) {
+      setNotice(d.reason || "Already as personal as it gets.");
+      return;
+    }
+    if (!subjectLocked) setSubject(d.subject);
+    setBody(d.body);
+    setAiBody(d.body);
+    setReading(`Rewritten to read more personal — spam ${d.before.spam}% → ${d.after.spam}%, Promotions ${d.before.promotions}% → ${d.after.promotions}%`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, ids, previewFor, subject, body, intent, allowNI, numbersOn, imageOn, proofId]);
+
   function setPref(k: "numbers" | "image", v: boolean) {
     const next = { ...prefs, [group]: { ...prefs[group], [k]: v } };
     setPrefs(next);
     savePrefs(next);
     // The numbers line is written by the AI; switching it needs a new draft.
     if (k === "numbers" && status?.aiConfigured && busy === null) void generate({ asNumbers: v });
-  }
-
-  function chooseStyle(next: OutreachStyle) {
-    if (next === style || styleLocked) return;
-    setStyle(next);
-    // The two styles want different emails; a fresh draft fits the new one.
-    if (status?.aiConfigured && busy === null) void generate({ asStyle: next });
-  }
-
-  function chooseTouch(next: FirstTouch) {
-    if (next === touch || busy !== null) return;
-    setTouch(next);
-    // A hello and a pitch are different emails; a fresh draft fits the new one.
-    if (status?.aiConfigured) void generate({ asTouch: next });
   }
 
   function chooseIntent(next: JobKind) {
@@ -380,6 +406,7 @@ export default function Composer({
         <button type="button" data-on={mobileTab === "write" ? "1" : "0"} onClick={() => setMobileTab("write")}>Write</button>
         <button type="button" data-on={mobileTab === "preview" ? "1" : "0"} onClick={() => setMobileTab("preview")}>
           Preview {lint && (lint.ok ? <CheckCircle2 size={12} color={A.ok} /> : <AlertTriangle size={12} color={A.danger} />)}
+          {preview?.deliverability && <i className={`cmp-mscore ${worst(preview.deliverability)}`}>{Math.max(preview.deliverability.spam, preview.deliverability.promotions)}%</i>}
         </button>
       </div>
 
@@ -392,44 +419,6 @@ export default function Composer({
                   {KIND_LABEL[k]}{many && reach ? <i>{reach[k]}</i> : null}
                 </button>
               ))}
-            </div>
-          )}
-          {status?.personal && (
-            <div className="cmp-style" role="radiogroup" aria-label="Email style">
-              {(["personal", "classic"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  role="radio"
-                  aria-checked={effectiveStyle === k}
-                  data-on={effectiveStyle === k ? "1" : "0"}
-                  disabled={styleLocked || busy !== null}
-                  onClick={() => chooseStyle(k)}
-                >
-                  {STYLE_LABEL[k]}
-                </button>
-              ))}
-              <span className="cmp-style-hint">
-                {styleLocked
-                  ? "Kept from the first email, so it comes from the same sender."
-                  : personal
-                    ? `A plain note from ${writer || "one person"}, first person — lands in Primary.`
-                    : "Programme email with footer — often Promotions."}
-              </span>
-            </div>
-          )}
-          {personal && kind === "initial" && (
-            <div className="cmp-style cmp-touch" role="radiogroup" aria-label="First email type">
-              {(["connect", "pitch"] as const).map((k) => (
-                <button key={k} type="button" role="radio" aria-checked={touch === k} data-on={touch === k ? "1" : "0"} disabled={busy !== null} onClick={() => chooseTouch(k)}>
-                  {TOUCH_LABEL[k]}
-                </button>
-              ))}
-              <span className="cmp-style-hint">
-                {touch === "connect"
-                  ? "Just a hello asking to connect — nothing about SubhSandesh. You tell them about it when they reply."
-                  : "Introduces SubhSandesh and the reel idea in the first email."}
-              </span>
             </div>
           )}
           {connect && (
@@ -584,7 +573,7 @@ export default function Composer({
           </label>
           <label className="psp-field">
             <span>Message <em>— {lint ? `${lint.words} words` : "…"} · {personal ? `signed “${signatureText}”; no footer` : "signature and footer are added automatically"}</em></span>
-            <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : connect ? `Hey {{firstName}},\n\n… I'm ${writer || "…"}. I'd love to connect …?` : personal ? `Hey {{firstName}},\n\nI'm ${writer || "…"} from SubhSandesh. …` : "Hi {{firstName}},\n\n…"} onChange={(e) => setBody(e.target.value)} />
+            <textarea ref={bodyRef} rows={13} value={body} placeholder={busy === "gen" ? "Writing a draft…" : connect ? `Hey {{firstName}},\n\n… I'm ${writer || "…"}. I'd love to connect …?` : personal ? `Hey {{firstName}},\n\nI'm ${writer || "…"} from SubhSandesh. …` : "Hi {{firstName}},\n\n…"} onChange={(e) => { setBody(e.target.value); setNotice(null); }} />
           </label>
           {(eligible.length > 1 || /\{\{/.test(body)) && (
             <div className="cmp-merge">
@@ -598,6 +587,16 @@ export default function Composer({
         </section>
 
         <section className="cmp-right" data-show={mobileTab === "preview" ? "1" : "0"}>
+          {preview?.deliverability && (
+            <RiskCard
+              d={preview.deliverability}
+              who={preview.to?.name}
+              busy={busy === "improve"}
+              disabled={busy !== null || !body.trim() || !status?.aiConfigured}
+              onImprove={() => void improve()}
+              notice={notice}
+            />
+          )}
           {preview?.inboxCheck && (
             <div className={`cmp-inbox ${personal ? "" : "classic"}`}>
               <h3><Inbox size={14} /> Inbox check {connect ? "— Connect" : personal ? "" : "— Classic looks like bulk mail"}</h3>
@@ -705,6 +704,32 @@ export default function Composer({
         .cmp-merge button { height: 28px; padding: 0 9px; border-radius: 8px; border: 1px dashed rgba(109,74,209,.45); background: rgba(109,74,209,.05); color: #4b3296; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
         .cmp-error { margin: 0; display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; font-weight: 700; color: ${A.danger}; line-height: 1.45; }
         .cmp-error svg { flex: none; margin-top: 3px; }
+        .cmp-risk { padding: 12px; border-radius: 14px; border: 1px solid ${A.edge}; background: #fff; display: grid; gap: 10px; }
+        .cmp-risk h3 { margin: 0; display: flex; gap: 6px; align-items: center; font-size: 13px; color: ${A.ink}; }
+        .cmp-risk h3 small { font-weight: 600; color: ${A.muted}; font-size: 11.5px; }
+        .cmp-meters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .cmp-meter { display: grid; gap: 5px; }
+        .cmp-meter-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 700; color: ${A.soft}; }
+        .cmp-meter-top b { font-size: 18px; font-variant-numeric: tabular-nums; }
+        .cmp-meter-top em { font-style: normal; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 99px; }
+        .cmp-bar { height: 7px; border-radius: 99px; background: rgba(61,12,17,.08); overflow: hidden; }
+        .cmp-bar > span { display: block; height: 100%; border-radius: 99px; transition: width .3s ease; }
+        .lv-low b { color: ${A.ok}; } .lv-low .cmp-bar > span { background: ${A.ok}; } .lv-low em { background: rgba(30,122,75,.12); color: ${A.ok}; }
+        .lv-medium b { color: #b7791f; } .lv-medium .cmp-bar > span { background: #d69e2e; } .lv-medium em { background: rgba(183,121,31,.14); color: #7a4f12; }
+        .lv-high b { color: ${A.danger}; } .lv-high .cmp-bar > span { background: ${A.danger}; } .lv-high em { background: rgba(179,38,30,.12); color: ${A.danger}; }
+        .cmp-factors { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+        .cmp-factors li { display: grid; grid-template-columns: auto 1fr; gap: 2px 7px; font-size: 12px; line-height: 1.45; }
+        .cmp-factors li svg { margin-top: 2px; }
+        .cmp-factors li small { grid-column: 2; color: ${A.muted}; font-size: 11.5px; }
+        .cmp-factors li i { font-style: normal; font-weight: 800; font-size: 10.5px; color: ${A.muted}; margin-left: 4px; }
+        .cmp-factors li.ok { color: ${A.ok}; }
+        .cmp-risk-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .cmp-risk-foot small { flex: 1 1 180px; font-size: 11px; line-height: 1.45; color: ${A.muted}; }
+        .cmp-notice { margin: 0; font-size: 12px; color: ${A.ok}; display: flex; gap: 6px; align-items: flex-start; }
+        .cmp-mscore { font-style: normal; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 99px; margin-left: 4px; }
+        .cmp-mscore.low { background: rgba(30,122,75,.12); color: ${A.ok}; }
+        .cmp-mscore.medium { background: rgba(183,121,31,.14); color: #7a4f12; }
+        .cmp-mscore.high { background: rgba(179,38,30,.12); color: ${A.danger}; }
         .cmp-check { padding: 11px 12px; border-radius: 14px; border: 1px solid ${A.edge}; background: #fff; }
         .cmp-check.ok { border-color: rgba(30,122,75,.3); background: rgba(30,122,75,.05); }
         .cmp-check.bad { border-color: rgba(179,38,30,.3); background: rgba(179,38,30,.04); }
@@ -778,5 +803,56 @@ export default function Composer({
         }
       `}</style>
     </Sheet>
+  );
+}
+
+const RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2 };
+function worst(d: Deliverability): RiskLevel {
+  return RANK[d.spamLevel] >= RANK[d.promotionsLevel] ? d.spamLevel : d.promotionsLevel;
+}
+
+function Meter({ label, value, level }: { label: string; value: number; level: RiskLevel }) {
+  return (
+    <div className={`cmp-meter lv-${level}`} role="meter" aria-label={`${label} risk`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}>
+      <div className="cmp-meter-top">
+        <span>{label}</span>
+        <span><b>{value}%</b> <em>{LEVEL_LABEL[level]}</em></span>
+      </div>
+      <div className="cmp-bar"><span style={{ width: `${value}%` }} /></div>
+    </div>
+  );
+}
+
+/** Spam / Promotions risk for the previewed recipient, what raises it, and the rewrite button. */
+function RiskCard({ d, who, busy, disabled, onImprove, notice }: { d: Deliverability; who?: string; busy: boolean; disabled: boolean; onImprove: () => void; notice: string | null }) {
+  const clean = d.spamLevel === "low" && d.promotionsLevel === "low";
+  return (
+    <div className="cmp-risk">
+      <h3><Gauge size={14} /> Inbox risk {who ? <small>· email to {who}</small> : null}</h3>
+      <div className="cmp-meters">
+        <Meter label="Spam" value={d.spam} level={d.spamLevel} />
+        <Meter label="Promotions" value={d.promotions} level={d.promotionsLevel} />
+      </div>
+      <ul className="cmp-factors">
+        {d.factors.slice(0, 6).map((f) => (
+          <li key={f.id}>
+            <AlertTriangle size={12} color={f.points >= 12 ? A.danger : "#b7791f"} />
+            <span>{f.label}<i>+{f.points} {f.affects === "both" ? "spam & promo" : f.affects === "spam" ? "spam" : "promo"}</i></span>
+            <small>{f.fix}</small>
+          </li>
+        ))}
+        {clean && d.good.slice(0, 4).map((g) => (
+          <li key={g} className="ok"><CheckCircle2 size={12} /> <span>{g}</span></li>
+        ))}
+      </ul>
+      {notice && <p className="cmp-notice"><CheckCircle2 size={13} /> <span>{notice}</span></p>}
+      <div className="cmp-risk-foot">
+        <button type="button" className="psp-btn gold" disabled={disabled} onClick={onImprove}>
+          {busy ? <Loader2 size={15} className="psp-spin" /> : <Wand2 size={15} />}
+          {busy ? "Rewriting…" : "Make it more personal"}
+        </button>
+        <small>Our estimate from the signals Gmail and spam filters use — not Gmail&apos;s own number. Replies matter most: one reply moves you to Primary.</small>
+      </div>
+    </div>
   );
 }
