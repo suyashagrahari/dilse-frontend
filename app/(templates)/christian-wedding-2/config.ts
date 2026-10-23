@@ -8,10 +8,10 @@ export const config: TemplatePageConfig = {
   category: "wedding",
   title: "Christian Wedding — Scroll Edition",
   description:
-    "A single-scroll Christian wedding invitation with sage & watercolor styling. Couple story, RSVP-style events, gallery & blessings all flow together on one beautiful page.",
+    "Stained-glass garden windows swing open onto a cherry-blossom garden: a light, single-scroll Christian wedding invitation in sage, ivory and blush, with a Bible verse, every celebration with map and calendar, RSVP per event, gallery, voice blessings and an AI that writes it from a few answers.",
   emoji: "⛪",
   color: "from-emerald-700 to-rose-900/80",
-  previewText: "Scroll Through Our Story ✝️",
+  previewText: "Open the garden windows 💐",
   bodyText: "One long page, many beautiful moments. Scroll to meet the couple, RSVP, and leave a blessing.",
   bgGradient: "from-emerald-50 via-stone-50 to-white",
   coverImage: templateMedia("christian-wedding-2", "cover-poster.webp"),
