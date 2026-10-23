@@ -1,313 +1,173 @@
 "use client";
 
-import { lazy, Suspense, useMemo, useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
-import { ArrowLeft, Sparkles, Share2 } from "lucide-react";
+// ─── /reception — the Reception Night editor ─────────────────────────────────
+// The demo invitation (doors and all) under a slim top bar. Create → the AI
+// questions → the stepped form, with the invitation itself as the live
+// preview (beside the form on laptops, one tap away on phones) → Save →
+// Publish → Share.
+
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import { DayMusicProvider } from "../_valentine/music/DayMusic";
+import { WeddingRoot } from "../_wedding";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
-
-import BokehParticles from "./components/BokehParticles";
-import DesktopNav from "./components/DesktopNav";
-import DesktopRightPanel from "./components/DesktopRightPanel";
-import BottomNav from "./components/BottomNav";
-import SplashSection from "./components/SplashSection";
-import EditSheet from "./components/EditSheet";
+import ReceptionExperience from "./components/ReceptionExperience";
+import EditSheet from "./components/editor/EditSheet";
+import ReceptionAi from "./components/editor/ReceptionAi";
+import { ED_CSS } from "./components/editor/editorCss";
 import PublishingOverlay from "./components/PublishingOverlay";
-import ReceptionWelcomeOverlay from "./components/ReceptionWelcomeOverlay";
-import ReceptionBackgroundMusic from "./components/ReceptionBackgroundMusic";
+import { RECEPTION_DAY_TRACK, musicSettings } from "./components/music";
+import { RECEPTION_SONGS } from "./components/types";
 
-const CoupleReveal = lazy(() => import("./components/CoupleReveal"));
-const GallerySection = lazy(() => import("./components/GallerySection"));
-const LocationSection = lazy(() => import("./components/LocationSection"));
-const BlessingsSection = lazy(() => import("./components/BlessingsSection"));
-
-const PAGE_VARIANTS = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-  exit: { opacity: 0, y: -15, transition: { duration: 0.3 } },
-} as const;
-
-function TabFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div
-        className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-        style={{ borderColor: "var(--rec-accent)", borderTopColor: "transparent" }}
-      />
-    </div>
-  );
+function useWide(q: string) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(q);
+    const f = () => setOn(mq.matches);
+    f();
+    mq.addEventListener("change", f);
+    return () => mq.removeEventListener("change", f);
+  }, [q]);
+  return on;
 }
 
+const BAR_CSS = `
+.rc-bar-root { position: relative; z-index: 90; }
+.rc-bar { position: fixed; z-index: 90; top: 0; left: 0; right: 0; height: calc(60px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) 12px 0; display: flex; align-items: center; gap: 8px;
+  background: rgba(255,253,248,.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(184,137,46,.25); font-family: var(--wk-font-sans), system-ui, sans-serif; }
+.rc-bar-t { flex: 1; min-width: 0; margin: 0; text-align: center; font: 400 26px/1 var(--wk-font-script, cursive); color: #6E3F2C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-bar-sp { display: none; }
+@media (max-width: 599px) { .rc-bar-t { display: none; } .rc-bar-sp { display: block; flex: 1; } }
+.rc-bar button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #E6D7BC; background: #FFFDF8; font: 700 14.5px/1 var(--wk-font-sans), system-ui, sans-serif; color: #2E2216; cursor: pointer; white-space: nowrap; }
+.rc-bar .is-gold { border: 0; color: #3A2608; background: linear-gradient(135deg, #8A6420 0%, #D9B45E 30%, #F6E2A6 50%, #C9993F 70%, #8A6420 100%); box-shadow: 0 10px 20px -12px rgba(110,70,10,.7); }
+.rc-bar .is-back { padding: 0 12px 0 10px; }
+.rc-bar button:disabled { opacity: .6; }
+.rc-bar button:focus-visible { outline: 3px solid #B8892E; outline-offset: 2px; }
+@media (max-width: 400px) { .rc-bar { gap: 6px; padding-left: 8px; padding-right: 8px; } .rc-bar button { padding: 0 12px; font-size: 14px; } .rc-bar .is-back span { display: none; } }
+.rc-float { position: fixed; z-index: 95; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 8px; }
+.rc-float button { min-height: 50px; padding: 0 20px; border-radius: 999px; border: 0; font: 700 15px var(--wk-font-sans), system-ui, sans-serif; cursor: pointer; white-space: nowrap; box-shadow: 0 16px 30px -12px rgba(60,40,10,.55); }
+.rc-float .is-dark { background: #2E2216; color: #FFF8EA; }
+.rc-float .is-light { background: #FFFDF8; color: #2E2216; border: 1.5px solid #E6D7BC; }
+.rc-page.is-phone-preview .rc-pill-wrap { display: none; }
+`;
+
 export default function ReceptionPage() {
-  const editor = useReceptionEditor();
-  const [welcomed, setWelcomed] = useState(false);
-  const [playMusic, setPlayMusic] = useState(false);
+  const ed = useReceptionEditor();
+  const wide = useWide("(min-width: 1024px)");
+  const [phonePreview, setPhonePreview] = useState(false);
+  const [replay, setReplay] = useState(0);
+  const editing = ed.editMode === "manual";
+  const sideBySide = editing && wide;
+  const view = editing ? ed.mf : ed.content;
+  const settings = useMemo(() => musicSettings(view.music), [view.music]);
 
-  const handleWelcomeEnter = useCallback((withMusic: boolean) => {
-    setPlayMusic(withMusic);
-    setWelcomed(true);
-  }, []);
+  // Leaving the editor ends a phone preview.
+  const [editingFrom, setEditingFrom] = useState(editing);
+  if (editingFrom !== editing) {
+    setEditingFrom(editing);
+    if (!editing) setPhonePreview(false);
+  }
 
-  const isPreview = editor.editMode === "preview";
+  if (!ed.ready) return null;
 
-  const coupleNames = useMemo(
-    () => ({ bride: editor.content.brideName, groom: editor.content.groomName }),
-    [editor.content.brideName, editor.content.groomName],
-  );
+  const style = {
+    "--rc-top": "calc(60px + env(safe-area-inset-top, 0px))",
+    "--rc-panel": "min(680px, 50vw)",
+    "--rc-left": sideBySide ? "min(680px, 50vw)" : "0px",
+    minHeight: "100dvh",
+    background: "#FBF4E8",
+  } as CSSProperties;
 
-  if (!editor.themeReady) return null;
+  const published = !!ed.shareUrl;
 
   return (
-    <div
-      className="h-screen relative overflow-hidden"
-      style={{ background: "hsl(var(--rec-bg))", color: "hsl(var(--rec-fg))" }}
-    >
-      {!welcomed && (
-        <ReceptionWelcomeOverlay
-          brideName={editor.content.brideName}
-          groomName={editor.content.groomName}
-          onEnter={handleWelcomeEnter}
-        />
-      )}
-
-      {/* Floating Back button — top-left, mobile only */}
-      {welcomed && (
-        <div className="fixed top-4 left-4 z-50 lg:hidden">
-          <motion.button
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={editor.editMode === "preview" ? editor.handleDiscardPreview : editor.goBack}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-xl font-medium text-xs"
-            style={{
-              background: "var(--rec-nav-bg)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid var(--rec-nav-border)",
-              color: "hsl(var(--rec-muted-fg))",
-            }}
-          >
-            <ArrowLeft size={14} />
-            {editor.editMode === "preview" ? "Back & Edit" : "Back"}
-          </motion.button>
-        </div>
-      )}
-
-      {/* Floating action button(s) — top-right, mobile only */}
-      {welcomed && (
-        <div className="fixed top-4 right-4 z-50 lg:hidden">
-          <AnimatePresence mode="wait">
-            {isPreview ? (
-              <motion.div
-                key="preview-actions"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <button
-                  onClick={editor.handleEditFromPreview}
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    color: "#fff",
-                    borderRadius: 20,
-                    padding: "6px 14px",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    backdropFilter: "blur(12px)",
-                  }}
-                >
-                  ✦ Edit
+    <div className={`rc-page${editing ? " is-editing" : ""}${phonePreview ? " is-phone-preview" : ""}`} style={style}>
+      <WeddingRoot theme="champagne" background={false} className="rc-bar-root">
+        <style>{BAR_CSS}</style>
+        <header className="rc-bar">
+          <button type="button" className="is-back" onClick={editing && !wide ? ed.closeEditor : ed.goBack} aria-label="Back">
+            ← <span>Back</span>
+          </button>
+          <span className="rc-bar-sp" />
+          <p className="rc-bar-t">Reception Night</p>
+          {editing ? (
+            <>
+              {wide && (
+                <button type="button" onClick={() => setReplay((r) => r + 1)}>
+                  ▶ Replay doors
                 </button>
-                <button
-                  onClick={editor.handlePublish}
-                  disabled={editor.publishing}
-                  style={{
-                    background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)",
-                    color: "#080808",
-                    border: "none",
-                    borderRadius: 20,
-                    padding: "6px 14px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: editor.publishing ? "not-allowed" : "pointer",
-                    opacity: editor.publishing ? 0.7 : 1,
-                  }}
-                >
-                  {editor.publishing ? "Publishing…" : "🥂 Publish"}
+              )}
+              <button type="button" className="is-gold" onClick={() => ed.handleSavePreview()}>
+                Save &amp; preview
+              </button>
+            </>
+          ) : ed.isPersonalized ? (
+            <>
+              <button type="button" onClick={ed.handleEditClick}>
+                ✎ Edit
+              </button>
+              {published ? (
+                <>
+                  {ed.editMode === "preview" && (
+                    <button type="button" onClick={() => void ed.handlePublish()} disabled={ed.publishing}>
+                      Update
+                    </button>
+                  )}
+                  <button type="button" className="is-gold" onClick={ed.handleShare}>
+                    Share
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="is-gold" onClick={() => void ed.handlePublish()} disabled={ed.publishing}>
+                  {ed.publishing ? "Publishing…" : "🥂 Publish"}
                 </button>
-              </motion.div>
-            ) : editor.showShare ? (
-              <motion.button
-                key="share"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={editor.handleShare}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
-                style={{
-                  background: "rgba(99,102,241,0.15)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  color: "#818cf8",
-                  border: "1px solid rgba(99,102,241,0.3)",
-                }}
-              >
-                <Share2 size={14} />
-                Share
-              </motion.button>
-            ) : (
-              <motion.button
-                key="create"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={editor.handleEditClick}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
-                style={{ background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)", color: "#080808" }}
-              >
-                <Sparkles size={14} />
-                {editor.isPersonalized ? "Edit" : "Create"}
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+              )}
+            </>
+          ) : (
+            <button type="button" className="is-gold" onClick={ed.handleEditClick}>
+              ✦ Create yours
+            </button>
+          )}
+        </header>
+      </WeddingRoot>
 
-      {/* Background image */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <Image
-          src="https://cdn.subhsandesh.in/gifts-media/assets/Reception/reception.webp"
-          alt=""
-          fill
-          className="object-cover object-center"
-          sizes="100vw"
-          priority
-          style={{ opacity: editor.tab === "home" ? 0.04 : 0.06 }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, hsl(var(--rec-bg) / 0.4) 0%, hsl(var(--rec-bg) / 0.6) 40%, hsl(var(--rec-bg) / 0.5) 70%, hsl(var(--rec-bg) / 0.4) 100%)",
-          }}
-        />
+      <div className="rc-music-host" style={{ display: "contents" }}>
+        <DayMusicProvider settings={settings} melody="velvet" autoStart={!editing} compact audioOnly songs={RECEPTION_SONGS} track={RECEPTION_DAY_TRACK}>
+          <div style={{ paddingLeft: sideBySide ? "min(680px, 50vw)" : 0 }}>
+            <ReceptionExperience data={view} mode="preview" replay={replay} noOpening={editing} chromeHidden={editing && !wide && !phonePreview} />
+          </div>
+
+          {editing && !(phonePreview && !wide) && (
+            <EditSheet
+              ed={ed}
+              onPreview={() => {
+                setPhonePreview(true);
+                window.scrollTo({ top: 0 });
+              }}
+            />
+          )}
+          {editing && phonePreview && !wide && (
+            <div className="rc-float">
+              <button type="button" className="is-light" onClick={() => setReplay((r) => r + 1)}>
+                ▶ Doors
+              </button>
+              <button type="button" className="is-dark" onClick={() => setPhonePreview(false)}>
+                ✎ Back to editing
+              </button>
+            </div>
+          )}
+          {ed.editMode === "ai" && (
+            <WeddingRoot theme="champagne" background={false} className="rc-ed-root rc-ai-root">
+              <style>{ED_CSS}</style>
+              <ReceptionAi ed={ed} />
+            </WeddingRoot>
+          )}
+        </DayMusicProvider>
       </div>
 
-      <BokehParticles />
-
-      <DesktopNav
-        tab={editor.tab}
-        onTabChange={editor.handleTabChange}
-        coupleNames={coupleNames}
-        darkMode={editor.darkMode}
-        toggleDark={editor.toggleDark}
-        onBack={editor.goBack}
-        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
-        showPublish={editor.showPublish}
-        showShare={editor.showShare}
-        shareLabel={editor.shareLabel}
-        onPublish={editor.handlePublish}
-        onShare={editor.handleShare}
-      />
-
-      <DesktopRightPanel
-        content={editor.content}
-        shareUrl={editor.shareUrl}
-        isPersonalized={editor.isPersonalized}
-      />
-
-      <BottomNav
-        tab={editor.tab}
-        onTabChange={editor.handleTabChange}
-        onEdit={editor.handleEditClick}
-        isPersonalized={editor.isPersonalized}
-        isPreview={editor.editMode === "preview"}
-      />
-
-      <div className="lg:ml-64 xl:mr-72 h-full overflow-y-auto no-scrollbar pb-20 lg:pb-0">
-        <AnimatePresence mode="wait">
-          {editor.tab === "home" && (
-            <motion.div key="home" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <SplashSection data={editor.content} />
-            </motion.div>
-          )}
-
-          {editor.tab === "couple" && (
-            <motion.div key="couple" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <CoupleReveal data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {editor.tab === "gallery" && (
-            <motion.div key="gallery" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <GallerySection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {editor.tab === "location" && (
-            <motion.div key="location" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <LocationSection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {editor.tab === "blessings" && (
-            <motion.div key="blessings" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <BlessingsSection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-
-      <EditSheet
-        editMode={editor.editMode}
-        setEditMode={editor.setEditModeFromSheet}
-        aiName={editor.aiName}
-        setAiName={editor.setAiName}
-        aiSender={editor.aiSender}
-        setAiSender={editor.setAiSender}
-        aiPrompt={editor.aiPrompt}
-        setAiPrompt={editor.setAiPrompt}
-        aiLoading={editor.aiLoading}
-        extractLoading={editor.extractLoading}
-        mf={editor.mf}
-        manualStep={editor.manualStep}
-        setManualStep={editor.setManualStep}
-        updateMf={editor.updateMf}
-        pagePassword={editor.pagePassword}
-        setPagePassword={editor.setPagePassword}
-        onStartAiText={editor.startAiTextMode}
-        onStartAiCard={editor.startAiCardMode}
-        onStartManual={editor.startManualMode}
-        onCardExtract={editor.handleCardExtract}
-        onAiGenerate={editor.handleAiGenerate}
-        onAiEditPreview={editor.handleAiEditPreview}
-        onManualPreview={editor.handleManualPreview}
-      />
-
-      <PublishingOverlay visible={editor.publishing} />
-
-      <ReceptionBackgroundMusic shouldPlay={playMusic} />
-
-      <AnimatePresence>
-        {editor.showAuth && (
-          <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />
-        )}
-      </AnimatePresence>
+      <PublishingOverlay visible={ed.publishing} />
+      <AnimatePresence>{ed.showAuth && <AuthModal onClose={ed.closeAuth} onSuccess={ed.closeAuthSuccess} />}</AnimatePresence>
     </div>
   );
 }
