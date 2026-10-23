@@ -78,7 +78,11 @@ export function tidyAfterFill(n: Cw2Data): Cw2Data {
     next.hashtag = `#${a.replace(/\W+/g, "")}Weds${b.replace(/\W+/g, "")}`.slice(0, 40);
   }
   if (next.closing === DEMO.closing) next.closing = "";
-  // The demo order of service is generic: keep it, but on the ceremony's own time.
+  // Dated functions in date order (the model keeps the order it was told; undated rows keep their place after their neighbour).
+  next.events = next.events
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => (a.e.date && b.e.date && a.e.date !== b.e.date ? (a.e.date < b.e.date ? -1 : 1) : a.i - b.i))
+    .map(({ e }) => e);
   return next;
 }
 
@@ -116,6 +120,11 @@ export function useCw2Editor() {
   const [savedStamp, setSavedStamp] = useState(0);
   const [replayKey, setReplayKey] = useState(0);
   const pendingPublish = useRef(false);
+  // The page id as of now (state lags inside callbacks), and the one create in flight:
+  // Save, the draft sync and Publish can all ask for a save at once, and only one may POST.
+  const pageIdRef = useRef<string | null>(null);
+  const shareIdRef = useRef<string | null>(null);
+  const creating = useRef<Promise<{ id: string | null; shareId: string | null }> | null>(null);
   const publishInFlight = useRef(false);
 
   const fill = useStoryFill<Cw2Data>({
@@ -161,6 +170,8 @@ export function useCw2Editor() {
         setMf(clone(loaded));
         setPageId(String(j.data._id));
         setShareId(j.data.shareId || null);
+        pageIdRef.current = String(j.data._id);
+        shareIdRef.current = j.data.shareId || null;
         if (j.data.isPublished && j.data.shareId) setShareUrl(`${SITE_URL.replace(/\/$/, "")}/${j.data.shareId}`);
         setWishes(((j.data.blessings as Wish[]) || []).slice().reverse());
         setIsPersonalized(true);
@@ -188,8 +199,10 @@ export function useCw2Editor() {
     async (d: Cw2Data): Promise<{ id: string | null; shareId: string | null }> => {
       if (!accessToken) return { id: null, shareId: null };
       const body = JSON.stringify(toBody(d, password));
-      if (pageId) {
-        const r = await fetch(`${API}/${pageId}`, { method: "PUT", headers: headers(), body });
+      if (!pageIdRef.current && creating.current) await creating.current.catch(() => undefined);
+      const id = pageIdRef.current;
+      if (id) {
+        const r = await fetch(`${API}/${id}`, { method: "PUT", headers: headers(), body });
         const j = await r.json();
         if (!j.success) throw new Error(j.error || "Save failed");
         if (j.data) {
@@ -197,16 +210,27 @@ export function useCw2Editor() {
           // The server swapped uploaded photos for URLs: keep the form in step.
           setData((cur) => ({ ...cur, gallery: back.gallery, bridePhoto: back.bridePhoto, groomPhoto: back.groomPhoto, couplePhoto: back.couplePhoto, story: back.story }));
         }
-        return { id: pageId, shareId };
+        return { id, shareId: shareIdRef.current };
       }
-      const r = await fetch(API, { method: "POST", headers: headers(), body });
-      const j = await r.json();
-      if (!j.success) throw new Error(j.error || "Create failed");
-      setPageId(String(j.data._id));
-      setShareId(j.data.shareId || null);
-      return { id: String(j.data._id), shareId: j.data.shareId || null };
+      const create = (async () => {
+        const r = await fetch(API, { method: "POST", headers: headers(), body });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || "Create failed");
+        const made = { id: String(j.data._id), shareId: (j.data.shareId as string) || null };
+        pageIdRef.current = made.id;
+        shareIdRef.current = made.shareId;
+        setPageId(made.id);
+        setShareId(made.shareId);
+        return made;
+      })();
+      creating.current = create;
+      try {
+        return await create;
+      } finally {
+        if (creating.current === create) creating.current = null;
+      }
     },
-    [accessToken, pageId, shareId, password, headers],
+    [accessToken, password, headers],
   );
 
   const draft = useDraft({
@@ -309,6 +333,7 @@ export function useCw2Editor() {
       if (!pj.success) throw new Error(pj.error || "Publish failed");
       const published = String(pj.data.shareId || sid || "");
       setShareId(published);
+      shareIdRef.current = published;
       setShareUrl(published ? `${SITE_URL.replace(/\/$/, "")}/${published}` : String(pj.data.shareUrl));
       setEditorOpen(false);
       try {

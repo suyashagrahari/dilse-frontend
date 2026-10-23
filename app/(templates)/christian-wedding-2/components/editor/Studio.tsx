@@ -296,7 +296,7 @@ export default function Studio({ e, previewOpen, setPreviewOpen }: { e: Cw2Edito
   const musicValue = { musicMode: mf.music.enabled ? (mf.music.youtubeId ? ("youtube" as const) : ("melody" as const)) : ("off" as const), musicYoutubeId: mf.music.youtubeId, musicStart: mf.music.start };
 
   return (
-    <div className={`c2e${previewOpen ? " is-previewing" : ""}`} role="dialog" aria-modal="false" aria-label="Edit your invitation">
+    <div className={`c2e${previewOpen ? " is-previewing" : ""}`} style={CROP_THEME} role="dialog" aria-modal="false" aria-label="Edit your invitation">
       <style>{STUDIO_CSS}</style>
       <header className="c2e-top">
         <button type="button" className="c2e-btn is-ghost is-sm" onClick={e.discard}>

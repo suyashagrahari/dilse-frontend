@@ -114,7 +114,20 @@ export function composeWeddingStory(a: Answers): string {
   const L: string[] = [];
   L.push(`We are inviting guests to the Christian church wedding of ${a.bride.trim() || "the bride"} (the bride) and ${a.groom.trim() || "the groom"} (the groom).`);
   if (a.groomFirst) L.push("Print the groom's name first.");
-  const fns = a.functions.filter((f) => f.title.trim());
+  // In the order a church wedding runs (betrothal … brunch), dated ones by their date.
+  const rank = (t: string) => {
+    const k = QUICK_FUNCTIONS.findIndex((q) => q.title === t);
+    return k < 0 ? 50 : k;
+  };
+  const dayOf = (f: Answers["functions"][number]) => f.date || (CEREMONY_RE.test(f.title) ? a.date : "");
+  const fns = a.functions
+    .filter((f) => f.title.trim())
+    .slice()
+    .sort((x, y) => {
+      const dx = dayOf(x);
+      const dy = dayOf(y);
+      return dx && dy && dx !== dy ? (dx < dy ? -1 : 1) : rank(x.title) - rank(y.title);
+    });
   const main = fns.find((f) => CEREMONY_RE.test(f.title));
   const where = [a.church.trim(), a.city.trim()].filter(Boolean).join(", ");
   if (a.date || where) {
@@ -130,7 +143,8 @@ export function composeWeddingStory(a: Answers): string {
           const date = f.date || (isMain ? a.date : "");
           const time = f.time || (isMain ? a.time : "");
           const venue = f.venue || (isMain ? where : "");
-          return [f.title.trim(), date ? `on ${fmtDate(date)} (${date})` : "", time ? `at ${fmtTime(time)}` : "", venue ? `at ${venue}` : ""].filter(Boolean).join(" ");
+          const open = [!time && "time", !venue && "place"].filter(Boolean).join(" and ");
+          return [f.title.trim(), date ? `on ${fmtDate(date)} (${date})` : "", time ? `at ${fmtTime(time)}` : "", venue ? `at ${venue}` : "", open ? `(its ${open} not decided yet)` : ""].filter(Boolean).join(" ");
         })
         .join("; ")}.`,
     );
