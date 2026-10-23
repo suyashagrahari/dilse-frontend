@@ -7,7 +7,8 @@
 // Rohan families". Guides alone did not make that rare enough, so every fill is
 // checked against the text that was sent:
 //   - a venue with a name the text never mentions falls back to its city;
-//   - a one-line portrait or a story chapter needs a concrete word of the text;
+//   - a one-line portrait or a story chapter needs a concrete word of the text,
+//     and may not give anyone a job the text never mentions;
 //   - "the X & Y families" needs X and Y in the parents' names;
 //   - a midnight start needs the text to say so.
 // What is dropped shows up as an empty field in the review screen.
@@ -61,6 +62,18 @@ function grounded(line: string, src: string, names: string[]) {
   return words(line).some((w) => !GENERIC.has(w) && !skip.has(w) && told(src, w));
 }
 
+// Jobs and titles the model likes to hand out ("a dedicated nurse" for two hospital interns).
+const ROLES = new Set(
+  (
+    "accountant actor actress analyst architect artist athlete baker banker builder carpenter chef coach consultant dancer dentist designer developer doctor " +
+    "economist editor engineer entrepreneur farmer founder journalist lawyer lecturer manager mechanic musician nurse officer painter pastor pharmacist " +
+    "photographer physician physiotherapist pilot poet priest producer professor programmer researcher scientist singer soldier student surgeon " +
+    "teacher therapist trader tutor veterinarian writer"
+  ).split(" "),
+);
+/** A line that gives someone a job or title the text never mentions. */
+const inventsRole = (line: string, src: string) => words(line).some((w) => ROLES.has(w.replace(/s$/, "")) && !told(src, w.replace(/s$/, "")));
+
 const MARRYING = /getting married|get married|are marrying|will marry|tying the knot|their wedding|wedding in /i;
 
 export function factCheck(n: Cw2Data, raw: string): Cw2Data {
@@ -85,13 +98,14 @@ export function factCheck(n: Cw2Data, raw: string): Cw2Data {
       return { ...e, venue: city ?? "" };
     });
     const notThese = [...names, ...placeWords];
-    if (n.bride.description && !grounded(n.bride.description, src, notThese)) next.bride = { ...n.bride, description: "" };
-    if (n.groom.description && !grounded(n.groom.description, src, notThese)) next.groom = { ...n.groom, description: "" };
+    const portraitOk = (line: string) => grounded(line, src, notThese) && !inventsRole(line, src);
+    if (n.bride.description && !portraitOk(n.bride.description)) next.bride = { ...n.bride, description: "" };
+    if (n.groom.description && !portraitOk(n.groom.description)) next.groom = { ...n.groom, description: "" };
     next.story = n.story.filter((c) => {
       const text = `${c.title} ${c.line}`;
       if (!c.title && !c.line) return false;
       if (MARRYING.test(text) && !/\bmet\b|propos|asked|first/i.test(text)) return false;
-      return grounded(text, src, notThese);
+      return grounded(text, src, notThese) && !inventsRole(text, src);
     });
   }
 

@@ -226,7 +226,22 @@ export default function Experience({ data: d, mode, shareId, wishes = [], brand 
   const venueLine = [main?.venue, city && !main?.venue?.toLowerCase().includes(city.toLowerCase()) ? city : ""].filter(Boolean).join(" · ");
   const dated = d.events.filter((e) => e.date);
   const videoId = d.videoUrl ? youtubeIdOf(d.videoUrl) : "";
-  const gallery = useMemo(() => d.gallery.filter((p) => p.url).map((p) => ({ ...p, url: localArt(p.url) })), [d.gallery]);
+  // Photos that no longer load (old pages can point at a retired bucket) leave the wall instead of showing an empty tile.
+  const [deadPhotos, setDeadPhotos] = useState<ReadonlySet<string>>(() => new Set());
+  const gallery = useMemo(() => d.gallery.filter((p) => p.url && !deadPhotos.has(localArt(p.url))).map((p) => ({ ...p, url: localArt(p.url) })), [d.gallery, deadPhotos]);
+  useEffect(() => {
+    let live = true;
+    for (const p of d.gallery) {
+      if (!p.url) continue;
+      const url = localArt(p.url);
+      const probe = new Image();
+      probe.onerror = () => live && setDeadPhotos((s) => (s.has(url) ? s : new Set(s).add(url)));
+      probe.src = url;
+    }
+    return () => {
+      live = false;
+    };
+  }, [d.gallery]);
   const story = d.story.filter((c) => c.title || c.line);
   const order = d.order.filter((o) => o.title);
   const things = d.things.filter((t) => t.text);
