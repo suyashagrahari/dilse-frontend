@@ -72,7 +72,7 @@ export const RW_CSS = `
 
 /* the garden court beside the gateway (tablets and desktops, landscape-ish) */
 .rw-gate-side { display: none; }
-@media (min-width: 760px) and (min-aspect-ratio: 3/4) {
+@media (min-width: 760px) and (min-aspect-ratio: 6/5) {
   .rw-gate-side { display: block; position: absolute; inset: 0; pointer-events: none; }
   .rw-gate-hedge { position: absolute; bottom: -2px; width: clamp(240px, 26vw, 460px); height: auto; opacity: .95; }
   .rw-gate-hedge.is-l { right: calc(50% + var(--sw) * .36); }
@@ -86,7 +86,7 @@ export const RW_CSS = `
   .rw-gate:not(.is-loading) .rw-gate-peacock { animation-delay: .55s; }
   .rw-gate { --copy: clamp(190px, 25svh, 240px); }
 }
-@media (min-width: 760px) and (min-aspect-ratio: 3/4) and (max-width: 1100px) { .rw-gate-peacock { display: none; } }
+@media (min-width: 760px) and (min-aspect-ratio: 6/5) and (max-width: 1100px) { .rw-gate-peacock { display: none; } }
 
 .rw-gate-copy { position: absolute; left: 0; right: 0; bottom: 0; height: var(--copy); z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 16px max(14px, env(safe-area-inset-bottom)); text-align: center; transition: opacity .5s ease, transform .6s var(--rw-ease); }
 .rw-gate-dear { margin: 0 0 2px; font: italic 500 clamp(15px, 4.2vw, 19px)/1.25 var(--wk-font-display); color: #6A4038; text-wrap: balance; max-width: 36rem; }
@@ -182,7 +182,7 @@ export const RW_CSS = `
 .rw-court.is-open .rw-court-carpet { opacity: 1; transform: none; }
 .rw-court.is-open .rw-court-pair { opacity: 1; transform: none; }
 .rw-portrait { position: absolute; left: 50%; top: 6%; width: 50%; aspect-ratio: 4 / 5; transform: translateX(-50%) scale(.86); opacity: 0; border-radius: clamp(14px, 2vw, 20px); overflow: hidden; background: #F2DCAC; box-shadow: 0 0 0 1px color-mix(in srgb, var(--wk-gold) 70%, transparent), 0 0 0 6px var(--wk-surface-solid), 0 0 0 7px color-mix(in srgb, var(--wk-gold) 50%, transparent), 0 24px 40px -22px rgba(90,40,20,.6); transition: transform 1.2s cubic-bezier(.34,1.4,.64,1) .55s, opacity .8s ease .55s; }
-.rw-portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rw-portrait-photo { position: absolute !important; inset: 0; }
 .rw-court.is-open .rw-portrait { transform: translateX(-50%); opacity: 1; }
 .rw-court-peacock { position: absolute; right: 9%; bottom: -1%; height: 42%; width: auto; opacity: 0; transform: translateY(14%) scaleX(-1); transition: transform 1.2s var(--rw-ease) 1s, opacity .9s ease 1s; filter: drop-shadow(0 8px 8px rgba(30,60,40,.2)); }
 .rw-court.is-open .rw-court-peacock { opacity: 1; transform: scaleX(-1); }
@@ -227,9 +227,9 @@ export const RW_CSS = `
   .rw-court-amp { margin: -.1em 0 -.2em 1.1em; font-size: clamp(40px, 3.6vw, 56px); }
   .rw-court-scene { width: 100%; max-width: 640px; justify-self: end; }
   .rw-court-lamp { width: clamp(220px, 19vw, 340px); }
-  .rw-court-lamp.is-l { left: 3%; }
-  .rw-court-lamp.is-r { right: 3%; }
-  .rw-court-rail { width: min(70vw, 1100px); }
+  .rw-court-lamp.is-l { left: 40%; }
+  .rw-court-lamp.is-r { right: 1%; }
+  .rw-court-rail { width: min(56vw, 980px); left: 72%; }
 }
 @media (min-width: 1440px) {
   .rw-court-grid { max-width: 1480px; }
@@ -302,7 +302,7 @@ export const RW_CSS = `
 .rw-ch-dot { position: absolute; left: 7px; top: 22px; width: 23px; height: 23px; transform: rotate(45deg); border-radius: 5px; background: radial-gradient(circle, var(--rw-maroon) 30%, transparent 34%), var(--wk-surface-solid); box-shadow: inset 0 0 0 2px var(--wk-gold), 0 4px 10px -4px rgba(120,60,20,.5); }
 .rw-ch-card { display: grid; gap: 0; border-radius: 20px; background: var(--wk-surface-solid); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 50%, transparent), 0 22px 44px -34px rgba(80,40,10,.6); overflow: hidden; }
 .rw-ch-photo { position: relative; display: block; margin: 10px 10px 0; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: var(--wk-placeholder); }
-.rw-ch-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rw-ch-img { position: absolute !important; inset: 0; }
 .rw-ch-text { padding: 16px 18px 20px; }
 .rw-ch-when { display: inline-block; margin: 0 0 8px; padding: 6px 12px; border-radius: 999px; font: 600 12px/1 var(--wk-font-caps); letter-spacing: .2em; color: #FFF7EA; background: var(--rw-maroon); }
 .rw-ch-title { margin: 0 0 6px; font: 500 clamp(23px, 6vw, 30px)/1.15 var(--wk-font-display); color: var(--wk-ink); }

@@ -9,7 +9,8 @@
 // chapters alternate either side of a centred thread.
 
 import { useEffect, useRef } from "react";
-import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
+import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
 import type { RwChapter } from "./model";
 
 export default function Story({ chapters }: { chapters: RwChapter[] }) {
@@ -63,8 +64,7 @@ export default function Story({ chapters }: { chapters: RwChapter[] }) {
             <Reveal className="rw-ch-card" effect="rise" delay={60}>
               {c.photo && (
                 <span className="rw-ch-photo">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.photo.url} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+                  <CroppedPhoto photo={c.photo} alt={c.title} className="rw-ch-img" />
                 </span>
               )}
               <div className="rw-ch-text">

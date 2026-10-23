@@ -11,7 +11,7 @@
 // The entrance is staged by `open`; loops pause while the hero is off screen.
 
 import { useEffect, useRef } from "react";
-import { photoImgStyle } from "../../../_wedding";
+import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
 import type { LovePhoto } from "../../../_love/types";
 import { A, img } from "../assets";
 import type { Strings } from "./model";
@@ -64,8 +64,7 @@ export default function Courtyard({ open, s, lang, first, second, photo, dateLin
           <img className="rw-court-chhatri is-r" aria-hidden {...img(A.chhatri)} />
           {photo ? (
             <span className="rw-portrait">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt={`${first} ${s.and} ${second}`} decoding="async" style={photoImgStyle(photo)} />
+              <CroppedPhoto photo={photo} alt={`${first} ${s.and} ${second}`} eager className="rw-portrait-photo" />
             </span>
           ) : (
             <span className="rw-court-couple" aria-hidden>

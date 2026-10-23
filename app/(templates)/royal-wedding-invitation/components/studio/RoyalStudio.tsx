@@ -577,7 +577,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
         )}
 
         <p className="rws-sub">Your portrait in the gold frame</p>
-        <p className="rws-hint">Optional. Without one, the courtyard shows the illustrated couple in wedding red.</p>
+        <p className="rws-hint">Optional. Without one, the courtyard shows the illustrated couple in wedding red between the pink chhatris.</p>
         <PhotoPick
           label="Portrait"
           round
@@ -585,7 +585,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
           photos={photos}
           onPick={(k) => set("couplePhoto", k)}
           onUpload={(f) => void uploadTo(f, (k) => set("couplePhoto", k))}
-          onFrame={() => setFraming({ k: n(x.couplePhoto), aspect: 1.03, title: "Frame your portrait" })}
+          onFrame={() => setFraming({ k: n(x.couplePhoto), aspect: 0.8, title: "Frame your portrait" })}
         />
 
         <h4 className="rws-h4">Families</h4>
@@ -597,7 +597,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
             <Field label="Under their names" htmlFor="rws-bn">
               <input id="rws-bn" className="vs-input" value={s(x.brideNote)} maxLength={100} placeholder="e.g. Jodhpur" onChange={(e) => set("brideNote", e.target.value)} />
             </Field>
-            <PhotoPick label="Family photo" round value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} onFrame={() => setFraming({ k: n(x.bridePhoto), aspect: 1, title: "Frame the bride's family photo" })} />
+            <PhotoPick label="Family photo" round value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} onFrame={() => setFraming({ k: n(x.bridePhoto), aspect: 0.8, title: "Frame the bride's family photo" })} />
           </div>
           <div>
             <Field label="Groom's parents" htmlFor="rws-gf">
@@ -606,7 +606,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
             <Field label="Under their names" htmlFor="rws-gn">
               <input id="rws-gn" className="vs-input" value={s(x.groomNote)} maxLength={100} placeholder="e.g. Jaipur" onChange={(e) => set("groomNote", e.target.value)} />
             </Field>
-            <PhotoPick label="Family photo" round value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} onFrame={() => setFraming({ k: n(x.groomPhoto), aspect: 1, title: "Frame the groom's family photo" })} />
+            <PhotoPick label="Family photo" round value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} onFrame={() => setFraming({ k: n(x.groomPhoto), aspect: 0.8, title: "Frame the groom's family photo" })} />
           </div>
         </div>
         <Field label="With the blessings of (grandparents, optional)" htmlFor="rws-bo">
@@ -769,7 +769,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
 
       {/* ── 5 Our story ────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-story" aria-label="Our story">
-        <Head n={5} icon="heart" title="Our story" sub={`A few moments: how you met, the proposal, the yes. Up to ${RW_LIMITS.story}, each with a photo in a gold-framed window.`} />
+        <Head n={5} icon="heart" title="Our story" sub={`A few moments: how you met, the proposal, the yes. Up to ${RW_LIMITS.story}, each with a photo in a rounded gold frame.`} />
         <ol className="rws-story">
           {story.map((c, i) => (
             <li key={i} className="rws-ch">
@@ -791,7 +791,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
                   photos={photos}
                   onPick={(k) => set("story", story.map((q, j) => (j === i ? { ...q, photo: k } : q)))}
                   onUpload={(f) => void uploadTo(f, (k) => set("story", (latest.current.extras.story as Chapter[]).map((q, j) => (j === i ? { ...q, photo: k } : q))))}
-                  onFrame={() => setFraming({ k: n(c.photo), aspect: 0.8, title: `Frame the photo for “${c.title || `chapter ${i + 1}`}”` })}
+                  onFrame={() => setFraming({ k: n(c.photo), aspect: 4 / 3, title: `Frame the photo for “${c.title || `chapter ${i + 1}`}”` })}
                 />
                 <button type="button" className="rws-x" onClick={() => set("story", story.filter((_, j) => j !== i))}>
                   Remove
