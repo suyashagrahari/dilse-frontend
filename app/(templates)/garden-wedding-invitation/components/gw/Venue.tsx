@@ -2,7 +2,7 @@
 
 // ─── The venue: a lake garden seen over a white balustrade ───────────────────
 // The watercolour lake (mountains, lotus, a pink dome and a peacock) in a wide
-// arch, a white balustrade along its foot, sunlight glints on the water
+// rounded frame, a white balustrade along its foot, sunlight glints on the water
 // (opacity loops, only while on screen), then the venue, its address,
 // Directions and a tap-to-load map (no Google request until the guest asks),
 // and "Getting there" beside it on wide screens.

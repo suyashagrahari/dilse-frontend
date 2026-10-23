@@ -4,7 +4,7 @@
 // One passive scroll listener, rAF-throttled and only while the section is on
 // screen, writes ONE custom property (--gw-p, 0→1) on the section; the vine's
 // scaleY and the drifting cherry branch read it (transform only). Each chapter
-// photo sits in an arched frame (the sender's crop + zoom kept), the text
+// photo sits in an rounded frame (the sender's crop + zoom kept), the text
 // rises in beside it; phones read one column, wide screens alternate sides.
 
 import { useEffect, useRef } from "react";
