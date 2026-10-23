@@ -201,6 +201,12 @@ export const CW_CSS = `
 .cw-hero.is-on .cw-hero-words > :nth-child(5) { transition-delay: 1.05s; }
 .cw-hero.is-on .cw-hero-words > :nth-child(6) { transition-delay: 1.2s; }
 .cw-hero.is-on .cw-hero-words > :nth-child(7) { transition-delay: 1.35s; }
+/* Phones and tablets: the scroll cue rests on the gazebo's lawn between the pampas, on a blush ground (no bare band under the scene). */
+@media (max-width: 1023px) {
+  .cw-hero { padding-bottom: 10px; }
+  .cw-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; z-index: 0; pointer-events: none; background: radial-gradient(60% 90% at 50% 100%, color-mix(in srgb, var(--wk-accent) 16%, transparent) 0%, color-mix(in srgb, var(--wk-accent) 6%, transparent) 55%, transparent 80%); }
+  .cw-hero-down { margin-top: 2px; background: color-mix(in srgb, var(--wk-surface-solid) 78%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--wk-gold) 30%, transparent), 0 10px 22px -14px rgba(110,40,58,.45); }
+}
 @media (min-width: 560px) {
   .cw-hero-tree { height: min(62svh, 620px); }
   .cw-hero-tree.is-l { left: -30px; }
