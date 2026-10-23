@@ -1,0 +1,61 @@
+{
+ "stage": "gateway-frame.webp",
+ "behind": [
+  "(any light sky / courtyard; transparent behind screens)"
+ ],
+ "pieces": {
+  "gateway-frame.webp": {
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4,
+   "px": "1246x1800"
+  },
+  "left-screen.webp": {
+   "px": "622x1500",
+   "leftPct": 20.588,
+   "topPct": 39.104,
+   "widthPct": 29.152,
+   "heightPct": 48.676,
+   "motion": "slides left (translateX -105%)",
+   "z": 2
+  },
+  "right-screen.webp": {
+   "px": "642x1500",
+   "leftPct": 49.308,
+   "topPct": 39.104,
+   "widthPct": 30.104,
+   "heightPct": 48.676,
+   "motion": "slides right",
+   "z": 3
+  },
+  "brass-toran.webp": {
+   "leftPct": 11.765,
+   "topPct": 38.289,
+   "widthPct": 76.471,
+   "heightPct": 12.22,
+   "z": 5,
+   "motion": "sway: rotate(±2deg) about top centre",
+   "px": "1300x300"
+  },
+  "elephant-left.webp": {
+   "leftPct": -12,
+   "topPct": 70,
+   "widthPct": 42,
+   "heightPct": 24.559,
+   "z": 6,
+   "note": "stage-relative suggestion; enters from left, bows (trunk down already drawn)",
+   "px": "900x760"
+  },
+  "elephant-right.webp": {
+   "leftPct": 70,
+   "topPct": 70,
+   "widthPct": 42,
+   "heightPct": 24.559,
+   "z": 6,
+   "px": "900x760"
+  }
+ },
+ "stageAspect": "1246:1800"
+}

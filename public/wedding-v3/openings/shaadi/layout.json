@@ -1,0 +1,43 @@
+{
+ "stage": "frame.webp",
+ "behind": [
+  "haldi-mandap-bg.webp"
+ ],
+ "pieces": {
+  "frame.webp": {
+   "px": "1300x1640",
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4
+  },
+  "left-shutter.webp": {
+   "px": "490x1120",
+   "leftPct": 13.077,
+   "topPct": 18.293,
+   "widthPct": 37.692,
+   "heightPct": 68.293,
+   "z": 2,
+   "hinge": "left"
+  },
+  "right-shutter.webp": {
+   "px": "490x1120",
+   "leftPct": 49.231,
+   "topPct": 18.293,
+   "widthPct": 37.692,
+   "heightPct": 68.293,
+   "z": 3,
+   "hinge": "right"
+  },
+  "toran-marigold.webp": {
+   "px": "1400x520",
+   "leftPct": -3.846,
+   "topPct": 3.5,
+   "widthPct": 107.692,
+   "heightPct": 34,
+   "z": 5
+  }
+ },
+ "stageAspect": "1300:1640"
+}

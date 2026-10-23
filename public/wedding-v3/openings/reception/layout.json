@@ -1,0 +1,36 @@
+{
+ "stage": "frame.webp",
+ "behind": [
+  "ballroom-bg.webp"
+ ],
+ "pieces": {
+  "left-leaf.webp": {
+   "px": "404x1701",
+   "leftPct": 9.7,
+   "topPct": 5.39,
+   "widthPct": 41.318,
+   "heightPct": 94.522,
+   "hinge": "left",
+   "z": 2
+  },
+  "right-leaf.webp": {
+   "px": "397x1701",
+   "leftPct": 50.161,
+   "topPct": 5.39,
+   "widthPct": 40.514,
+   "heightPct": 94.522,
+   "hinge": "right",
+   "z": 3
+  },
+  "frame.webp": {
+   "px": "979x1800",
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4,
+   "note": "aperture transparent; leaves sit under it"
+  }
+ },
+ "stageAspect": "979:1800"
+}

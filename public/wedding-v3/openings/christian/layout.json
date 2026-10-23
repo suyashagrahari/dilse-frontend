@@ -1,0 +1,42 @@
+{
+ "stage": "frame.webp",
+ "behind": [
+  "aisle-bg.webp"
+ ],
+ "pieces": {
+  "left-leaf.webp": {
+   "px": "549x1502",
+   "leftPct": 30.496,
+   "topPct": 56.923,
+   "widthPct": 20.954,
+   "heightPct": 41.264,
+   "hinge": "left",
+   "z": 2,
+   "note": "native res (2.0x frame scale)"
+  },
+  "right-leaf.webp": {
+   "px": "502x1502",
+   "leftPct": 50.992,
+   "topPct": 56.923,
+   "widthPct": 19.16,
+   "heightPct": 41.264,
+   "hinge": "right",
+   "z": 3
+  },
+  "frame.webp": {
+   "px": "1296x1800",
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4,
+   "note": "stone portal + fixed glazed transom; aperture transparent (plinths overlap leaf corners)"
+  }
+ },
+ "extras": [
+  "dove-up.webp",
+  "dove-down.webp",
+  "rose-lunette.webp"
+ ],
+ "stageAspect": "1296:1800"
+}

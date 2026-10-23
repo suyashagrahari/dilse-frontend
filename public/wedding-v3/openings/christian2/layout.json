@@ -1,0 +1,36 @@
+{
+ "stage": "casement-frame.webp",
+ "behind": [
+  "blossom-garden-bg.webp"
+ ],
+ "pieces": {
+  "casement-frame.webp": {
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4,
+   "px": "1145x1800"
+  },
+  "left-sash.webp": {
+   "px": "641x1800",
+   "leftPct": 14.286,
+   "topPct": 16.364,
+   "widthPct": 36.087,
+   "heightPct": 64.545,
+   "hinge": "left",
+   "z": 2,
+   "opens": "outward (towards viewer)"
+  },
+  "right-sash.webp": {
+   "px": "641x1800",
+   "leftPct": 49.627,
+   "topPct": 16.364,
+   "widthPct": 36.087,
+   "heightPct": 64.545,
+   "hinge": "right",
+   "z": 3
+  }
+ },
+ "stageAspect": "1145:1800"
+}

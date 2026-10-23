@@ -1,0 +1,38 @@
+{
+ "stage": "frame.webp",
+ "behind": [
+  "terrace-bg.webp"
+ ],
+ "pieces": {
+  "frame.webp": {
+   "px": "1149x1800",
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4
+  },
+  "left-door.webp": {
+   "px": "568x1800",
+   "leftPct": 12.667,
+   "topPct": 18.723,
+   "widthPct": 37.867,
+   "heightPct": 76.596,
+   "z": 2,
+   "hinge": "left"
+  },
+  "right-door.webp": {
+   "px": "568x1800",
+   "leftPct": 49.467,
+   "topPct": 18.723,
+   "widthPct": 37.867,
+   "heightPct": 76.596,
+   "z": 3,
+   "hinge": "right"
+  }
+ },
+ "extras": [
+  "glare-sweep.webp (clip to each door)"
+ ],
+ "stageAspect": "1149:1800"
+}

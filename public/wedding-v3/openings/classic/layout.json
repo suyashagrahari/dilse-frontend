@@ -1,0 +1,36 @@
+{
+ "stage": "jharokha-frame.webp",
+ "behind": [
+  "dawn-bg.webp"
+ ],
+ "pieces": {
+  "jharokha-frame.webp": {
+   "leftPct": 0,
+   "topPct": 0,
+   "widthPct": 100,
+   "heightPct": 100,
+   "z": 4,
+   "px": "908x1800"
+  },
+  "left-shutter.webp": {
+   "px": "475x1800",
+   "leftPct": 16.429,
+   "topPct": 20.18,
+   "widthPct": 32.898,
+   "heightPct": 62.883,
+   "hinge": "left",
+   "z": 2,
+   "opens": "outward"
+  },
+  "right-shutter.webp": {
+   "px": "505x1800",
+   "leftPct": 48.618,
+   "topPct": 20.18,
+   "widthPct": 34.954,
+   "heightPct": 62.883,
+   "hinge": "right",
+   "z": 3
+  }
+ },
+ "stageAspect": "908:1800"
+}
