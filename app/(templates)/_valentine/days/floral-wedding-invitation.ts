@@ -96,23 +96,24 @@ export const fwLocalUrl = (url: string): string => REPO_ART_RE.exec(url)?.[1] ??
 /** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
 export const fwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
-/** 16 is the couple portrait under the floral drape; 17 and 18 are story chapters 3 and 4; the rest fill the gallery. */
+/** 16 is the couple portrait under the floral drape; 17 and 18 are story chapters 3 and 4; the rest fill the gallery.
+ *  The first 15 are ordered (and spanned) so the album's columns end level at 2, 3 and 4 columns. */
 export const FW_DEMO_PHOTOS: LovePhoto[] = [
-  { url: `${DEMO_CDN}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
-  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
-  { url: `${DEMO_CDN}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
-  { url: `${DEMO_CDN}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
-  { url: `${DEMO_CDN}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
   { url: `${DEMO_CDN}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
-  { url: `${DEMO_CDN}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
-  { url: `${DEMO_CDN}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_CDN}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
+  { url: `${DEMO_CDN}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning" },
+  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, span: "wide" },
+  { url: `${DEMO_CDN}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
+  { url: `${DEMO_CDN}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35, span: "tall" },
+  { url: `${DEMO_CDN}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
   { url: `${DEMO_CDN}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras" },
+  { url: `${DEMO_CDN}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_CDN}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_CDN}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night" },
+  { url: `${DEMO_CDN}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
+  { url: `${DEMO_CDN}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
   { url: `${DEMO_CDN}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
   { url: `${DEMO_CDN}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
   { url: `${DEMO_CDN}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
