@@ -120,6 +120,14 @@ export function tidyAfterFill(next: ReceptionData, before: ReceptionData, declar
     if (!segs) continue;
     const demoVal = readAt(DEMO, segs);
     if (!same(readAt(d, segs), demoVal) || !same(readAt(before, segs), demoVal)) continue;
+    // A row the model rewrote keeps every value it wrote, even one that happens to
+    // match the demo (a first part called "Wedding Reception", like the demo's).
+    // Clearing that title would drop the whole row and its new date and venue.
+    const row = segs.findIndex((s) => s.kind === "index");
+    if (row > 0 && row < segs.length - 1) {
+      const rowSegs = segs.slice(0, row + 1);
+      if (!same(readAt(next, rowSegs), readAt(DEMO, rowSegs))) continue;
+    }
     clearAt(d, segs);
   }
   // 2. Rows: an event / chapter / contact with nothing left is dropped; the
