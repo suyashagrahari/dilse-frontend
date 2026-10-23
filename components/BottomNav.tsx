@@ -4,7 +4,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { animate, useMotionValue } from "framer-motion";
-import { Ellipsis, Home, LayoutTemplate, MessageSquareHeart, ScrollText } from "lucide-react";
+import { Ellipsis, Home, LayoutTemplate, MessageSquareHeart } from "lucide-react";
+import WeddingRings from "@/components/icons/WeddingRings";
 import MoreDrawer, { drawerWidth } from "@/components/MoreDrawer";
 import type { PastEndDetail } from "@/components/SwipeTabs";
 
@@ -21,8 +22,8 @@ export default function BottomNav() {
     setMoreOpen(false);
   }, [pathname]);
 
-  // ── Swiping past Manifesto pulls the drawer in under the finger ─────────
-  // More is the slot right of Manifesto, so the drawer arrives from the right
+  // ── Swiping past Wedding pulls the drawer in under the finger ───────────
+  // More is the slot right of Wedding, so the drawer arrives from the right
   // and tracks the drag (see SwipeTabs' `pastEnd`); the tapped button keeps
   // opening it from the left as before.
   const [side, setSide] = useState<"left" | "right">("left");
@@ -65,9 +66,12 @@ export default function BottomNav() {
     // Favorites moved into the More drawer, where the rest of "your stuff" is.
     if (pathname.startsWith("/feedback")) return 1;
     if (pathname === "/") return 2;
-    if (pathname.startsWith("/manifesto")) return 3;
+    // Slot 3 is the wedding hub (it replaced Manifesto, which now lives in
+    // the More drawer and the desktop Company menu).
+    if (pathname === "/wedding" || pathname.startsWith("/wedding/")) return 3;
     if (
       pathname.startsWith("/profile") ||
+      pathname.startsWith("/manifesto") ||
       pathname.startsWith("/favorites") ||
       pathname.startsWith("/saves") ||
       pathname.startsWith("/guides") ||
@@ -89,7 +93,7 @@ export default function BottomNav() {
     <LayoutTemplate key="b-template" size={23} strokeWidth={2.1} />,
     <MessageSquareHeart key="b-lovewall" size={23} strokeWidth={2.1} />,
     <Home key="b-home" size={23} strokeWidth={2.1} />,
-    <ScrollText key="b-manifesto" size={23} strokeWidth={2.1} />,
+    <WeddingRings key="b-wedding" size={23} strokeWidth={2.1} />,
     <Ellipsis key="b-more" size={23} strokeWidth={2.1}  />,
   ][activeSlot];
 
@@ -205,10 +209,10 @@ export default function BottomNav() {
           />
 
           <TabItem
-            href="/manifesto"
-            label="MANIFESTO"
+            href="/wedding"
+            label="WEDDING"
             slot={3}
-            icon={<ScrollText size={20} color={activeSlot === 3 ? activeColor : mutedColor} strokeWidth={1.9} />}
+            icon={<WeddingRings size={20} color={activeSlot === 3 ? activeColor : mutedColor} strokeWidth={1.9} />}
           />
 
           <button
