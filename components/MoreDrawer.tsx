@@ -35,7 +35,7 @@ import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
   Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus, Megaphone,
-  HeartHandshake, Crown, BadgePercent,
+  HeartHandshake, Crown, BadgePercent, ScrollText,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
@@ -155,7 +155,7 @@ export default function MoreDrawer({
   onClose: () => void;
   /**
    * "right" when it was pulled in by swiping past the last bottom-nav tab:
-   * More sits right of Manifesto, so it arrives from that side, following
+   * More sits right of Wedding, so it arrives from that side, following
    * the finger through `dragX` (px from fully open; drawerWidth() = closed).
    */
   side?: "left" | "right";
@@ -239,6 +239,8 @@ export default function MoreDrawer({
     : [];
 
   const support: Item[] = [
+    // Moved here from the bottom bar, whose slot now holds the wedding hub.
+    { label: "Our Manifesto", icon: <ScrollText size={17} />, href: "/manifesto" },
     { label: "About Us", icon: <Info size={17} />, href: "/about-us" },
     { label: "Contact Us", icon: <Mail size={17} />, href: "/contact-us" },
     { label: "Help", icon: <HelpCircle size={17} />, href: "/help" },

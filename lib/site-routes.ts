@@ -107,6 +107,10 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   // The per-guide pages are appended from the guide registry in sitemap.ts, so
   // adding a guide does not mean editing this list a second time.
   { path: "/guides", priority: 0.7, changeFrequency: "weekly" },
+  // ── The wedding hub (the bottom nav's Wedding tab) ─────────────────────
+  // Every wedding template on one page, for "wedding invitation online"
+  // intent; 0.8 like a template, weekly because designs keep being added.
+  { path: "/wedding", priority: 0.8, changeFrequency: "weekly" },
   // ── Informational ────────────────────────────────────────────────────────
   { path: "/help", priority: 0.5, changeFrequency: "monthly" },
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },

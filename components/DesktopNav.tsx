@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Search, X, SlidersHorizontal, User, BarChart3, Crown, GraduationCap, BookOpen, Star, Info, Mail, HelpCircle, Gift } from "lucide-react";
+import { Search, X, SlidersHorizontal, User, BarChart3, Crown, GraduationCap, BookOpen, Star, Info, Mail, HelpCircle, Gift, ScrollText } from "lucide-react";
 import NavDropdown from "@/components/NavDropdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
@@ -23,7 +23,7 @@ export default function DesktopNav() {
   const isProfile = pathname.startsWith("/profile");
   const { user: authUser, isAuthenticated } = useAppSelector((s) => s.auth);
   const isExplore = ["/guides", "/blog", "/feedback"].some((p) => pathname.startsWith(p));
-  const isCompany = ["/about-us", "/contact-us", "/help"].some((p) => pathname.startsWith(p));
+  const isCompany = ["/about-us", "/contact-us", "/help", "/manifesto"].some((p) => pathname.startsWith(p));
   const isInfluencerPage = pathname.startsWith("/influencer");
   // Rank check, not equality: `superadmin` outranks `admin` and must still
   // see the Admin entry. `=== "admin"` hid it the moment that role existed.
@@ -123,6 +123,10 @@ export default function DesktopNav() {
           <button onClick={() => router.push("/templates")} style={tabTextStyle(pathname.startsWith("/templates"))}>
             Templates
           </button>
+          {/* The wedding hub — the bottom nav's Wedding tab on a phone. */}
+          <button onClick={() => router.push("/wedding")} style={tabTextStyle(pathname === "/wedding" || pathname.startsWith("/wedding/"))}>
+            Weddings
+          </button>
           <button
             onClick={() => router.push("/favorites")}
             style={tabTextStyle(pathname.startsWith("/favorites") || pathname.startsWith("/saves"))}
@@ -147,6 +151,8 @@ export default function DesktopNav() {
               { href: "/about-us", label: "About Us", description: "The story behind SubhSandesh", icon: <Info size={16} /> },
               { href: "/contact-us", label: "Contact Us", description: "We reply within a day", icon: <Mail size={16} /> },
               { href: "/help", label: "Help Center", description: "Answers to common questions", icon: <HelpCircle size={16} /> },
+              // Moved off the phone's bottom bar (now the Wedding tab); kept reachable here.
+              { href: "/manifesto", label: "Our Manifesto", description: "What we believe about gifting", icon: <ScrollText size={16} /> },
             ]}
           />
           <button
