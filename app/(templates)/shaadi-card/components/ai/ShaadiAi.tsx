@@ -319,14 +319,17 @@ export default function ShaadiAi({ e }: { e: ShaadiEditor }) {
   const cardInput = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  // Opened afresh: start at the choice, answers from this session.
-  useEffect(() => {
-    if (!open) return;
-    setA(loadAnswers());
-    setScreen("choice");
-    setQi(0);
-    setTried(false);
-  }, [open]);
+  // Opened afresh: start at the choice, answers from this session (adjusted while rendering, not in an effect).
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setA(loadAnswers());
+      setScreen("choice");
+      setQi(0);
+      setTried(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -357,6 +360,7 @@ export default function ShaadiAi({ e }: { e: ShaadiEditor }) {
   useEffect(() => {
     if (!pending) return;
     generateGuided({ people: { userName: "", partnerName: "", bestFriendName: "", partnerPronouns: "" }, story: pending.story, hints: pending.hints });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the request starts after the blanked form committed; clearing the trigger is part of that hand-off
     setPending(null);
   }, [pending, generateGuided]);
 
@@ -367,10 +371,12 @@ export default function ShaadiAi({ e }: { e: ShaadiEditor }) {
       // The names are the sender's, spelled the way they typed them (the model may transliterate).
       const typed = answersRef.current;
       e.setMf((x) => afterFill(x, typed));
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacts to the async fill landing in useStoryFill
       setScreen("review");
     }
     else if (fill.error) {
       if (snapshot.current) e.setMf(snapshot.current);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacts to the async fill failing in useStoryFill
       setScreen("q");
       setQi(STEPS.length - 1);
     }

@@ -142,7 +142,12 @@ function openedKey(shareId?: string) {
 export default function ShaadiExperience({ data, mode, shareId, replay = 0, onOpened, createHref }: ShaadiExperienceProps) {
   const m = useMemo(() => readView(data), [data]);
   const [lang, setLang] = useState<Lang>(data.lang);
-  useEffect(() => setLang(data.lang), [data.lang]);
+  // The editor's language follows the form (adjusted while rendering).
+  const [formLang, setFormLang] = useState<Lang>(data.lang);
+  if (formLang !== data.lang) {
+    setFormLang(data.lang);
+    setLang(data.lang);
+  }
   const s = T[lang];
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
   const guest = useGuestName();
@@ -157,12 +162,17 @@ export default function ShaadiExperience({ data, mode, shareId, replay = 0, onOp
     }
   });
   const [open, setOpen] = useState(gate === "hidden");
+  // "Replay opening" from the editor: close and show the khidki again (state adjusted while rendering; the scroll is the effect).
+  const [seenReplay, setSeenReplay] = useState(replay);
+  if (replay !== seenReplay) {
+    setSeenReplay(replay);
+    setOpen(false);
+    setGate("show");
+  }
   const lastReplay = useRef(replay);
   useEffect(() => {
     if (replay === lastReplay.current) return;
     lastReplay.current = replay;
-    setOpen(false);
-    setGate("show");
     window.scrollTo?.({ top: 0 });
   }, [replay]);
   const replayNow = useCallback(() => {

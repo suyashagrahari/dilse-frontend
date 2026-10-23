@@ -114,7 +114,8 @@ export function canonicalNimantran(hi: string): string {
 export function nextOccurrence(iso: string, today = new Date()): string {
   if (!isIsoDay(iso)) return iso;
   const t0 = today.toISOString().slice(0, 10);
-  let [y, m, d] = iso.split("-").map(Number);
+  const [y0, m, d] = iso.split("-").map(Number);
+  let y = y0;
   const pad = (x: number) => String(x).padStart(2, "0");
   let out = iso;
   for (let k = 0; out < t0 && k < 5; k++) out = `${++y}-${pad(m)}-${pad(d)}`;
