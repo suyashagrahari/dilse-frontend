@@ -48,7 +48,7 @@ export function Heading({ eyebrow, title, children, id }: { eyebrow?: string; ti
 
 const paragraphs = (t: string) =>
   t
-    .split(/\n{2,}/)
+    .split(/\n+/) // a blank line or a single break both start a paragraph (the AI writes either)
     .map((p) => p.trim())
     .filter(Boolean);
 

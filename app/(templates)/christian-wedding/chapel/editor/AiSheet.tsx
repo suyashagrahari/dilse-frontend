@@ -170,6 +170,26 @@ export default function AiSheet({ fill, setMf, onClose }: Props) {
     }));
   }, [fill.mode, setMf]);
 
+  // Own words: a date whose day of the month the text never states is the
+  // model padding "March 2027" to the 1st. Clear it, so the review shows it
+  // empty (loud) instead of a day nobody chose.
+  const ownPending = useRef<string | null>(null);
+  useEffect(() => {
+    if (fill.mode !== "done" || ownPending.current === null) return;
+    const text = ownPending.current;
+    ownPending.current = null;
+    const stated = (iso: string) => !iso || new RegExp(`(^|\\D)0?${Number(iso.slice(8, 10))}(st|nd|rd|th)?(\\D|$)`, "i").test(text);
+    setMf((p) => {
+      const wedding = stated(p.weddingDay) ? p.weddingDay : "";
+      return {
+        ...p,
+        weddingDay: wedding,
+        // "the same evening" legitimately has no number: a function on the (kept) wedding day stays.
+        events: p.events.map((e) => (e.isoDate && e.isoDate !== wedding && !stated(e.isoDate) ? { ...e, isoDate: "" } : e.isoDate && !wedding && e.isoDate === p.weddingDay ? { ...e, isoDate: "" } : e)),
+      };
+    });
+  }, [fill.mode, setMf]);
+
   const set = (patch: Partial<Answers>) => setA((p) => ({ ...p, ...patch }));
   const toggleFn = (name: string) =>
     setA((p) => {
@@ -192,6 +212,7 @@ export default function AiSheet({ fill, setMf, onClose }: Props) {
     }
     setErr("");
     pending.current = null;
+    ownPending.current = ownText.trim();
     fill.generateGuided({ people: { userName: "", partnerName: "", bestFriendName: "", partnerPronouns: "" }, story: ownText.trim(), hints: { occasion: "a Christian wedding (Holy Matrimony)" } });
   };
 
