@@ -1,30 +1,47 @@
-// ─── Wedding Invitation ✦ Premium ($10) ──────────────────────────────────────
+// ─── Wedding Invitation ✦ Premium ($10) — "The Lake Terrace" ─────────────────
 //
-// A scroll-told wedding website on the Valentine engine (draft, publish,
-// paywall, share link, password, OG, analytics and AI fill come from it) and
-// the wedding kit (app/(templates)/_wedding: themes, masonry, countdown,
-// functions, RSVP). The guest page lives in
-// app/(templates)/wedding-invitation-premium/components; the editor is that
-// folder's studio (DayConfig.studio "weddingPremium"), which owns the whole
-// form except music and the finishing touches.
+// Tall gold French doors with etched glass swing inward onto a sunlit
+// watercolour terrace over a lake: powder blue sky, ivory balustrades,
+// champagne gold, flamingos, a pink gazebo, a peacock and lanterns (the
+// owner's art, public/wedding-v3/template6 + template11 + openings/premium,
+// served from the repo, never the CDN). Then one scroll: the couple, the
+// invitation in English + Hindi, families, countdown, story, functions, venue,
+// film, gallery, good to know, contacts, RSVP per function, blessings, shagun,
+// share and a closing terrace. The guest page + studio live in
+// app/(templates)/wedding-invitation-premium/components.
 //
 // Field mapping on the engine's shape:
 //   recipientName = the bride · senderName = the groom · letter = the
-//   invitation message · endLine = the closing thank-you · photos[0] = cover.
+//   invitation message · endLine = the closing thank-you · photos[0] = cover;
+//   story chapters point into photos by 1-based index.
+//
+// DATA COMPATIBILITY: pages published before the rebuild store `order`,
+// `motif`, `hindi`, `date`, `time`, `city`, `brideParents`, `groomParents`,
+// `faqs` and story `text`. Those keys stay exactly as they were; every new key
+// is optional with a default, and the renderer treats it as possibly absent.
+// Dark theme ids (maroon/noir/emerald) stay valid in storage and render as the
+// nearest light palette.
 //
 // Server twin: server/src/config/valentineDays.ts ("wedding-invitation-premium");
 // keys and limits must match (valentineDays.test.ts pins them).
 
-import type { DayConfig } from "../types";
+import type { DayConfig, LovePhoto } from "../types";
 import type { DayTheme } from "../theme";
 import type { SongSuggestion } from "../music/youtube";
-import { WEDDING_THEME_IDS, WEDDING_THEMES, WEDDING_TIER_LIMITS } from "../../_wedding";
+import { WEDDING_THEME_IDS, WEDDING_TIER_LIMITS } from "../../_wedding";
 import { meta } from "./_shared";
 
 const SLUG = "wedding-invitation-premium" as const;
 export const WP_LIMITS = WEDDING_TIER_LIMITS[SLUG];
 
-// ─── Music: one track, Din Shagna Da by default (music.json, verified 2026-10-19) ─
+/** The three light palettes, by this template's own names. */
+export const WP_THEME_LABELS: Record<string, string> = {
+  powder: "Lake Blue",
+  champagne: "Ivory & Gold",
+  blush: "Flamingo Blush",
+};
+
+// ─── Music: Din Shagna Da by default (oEmbed-verified ids, wq-research.md §5) ─
 export const WP_SONGS: readonly SongSuggestion[] = [
   { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal · Phillauri" },
   { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
@@ -45,26 +62,28 @@ export interface FunctionPreset {
   match: RegExp;
   title: string;
   dressCode: string;
+  dressColor: string;
   note: string;
   /** Default start time when none is given. */
   time: string;
 }
 const NEUTRAL_WEDDING_NOTE = "Join us as we are married and begin our life together, surrounded by the people we love.";
 export const FUNCTION_PRESETS: readonly FunctionPreset[] = [
-  { match: /haldi|pithi|mayun|vatna/i, title: "Haldi", time: "10:00", dressCode: "Shades of yellow", note: "A morning of turmeric, laughter and sunshine as the couple is blessed with haldi. Wear yellow and be ready to get a little messy." },
-  { match: /mehe?n?di|henna/i, title: "Mehendi", time: "16:00", dressCode: "Greens and bright florals", note: "Henna, music and plenty of chai. Come get your hands painted as we fill the afternoon with colour and song." },
-  { match: /sangeet|garba|ladies|cocktail/i, title: "Sangeet", time: "19:30", dressCode: "Indo-western glam", note: "An evening of music, dance performances and family rivalries settled on the dance floor. Bring your best moves." },
-  { match: /recep/i, title: "Reception", time: "20:00", dressCode: "Formal / black tie", note: "Dinner, toasts and dancing to celebrate the newlyweds. Come raise a glass with us." },
-  { match: /engage|roka|sagai|ring/i, title: "Engagement", time: "18:00", dressCode: "Festive pastels", note: "Rings, blessings and the first toast to the two of us. Join our families for an evening of joy." },
-  { match: /church|ceremony|nikah|anand|muhurtham|court|register/i, title: "Ceremony", time: "11:00", dressCode: "Elegant formal", note: NEUTRAL_WEDDING_NOTE },
-  { match: /wedd|phera|vivah|shaadi|marri|lagna|kalyanam/i, title: "Wedding", time: "19:00", dressCode: "Traditional festive", note: "Join us as we take the seven pheras around the sacred fire and begin our life together." },
+  { match: /haldi|pithi|mayun|vatna/i, title: "Haldi", time: "10:00", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "A morning of turmeric, laughter and sunshine as the couple is blessed with haldi." },
+  { match: /mehe?n?di|henna/i, title: "Mehendi", time: "16:00", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna, music and plenty of chai. Come get your hands painted." },
+  { match: /sangeet|garba|ladies/i, title: "Sangeet", time: "19:30", dressCode: "Indo-western glam", dressColor: "#7B3FA0", note: "An evening of music, dance and family rivalries settled on the dance floor." },
+  { match: /cocktail/i, title: "Cocktail", time: "20:00", dressCode: "Cocktail chic", dressColor: "#1C1C24", note: "Drinks, music and dancing under the stars." },
+  { match: /recep/i, title: "Reception", time: "20:00", dressCode: "Formal / black tie", dressColor: "#1C1C24", note: "Dinner, toasts and dancing to celebrate the newlyweds." },
+  { match: /engage|roka|sagai|ring/i, title: "Engagement", time: "18:00", dressCode: "Festive pastels", dressColor: "#E86A92", note: "Rings, blessings and the first toast to the two of us." },
+  { match: /church|ceremony|nikah|anand|muhurt|court|register/i, title: "Ceremony", time: "11:00", dressCode: "Elegant formal", dressColor: "#F3EBDD", note: NEUTRAL_WEDDING_NOTE },
+  { match: /wedd|phera|vivah|shaadi|marri|lagna|kalyanam/i, title: "Wedding", time: "19:00", dressCode: "Traditional festive", dressColor: "#A3122B", note: "Join us as we take the seven pheras and begin our life together." },
 ];
 /** The preset for a function's name; the pheras line only on a Hindu (Ganesha) invitation. */
 export function presetFor(title: string, motif?: unknown): FunctionPreset | null {
   const t = title.trim();
   if (!t) return null;
   const p = FUNCTION_PRESETS.find((f) => f.match.test(t)) ?? null;
-  if (p && p.title === "Wedding" && motif !== undefined && motif !== "ganesha") return { ...p, dressCode: "Elegant formal", note: NEUTRAL_WEDDING_NOTE };
+  if (p && p.title === "Wedding" && motif !== undefined && motif !== "ganesha") return { ...p, dressCode: "Elegant formal", dressColor: "#F3EBDD", note: NEUTRAL_WEDDING_NOTE };
   return p;
 }
 
@@ -77,72 +96,79 @@ export function newEventId(title: string, taken: readonly string[]): string {
   return id;
 }
 
-// ─── Demo: Aanya & Vihaan, a royal Udaipur weekend ──────────────────────────
-const CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
+// ─── Demo photos: in the repo (public/wedding-v3/demo), never the CDN ────────
+// The engine and the server keep only https links, so a draft stores them on
+// the site's own domain; every render maps that back to the same-origin path
+// (wpLocalUrl), so local, staging and prod each serve their own copy. Pages
+// published before the rebuild keep their CDN links, which pass through.
+const SITE_ORIGIN = "https://subhsandesh.in";
+const REPO_ART_RE = /^https:\/\/(?:www\.)?subhsandesh\.in(\/wedding-v3\/[^?#\s]+)$/i;
+export const wpLocalUrl = (url: string): string => {
+  const m = REPO_ART_RE.exec(url);
+  return m ? m[1] : url;
+};
+export const wpStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
+const ph = (file: string, w: number, h: number, extra: Partial<LovePhoto> = {}): LovePhoto => ({ url: `${SITE_ORIGIN}/wedding-v3/demo/${file}`, w, h, cropX: 50, cropY: 50, scale: 100, ...extra });
+/** 1 = the cover (hero), 2–4 = story chapters, 5+ = the gallery (ends level at 2, 3 and 4 columns). */
+export const DEMO_PHOTOS_WP: LovePhoto[] = [
+  ph("rw-16.webp", 683, 1024, { cropY: 38, caption: "Ishita & Aarav" }),
+  ph("rw-02.webp", 1024, 683),
+  ph("rw-17.webp", 1400, 1050),
+  ph("rw-18.webp", 1024, 683),
+  ph("rw-13.webp", 1024, 683, { span: "wide", caption: "Shringar" }),
+  ph("rw-01.webp", 1024, 768, { caption: "The bride" }),
+  ph("rw-08.webp", 684, 1024, { span: "tall", cropY: 35 }),
+  ph("rw-07.webp", 1024, 683, { caption: "First dance" }),
+  ph("rw-05.webp", 680, 1024, { cropY: 35, caption: "Pheras" }),
+  ph("rw-11.webp", 1024, 487, { caption: "Mehendi" }),
+  ph("rw-12.webp", 1024, 683),
+  ph("rw-09.webp", 931, 1024, { cropY: 35 }),
+  ph("rw-03.webp", 1024, 768, { caption: "Chooda" }),
+  ph("rw-15.webp", 1024, 683),
+  ph("rw-06.webp", 1024, 683),
+  ph("rw-14.webp", 1024, 683, { caption: "Henna" }),
+];
+
+// ─── Demo: Ishita & Aarav, a lakeside weekend in Udaipur ────────────────────
 export const DEMO_EVENTS = [
-  { id: "haldi", title: "Haldi", date: "2027-02-11", time: "10:00", endTime: "13:00", venue: "The Courtyard, Shiv Niwas Palace", address: "City Palace Complex, Udaipur, Rajasthan 313001", mapUrl: "", dressCode: "Shades of yellow", note: "A morning of turmeric, laughter and sunshine. Wear yellow and be ready to get a little messy." },
-  { id: "mehendi", title: "Mehendi", date: "2027-02-11", time: "16:30", endTime: "20:00", venue: "Lakeside Lawns, Shiv Niwas Palace", address: "City Palace Complex, Udaipur, Rajasthan 313001", mapUrl: "", dressCode: "Greens and bright florals", note: "Henna, folk music and plenty of chai as the sun sets over Lake Pichola." },
-  { id: "sangeet", title: "Sangeet", date: "2027-02-12", time: "19:30", endTime: "23:30", venue: "Durbar Hall, Fateh Prakash Palace", address: "City Palace Complex, Udaipur, Rajasthan 313001", mapUrl: "", dressCode: "Indo-western glam", note: "Music, dance performances and family rivalries settled on the dance floor. Bring your best moves." },
-  { id: "wedding", title: "Wedding", date: "2027-02-13", time: "19:00", endTime: "23:00", venue: "Manek Chowk, City Palace", address: "City Palace, Udaipur, Rajasthan 313001", mapUrl: "", dressCode: "Traditional festive", note: "The baraat arrives at 7 pm; the pheras begin at the auspicious hour of 9:15 pm." },
-  { id: "reception", title: "Reception", date: "2027-02-14", time: "20:00", endTime: "23:30", venue: "The Terrace, Jagmandir Island Palace", address: "Lake Pichola, Udaipur, Rajasthan 313001", mapUrl: "", dressCode: "Formal / black tie", note: "Boats leave the City Palace jetty every fifteen minutes from 7:30 pm." },
+  { id: "mehendi", title: "Mehendi", date: "2027-02-11", time: "15:00", endTime: "19:00", venue: "The Lake Terrace, Oberoi Udaivilas", address: "Haridasji Ki Magri, Udaipur, Rajasthan", mapUrl: "", dressCode: "Greens and bright florals", dressColor: "#4F9B6A", note: "Henna, folk music and chai as the sun sets over Lake Pichola." },
+  { id: "haldi", title: "Haldi", date: "2027-02-12", time: "10:00", endTime: "13:00", venue: "The Courtyard Garden, Oberoi Udaivilas", address: "Haridasji Ki Magri, Udaipur, Rajasthan", mapUrl: "", dressCode: "Shades of yellow", dressColor: "#F2C94C", note: "Turmeric, marigolds and a lot of laughter. Be ready to get a little messy." },
+  { id: "sangeet", title: "Sangeet", date: "2027-02-12", time: "19:30", endTime: "23:30", venue: "Durbar Hall, Fateh Prakash Palace", address: "City Palace Complex, Udaipur, Rajasthan", mapUrl: "", dressCode: "Indo-western glam", dressColor: "#7B3FA0", note: "Two families, one dance floor. Bring your best moves." },
+  { id: "wedding", title: "Wedding", date: "2027-02-13", time: "18:30", endTime: "23:00", venue: "The Gazebo Lawns, Oberoi Udaivilas", address: "Haridasji Ki Magri, Udaipur, Rajasthan", mapUrl: "", dressCode: "Traditional festive", dressColor: "#C9A24A", note: "The baraat arrives at 6:30 pm; the pheras begin at the auspicious hour of 8:40 pm." },
+  { id: "reception", title: "Reception", date: "2027-02-14", time: "20:00", endTime: "23:30", venue: "Jagmandir Island Palace", address: "Lake Pichola, Udaipur, Rajasthan", mapUrl: "", dressCode: "Black tie", dressColor: "#1C1C24", note: "Boats leave the City Palace jetty every fifteen minutes from 7:30 pm." },
 ];
 
 export const DEMO_STORY = [
-  { when: "2018 · Pune", title: "Where it began", text: "A borrowed umbrella outside the college library, a monsoon that would not stop, and a conversation that has not ended since.", photo: 2 },
-  { when: "2021", title: "Miles apart", text: "Two cities, a hundred late-night calls and one very patient chai vendor near Bandra station.", photo: 14 },
-  { when: "2025 · Udaipur", title: "The question", text: "On a boat on Lake Pichola at sunset, Vihaan finally asked. Aanya said yes before he finished the sentence.", photo: 9 },
-  { when: "13 Feb 2027", title: "Forever begins", text: "And now we can't wait to begin forever, with all of you there.", photo: 1 },
+  { when: "2017 · Bengaluru", title: "Where it began", text: "A rainy evening, one umbrella and two strangers at the same bus stop. The bus never came; the conversation never ended.", photo: 2 },
+  { when: "2024 · Udaipur", title: "The question", text: "On a boat on Lake Pichola at sunset, Aarav took out a ring. Ishita said yes before he finished the sentence.", photo: 3 },
+  { when: "13 Feb 2027", title: "Forever begins", text: "Now our two families become one, on a terrace by the lake. Come and bless us.", photo: 4 },
 ];
 
 export const DEMO_FAQS = [
-  { title: "Dress code", text: "Each function has its own colours, listed on its card. Comfortable shoes for the courtyard; the palace floors are stone." },
-  { title: "Getting there", text: "Udaipur airport (UDR) is 25 minutes away. We have cars at the airport on 10 and 11 February; call Rohan on +91 98290 00000." },
-  { title: "Where to stay", text: "Rooms are held for our guests at Shiv Niwas Palace and Fateh Prakash Palace until 31 December. Mention our names when you book." },
+  { title: "Where to stay", text: "Rooms are held for our guests at Oberoi Udaivilas and Fateh Prakash Palace until 31 December. Mention our names." },
+  { title: "Weather", text: "February evenings by the lake are cool, around 14°C. Bring a shawl for the boat ride." },
+  { title: "Little ones", text: "Children are very welcome. There is a play corner at every function." },
 ];
 
-/**
- * Demo gallery (CC0 photographs from Wikimedia Commons — Unsplash-sourced and
- * others; see media-src/templates/wedding/ATTRIBUTION.md), on our CDN with
- * their natural size so the masonry lays out before they load.
- */
-const p = (file: string, w: number, h: number, extra: Record<string, unknown> = {}) => ({ url: `${CDN}/${file}`, w, h, cropX: 50, cropY: 50, scale: 100, ...extra });
-export const DEMO_PHOTOS_WP = [
-  p("wp-varmala-couple.webp", 1400, 1075, { caption: "Aanya & Vihaan", cropX: 46, cropY: 40 }),
-  p("wp-couple-hands.webp", 1068, 1600, { caption: "Hand in hand" }),
-  p("wp-city-palace-court.webp", 720, 1600, { span: "tall", caption: "City Palace, Udaipur" }),
-  p("wp-mehndi-bangles.webp", 1600, 1064, { caption: "Mehendi" }),
-  p("wp-haldi.webp", 1487, 753, { span: "wide", caption: "Haldi morning" }),
-  p("wp-palace-hall.webp", 1600, 720),
-  p("wp-bridal-mehndi.webp", 925, 1600),
-  p("wp-ring-ceremony.webp", 1024, 683, { caption: "The ring ceremony" }),
-  p("wp-rings-hands.webp", 1600, 1067),
-  p("wp-aisle-florals.webp", 1600, 1068, { span: "large" }),
-  p("wp-palace-mural.webp", 1600, 720),
-  p("wp-bridal-bangles.webp", 1024, 768, { caption: "Chooda" }),
-  p("wp-mehndi-palm.webp", 1600, 1197),
-  p("wp-rings-watch.webp", 1600, 1067),
-  p("wp-flowers.webp", 1065, 1600),
-];
-
-// ─── The editor chrome (sheet + top bar): blush & rose gold ─────────────────
+// ─── The editor chrome (sheet + top bar): powder blue, ivory, champagne gold ─
 const theme: DayTheme = {
-  bg: "radial-gradient(120% 90% at 50% 0%, #fdf6f4 0%, #f8e9e7 55%, #f1d9d6 100%)",
-  base: "#fbf0ee",
-  paper: "#fffaf8",
-  glass: "rgba(255,250,248,.82)",
-  ink: "#3e1f27",
-  inkSoft: "#87636a",
-  paperInk: "#3e1f27",
-  accent: "#b4596c",
-  accentDeep: "#8e3d50",
-  accentInk: "#fff8f6",
-  soft: "#f7e3e1",
-  edge: "rgba(169,78,99,.24)",
-  gold: "#c08a5c",
+  bg: "linear-gradient(180deg, #F7FBFE 0%, #EEF5FA 55%, #F8F3E8 100%)",
+  base: "#F4F8FB",
+  paper: "#FFFEFB",
+  glass: "rgba(255,254,251,.86)",
+  ink: "#1F3346",
+  inkSoft: "#5B6E80",
+  paperInk: "#1F3346",
+  accent: "#3E6A8A",
+  accentDeep: "#284D69",
+  accentInk: "#FFFDF6",
+  soft: "#E8F1F7",
+  edge: "#D9CBA6",
+  gold: "#B8913E",
   dark: false,
-  particles: ["🌸", "✨"],
-  confetti: ["#c08a5c", "#e8c79a", "#b4596c", "#f4c6cf"],
+  particles: ["🦩", "✨", "🌸"],
+  confetti: ["#C9A24A", "#F1D58A", "#9CC3DE", "#F3B6C8"],
 };
 
 type Leaf = { key: string; label: string; kind: "text"; max: number };
@@ -162,8 +188,22 @@ export const weddingPremiumDay: DayConfig = {
   topBar: true,
   brandMark: "stacked",
   studio: "weddingPremium",
-  // The studio numbers its own 9 steps (no side nav); the sheet keeps Music + Finishing touches as 10 and 11.
-  studioForm: { keep: ["music", "finish"], numberFrom: 9, ownAi: true, ownerPanel: "weddingGuests" },
+  // The studio draws every step itself (password included). Edit stays after
+  // publishing: guest replies, blessings and personal links live in the form.
+  studioForm: {
+    ownAi: true,
+    editAfterPublish: true,
+    nav: [
+      { id: "names", label: "The couple", emoji: "💍" },
+      { id: "details", label: "Functions", emoji: "🪔" },
+      { id: "photos", label: "Photos", emoji: "📸" },
+      { id: "letter", label: "Invitation", emoji: "✉️" },
+      { id: "story", label: "Story & families", emoji: "🌸" },
+      { id: "guests", label: "Guest info", emoji: "🧭" },
+      { id: "music", label: "Look & music", emoji: "🎵" },
+      { id: "finish", label: "RSVP & send", emoji: "✦" },
+    ],
+  },
   music: {
     audioOnly: true,
     compact: true,
@@ -171,16 +211,15 @@ export const weddingPremiumDay: DayConfig = {
     suggestionsNote: "Wedding favourites · tap one, or paste any YouTube link",
   },
   extras: [
-    {
-      key: "theme", kind: "enum", label: "Theme", default: "blush", hidden: true,
-      options: WEDDING_THEME_IDS.map((id) => ({ value: id, label: WEDDING_THEMES[id].label, swatch: WEDDING_THEMES[id].swatch[1] })),
-    },
+    // ── Stored by pages published before the rebuild: never rename or retype ──
+    { key: "theme", kind: "enum", label: "Theme", default: "powder", hidden: true, options: WEDDING_THEME_IDS.map((id) => ({ value: id, label: WP_THEME_LABELS[id] ?? id })) },
     { key: "order", kind: "enum", label: "Show names as", default: "bride", hidden: true, options: [{ value: "bride", label: "Bride first" }, { value: "groom", label: "Groom first" }] },
     {
       key: "motif", kind: "enum", label: "Blessing ornament", default: "ganesha", hidden: true,
       options: [{ value: "ganesha", label: "Ganesha" }, { value: "lotus", label: "Lotus" }, { value: "rings", label: "Rings" }, { value: "none", label: "None" }],
     },
-    { key: "hindi", kind: "bool", default: true, label: "Hindi lines under the headings", hidden: true },
+    /** Offer the Hindi toggle (EN/हिं) to guests. Off = an English-only invitation. */
+    { key: "hindi", kind: "bool", default: true, label: "Offer a Hindi version", hidden: true },
     { key: "date", kind: "text", max: 10, label: "the wedding date", min: 10, hidden: true, input: "date" },
     { key: "time", kind: "text", max: 5, label: "Time", hidden: true },
     { key: "city", kind: "text", max: 40, label: "City", hidden: true },
@@ -191,7 +230,7 @@ export const weddingPremiumDay: DayConfig = {
     { key: "groomNote", kind: "text", max: 90, label: "Groom's family note", hidden: true },
     {
       key: "events", kind: "objlist", maxItems: WP_LIMITS.events, minItems: 1, label: "Function", itemTitle: "Function", hidden: true,
-      item: [t("id", "Id", 40), t("title", "Name", 30), t("date", "Date", 10), t("time", "Starts", 5), t("endTime", "Ends", 5), t("venue", "Venue", 80), t("address", "Address", 140), t("mapUrl", "Google Maps link", 300), t("dressCode", "Dress code", 50), t("note", "Note", 220)],
+      item: [t("id", "Id", 40), t("title", "Name", 30), t("date", "Date", 10), t("time", "Starts", 5), t("endTime", "Ends", 5), t("venue", "Venue", 80), t("address", "Address", 140), t("mapUrl", "Google Maps link", 300), t("dressCode", "Dress code", 50), t("dressColor", "Dress colour", 7), t("note", "Note", 220)],
     },
     {
       key: "story", kind: "objlist", maxItems: WP_LIMITS.story, label: "Moments", itemTitle: "Moment", hidden: true,
@@ -201,61 +240,90 @@ export const weddingPremiumDay: DayConfig = {
     { key: "rsvpBy", kind: "text", max: 10, label: "Reply by", hidden: true, input: "date" },
     { key: "maxGuests", kind: "number", min: 1, max: 10, default: 4, label: "Guests per reply", hidden: true },
     { key: "rsvpMeal", kind: "bool", default: false, label: "Ask meal preference", hidden: true },
+    // ── Added in the rebuild (2026-10): all optional, absent on older pages ──
+    { key: "lang", kind: "enum", label: "Opens in", default: "en", hidden: true, options: [{ value: "en", label: "English" }, { value: "hi", label: "हिन्दी" }] },
+    { key: "hindiMessage", kind: "longtext", max: 700, label: "Invitation in Hindi", hidden: true },
+    { key: "blessingsOf", kind: "text", max: 160, label: "With the blessings of", hidden: true },
+    { key: "muhurat", kind: "text", max: 60, label: "Muhurat", hidden: true },
+    { key: "gettingThere", kind: "longtext", max: 500, label: "Getting there", hidden: true },
+    { key: "videoUrl", kind: "text", max: 200, label: "Pre-wedding film", hidden: true },
+    {
+      key: "contacts", kind: "objlist", maxItems: 4, label: "Family contacts", itemTitle: "Contact", hidden: true,
+      item: [t("name", "Name", 40), t("relation", "Relation", 40), t("phone", "Phone", 20)],
+    },
+    { key: "upiId", kind: "text", max: 60, label: "UPI ID for shagun", hidden: true },
+    { key: "upiName", kind: "text", max: 60, label: "Name on the UPI account", hidden: true },
+    { key: "liveUrl", kind: "text", max: 300, label: "Livestream link", hidden: true },
+    { key: "blessings", kind: "bool", default: true, label: "Blessings wall", hidden: true },
   ],
   theme,
   demo: {
-    recipientName: "Aanya",
-    senderName: "Vihaan",
+    recipientName: "Ishita",
+    senderName: "Aarav",
     petName: "",
     letter:
-      "By the grace of the Almighty and with the blessings of our elders, Aanya and Vihaan invite you to celebrate their wedding in the city of lakes.\n\nFour days of haldi, henna, music and pheras by the water: it would not be complete without you.",
+      "With the blessings of the Almighty and our elders, the Rathore and Kapoor families invite you to celebrate the wedding of Ishita and Aarav on 13 February 2027, by the lake in Udaipur.\n\nFour days of henna, haldi, music and pheras on a terrace over Lake Pichola. It would not be complete without you.",
     photos: DEMO_PHOTOS_WP,
     gifs: {},
     music: true,
     musicMode: "youtube",
     musicYoutubeId: "1LVpuWpRs3I",
     musicStart: 0,
-    endLine: "Thank you for being part of our story.",
+    endLine: "With love and gratitude, the Rathore & Kapoor families",
     extras: {
-      theme: "blush",
+      theme: "powder",
       order: "bride",
       motif: "ganesha",
       hindi: true,
       date: "2027-02-13",
-      time: "19:00",
+      time: "18:30",
       city: "Udaipur",
-      hashtag: "#AanyaWedsVihaan",
+      hashtag: "#IshitaWedsAarav",
       brideParents: "Mrs. Meera & Mr. Arvind Rathore",
       brideNote: "Jaipur",
-      groomParents: "Mrs. Nandini & Mr. Sanjay Malhotra",
+      groomParents: "Mrs. Nandini & Mr. Sanjay Kapoor",
       groomNote: "New Delhi",
       events: DEMO_EVENTS.map((e) => ({ ...e })),
       story: DEMO_STORY.map((s) => ({ ...s })),
       faqs: DEMO_FAQS.map((f) => ({ ...f })),
       rsvpBy: "2027-01-15",
       maxGuests: 4,
-      rsvpMeal: false,
+      rsvpMeal: true,
+      lang: "en",
+      hindiMessage: "ईश्वर की असीम कृपा और बड़ों के आशीर्वाद से, इशिता और आरव के शुभ विवाह के पावन अवसर पर आप सपरिवार सादर आमंत्रित हैं। झील के किनारे इस उत्सव में आपकी उपस्थिति ही हमारा सौभाग्य है।",
+      blessingsOf: "Smt. Kamla Devi & Late Shri Ram Singh Rathore",
+      muhurat: "Shubh muhurat 8:40 pm",
+      gettingThere: "Udaipur airport (UDR) is 25 minutes away. Our cars meet every flight on 10 and 11 February, and boats run from the City Palace jetty to the reception.",
+      videoUrl: "",
+      contacts: [
+        { name: "Rohan Rathore", relation: "Bride's brother", phone: "+91 98290 00001" },
+        { name: "Tara Kapoor", relation: "Groom's sister", phone: "+91 98100 00002" },
+      ],
+      upiId: "",
+      upiName: "",
+      liveUrl: "",
+      blessings: true,
     },
   },
   copy: {
-    recipientPlaceholder: "e.g. Ananya",
-    senderPlaceholder: "e.g. Arjun",
+    recipientPlaceholder: "e.g. Ishita",
+    senderPlaceholder: "e.g. Aarav",
     petNamePlaceholder: "",
-    letterPlaceholder: "The words your guests read first.",
+    letterPlaceholder: "With the blessings of our families, Ishita and Aarav invite you to celebrate their wedding…",
     letterHint: "The words your guests read first.",
-    photosHint: "Any shape works.",
+    photosHint: "Any shape works. Tap a photo to resize it or set its focus. Drag to reorder.",
     captionHint: "caption (optional)",
     noteHint: "",
-    endLinePlaceholder: "Thank you for being part of our story.",
-    endLineHint: "The thank-you at the very end, under your photo.",
-    sheetTitle: "Your wedding website",
-    sheetSub: "Describe your wedding and we'll fill everything in. Change anything you like.",
-    extrasTitle: "Details",
-    extrasSub: "",
-    publishing: "Sealing your invitation…",
+    endLinePlaceholder: "With love, the Rathore & Kapoor families",
+    endLineHint: "The thank-you at the very end, on the terrace.",
+    sheetTitle: "Your lake terrace invitation",
+    sheetSub: "Answer a few questions and we'll fill everything in. Change anything you like.",
+    extrasTitle: "Functions",
+    extrasSub: "Every function with its own map, timings and dress code.",
+    publishing: "Opening the doors to your invitation…",
     storyTitle: "Describe your wedding",
     replyText: "We'd love to come! Congratulations to you both 💐",
     yesChip: "Opened ✓",
   },
-  share: { title: "You're invited to our wedding 💍 Open your invitation", accent: "#A8445E" },
+  share: { title: "The doors are open ✨ You're invited to our wedding", accent: "#3E6A8A" },
 };
