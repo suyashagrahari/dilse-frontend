@@ -867,6 +867,8 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
 }
 
 const FWS_CSS = `
+/* The music picker's Listen / Change chips are 36px: lift them to a 40px touch target inside this studio. */
+@media (max-width: 1023px) { .rs .vmp-songActs .vmp-listen, .rs .vp-chip { min-height: 40px; } }
 .rs { --fws-gold: #b8924a; --fws-rose: #9e5a62; --fws-wine: #7a3f47; }
 .fws-head .fws-secN { position: relative; width: 44px; height: 44px; font-size: 20px; background: radial-gradient(circle at 35% 30%, #fff8f3, #f5e3da); color: var(--fws-wine); box-shadow: 0 0 0 1px rgba(184,146,74,.55), 0 6px 14px -8px rgba(122,63,71,.45); }
 .fws-secI { line-height: 1; }
@@ -935,7 +937,7 @@ const FWS_CSS = `
 .fws-pick { margin: 0 0 14px; }
 .fws-pick-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .fws-pick-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1.5px dashed var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1.2 var(--vw-font-ui); cursor: pointer; }
-.fws-pick-btn img, .fws-pick-btn > span:first-child { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
+.fws-pick-btn img, .fws-pick-btn > span:first-child { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
 .fws-frame { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--fws-gold); background: #fffaf3; color: var(--fws-wine); font: 700 13px/1 var(--vw-font-ui); cursor: pointer; }
 .fws-pick-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scroll-snap-type: x proximity; }
 .fws-pick-th, .fws-pick-none { flex: none; width: 64px; height: 64px; border-radius: 12px; border: 2px solid transparent; padding: 0; overflow: hidden; background: var(--vw-soft); cursor: pointer; scroll-snap-align: start; font: 600 12px/1 var(--vw-font-ui); color: var(--vw-paper-ink); }

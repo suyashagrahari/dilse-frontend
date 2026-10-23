@@ -64,6 +64,14 @@ function Film({ id, label }: { id: string; label: string }) {
   );
 }
 
+/** The album: 2 columns on phones, 3 on tablets, 4 from a laptop up (inside a 1120px frame, so a
+ *  "wide" photo is half the wall, never a giant). */
+const GALLERY_COLUMNS = [
+  { min: 0, columns: 2 },
+  { min: 640, columns: 3 },
+  { min: 960, columns: 4 },
+] as const;
+
 /** "20", "February", "2027", "Saturday" in the page's language. */
 function dateParts(date: string, locale: string) {
   const [y, mo, d] = date.split("-").map(Number);
@@ -363,7 +371,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
       {/* ── The album ───────────────────────────────────────────────────── */}
       {m.gallery.length > 0 && (
         <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament={null} width="wide" className="fw-sec fw-sec-gallery">
-          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="mat" tileCaptions label={s.gallery} />
+          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="mat" tileCaptions label={s.gallery} columns={GALLERY_COLUMNS} className="fw-album" />
         </Section>
       )}
 
