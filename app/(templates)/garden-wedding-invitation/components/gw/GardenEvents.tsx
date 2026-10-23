@@ -1,7 +1,7 @@
 "use client";
 
 // ─── The functions: garden cards, each with its own little painting ──────────
-// Every function is an arched card: a watercolour vignette picked from its
+// Every function is a rounded card: a watercolour vignette picked from its
 // title (mehendi = the couple on the sofa, sangeet = the lanterns, haldi = the
 // chhatri umbrellas, the pheras = the flowering gazebo …) on a wash of its
 // dress-code colour, then the date, time, venue, dress-code swatch and note,

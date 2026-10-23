@@ -56,6 +56,13 @@ const SILK = 'url("/wedding-v3/gw-kit/paper-silk-light.webp")';
 const gwTextures = (theme: string): CSSProperties =>
   ({ minHeight: "100dvh", ["--wk-texture" as string]: LINEN, ["--wk-paper" as string]: theme === "champagne" ? SILK : LINEN }) as CSSProperties;
 
+/** Gallery columns by container width: 2 on phones, 3 on tablets, 4 from a small laptop (the wall is capped at 1120px in css.ts). */
+const GALLERY_COLUMNS = [
+  { min: 0, columns: 2 },
+  { min: 560, columns: 3 },
+  { min: 900, columns: 4 },
+] as const;
+
 /** A key that changes when a section appears or disappears (the observer re-collects them). */
 const hasSections = (m: ReturnType<typeof readGarden>) => [m.blessings, !!m.main?.date, m.things.length > 0, m.contacts.length > 0, !!m.upiId, !!m.videoId].join("");
 
@@ -320,7 +327,7 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...gwImg(GW.palm, { lazy: true })} />
           </span>
-          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="foil" tileCaptions label={s.gallery} />
+          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} columns={GALLERY_COLUMNS} frame="foil" tileCaptions label={s.gallery} className="gw-gallery" />
         </Section>
       )}
 

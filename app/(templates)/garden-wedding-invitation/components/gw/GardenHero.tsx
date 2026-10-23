@@ -60,6 +60,9 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
     const io = new IntersectionObserver(([en]) => {
       on = en.isIntersecting;
       el.classList.toggle("is-idle", !on);
+      // A jump back to the top (Home key, an anchor) fires its scroll event while the hero is still
+      // "off screen", so re-read the position now or the planes stay parked at the old offset.
+      if (on && !still && !raf) raf = requestAnimationFrame(tick);
     });
     io.observe(el);
     window.addEventListener("scroll", onScroll, { passive: true });

@@ -401,7 +401,7 @@ export default function GardenStudio({ mf, updateMf, updateExtra, ai, password, 
     }
   };
 
-  // ── Crop one photo of the pool (story chapters: 4:5 arch; family cards: round) ─
+  // ── Crop one photo of the pool (story chapters: 4:5; family cards: square, both rounded rectangles) ─
   const [crop, setCrop] = useState<{ k: number; aspect: number; title: string } | null>(null);
   const cropPhoto = crop ? photos[crop.k - 1] : null;
   const setCropOf = (k: number, c: Crop) => {
@@ -983,7 +983,7 @@ const GWS_CSS = `
 .gws-ev-tools .is-danger, .gws-x { color: #b3261e; }
 .gws-mini { color: var(--vw-accent); border-color: color-mix(in srgb, var(--vw-accent) 35%, transparent); }
 .gws-undo { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: #3e1f27; color: #fff; font-size: 14px; }
-.gws-undo button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: #f4c9d4; color: #3e1f27; font: 700 13px/1 var(--vw-font-ui); cursor: pointer; }
+.gws-undo button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: #f4c9d4; color: #3e1f27; font: 700 13px/1 var(--vw-font-ui); cursor: pointer; }
 .gws-sws { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 16px; }
 .gws-sw { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--vw-edge); cursor: pointer; padding: 0; transition: transform .15s; }
 .gws-sw:hover { transform: scale(1.08); }

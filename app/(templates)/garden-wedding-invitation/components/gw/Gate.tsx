@@ -3,7 +3,7 @@
 // ─── The garden gate (the opening) ──────────────────────────────────────────
 //
 // A pastel sky, two cloud banks and a gate of flowering peony trees, lanterns
-// hanging at the corners, lotus at the foot. In the middle an arched ivory card
+// hanging at the corners, lotus at the foot. In the middle a rounded ivory card
 // under the gold lattice crown: "॥ श्री गणेशाय नमः ॥", the guest's own greeting
 // (?to=), the names, the date and a lotus seal to tap. The tap is also the
 // gesture that starts the music (DayMusic listens for the first tap).
