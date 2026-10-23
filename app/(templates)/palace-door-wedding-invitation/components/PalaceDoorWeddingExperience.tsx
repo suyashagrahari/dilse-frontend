@@ -252,7 +252,7 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
         {/* ── Gallery ─────────────────────────────────────────────────────── */}
         {m.gallery.length > 0 && (
           <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament="divider-scroll" width="wide" className="pd-sec pd-sec-gallery">
-            <WeddingMasonry photos={m.gallery} mask="arch" frame="foil" tileCaptions label={s.gallery} />
+            <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="foil" tileCaptions label={s.gallery} />
           </Section>
         )}
 

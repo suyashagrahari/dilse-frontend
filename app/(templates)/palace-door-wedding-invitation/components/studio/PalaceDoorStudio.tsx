@@ -695,7 +695,7 @@ export default function PalaceDoorStudio({ day, mf, updateMf, updateExtra, ai, p
       {/* ── 3 Photos ───────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-photos" aria-label="Photos">
         <Head n={3} icon="photo" title="Photos" sub={`${photos.length} of ${PD_LIMITS.photos}. Tap a photo to make it wide, tall or large, set its focus and zoom. Drag ⠿ to reorder. Photos used as the portrait, in your story or on a family card don't repeat in the gallery.`} />
-        <MasonryEditor photos={photos} onChange={setPhotos} max={PD_LIMITS.photos} mask="arch" />
+        <MasonryEditor photos={photos} onChange={setPhotos} max={PD_LIMITS.photos} mask="rounded" />
       </section>
 
       {/* ── 4 The invitation ───────────────────────────────────────────── */}

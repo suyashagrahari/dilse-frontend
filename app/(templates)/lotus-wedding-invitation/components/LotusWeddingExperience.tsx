@@ -299,7 +299,7 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
       {m.gallery.length > 0 && (
         <Section id="gallery" ornament={null} width="wide" className="lw-sec lw-sec-gallery">
           <Head eyebrow={s.galleryEyebrow} title={s.gallery} lang={lang} />
-          <WeddingMasonry photos={m.gallery} mask="arch" frame="foil" tileCaptions label={s.gallery} />
+          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="foil" tileCaptions label={s.gallery} />
         </Section>
       )}
 

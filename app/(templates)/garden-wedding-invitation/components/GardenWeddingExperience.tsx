@@ -320,7 +320,7 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...gwImg(GW.palm, { lazy: true })} />
           </span>
-          <WeddingMasonry photos={m.gallery} mask="arch" frame="foil" tileCaptions label={s.gallery} />
+          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="foil" tileCaptions label={s.gallery} />
         </Section>
       )}
 

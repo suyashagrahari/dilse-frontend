@@ -363,7 +363,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
       {/* ── The album ───────────────────────────────────────────────────── */}
       {m.gallery.length > 0 && (
         <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament={null} width="wide" className="fw-sec fw-sec-gallery">
-          <WeddingMasonry photos={m.gallery} mask="arch" frame="mat" tileCaptions label={s.gallery} />
+          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="mat" tileCaptions label={s.gallery} />
         </Section>
       )}
 

@@ -627,7 +627,7 @@ export default function FloralStudio({ mf, updateMf, updateExtra, ai, password, 
       {/* ── Photos ─────────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-photos" aria-label="Photos">
         <Head n={3} icon="📸" title="Photos" sub={`Up to ${FW_LIMITS.photos}. Any shape works. Tap a photo to resize it or set its focus. Drag to reorder. Photos you use in your story or on a family card don't repeat in the gallery.`} />
-        <MasonryEditor photos={photos} onChange={setPhotos} max={FW_LIMITS.photos} mask="arch" />
+        <MasonryEditor photos={photos} onChange={setPhotos} max={FW_LIMITS.photos} mask="rounded" />
       </section>
 
       {/* ── The invitation ─────────────────────────────────────────────── */}

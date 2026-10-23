@@ -692,7 +692,7 @@ export default function GardenStudio({ mf, updateMf, updateExtra, ai, password, 
       {/* ── 3 · Photos ─────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-photos" aria-label="Photos">
         <Head id="photos" n={3} title="Photos" sub={`Up to ${GW_LIMITS.photos}. Tap a photo to make it wide, tall or large, set its focus and zoom. Drag ⠿ to reorder. Photos used in your story or on a family card don't repeat in the album.`} />
-        <MasonryEditor photos={photos} onChange={setPhotos} max={GW_LIMITS.photos} mask="arch" />
+        <MasonryEditor photos={photos} onChange={setPhotos} max={GW_LIMITS.photos} mask="rounded" />
       </section>
 
       {/* ── 4 · The invitation ─────────────────────────────────────────── */}
