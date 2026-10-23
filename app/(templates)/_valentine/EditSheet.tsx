@@ -644,9 +644,19 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
       },
       { root, rootMargin: "0px 0px -60% 0px", threshold: 0 },
     );
-    root.querySelectorAll("section[id^='vs-sec-']").forEach((s) => io.observe(s));
-    return () => io.disconnect();
+    const watch = () => root.querySelectorAll("section[id^='vs-sec-']").forEach((s) => io.observe(s));
+    watch();
+    // Studios load via dynamic(): their sections mount after this effect runs.
+    const mo = new MutationObserver(watch);
+    mo.observe(root, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
   }, [open]);
+
+  useEffect(() => {
+    const chip = dialogRef.current?.querySelector<HTMLElement>(".vs-nav [aria-current]");
+    const nav = chip?.parentElement;
+    if (chip && nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: nav.scrollLeft + chip.getBoundingClientRect().left - nav.getBoundingClientRect().left - (nav.clientWidth - chip.offsetWidth) / 2, behavior: "smooth" });
+  }, [active]);
 
   const jump = (id: string) => {
     setActive(id);

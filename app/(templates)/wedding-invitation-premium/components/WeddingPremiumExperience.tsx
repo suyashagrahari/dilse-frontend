@@ -268,7 +268,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         <Section id="live" ornament={null} width="narrow" className="wp-sec">
           <Head eyebrow={s.liveEyebrow} title={s.live} lang={lang} />
           <Reveal>
-            <LiveStream url={m.liveUrl} main={main} s={s} />
+            <LiveStream url={m.liveUrl} main={main} s={s} lang={lang} />
           </Reveal>
         </Section>
       )}

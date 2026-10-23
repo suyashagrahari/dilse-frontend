@@ -211,7 +211,7 @@ export function Shagun({ upiId, upiName, s }: { upiId: string; upiName: string; 
 
 // ── Livestream: live from 30 minutes before the ceremony until it ends ──────
 
-export function LiveStream({ url, main, s }: { url: string; main?: WeddingEvent; s: Strings }) {
+export function LiveStream({ url, main, s, lang = "en" }: { url: string; main?: WeddingEvent; s: Strings; lang?: string }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -223,15 +223,26 @@ export function LiveStream({ url, main, s }: { url: string; main?: WeddingEvent;
   const end = main ? eventEnd(main) : null;
   // With no date, the link is simply live.
   const on = !start || (now !== null && now >= start.getTime() - 30 * 60_000 && (!end || now <= end.getTime() + 60 * 60_000));
+  const opens = start
+    ? new Date(start.getTime() - 30 * 60_000).toLocaleString(lang === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })
+    : "";
   return (
     <div className="wp-live">
-      <span className={`wp-live-dot${on ? " is-on" : ""}`} aria-hidden />
+      <span className={`wp-live-badge${on ? " is-on" : ""}`}>
+        <span className="wp-live-dot" aria-hidden />
+        {on ? "LIVE" : opens || "LIVE"}
+      </span>
       {on ? (
         <a className="wp-btn" href={url} target="_blank" rel="noopener noreferrer">
           <Icon d={PLAY} fill /> <span>{s.live}</span>
         </a>
       ) : (
-        <p className="wp-live-soon">{s.liveSoon}</p>
+        <>
+          <span className="wp-btn is-ghost wp-live-off" aria-disabled="true">
+            <Icon d={PLAY} fill /> <span>{s.live}</span>
+          </span>
+          <p className="wp-live-soon">{s.liveSoon}</p>
+        </>
       )}
     </div>
   );
