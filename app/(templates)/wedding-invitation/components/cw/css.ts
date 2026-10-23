@@ -218,7 +218,7 @@ export const CW_CSS = `
   .cw-hero-crown { max-width: 860px; }
   .cw-hero-mono { position: absolute; left: 50%; bottom: 14%; display: flex; align-items: baseline; gap: .12em; transform: translateX(-50%); font: 400 clamp(64px, 6vw, 96px)/1 var(--wk-font-script); color: var(--wk-accent); white-space: nowrap; }
   .cw-hero-mono i { font: 500 .32em/1 var(--wk-font-caps); font-style: normal; color: var(--wk-gold-ink); }
-  .cw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: clamp(20px, 4vw, 64px); margin-top: -14px; padding: 0 clamp(80px, 8vw, 170px); }
+  .cw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: clamp(20px, 4vw, 64px); margin-top: 18px; padding: 0 clamp(80px, 8vw, 170px); }
   .cw-hero-words { justify-self: center; }
   .cw-hero-n { font-size: clamp(72px, 6.2vw, 108px); }
   .cw-hero-names.is-long .cw-hero-n { font-size: clamp(62px, 5.2vw, 92px); }
