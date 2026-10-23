@@ -967,6 +967,7 @@ select.c2e-input { appearance:auto; }
 .c2e-bar.is-hidden { transform:translateY(110%); }
 .c2e-bar .c2e-btn { flex:1; min-width:0; padding:10px 10px; overflow:hidden; text-overflow:ellipsis; }
 .c2e-bar .c2e-btn.is-ghost { flex:0 0 auto; }
+@media (max-width: 380px) { .c2e-bar { gap:6px; padding-right:10px; } .c2e-bar .c2e-btn { padding:10px 8px; font-size:14px; white-space:nowrap; } }
 .c2e-undo { position:fixed; left:50%; bottom:calc(80px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:6; display:flex; align-items:center; gap:14px;
   background:#2f3a32; color:#fff; border-radius:999px; padding:6px 6px 6px 18px; font-size:14.5px; box-shadow:0 10px 30px rgba(0,0,0,.25); max-width:calc(100vw - 24px); }
 .c2e-undo button { min-height:44px; padding:0 16px; border-radius:999px; border:0; background:#fff; color:#2f3a32; font:700 14px inherit; font-family:inherit; cursor:pointer; }

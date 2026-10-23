@@ -30,6 +30,11 @@ const DOCK_CSS = `
   .c2-shell.is-editing .c2-page { margin-left:min(560px, 44vw); }
   .c2-shell.is-editing .c2d { left:calc(min(560px, 44vw) + 10px); }
   .c2-shell.is-editing .c2-root .c2-backdrop { left:min(560px, 44vw); }
+  /* The live preview beside the studio is only ~56vw wide: fit its viewport-keyed layouts to that column. */
+  .c2-shell.is-editing .c2-couple { grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); gap:16px; }
+  .c2-shell.is-editing .c2-couple .c2-person .c2-frame { width:min(100%, 20vw, 300px); }
+  .c2-shell.is-editing .c2-person-desc { max-width:100%; }
+  .c2-shell.is-editing .c2-events > .c2-ev { flex-basis:calc((100% - 22px) / 2); }
 }
 @media (prefers-reduced-motion: reduce) { .c2-busy i { animation:none; } }
 `;
