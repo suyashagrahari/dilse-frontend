@@ -5,8 +5,8 @@ import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send } from "lucide-react";
 
-const C_ACCENT = "#AB1C3E";
-const C_MED = "#CB6B82";
+const C_ACCENT = "#c2185b";
+const C_MED = "#e29a1b";
 
 interface Props {
   visible: boolean;
@@ -23,8 +23,8 @@ export default memo(function PublishingOverlay({ visible }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[55] flex items-center justify-center"
-          style={{ background: "rgba(109,43,59,0.35)" }}
+          className="fixed inset-0 z-[260] flex items-center justify-center"
+          style={{ background: "rgba(61,26,15,0.38)" }}
         >
           <motion.div
             initial={{ scale: 0.88, opacity: 0 }}
@@ -32,7 +32,7 @@ export default memo(function PublishingOverlay({ visible }: Props) {
             exit={{ scale: 0.88, opacity: 0 }}
             className="rounded-3xl p-8 shadow-2xl text-center max-w-[280px] mx-4"
             style={{
-              background: "rgba(255,250,248,0.96)",
+              background: "rgba(255,250,240,0.97)",
               backdropFilter: "blur(16px)",
               border: `1px solid ${C_MED}35`,
             }}
@@ -45,10 +45,10 @@ export default memo(function PublishingOverlay({ visible }: Props) {
             >
               <Send size={26} style={{ color: C_ACCENT }} />
             </motion.div>
-            <p className="font-bold text-sm" style={{ color: "#6D2B3B" }}>
+            <p className="font-bold text-sm" style={{ color: "#3d1a0f" }}>
               Publishing your invitation…
             </p>
-            <p className="text-xs mt-1" style={{ color: C_MED }}>
+            <p className="text-xs mt-1" style={{ color: "#7a5a43" }}>
               Making it live for your guests
             </p>
           </motion.div>

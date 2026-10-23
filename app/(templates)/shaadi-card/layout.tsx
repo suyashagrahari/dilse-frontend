@@ -2,28 +2,6 @@ import type { Metadata } from "next";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import WeddingTiersCrossLink from "@/components/WeddingTiersCrossLink";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
-import localFont from "next/font/local";
-
-const cinzel = localFont({
-  src: [
-    { path: "../../../assets/fonts/cinzel-400-normal.woff2", weight: "400", style: "normal" },
-    { path: "../../../assets/fonts/cinzel-700-normal.woff2", weight: "700", style: "normal" },
-  ],
-  adjustFontFallback: "Times New Roman",
-  variable: "--font-cinzel" });
-const dancing = localFont({
-  src: [
-    { path: "../../../assets/fonts/dancing-script-700-normal.woff2", weight: "700", style: "normal" },
-  ],
-  variable: "--font-dancing" });
-const lora = localFont({
-  src: [
-    { path: "../../../assets/fonts/lora-400-normal.woff2", weight: "400", style: "normal" },
-    { path: "../../../assets/fonts/lora-700-normal.woff2", weight: "700", style: "normal" },
-  ],
-  adjustFontFallback: "Times New Roman",
-  variable: "--font-lora" });
-
 const SLUG = "shaadi-card";
 const tpl = TEMPLATE_SEO[SLUG];
 
@@ -37,7 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const howTo = getHowTo(SLUG);
   const rating = getAggregateRating(SLUG);
   return (
-    <div className={`${cinzel.variable} ${dancing.variable} ${lora.variable}`}>
+    <div>
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: SITE_URL },
