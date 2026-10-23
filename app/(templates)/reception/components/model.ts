@@ -136,7 +136,9 @@ function readPerson(v: unknown, fallback: PersonInfo, role: string): PersonInfo 
   const p: PersonInfo = {
     name: str(o.name, 60) || fallback.name,
     role: str(o.role, 40) || role,
-    description: str(o.description, 300) || fallback.description,
+    // A stored empty bio stays empty: the demo's words are not about this couple.
+    // (Only a page with no person object at all falls back to the demo.)
+    description: typeof o.description === "string" ? str(o.description, 300) : fallback.description,
     photo: typeof o.photo === "string" ? o.photo : "",
     tags,
   };
@@ -183,9 +185,11 @@ export function normalizeReception(raw: unknown, opts: { fillEvents?: boolean } 
   const d = isObj(raw) ? raw : {};
   const blessings = Array.isArray(d.blessings) ? d.blessings : [];
   const wishesRaw = blessings.length ? blessings : Array.isArray(d.wishes) ? d.wishes : [];
+  const brideName = str(d.brideName, 40) || DEMO_DATA.brideName;
+  const groomName = str(d.groomName, 40) || DEMO_DATA.groomName;
   const base: ReceptionData = {
-    brideName: str(d.brideName, 40) || DEMO_DATA.brideName,
-    groomName: str(d.groomName, 40) || DEMO_DATA.groomName,
+    brideName,
+    groomName,
     receptionDate: str(d.receptionDate, 40) || DEMO_DATA.receptionDate,
     venue: str(d.venue, 120),
     venueAddress: str(d.venueAddress, 200),
@@ -193,8 +197,9 @@ export function normalizeReception(raw: unknown, opts: { fillEvents?: boolean } 
     venueTimings: str(d.venueTimings, 60),
     tagline: str(d.tagline, 120) || DEMO_DATA.tagline,
     heroImage: str(d.heroImage, 600) || DEMO_DATA.heroImage,
-    bride: readPerson(d.bride, { ...DEMO_DATA.bride, photo: "" }, "The Bride"),
-    groom: readPerson(d.groom, { ...DEMO_DATA.groom, photo: "" }, "The Groom"),
+    // An empty full name shows this page's own first name, never the demo's.
+    bride: readPerson(d.bride, { ...DEMO_DATA.bride, photo: "", name: isObj(d.bride) ? brideName : DEMO_DATA.bride.name }, "The Bride"),
+    groom: readPerson(d.groom, { ...DEMO_DATA.groom, photo: "", name: isObj(d.groom) ? groomName : DEMO_DATA.groom.name }, "The Groom"),
     families: {
       bride: str(isObj(d.families) ? d.families.bride : "", 160),
       groom: str(isObj(d.families) ? d.families.groom : "", 160),
