@@ -376,7 +376,6 @@ export default function ShaadiAi({ e }: { e: ShaadiEditor }) {
     }
     else if (fill.error) {
       if (snapshot.current) e.setMf(snapshot.current);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacts to the async fill failing in useStoryFill
       setScreen("q");
       setQi(STEPS.length - 1);
     }

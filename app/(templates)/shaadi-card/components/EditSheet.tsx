@@ -22,7 +22,7 @@
 // keyboard is open. Desktop (≥ 1024): a left panel, the live page beside it,
 // scrolled to the section being edited.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MasonryEditor, RsvpDashboard } from "../../_wedding";
 import { compressImage } from "../../dedication/components/mediaUploads";
 import MusicPicker, { MUSIC_CSS } from "../../_valentine/editor/MusicPicker";
@@ -30,7 +30,7 @@ import PhotoCropper, { clampCrop, cropImgStyle, type Crop as CropT } from "../..
 import type { LovePhoto } from "../../_love/types";
 import type { MusicMode } from "../../_valentine/types";
 import { ART, img } from "./assets";
-import { LEGACY_TRACK, LIMITS, QUICK_FUNCTIONS, SHAADI_SONGS, SWATCHES, dialOf, isUpiId, newEventId, presetFor, swatchFor, youTubeIdOf, type ShaadiCardData, type ShaadiEvent, type ShaadiTheme, type StoryChapter } from "./model";
+import { LEGACY_TRACK, LIMITS, QUICK_FUNCTIONS, SHAADI_SONGS, SWATCHES, dialOf, isUpiId, newEventId, presetFor, swatchFor, youTubeIdOf, type ShaadiEvent, type ShaadiTheme, type StoryChapter } from "./model";
 import { copyText, personalUrl, whatsappUrl } from "./sc/guest";
 import type { ShaadiEditor } from "../hooks/useShaadiCardEditor";
 
@@ -992,6 +992,7 @@ select.es-input { appearance: auto; }
 .es-music .vs-input { width: 100%; min-width: 0; min-height: 48px; padding: 11px 13px; border-radius: 12px; border: 1.5px solid rgba(179, 21, 90, .18); background: #fff; color: #3d1a0f; font: 400 16px/1.4 inherit; outline: none; }
 .es-music .vs-input:focus { border-color: #c2185b; box-shadow: 0 0 0 3px rgba(194, 24, 91, .12); }
 .es-music .vs-input.is-bad { border-color: #d0453a; }
+.es-music .vmp-sug b, .es-music .vmp-sug small { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 .es-music .vp-chip { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid rgba(179, 21, 90, .2); background: #fff; color: #5a3a24; font: 600 13.5px/1 inherit; cursor: pointer; }
 .es-links { display: grid; gap: 8px; }
 .es-url { display: block; padding: 8px 10px; border-radius: 10px; background: #fff6e6; font-size: 12.5px; overflow-wrap: anywhere; color: #6b4a1e; }

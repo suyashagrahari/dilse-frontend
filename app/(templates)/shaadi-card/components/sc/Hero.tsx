@@ -54,7 +54,7 @@ export default function Hero({ open, s, lang, first, second, guest, invocation, 
         <div className="sc-hero-copy">
           {invocation && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img className="sc-hero-ganesh sc-rise" {...img(ART.ganeshText, { alt: "॥ श्री गणेशाय नमः ॥" })} lang="hi" />
+            <img className="sc-hero-ganesh sc-rise" {...img(ART.ganeshText)} alt="॥ श्री गणेशाय नमः ॥" lang="hi" />
           )}
           {guest ? (
             <p className="sc-hero-dear sc-rise" style={{ ["--d" as string]: "80ms" }}>
@@ -105,7 +105,7 @@ export default function Hero({ open, s, lang, first, second, guest, invocation, 
               </span>
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img className="sc-mandap-couple" {...img(ART.couple, { alt: `${first} ${s.and} ${second}` })} />
+              <img className="sc-mandap-couple" {...img(ART.couple)} alt={`${first} ${s.and} ${second}`} />
             )}
             {/* The havan stands in front of the couple (the same art, clipped to the fire pit). */}
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

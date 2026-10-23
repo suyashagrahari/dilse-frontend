@@ -221,7 +221,7 @@ export default function Khidki({ first, second, dateLine, guest, s, lang, invoca
           {invocation && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="sc-gate-ganesh" {...img(ART.ganeshText, { high: true, alt: "॥ श्री गणेशाय नमः ॥" })} lang="hi" />
+              <img className="sc-gate-ganesh" {...img(ART.ganeshText, { high: true })} alt="॥ श्री गणेशाय नमः ॥" lang="hi" />
             </>
           )}
           {guest ? (

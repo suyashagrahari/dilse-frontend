@@ -26,7 +26,7 @@ export interface BlessingsProps {
 
 const MAX_SHOWN = 24;
 
-export default function Blessings({ mode, shareId, wishes, s, lang, guest, onUpdated }: BlessingsProps) {
+export default function Blessings({ mode, shareId, wishes, lang, guest, onUpdated }: BlessingsProps) {
   const [list, setList] = useState<Wish[]>(wishes);
   useEffect(() => setList(wishes), [wishes]);
   const [name, setName] = useState(guest);

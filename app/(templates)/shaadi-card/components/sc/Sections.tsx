@@ -56,7 +56,7 @@ export function Invitation({ text, hindi, lang, s, signature, blessing }: { text
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="sc-invite-border" {...img(ART.garlandBorder, { lazy: true })} aria-hidden />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="sc-invite-ganesha" {...img(ART.ganesha, { lazy: true, alt: "" })} aria-hidden />
+        <img className="sc-invite-ganesha" {...img(ART.ganesha, { lazy: true })} alt="" aria-hidden />
         <p className="sc-eyebrow" lang={lang}>
           {s.invitation}
         </p>
@@ -186,7 +186,7 @@ export function Couple({ s, lang, bride, groom, brideCrop, groomCrop, first }: {
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img className="sc-couple-gazebo" {...img(ART.gazebo, { lazy: true })} aria-hidden />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="sc-couple-ill" {...img(ART.couple, { lazy: true, alt: "" })} aria-hidden />
+            <img className="sc-couple-ill" {...img(ART.couple, { lazy: true })} alt="" aria-hidden />
           </Reveal>
         )}
         {one(order[1][1], order[1][2], order[1][0], 1)}
@@ -205,7 +205,7 @@ export function SaveTheDate({ s, lang, locale, day, clock, time, muhurat, venue 
       <div className="sc-date-grid">
         <Reveal className="sc-date-art" effect="zoom">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="sc-swing" {...img(ART.swing, { lazy: true, alt: "" })} aria-hidden />
+          <img className="sc-swing" {...img(ART.swing, { lazy: true })} alt="" aria-hidden />
         </Reveal>
         <div className="sc-date-tx">
           <SectionHead eyebrow={s.dateEyebrow} title={s.countdownTitle} lang={lang} />
