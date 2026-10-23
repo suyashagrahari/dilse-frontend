@@ -344,7 +344,7 @@ body:has(.sc-root) .vm-icon-btn:focus-visible { outline-color: #b3155a !importan
 
 /* ── Save the date ────────────────────────────────────────────────────── */
 .sc-sec-date { overflow: hidden; }
-.sc-date-grid { display: grid; gap: 10px; max-width: 1100px; margin: 0 auto; align-items: center; }
+.sc-date-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; max-width: 1100px; margin: 0 auto; align-items: center; }
 .sc-date-art { width: min(58%, 240px); margin: 0 auto -6px; }
 .sc-swing { display: block; width: 100%; height: auto; transform-origin: 50% 0; }
 .sc-root.is-open .sc-swing { animation: sc-jhoola 4.5s ease-in-out infinite alternate; }

@@ -231,6 +231,32 @@ function groupFields(fields: readonly WireField[], valueAt: (p: string) => unkno
   return groups.filter((g) => g.fields.length);
 }
 
+/** The schema's guides are written for the model ("return null", "no emoji");
+    the sender sees a short human hint instead, and a label without the
+    "Function 2 —" prefix its group heading already says. */
+const HUMAN_HINT: [RegExp, string][] = [
+  [/^brideName$|^groomName$/, "First name, as you'd like it printed."],
+  [/^weddingDay$/, "The main wedding day; the countdown and calendars use it."],
+  [/^venue$/, "Just the city, e.g. Udaipur."],
+  [/^invitation$/, "What guests read first. Two short paragraphs."],
+  [/^hindiMessage$/, "The Hindi nimantran, shown when guests tap हिं."],
+  [/^closingLine$/, "The last line of the page."],
+  [/Family\.parents$/, "As a card prints them, e.g. Smt. Sunita & Shri Ramesh Agarwal."],
+  [/\]\.name$/, "Haldi, Mehendi, Sangeet, Wedding…"],
+  [/\]\.isoDate$/, "Leave empty if it isn't fixed yet."],
+  [/\]\.startTime$/, "24-hour time, e.g. 19:30."],
+  [/\]\.venue$/, "Venue name and city."],
+  [/^story\[\d+\]\.title$/, "A short title for this chapter."],
+  [/^story\[\d+\]\.line$/, "One or two sentences about the two of you."],
+  [/^contacts\[0\]\.phone$/, "10 digits, with or without +91."],
+  [/^contacts\[0\]\./, "Someone guests can call with questions."],
+  [/^things$/, "Practical notes, e.g. Stay: rooms are held at …"],
+];
+function forPeople(f: WireField): WireField {
+  const hint = HUMAN_HINT.find(([re]) => re.test(f.path))?.[1] ?? "";
+  return { ...f, label: f.label.replace(/^(Function \d+|Our story \d+|Contact person) — /, "").replace(/^./, (c) => c.toUpperCase()), guide: hint };
+}
+
 function Review({ e, onDone, onBack }: { e: ShaadiEditor; onDone: () => void; onBack: () => void }) {
   const { fill } = e;
   const [openPath, setOpenPath] = useState<string | null>(null);
@@ -259,7 +285,7 @@ function Review({ e, onDone, onBack }: { e: ShaadiEditor; onDone: () => void; on
               const v = fill.valueAt(f.path);
               return (
                 <div key={f.path} className={`sa-row${isFilled(v) ? "" : " is-empty"}`}>
-                  <StoryFieldRow field={f} value={v} open={openPath === f.path} fromAi={aiWrote.has(f.path)} onToggle={toggle} onChange={fill.setFieldValue} />
+                  <StoryFieldRow field={forPeople(f)} value={v} open={openPath === f.path} fromAi={aiWrote.has(f.path)} onToggle={toggle} onChange={fill.setFieldValue} />
                 </div>
               );
             })}
@@ -311,7 +337,9 @@ export default function ShaadiAi({ e }: { e: ShaadiEditor }) {
     }
   }, [a, open]);
 
-  useEffect(() => bodyRef.current?.scrollTo?.({ top: 0 }), [screen, qi]);
+  useEffect(() => {
+    bodyRef.current?.scrollTo?.({ top: 0 });
+  }, [screen, qi]);
 
   // Lock the page behind the sheet.
   useEffect(() => {

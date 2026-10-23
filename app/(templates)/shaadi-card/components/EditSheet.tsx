@@ -919,7 +919,7 @@ select.es-input { appearance: auto; }
 .es-hint { margin: 5px 0 0; font-size: 13.5px; line-height: 1.45; color: #8a6d55; }
 .es-note { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff1d2; font-size: 14px; color: #6b4a1e; }
 .es-two, .es-three { display: grid; gap: 0 12px; }
-@media (min-width: 560px) { .es-two { grid-template-columns: 1fr 1fr; } .es-three { grid-template-columns: 1fr 1fr 1fr; } }
+@media (min-width: 560px) { .es-two { grid-template-columns: 1fr 1fr; } .es-three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .es-three > :first-child { grid-column: 1 / -1; } }
 .es-two-tight { grid-template-columns: 110px 1fr; }
 .es-card { margin: 12px 0; padding: 14px; border-radius: 16px; background: #fff; border: 1px solid rgba(179, 21, 90, .12); box-shadow: 0 10px 24px -20px rgba(61, 26, 15, .5); }
 .es-kick { margin: 0 0 10px; font: 700 13px/1.4 inherit; color: #8c5300; }
