@@ -366,6 +366,9 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
       // The main ceremony carries the date and time the sender typed.
       if (main && a.date && !s(main.date)) main.date = a.date;
       if (main && a.time && !s(main.time)) main.time = a.time;
+      // The questions ask only the ceremony's time. A Haldi "at 7 pm" is the model copying it
+      // (measured on the live model even with the description saying the times are undecided).
+      if (a.time) for (const e of fixed) if (e !== main && s(e.time) === a.time) e.time = "";
       // A typed function date wins over the model's guess for that function.
       for (const f of a.functions) {
         if (!f.date) continue;
