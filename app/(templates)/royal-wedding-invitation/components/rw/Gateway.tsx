@@ -121,6 +121,11 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
   }, [phase]);
 
   // "Replay the opening": bring the gateway back, closed.
+  const [seenReplay, setSeenReplay] = useState(replay);
+  if (replay !== seenReplay) {
+    setSeenReplay(replay);
+    setPhase("loading");
+  }
   const firstReplay = useRef(replay);
   useEffect(() => {
     if (replay === firstReplay.current) return;
@@ -129,7 +134,6 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
       window.sessionStorage.removeItem(OPENED_KEY);
     } catch {}
     window.scrollTo({ top: 0 });
-    setPhase("loading");
   }, [replay]);
 
   const later = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));

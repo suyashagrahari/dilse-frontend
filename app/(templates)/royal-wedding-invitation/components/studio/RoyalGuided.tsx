@@ -375,7 +375,7 @@ export default function RoyalGuided({ open, fill, onClose, onAnswers }: RoyalGui
               <p className="rg-lead">How should it sound?</p>
               <div className="rg-chips" role="radiogroup" aria-label="Tone">
                 {TONES.map((t) => (
-                  <button key={t} type="button" role="radio" className="rg-chip" aria-checked={a.tone === t} aria-pressed={a.tone === t} onClick={() => set("tone", t)}>
+                  <button key={t} type="button" role="radio" className="rg-chip" aria-checked={a.tone === t} onClick={() => set("tone", t)}>
                     {t}
                   </button>
                 ))}
