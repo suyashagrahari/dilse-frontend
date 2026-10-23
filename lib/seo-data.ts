@@ -1338,7 +1338,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   "christian-wedding": {
     title: "Digital Christian Wedding Invitation | Elegant Online Wedding Card",
     description:
-      "Create a beautiful digital Christian wedding invitation with sage & watercolor styling, events, gallery & blessings wall. Share a single beautiful link instantly. Free!",
+      "Create a digital Christian wedding invitation where church doors swing open to your names: Bible verse, order of service, events with maps, RSVP, gallery & blessings wall. One link for WhatsApp.",
     category: "Wedding",
     emoji: "⛪",
     aggregateRating: { ratingValue: 4.8, reviewCount: 876 },

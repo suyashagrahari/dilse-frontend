@@ -1,259 +1,102 @@
 "use client";
 
-import { lazy, Suspense, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Sparkles, Send, Share2, Loader2 } from "lucide-react";
+// ─── /christian-wedding — "Join Us at the Altar" (the chapel doors) ─────────
+//
+// The demo invitation (doors and all) → Create → the AI's few questions and
+// its review screen, or the form → Save shows the page with Publish → sign in
+// when needed (the publish resumes by itself) → Share.
+//
+// The page's own actions sit in a dock at the bottom (the thumb zone), shown
+// once the doors are open; the top corners belong to the page's section menu
+// and the music button.
+
+import { Suspense, useState } from "react";
+import dynamic from "next/dynamic";
 import AuthModal from "@/components/AuthModal";
-import { useChristianWeddingEditor } from "./hooks/useChristianWeddingEditor";
-
-import DesktopSidebar from "./components/DesktopSidebar";
-import BottomNav from "./components/BottomNav";
-import HomeSection from "./components/HomeSection";
-import EditSheet from "./components/EditSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
-import ChristianBackgroundMusic from "./components/ChristianBackgroundMusic";
-import { ChristianPageChrome } from "./components/ChristianPageChrome";
+import { useChapelEditor } from "./hooks/useChapelEditor";
 
-const CoupleSection = lazy(() => import("./components/CoupleSection"));
-const EventsSection = lazy(() => import("./components/EventsSection"));
-const GallerySection = lazy(() => import("./components/GallerySection"));
-const WishesSection = lazy(() => import("./components/WishesSection"));
+// The experience reads window/navigator on its first render (the ?to= greeting, low-end checks).
+const ChapelExperience = dynamic(() => import("./chapel/ChapelExperience"), { ssr: false });
+const ChapelMusic = dynamic(() => import("./chapel/ChapelExperience").then((m) => m.ChapelMusic), { ssr: false });
+const ChapelEditor = dynamic(() => import("./chapel/editor/ChapelEditor"), { ssr: false });
+const AiSheet = dynamic(() => import("./chapel/editor/AiSheet"), { ssr: false });
 
-const C_ACCENT = "#546B57";
-const C_MED = "#7A9B7E";
+const DOCK_CSS = `
+.cwp-dock { position: fixed; z-index: 95; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 8px; padding: 6px; border-radius: 20px; background: rgba(255,253,248,.95); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(194,161,101,.45); box-shadow: 0 18px 38px -16px rgba(60,45,25,.55); max-width: calc(100vw - 24px); animation: cwp-in .5s cubic-bezier(.22,1,.36,1) both; font-family: var(--font-dm-sans), system-ui, sans-serif; }
+@keyframes cwp-in { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+.cwp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 0 16px; border-radius: 14px; border: 1px solid rgba(135,104,58,.22); background: #fffdf8; color: #3b342c; font: 700 14.5px/1 inherit; font-family: inherit; cursor: pointer; white-space: nowrap; }
+.cwp-btn.is-main { border-color: transparent; color: #fffdf8; background: linear-gradient(110deg, #7d9a7a, #5b7659); box-shadow: 0 10px 22px -12px rgba(40,50,30,.7); }
+.cwp-btn:disabled { opacity: .7; }
+body:has(.cwp-dock) .cw-page { padding-bottom: 96px; }
+@media (prefers-reduced-motion: reduce) { .cwp-dock { animation: none; } }
+`;
 
-const PAGE_VARIANTS = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.25 } },
-} as const;
-
-function TabFallback() {
+function Dock({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ background: "#fcfcfa" }}>
-      <div
-        className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
-        style={{ borderColor: C_ACCENT, borderTopColor: "transparent" }}
-      />
+    <div className="cwp-dock" role="toolbar" aria-label="Your invitation">
+      <style>{DOCK_CSS}</style>
+      {children}
     </div>
   );
 }
 
 function ChristianWeddingPage() {
-  const editor = useChristianWeddingEditor();
+  const ed = useChapelEditor();
+  const [opened, setOpened] = useState(false);
+  const [seenReplay, setSeenReplay] = useState(ed.replayKey);
+  if (seenReplay !== ed.replayKey) {
+    setSeenReplay(ed.replayKey);
+    setOpened(false);
+  }
+  if (!ed.ready) return null;
 
-  const coupleNames = useMemo(
-    () => ({ bride: editor.content.brideName, groom: editor.content.groomName }),
-    [editor.content.brideName, editor.content.groomName],
-  );
-
-  if (!editor.themeReady) return null;
+  const editing = ed.mode === "edit";
+  const published = !!ed.shareUrl;
 
   return (
-    <div className="relative overflow-hidden" style={{ background: "#fcfcfa", height: "100dvh" }}>
-      <div className="fixed left-4 top-4 z-50 lg:hidden">
-        <motion.button
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={editor.editMode === "preview" ? editor.handleDiscardPreview : editor.goBack}
-          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium shadow-xl"
-          style={{
-            background: "rgba(252,252,250,0.94)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: `1px solid ${C_MED}35`,
-            color: C_MED,
-          }}
-        >
-          <ArrowLeft size={14} />
-          {editor.editMode === "preview" ? "Back & Edit" : "Back"}
-        </motion.button>
-      </div>
-
-      <div className="fixed right-4 top-4 z-50 lg:hidden">
-        <AnimatePresence mode="wait">
-          {editor.editMode === "preview" ? (
-            <motion.div
-              key="preview-actions"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="flex items-center gap-2"
-            >
-              <button
-                onClick={editor.handleEditFromPreview}
-                className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-bold shadow-xl"
-                style={{
-                  background: "rgba(252,252,250,0.94)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  border: `1px solid ${C_MED}35`,
-                  color: C_MED,
-                }}
-              >
-                <Sparkles size={13} />
-                Edit
-              </button>
-              <button
-                onClick={editor.handlePublish}
-                disabled={editor.publishing}
-                className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-bold text-white shadow-xl disabled:opacity-70"
-                style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
-              >
-                {editor.publishing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                {editor.publishing ? "Publishing…" : "Publish"}
-              </button>
-            </motion.div>
-          ) : editor.shareUrl ? (
-            <motion.button
-              key="share"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handleShare}
-              className="flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-bold shadow-xl"
-              style={{
-                background: "rgba(99,102,241,0.15)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                color: "#818cf8",
-                border: "1px solid rgba(99,102,241,0.3)",
-              }}
-            >
-              <Share2 size={14} />
-              Share
-            </motion.button>
-          ) : (
-            <motion.button
-              key="create"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handleEditClick}
-              className="flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-bold text-white shadow-xl"
-              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
-            >
-              <Sparkles size={14} />
-              {editor.isPersonalized ? "Edit" : "Create"}
-            </motion.button>
+    <ChapelMusic data={editing ? ed.mf : ed.content} autoStart={false} overSheet={editing}>
+      {editing ? (
+        <ChapelEditor ed={ed} />
+      ) : (
+        <>
+          <ChapelExperience data={ed.content} mode="preview" replayKey={ed.replayKey} onOpened={() => setOpened(true)} />
+          {opened && !ed.starter && (
+            <Dock>
+              {ed.mode === "preview" ? (
+                <>
+                  <button type="button" className="cwp-btn" onClick={ed.editFromPreview}>
+                    ✎ Edit
+                  </button>
+                  {published ? (
+                    <button type="button" className="cwp-btn is-main" onClick={ed.handleShare}>
+                      Share invitation
+                    </button>
+                  ) : (
+                    <button type="button" className="cwp-btn is-main" onClick={ed.handlePublish} disabled={ed.publishing} aria-busy={ed.publishing}>
+                      {ed.publishing ? "Publishing…" : "Publish ✦"}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button type="button" className="cwp-btn" onClick={ed.goBack}>
+                    ← Templates
+                  </button>
+                  <button type="button" className="cwp-btn is-main" onClick={ed.startCreate}>
+                    ✦ {ed.isPersonalized ? "Edit" : "Create your invitation"}
+                  </button>
+                </>
+              )}
+            </Dock>
           )}
-        </AnimatePresence>
-      </div>
+        </>
+      )}
 
-      <DesktopSidebar
-        tab={editor.tab}
-        onTabChange={editor.handleTabChange}
-        coupleNames={coupleNames}
-        onBack={editor.goBack}
-        onEdit={editor.editMode === "preview" ? editor.handleEditFromPreview : editor.handleEditClick}
-        showPublish={editor.showPublish}
-        showShare={editor.showShare}
-        shareLabel={editor.shareLabel}
-        onPublish={editor.handlePublish}
-        onShare={editor.handleShare}
-      />
-
-      <BottomNav
-        tab={editor.tab}
-        onTabChange={editor.handleTabChange}
-        onEdit={editor.handleEditClick}
-        onBack={editor.goBack}
-        isPersonalized={editor.isPersonalized}
-        isPreview={editor.editMode === "preview"}
-      />
-
-      <PublishingOverlay visible={editor.publishing} />
-      <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode && editor.editMode !== "preview"} />
-
-      {/* Fixed page chrome (corners, stains, gradients) — all tabs including home on desktop */}
-      <div className="pointer-events-none absolute inset-0 z-[1] lg:ml-64" aria-hidden>
-        <div className="relative h-full min-h-[100dvh] w-full">
-          <ChristianPageChrome />
-        </div>
-      </div>
-
-      <div className="no-scrollbar relative z-[2] h-full overflow-y-auto lg:ml-64">
-        <AnimatePresence mode="wait">
-          {editor.tab === "home" && (
-            <motion.div
-              key="home"
-              className="min-h-full overflow-visible"
-              variants={PAGE_VARIANTS}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <HomeSection data={editor.content} />
-            </motion.div>
-          )}
-
-          {editor.tab === "couple" && (
-            <motion.div key="couple" className="pb-0 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <CoupleSection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {editor.tab === "events" && (
-            <motion.div key="events" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <EventsSection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {editor.tab === "gallery" && (
-            <motion.div key="gallery" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <GallerySection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {editor.tab === "blessings" && (
-            <motion.div key="blessings" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <WishesSection data={editor.content} />
-              </Suspense>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-
-      <EditSheet
-        editMode={editor.editMode}
-        setEditMode={editor.setEditModeFromSheet}
-        aiName={editor.aiName}
-        setAiName={editor.setAiName}
-        aiSender={editor.aiSender}
-        setAiSender={editor.setAiSender}
-        aiPrompt={editor.aiPrompt}
-        setAiPrompt={editor.setAiPrompt}
-        aiLoading={editor.aiLoading}
-        extractLoading={editor.extractLoading}
-        mf={editor.mf}
-        manualStep={editor.manualStep}
-        setManualStep={editor.setManualStep}
-        updateMf={editor.updateMf}
-        pagePassword={editor.pagePassword}
-        setPagePassword={editor.setPagePassword}
-        onStartAi={editor.startAiMode}
-        onStartManual={editor.startManualMode}
-        onCardExtract={editor.handleCardExtract}
-        onAiGenerate={editor.handleAiGenerate}
-        onAiEditPreview={editor.handleAiEditPreview}
-        onManualPreview={editor.handleManualPreview}
-      />
-
-      <AnimatePresence>
-        {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />}
-      </AnimatePresence>
-    </div>
+      {ed.starter && <AiSheet fill={ed.fill} setMf={ed.setMf} onClose={ed.closeStarter} />}
+      <PublishingOverlay visible={ed.publishing} />
+      {ed.showAuth && <AuthModal onClose={ed.closeAuth} onSuccess={ed.closeAuthSuccess} />}
+    </ChapelMusic>
   );
 }
 
