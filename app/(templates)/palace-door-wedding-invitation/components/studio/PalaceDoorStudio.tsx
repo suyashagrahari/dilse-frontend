@@ -719,7 +719,7 @@ export default function PalaceDoorStudio({ day, mf, updateMf, updateExtra, ai, p
 
       {/* ── 5 Our story ────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-story" aria-label="Our story">
-        <Head n={5} icon="heart" title="Our story" sub={`A few moments: how you met, the proposal, the yes. Up to ${PD_LIMITS.story}, each with a photo in an arched window.`} />
+        <Head n={5} icon="heart" title="Our story" sub={`A few moments: how you met, the proposal, the yes. Up to ${PD_LIMITS.story}, each with a photo in a gold-framed window.`} />
         <ol className="pds-story">
           {story.map((c, i) => (
             <li key={i} className="pds-ch">

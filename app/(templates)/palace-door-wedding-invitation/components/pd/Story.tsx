@@ -3,7 +3,7 @@
 // ─── Our story: chapters along a gold thread that the scroll draws ───────────
 // The thread is the mauli (red-and-gold sacred thread) from the hands art: a
 // line whose scaleY follows the scroll (one rAF-throttled listener writes ONE
-// custom property, --pd-p 0→1). Photos sit in jharokha-arch windows that
+// custom property, --pd-p 0→1). Photos sit in gold-framed rounded windows that
 // alternate sides on desktop; each chapter rises in as it arrives.
 
 import { useEffect, useRef } from "react";

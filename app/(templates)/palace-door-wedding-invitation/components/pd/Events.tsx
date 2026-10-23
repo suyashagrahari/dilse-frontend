@@ -1,7 +1,7 @@
 "use client";
 
 // ─── The functions: one illustrated couple per function ──────────────────────
-// Each function is an ivory arch-topped card with the couple dressed for it
+// Each function is an ivory rounded card with the couple dressed for it
 // (haldi yellow, mehendi orange, sangeet dancing, wedding red, reception
 // tux-and-gown, engagement ivory) standing on a terracotta carpet in a warm
 // alcove. Under it: the date, time, venue, a dress-code swatch, the note,
