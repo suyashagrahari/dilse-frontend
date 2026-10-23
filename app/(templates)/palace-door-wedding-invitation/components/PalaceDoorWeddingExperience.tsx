@@ -35,6 +35,12 @@ import { PD_CSS } from "./pd/css";
 import { T, readPalaceDoor, type Lang } from "./pd/model";
 import { prefillRsvpName, useGuestName } from "./pd/share";
 
+/** Two across on a phone, three from a tablet up (the gallery block is capped at 1080px, so tiles stay large). */
+const GALLERY_COLUMNS = [
+  { min: 0, columns: 2 },
+  { min: 600, columns: 3 },
+] as const;
+
 /** The kit's paper textures from this repo (public/wedding-v3/palace-door/kit); the kit's defaults point at the CDN. */
 const rootStyle = (theme: string): CSSProperties =>
   ({
@@ -252,7 +258,9 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
         {/* ── Gallery ─────────────────────────────────────────────────────── */}
         {m.gallery.length > 0 && (
           <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament="divider-scroll" width="wide" className="pd-sec pd-sec-gallery">
-            <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="foil" tileCaptions label={s.gallery} />
+            <div className="pd-gallery">
+              <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} columns={GALLERY_COLUMNS} frame="foil" tileCaptions label={s.gallery} />
+            </div>
           </Section>
         )}
 

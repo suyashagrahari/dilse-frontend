@@ -86,16 +86,14 @@ export default function Courtyard({ open, s, lang, first, second, photo, dateLin
       </span>
 
       <div className="pd-court-stage">
-        <div className={`pd-court-arch${photo ? "" : " has-art"}`}>
+        <div className={`pd-court-arch${photo ? " has-photo" : " has-art"}`}>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img className="pd-court-flowers" {...img(A.arch)} />
           {photo ? (
-            <div className="pd-portrait">
-              <span className="pd-portrait-disc">
+            <div className="pd-portrait is-photo">
+              <span className="pd-portrait-frame">
                 <CroppedPhoto photo={photo} alt={`${first} ${s.and} ${second}`} eager className="pd-portrait-photo" />
               </span>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img className="pd-portrait-ring" {...img(A.frame)} />
             </div>
           ) : (
             <div className="pd-portrait is-art">

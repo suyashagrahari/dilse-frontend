@@ -101,27 +101,30 @@ export const pdLocalUrl = (url: string): string => REPO_ART_RE.exec(url)?.[1] ??
 export const pdStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
 /**
- * 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out
+ * 1–15 fill the gallery; 16 and 17 are story chapters 3 and 4 (so they stay out
  * of it). The demo has no portrait (couplePhoto 0): the courtyard shows the
  * illustrated couple in wedding red under the gold frame until one is picked.
+ * The gallery's order and spans are tuned so the masonry ends level (no ragged
+ * columns, no holes) at 2 columns (phones) and 3 (tablet / desktop); re-check
+ * with the layout simulation before reordering. rw-10 (a night sky, ~all black
+ * at tile size) is left out on purpose.
  */
 export const PD_DEMO_PHOTOS: LovePhoto[] = [
-  { url: `${DEMO_BASE}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
-  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
-  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
-  { url: `${DEMO_BASE}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35, caption: "Just us", span: "tall" },
-  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_BASE}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
-  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
+  { url: `${DEMO_BASE}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride", span: "wide" },
   { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
+  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35, caption: "Just us" },
   { url: `${DEMO_BASE}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
+  { url: `${DEMO_BASE}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35, span: "tall" },
   { url: `${DEMO_BASE}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_BASE}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
+  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
+  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
   { url: `${DEMO_BASE}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
   { url: `${DEMO_BASE}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
 ];
@@ -281,8 +284,8 @@ export const palaceDoorWeddingDay: DayConfig<PdExtras> = {
       story: [
         { when: "2018", title: "A wrong turn in Jodhpur", line: "He was lost in the blue lanes of the old city; she was the only one who stopped to point the way, and then walked him there herself.", photo: 0 },
         { when: "2021", title: "Letters between two cities", line: "Jaipur to Pune, a lockdown, and a habit of handwritten letters that neither of them admits to keeping. Both kept every one.", photo: 0 },
-        { when: "2025", title: "A ring at the haveli door", line: "He knocked on the carved door of her grandmother's haveli with a ring in his pocket. Her dadi answered first, and said yes on her behalf.", photo: 17 },
-        { when: "2027", title: "The doors open", line: "Now two families become one. Come in, bless us, and dance with us.", photo: 18 },
+        { when: "2025", title: "A ring at the haveli door", line: "He knocked on the carved door of her grandmother's haveli with a ring in his pocket. Her dadi answered first, and said yes on her behalf.", photo: 16 },
+        { when: "2027", title: "The doors open", line: "Now two families become one. Come in, bless us, and dance with us.", photo: 17 },
       ],
       things: [
         "Stay: Rooms for out-of-town guests are held at Samode Haveli from 9 to 14 February.",
