@@ -1,34 +1,53 @@
 "use client";
 
-// ─── Royal Wedding Invitation — the editor (the whole form) ──────────────────
+// ─── Royal Wedding Invitation — the editor (the whole form) ─────────────────
 //
-// Short on purpose. On top, "Describe your wedding" (the AI fills names,
-// families, five functions with dress codes, the English + Hindi invitation,
-// the story and good-to-know). Then: the couple + the big day → functions →
-// photos (one pool of 40: the gallery; story chapters and family cards point
-// into it) → the invitation → theme & music. Everything else (story,
-// family notes/photos, good to know, film, RSVP settings, closing line,
-// password) sits behind "More details". Each section carries
-// id="vs-sec-<id>" so the sheet's side nav and Save's "jump to the gap" work.
+// On top, "Let AI write it": the primary button opens eight quick wedding
+// questions (./RoyalGuided) whose answers the AI turns into the whole form
+// (names, families, five functions with dress codes, the English + Hindi
+// invitation, two story chapters, a family contact, good to know, the closing
+// line), followed by a review of every filled field; "or describe it in your
+// own words" keeps the one-textarea path. Pages published before the 2026-10
+// redesign (dark theme, no contacts/UPI/livestream/portrait) open here with
+// those fields empty and the light palette selected. Then eight
+// steps, each a <section id="vs-sec-<id>"> so the sheet's side nav and Save's
+// "jump to the gap" work:
+//   1 The couple   names, order, families, the big day, the portrait
+//   2 Functions    add / reorder / remove, each with map, dress swatch, note
+//   3 Photos       the masonry pool (resize, focal point, zoom, reorder)
+//   4 Invitation   English + Hindi, Shri Ganesh over the gateway
+//   5 Our story    chapters with a photo each (framed in the cropper)
+//   6 Guest info   good to know, getting there, who to call, livestream, shagun
+//   7 Look & music theme + the song (suggested list or any YouTube link)
+//   8 RSVP & send  RSVP settings, film, hashtag, closing line, password,
+//                  personal ?to= links for each guest
+// Single photos (portrait, family cards, story chapters) open the shared
+// PhotoCropper in the exact shape the guest page shows them.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
+import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
+import PhotoCropper, { CROP_DEFAULT, clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
 import type { StudioProps } from "../../../_valentine/editor/studios";
+import { themeVars } from "../../../_valentine/theme";
 import type { LovePhoto } from "../../../_valentine/types";
-import { RW_LIMITS, royalWeddingDay } from "../../../_valentine/days/royal-wedding-invitation";
-import { MAIN_RE, swatchFor } from "../rw/model";
+import { RW_LIMITS, RW_MAX_CONTACTS, RW_THEME_LABELS, royalWeddingDay, rwLocalUrl, rwStoredUrl } from "../../../_valentine/days/royal-wedding-invitation";
+import { MAIN_RE, isUpiId, phoneOf, swatchFor } from "../rw/model";
+import { personalUrl } from "../rw/share";
+import RoyalGuided, { type WeddingAnswers } from "./RoyalGuided";
 
 const SLUG = "royal-wedding-invitation";
 type Row = Record<string, unknown>;
 type Chapter = { when: string; title: string; line: string; photo: number };
+type Contact = { name: string; relation: string; phone: string };
 
 const DEMO = royalWeddingDay.demo.extras;
 
 const QUICK_FUNCTIONS: { title: string; dress: string; color: string }[] = [
   { title: "Roka", dress: "Festive pastels", color: "#E86A92" },
-  { title: "Tilak", dress: "Traditional", color: "#EE8A2E" },
+  { title: "Engagement", dress: "Ivory and gold", color: "#F3EBDD" },
   { title: "Haldi", dress: "Shades of yellow", color: "#F2C94C" },
   { title: "Mehendi", dress: "Greens and bright florals", color: "#4F9B6A" },
   { title: "Sangeet", dress: "Indo-western glam", color: "#7B3FA0" },
@@ -39,6 +58,7 @@ const QUICK_FUNCTIONS: { title: string; dress: string; color: string }[] = [
 ];
 const SWATCHES = ["#F2C94C", "#4F9B6A", "#E86A92", "#A3122B", "#7B3FA0", "#2E5AAC", "#EE8A2E", "#F3EBDD", "#1C1C24", "#C9A24A"];
 const AI_CHIPS = ["Make it formal", "Make it warm", "Add Hindi", "Mention our families", "Keep it short"];
+const LINK_KEY = "rw-invite-link";
 
 const newId = (taken: Set<string>) => {
   for (;;) {
@@ -74,24 +94,52 @@ function measure(url: string): Promise<{ w: number; h: number } | null> {
   });
 }
 
-function Field({ label, hint, children, htmlFor, count }: { label: string; hint?: ReactNode; children: ReactNode; htmlFor?: string; count?: string }) {
+// ── Little pieces ───────────────────────────────────────────────────────────
+
+const ICONS: Record<string, string> = {
+  door: "M5 21V9a7 7 0 0 1 14 0v12M3 21h18M12 4v17M9.5 13.5v1M14.5 13.5v1",
+  lamp: "M12 3c2 3 3 4.5 3 6.5a3 3 0 0 1-6 0C9 7.5 10 6 12 3zM5 14h14l-2 5H7zM9 19v2h6v-2",
+  photo: "M4 6h16v13H4zM4 16l5-5 4 4 3-3 4 4M15.5 10a1 1 0 1 0 0-.01",
+  letter: "M4 6h16v12H4zM4 7l8 6 8-6",
+  heart: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+  compass: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15.5 8.5l-2 5-5 2 2-5z",
+  music: "M9 18V6l11-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+  send: "M4 12l16-8-6 16-3-6zM11 14l9-10",
+  frame: "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M9 12h6M12 9v6",
+};
+function Icon({ name, size = 18 }: { name: keyof typeof ICONS | string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={ICONS[name] ?? ""} />
+    </svg>
+  );
+}
+
+function Field({ label, hint, children, htmlFor, count, error }: { label: string; hint?: ReactNode; children: ReactNode; htmlFor?: string; count?: string; error?: string }) {
   return (
     <div className="vs-field">
       <label className="vs-label" htmlFor={htmlFor}>
         <span>{label}</span>
-        {count && <small className="rs-count">{count}</small>}
+        {count && <small className="rws-count">{count}</small>}
       </label>
       {children}
-      {hint && <p className="rs-hint">{hint}</p>}
+      {error ? (
+        <p className="rws-err" role="alert">
+          {error}
+        </p>
+      ) : (
+        hint && <p className="rws-hint">{hint}</p>
+      )}
     </div>
   );
 }
 
-function Head({ n: num, title, sub }: { n: number | string; title: string; sub?: string }) {
+function Head({ n: num, icon, title, sub }: { n: number; icon: string; title: string; sub?: string }) {
   return (
-    <header className="vs-secHead">
-      <span className="vs-secN" aria-hidden>
-        {num}
+    <header className="vs-secHead rws-head">
+      <span className="rws-medal" aria-hidden>
+        <Icon name={icon} size={20} />
+        <i>{num}</i>
       </span>
       <div style={{ minWidth: 0 }}>
         <h3 className="vs-secH">{title}</h3>
@@ -101,32 +149,39 @@ function Head({ n: num, title, sub }: { n: number | string; title: string; sub?:
   );
 }
 
-/** A photo from the pool (1-based), "none" (0), or a new upload appended to the pool. */
-function PhotoPick({ value, photos, onPick, onUpload, label }: { value: number; photos: LovePhoto[]; onPick: (k: number) => void; onUpload: (f: File) => void; label: string }) {
+/** A photo from the pool (1-based), "none" (0), or a new upload appended to the pool; plus "Frame" to crop/zoom it. */
+function PhotoPick({ value, photos, onPick, onUpload, onFrame, label, round }: { value: number; photos: LovePhoto[]; onPick: (k: number) => void; onUpload: (f: File) => void; onFrame: () => void; label: string; round?: boolean }) {
   const [open, setOpen] = useState(false);
   const cur = value >= 1 && value <= photos.length ? photos[value - 1] : null;
   const file = useRef<HTMLInputElement>(null);
   return (
-    <div className="rs-pick">
-      <button type="button" className="rs-pick-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        {cur ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cur.url} alt="" />
-        ) : (
-          <span aria-hidden>＋</span>
+    <div className="rws-pick">
+      <div className="rws-pick-row">
+        <button type="button" className={`rws-pick-btn${round ? " is-round" : ""}`} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+          {cur ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cur.url} alt="" style={{ objectPosition: `${cur.cropX ?? 50}% ${cur.cropY ?? 50}%` }} />
+          ) : (
+            <span aria-hidden>＋</span>
+          )}
+          <span>{cur ? `${label}: photo ${value}` : `${label}: choose a photo`}</span>
+        </button>
+        {cur && (
+          <button type="button" className="rws-frame" onClick={onFrame}>
+            <Icon name="frame" size={16} /> Crop &amp; zoom
+          </button>
         )}
-        <span>{cur ? `${label}: photo ${value}` : `${label}: add a photo`}</span>
-      </button>
+      </div>
       {open && (
-        <div className="rs-pick-strip" role="listbox" aria-label={label}>
-          <button type="button" className={`rs-pick-none${value === 0 ? " is-on" : ""}`} onClick={() => { onPick(0); setOpen(false); }}>
+        <div className="rws-pick-strip" role="listbox" aria-label={label}>
+          <button type="button" className={`rws-pick-none${value === 0 ? " is-on" : ""}`} onClick={() => { onPick(0); setOpen(false); }}>
             None
           </button>
-          <button type="button" className="rs-pick-none" onClick={() => file.current?.click()} disabled={photos.length >= RW_LIMITS.photos}>
+          <button type="button" className="rws-pick-none" onClick={() => file.current?.click()} disabled={photos.length >= RW_LIMITS.photos}>
             Upload
           </button>
           {photos.map((p, i) => (
-            <button key={i} type="button" role="option" aria-selected={value === i + 1} className={`rs-pick-th${value === i + 1 ? " is-on" : ""}`} onClick={() => { onPick(i + 1); setOpen(false); }} aria-label={`Photo ${i + 1}`}>
+            <button key={i} type="button" role="option" aria-selected={value === i + 1} className={`rws-pick-th${value === i + 1 ? " is-on" : ""}`} onClick={() => { onPick(i + 1); setOpen(false); }} aria-label={`Photo ${i + 1}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.url} alt="" loading="lazy" />
             </button>
@@ -151,13 +206,28 @@ function PhotoPick({ value, photos, onPick, onUpload, label }: { value: number; 
   );
 }
 
-export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, owner }: StudioProps) {
+function Toggle({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
+  return (
+    <label className="rws-tog">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span className="rws-tog-ui" aria-hidden />
+      <span>{children}</span>
+    </label>
+  );
+}
+
+// ── The studio ──────────────────────────────────────────────────────────────
+
+export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, password, owner }: StudioProps) {
   const x = mf.extras as Row;
   const events = useMemo(() => (Array.isArray(x.events) ? (x.events as Row[]) : []), [x.events]);
   const story = useMemo(() => (Array.isArray(x.story) ? (x.story as Chapter[]) : []), [x.story]);
   const things = useMemo(() => (Array.isArray(x.things) ? (x.things as string[]) : []), [x.things]);
-  const photos = mf.photos;
+  const contacts = useMemo(() => (Array.isArray(x.contacts) ? (x.contacts as Contact[]) : []), [x.contacts]);
+  // Shown same-origin (repo demo art is stored as an https link on the site's domain); handed back stored.
+  const photos = useMemo(() => mf.photos.map((p) => (rwLocalUrl(p.url) === p.url ? p : { ...p, url: rwLocalUrl(p.url) })), [mf.photos]);
   const set = updateExtra;
+  const themeStyle = useMemo(() => themeVars(day.theme), [day.theme]);
 
   // ── Every function keeps a stable id (RSVPs refer to it) ──────────────────
   useEffect(() => {
@@ -181,6 +251,7 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
   const [ran, setRan] = useState(false);
   const [tooShort, setTooShort] = useState(false);
   const waiting = useRef(false);
+  const pending = useRef<WeddingAnswers | null>(null);
   const latest = useRef(mf);
   useLayoutEffect(() => {
     latest.current = mf;
@@ -205,10 +276,21 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
     const touched = (prefix: string) => [...filled].some((p) => p.startsWith(prefix));
     const cur = latest.current.extras as Row;
     const dEvents = DEMO.events as unknown as Row[];
-    const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : []).filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
+    const evs = (Array.isArray(cur.events) ? (cur.events as Row[]) : [])
+      // A function the AI rewrote keeps none of the demo couple's leaves it did not write (times, address, note…).
+      .map((e, i) => {
+        if (!touched(`extras.events[${i}]`)) return e;
+        const d = dEvents[i] ?? {};
+        const out = { ...e };
+        for (const k of ["time", "endTime", "address", "mapUrl", "note", "dressCode"]) if (!filled.has(`extras.events[${i}].${k}`) && s(e[k]) && s(e[k]) === s(d[k])) out[k] = "";
+        // The swatch follows the (new) dress-code words.
+        if (filled.has(`extras.events[${i}].dressCode`) && s(e.dressColor) === s(d.dressColor)) out.dressColor = "";
+        return out;
+      })
+      .filter((e, i) => touched(`extras.events[${i}]`) || !same(e, dEvents[i], ["title", "venue", "date"]));
     const dStory = DEMO.story as unknown as Row[];
     const st = (Array.isArray(cur.story) ? (cur.story as Row[]) : [])
-      // A moment the AI rewrote keeps none of the demo couple's words it did not write itself.
+      // A chapter the AI rewrote keeps none of the demo couple's words it did not write itself.
       .map((c, i) => {
         if (!touched(`extras.story[${i}]`)) return c;
         const d = dStory[i] ?? {};
@@ -217,17 +299,42 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
         return out;
       })
       .filter((c, i) => touched(`extras.story[${i}]`) || !same(c, dStory[i], ["title", "line"]));
+    const dContacts = DEMO.contacts as unknown as Row[];
+    const cs = (Array.isArray(cur.contacts) ? (cur.contacts as Row[]) : []).filter((c, i) => touched(`extras.contacts[${i}]`) || !same(c, dContacts[i], ["name", "phone"]));
     if (fill.filled.length) {
       set("events", (evs.length ? evs : (cur.events as Row[])).map((e) => ({ ...e, time: toHHMM(s(e.time)), endTime: toHHMM(s(e.endTime)) })));
       const L = latest.current.letter;
       if (/<[^>]+>/.test(L)) updateMf("letter", plain(L));
       set("story", st);
+      set("contacts", cs);
       if (!touched("extras.things") && JSON.stringify(cur.things) === JSON.stringify(DEMO.things)) set("things", []);
       for (const k of ["blessingsOf", "brideNote", "groomNote", "muhurat", "hashtag", "gettingThere"] as const) {
         if (!touched(`extras.${k}`) && cur[k] === DEMO[k]) set(k, "");
       }
     }
+    // The guided answers that are not AI fields (applied after the fill, which writes over the whole form).
+    const a = pending.current;
+    pending.current = null;
+    if (a && fill.mode === "done") {
+      set("nameOrder", a.first);
+      if (a.language === "Hindi") set("lang", "hi");
+      if (a.muhurat.trim()) set("muhurat", a.muhurat.trim().slice(0, 60));
+      if (a.bride.trim() && a.groom.trim() && (!s(cur.hashtag) || cur.hashtag === DEMO.hashtag)) set("hashtag", `#${(a.first === "groom" ? [a.groom, a.bride] : [a.bride, a.groom]).map((v) => v.trim().split(/\s+/)[0]).join("Weds")}`.slice(0, 40));
+      // Who to call: the answer is exact, so it wins over the model's copy.
+      if (a.contactName.trim() && a.contactPhone.trim()) {
+        const rest = cs.filter((c) => s(c.name).trim().toLowerCase() !== a.contactName.trim().toLowerCase());
+        set("contacts", [{ name: a.contactName.trim().slice(0, 40), relation: "", phone: a.contactPhone.trim().slice(0, 16) }, ...rest].slice(0, RW_MAX_CONTACTS));
+      }
+    }
   }, [fill, fill?.generating, fill?.mode, fill?.error, fill?.filled, set, updateMf]);
+
+  // The guided questions: the answers that are not AI fields are applied straight away.
+  const [guided, setGuided] = useState(false);
+  const onAnswers = (a: WeddingAnswers) => {
+    waiting.current = true;
+    pending.current = a;
+    setRan(false);
+  };
 
   const aiNote: { ok: boolean; text: string } | null = tooShort
     ? { ok: false, text: "A line or two more, please: names, the date and where." }
@@ -239,7 +346,7 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
           ? { ok: true, text: "Done. Read it through and change anything you like." }
           : null;
 
-  // ── Photos: one pool; story + family cards point into it by 1-based index ─
+  // ── Photos: one pool; the portrait, story + family cards point into it ─────
   const remapRefs = useCallback(
     (prev: LovePhoto[], next: LovePhoto[]) => {
       const where = (k: number) => {
@@ -250,10 +357,10 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
         return j < 0 ? 0 : j + 1;
       };
       const cur = latest.current.extras as Row;
-      const bp = where(n(cur.bridePhoto));
-      const gp = where(n(cur.groomPhoto));
-      if (bp !== n(cur.bridePhoto)) set("bridePhoto", bp);
-      if (gp !== n(cur.groomPhoto)) set("groomPhoto", gp);
+      for (const key of ["bridePhoto", "groomPhoto", "couplePhoto"] as const) {
+        const v = where(n(cur[key]));
+        if (v !== n(cur[key])) set(key, v);
+      }
       const st = (Array.isArray(cur.story) ? (cur.story as Chapter[]) : []).map((c) => ({ ...c, photo: where(n(c.photo)) }));
       if (st.some((c, i) => c.photo !== n((cur.story as Chapter[])[i]?.photo))) set("story", st);
     },
@@ -261,7 +368,7 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
   );
   const setPhotos = (next: LovePhoto[]) => {
     const prev = latest.current.photos;
-    const capped = next.slice(0, RW_LIMITS.photos);
+    const capped = next.slice(0, RW_LIMITS.photos).map((p) => (rwStoredUrl(p.url) === p.url ? p : { ...p, url: rwStoredUrl(p.url) }));
     updateMf("photos", capped);
     remapRefs(prev, capped);
   };
@@ -279,16 +386,38 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
     }
   };
 
+  // The cropper: one at a time, on a pool photo, in the shape the page shows it.
+  const [framing, setFraming] = useState<{ k: number; aspect: number; title: string } | null>(null);
+  const framed = framing && framing.k >= 1 && framing.k <= photos.length ? photos[framing.k - 1] : null;
+  const cropOf = (p: LovePhoto | null): Crop => (p ? clampCrop({ x: p.cropX ?? 50, y: p.cropY ?? 50, scale: p.scale ?? 100 }) : CROP_DEFAULT);
+  const setCrop = (c: Crop) => {
+    if (!framing) return;
+    const cur = latest.current.photos;
+    const i = framing.k - 1;
+    if (!cur[i]) return;
+    updateMf(
+      "photos",
+      cur.map((p, j) => (j === i ? { ...p, cropX: Math.round(c.x * 10) / 10, cropY: Math.round(c.y * 10) / 10, scale: Math.round(c.scale) } : p)),
+    );
+  };
+
   // ── Functions ──────────────────────────────────────────────────────────────
   const mainIdx = Math.max(0, events.findIndex((e) => MAIN_RE.test(s(e.title))));
   const setEvent = (i: number, k: string, v: string) => set("events", events.map((e, j) => (j === i ? { ...e, [k]: v } : e)));
+  const [openEv, setOpenEv] = useState<number | null>(null);
+  const [undo, setUndo] = useState<{ row: Row; at: number } | null>(null);
+  useEffect(() => {
+    if (!undo) return;
+    const t = window.setTimeout(() => setUndo(null), 6000);
+    return () => window.clearTimeout(t);
+  }, [undo]);
   const addEvent = (q?: (typeof QUICK_FUNCTIONS)[number]) => {
     if (events.length >= RW_LIMITS.events) return;
     const taken = new Set(events.map((e) => s(e.id)));
     const last = events[events.length - 1];
     set("events", [
       ...events,
-      { id: newId(taken), title: q?.title ?? "", date: s(last?.date), time: "", endTime: "", venue: "", address: "", mapUrl: "", dressCode: q?.dress ?? "", dressColor: q?.color ?? "", note: "" },
+      { id: newId(taken), title: q?.title ?? "", date: s(last?.date), time: "", endTime: "", venue: s(last?.venue), address: s(last?.address), mapUrl: "", dressCode: q?.dress ?? "", dressColor: q?.color ?? "", note: "" },
     ]);
     setOpenEv(events.length);
   };
@@ -300,73 +429,125 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
     set("events", next);
     setOpenEv(j);
   };
-  const [openEv, setOpenEv] = useState<number | null>(null);
+  const removeEvent = (i: number) => {
+    setUndo({ row: events[i], at: i });
+    set("events", events.filter((_, j) => j !== i));
+    setOpenEv(null);
+  };
+
+  // ── Contacts ───────────────────────────────────────────────────────────────
+  const setContact = (i: number, k: keyof Contact, v: string) => set("contacts", contacts.map((c, j) => (j === i ? { ...c, [k]: v } : c)));
+
+  // ── Personal links ─────────────────────────────────────────────────────────
+  const [link, setLink] = useState(() => {
+    try {
+      return window.localStorage.getItem(LINK_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const [guestList, setGuestList] = useState("");
+  const [copied, setCopied] = useState("");
+  const linkOk = /^https?:\/\/\S+$/i.test(link.trim());
+  const saveLink = (v: string) => {
+    setLink(v);
+    try {
+      window.localStorage.setItem(LINK_KEY, v.trim());
+    } catch {}
+  };
+  const copy = async (t: string) => {
+    try {
+      await navigator.clipboard.writeText(t);
+      setCopied(t);
+      window.setTimeout(() => setCopied(""), 1600);
+    } catch {}
+  };
+  const guests = guestList
+    .split(/\n|,/)
+    .map((g) => g.trim())
+    .filter(Boolean)
+    .slice(0, 30);
 
   // ── Owner: guest replies (a saved page; StudioProps.owner) ─────────────────
   const pageId = owner?.pageId ?? null;
   const token = owner?.token ?? null;
 
   const letter = mf.letter;
+  const legacyDark = !!s(x.theme) && !(LIGHT_THEMES as readonly string[]).includes(s(x.theme));
+  const themeId = legacyDark || !s(x.theme) ? "champagne" : s(x.theme);
   const hindi = s(x.hindiMessage);
   const main = events[mainIdx];
+  const upi = s(x.upiId);
+  const live = s(x.liveUrl);
+  const coupleName = `${mf.recipientName || "Bride"} & ${mf.senderName || "Groom"}`;
 
   return (
-    <div className="rs">
-      <style>{RS_CSS}</style>
+    <div className="rs pds">
+      <style>{RWS_CSS}</style>
 
       {pageId && token && (
-        <details className="rs-dash">
-          <summary>Guest replies &amp; blessings</summary>
+        <details className="rws-dash">
+          <summary>
+            <Icon name="send" /> Guest replies &amp; blessings
+          </summary>
           <RsvpDashboard slug={SLUG} pageId={pageId} token={token} csvName="wedding-rsvps" />
         </details>
       )}
 
       {ai?.available && fill && (
-        <section className="rs-ai" aria-labelledby="rs-ai-h">
-          <p className="rs-ai-k">✦ AI</p>
-          <h3 className="rs-ai-h" id="rs-ai-h">
-            Describe your wedding in a few lines
+        <section className="rws-ai" aria-labelledby="rws-ai-h">
+          <p className="rws-ai-k">✦ Let AI write it</p>
+          <h3 className="rws-ai-h" id="rws-ai-h">
+            Answer 8 quick questions
           </h3>
-          <p className="rs-ai-p">We&apos;ll fill in everything below. You can change any of it.</p>
-          <textarea
-            className="vs-input vs-area rs-ai-in"
-            rows={4}
-            value={desc}
-            maxLength={1500}
-            onChange={(e) => setDesc(e.target.value)}
-            placeholder="Ananya and Arjun are getting married on 12 Feb 2027 at The Leela Palace, Udaipur. Haldi and Mehendi on the 10th, Sangeet on the 11th, pheras at 7 pm, reception on the 13th in Delhi. We met at college in Pune in 2018. Keep it warm, a little royal, and add a Hindi line."
-            aria-label="Describe your wedding"
-          />
-          <div className="rs-chips">
-            {AI_CHIPS.map((c) => (
-              <button key={c} type="button" className="rs-chip" onClick={() => setDesc((d) => (d.trim() ? `${d.trim()} ${c}.` : `${c}.`))}>
-                + {c}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="rs-ai-go" onClick={runAi} disabled={fill.generating}>
-            {fill.generating ? "Writing your invitation…" : "Write my invitation"}
+          <p className="rws-ai-p">Names, the date, where, your functions and families. We fill in everything below in English and Hindi, then show you every line to check and change.</p>
+          <button type="button" className="rws-ai-go" onClick={() => setGuided(true)} disabled={fill.generating}>
+            {fill.generating ? "Writing your invitation…" : "✦ Answer 8 quick questions"}
           </button>
+          <details className="rws-ai-own">
+            <summary>or describe it in your own words</summary>
+            <textarea
+              className="vs-input vs-area rws-ai-in"
+              rows={4}
+              value={desc}
+              maxLength={1500}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder="Aanya and Vihaan are getting married on 12 Feb 2027 at Jagmandir Island Palace, Udaipur. Haldi and Mehendi on the 10th, Sangeet on the 11th, pheras at 7 pm, reception on the 13th at The Leela. Her parents are Meera and Raghuveer Rathore, his are Nandini and Arvind Singhania. They met at a book fair in Jaipur in 2019. For questions call Kabir on 98290 11223."
+              aria-label="Describe your wedding"
+            />
+            <div className="rws-chips">
+              {AI_CHIPS.map((c) => (
+                <button key={c} type="button" className="rws-chip" onClick={() => setDesc((d) => (d.trim() ? `${d.trim()} ${c}.` : `${c}.`))}>
+                  + {c}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="rws-ai-go is-ghost" onClick={runAi} disabled={fill.generating}>
+              {fill.generating ? "Writing your invitation…" : "Write it from my description"}
+            </button>
+          </details>
+          <p className="rws-ai-skip">Or skip it: every field below is yours to fill.</p>
           {aiNote && (
-            <p className={`rs-ai-note${aiNote.ok ? " is-ok" : ""}`} role="status">
+            <p className={`rws-ai-note${aiNote.ok ? " is-ok" : ""}`} role="status">
               {aiNote.text}
             </p>
           )}
         </section>
       )}
+      {fill && <RoyalGuided open={guided} fill={fill} onClose={() => setGuided(false)} onAnswers={onAnswers} />}
 
-      {/* ── The couple ─────────────────────────────────────────────────── */}
+      {/* ── 1 The couple ───────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-names" aria-label="The couple">
-        <Head n={1} title="The couple" sub="Names as you'd like them printed." />
+        <Head n={1} icon="door" title="The couple" sub="Names as you'd like them printed on the palace gateway." />
         <div className="vs-row2">
-          <Field label="Bride's name" htmlFor="rs-bride">
-            <input id="rs-bride" className="vs-input" value={mf.recipientName} maxLength={30} placeholder="e.g. Ananya" onChange={(e) => updateMf("recipientName", e.target.value)} />
+          <Field label="Bride's name" htmlFor="rws-bride">
+            <input id="rws-bride" className="vs-input" value={mf.recipientName} maxLength={30} placeholder="e.g. Aanya" onChange={(e) => updateMf("recipientName", e.target.value)} />
           </Field>
-          <Field label="Groom's name" htmlFor="rs-groom">
-            <input id="rs-groom" className="vs-input" value={mf.senderName} maxLength={30} placeholder="e.g. Arjun" onChange={(e) => updateMf("senderName", e.target.value)} />
+          <Field label="Groom's name" htmlFor="rws-groom">
+            <input id="rws-groom" className="vs-input" value={mf.senderName} maxLength={30} placeholder="e.g. Vihaan" onChange={(e) => updateMf("senderName", e.target.value)} />
           </Field>
         </div>
-        <div className="rs-seg" role="radiogroup" aria-label="Show names as">
+        <div className="rws-seg" role="radiogroup" aria-label="Show names as">
           {(["bride", "groom"] as const).map((o) => {
             const a = o === "bride" ? mf.recipientName || "Bride" : mf.senderName || "Groom";
             const b = o === "bride" ? mf.senderName || "Groom" : mf.recipientName || "Bride";
@@ -377,100 +558,148 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
             );
           })}
         </div>
-        <div className="vs-row2">
-          <Field label="Bride's family" htmlFor="rs-bf" hint="“With the blessings of…”">
-            <input id="rs-bf" className="vs-input" value={s(x.brideFamily)} maxLength={120} placeholder="e.g. Mrs. & Mr. Rakesh Sharma" onChange={(e) => set("brideFamily", e.target.value)} />
-          </Field>
-          <Field label="Groom's family" htmlFor="rs-gf">
-            <input id="rs-gf" className="vs-input" value={s(x.groomFamily)} maxLength={120} placeholder="e.g. Mrs. & Mr. Vikram Mehta" onChange={(e) => set("groomFamily", e.target.value)} />
-          </Field>
-        </div>
+
         {main && (
-          <>
-            <p className="rs-sub">The big day · used for the countdown and the calendar invites ({s(main.title) || "the wedding"})</p>
-            <div className="rs-row3">
-              <Field label="Date" htmlFor="rs-date">
-                <input id="rs-date" type="date" className="vs-input" value={s(main.date)} onChange={(e) => setEvent(mainIdx, "date", e.target.value)} />
+          <div className="rws-card">
+            <p className="rws-sub">The big day · the countdown and the date on the scroll ({s(main.title) || "the wedding"})</p>
+            <div className="rws-row3">
+              <Field label="Date" htmlFor="rws-date">
+                <input id="rws-date" type="date" className="vs-input" value={s(main.date)} onChange={(e) => setEvent(mainIdx, "date", e.target.value)} />
               </Field>
-              <Field label="Time" htmlFor="rs-time">
-                <input id="rs-time" type="time" className="vs-input" value={s(main.time)} onChange={(e) => setEvent(mainIdx, "time", e.target.value)} />
+              <Field label="Time" htmlFor="rws-time">
+                <input id="rws-time" type="time" className="vs-input" value={s(main.time)} onChange={(e) => setEvent(mainIdx, "time", e.target.value)} />
               </Field>
-              <Field label="Muhurat (optional)" htmlFor="rs-muh">
-                <input id="rs-muh" className="vs-input" value={s(x.muhurat)} maxLength={60} placeholder="e.g. Shubh muhurat 9:15 pm" onChange={(e) => set("muhurat", e.target.value)} />
+              <Field label="Muhurat (optional)" htmlFor="rws-muh">
+                <input id="rws-muh" className="vs-input" value={s(x.muhurat)} maxLength={60} placeholder="e.g. Shubh muhurat 9:15 pm" onChange={(e) => set("muhurat", e.target.value)} />
               </Field>
             </div>
-          </>
+          </div>
         )}
+
+        <p className="rws-sub">Your portrait in the gold frame</p>
+        <p className="rws-hint">Optional. Without one, the courtyard shows the illustrated couple in wedding red.</p>
+        <PhotoPick
+          label="Portrait"
+          round
+          value={n(x.couplePhoto)}
+          photos={photos}
+          onPick={(k) => set("couplePhoto", k)}
+          onUpload={(f) => void uploadTo(f, (k) => set("couplePhoto", k))}
+          onFrame={() => setFraming({ k: n(x.couplePhoto), aspect: 1.03, title: "Frame your portrait" })}
+        />
+
+        <h4 className="rws-h4">Families</h4>
+        <div className="vs-row2">
+          <div>
+            <Field label="Bride's parents" htmlFor="rws-bf">
+              <input id="rws-bf" className="vs-input" value={s(x.brideFamily)} maxLength={120} placeholder="e.g. Mrs. Meera & Mr. Raghuveer Singh Rathore" onChange={(e) => set("brideFamily", e.target.value)} />
+            </Field>
+            <Field label="Under their names" htmlFor="rws-bn">
+              <input id="rws-bn" className="vs-input" value={s(x.brideNote)} maxLength={100} placeholder="e.g. Jodhpur" onChange={(e) => set("brideNote", e.target.value)} />
+            </Field>
+            <PhotoPick label="Family photo" round value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} onFrame={() => setFraming({ k: n(x.bridePhoto), aspect: 1, title: "Frame the bride's family photo" })} />
+          </div>
+          <div>
+            <Field label="Groom's parents" htmlFor="rws-gf">
+              <input id="rws-gf" className="vs-input" value={s(x.groomFamily)} maxLength={120} placeholder="e.g. Mrs. Nandini & Mr. Arvind Singhania" onChange={(e) => set("groomFamily", e.target.value)} />
+            </Field>
+            <Field label="Under their names" htmlFor="rws-gn">
+              <input id="rws-gn" className="vs-input" value={s(x.groomNote)} maxLength={100} placeholder="e.g. Jaipur" onChange={(e) => set("groomNote", e.target.value)} />
+            </Field>
+            <PhotoPick label="Family photo" round value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} onFrame={() => setFraming({ k: n(x.groomPhoto), aspect: 1, title: "Frame the groom's family photo" })} />
+          </div>
+        </div>
+        <Field label="With the blessings of (grandparents, optional)" htmlFor="rws-bo">
+          <input id="rws-bo" className="vs-input" value={s(x.blessingsOf)} maxLength={160} placeholder="e.g. Smt. Kamla Devi & Late Shri Bhanwar Singh Rathore" onChange={(e) => set("blessingsOf", e.target.value)} />
+        </Field>
       </section>
 
-      {/* ── Functions ──────────────────────────────────────────────────── */}
+      {/* ── 2 Functions ────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-details" aria-label="Functions">
-        <Head n={2} title="Functions" sub={`Add, remove or reorder (up to ${RW_LIMITS.events}). Each one gets its own map, timings, dress code and calendar button.`} />
-        <ol className="rs-evs">
+        <Head n={2} icon="lamp" title="Functions" sub={`Up to ${RW_LIMITS.events}. Each gets its own illustrated couple (haldi, mehendi, sangeet, wedding, reception, engagement), a map, a dress-code swatch and a calendar button.`} />
+        <ol className="rws-evs">
           {events.map((e, i) => {
             const isOpen = openEv === i;
             const sw = swatchFor({ dressCode: s(e.dressCode), dressColor: s(e.dressColor) });
+            const mapBad = !!s(e.mapUrl) && !/^https:\/\//i.test(s(e.mapUrl));
             return (
-              <li key={s(e.id) || i} className={`rs-ev${isOpen ? " is-open" : ""}`}>
-                <button type="button" className="rs-ev-head" onClick={() => setOpenEv(isOpen ? null : i)} aria-expanded={isOpen}>
-                  <span className="rs-ev-sw" style={{ background: sw || "transparent" }} aria-hidden />
-                  <span className="rs-ev-t">
-                    <b>{s(e.title) || "New function"}</b>
-                    <small>{[s(e.date), s(e.time), s(e.venue)].filter(Boolean).join(" · ") || "Tap to fill in"}</small>
+              <li key={s(e.id) || i} className={`rws-ev${isOpen ? " is-open" : ""}`}>
+                <div className="rws-ev-top">
+                  <button type="button" className="rws-ev-head" onClick={() => setOpenEv(isOpen ? null : i)} aria-expanded={isOpen}>
+                    <span className="rws-ev-sw" style={{ background: sw || "transparent" }} aria-hidden />
+                    <span className="rws-ev-t">
+                      <b>{s(e.title) || "New function"}</b>
+                      <small>{[s(e.date), s(e.time), s(e.venue)].filter(Boolean).join(" · ") || "Tap to fill in"}</small>
+                    </span>
+                    <span className="rws-ev-chev" aria-hidden>
+                      {isOpen ? "–" : "+"}
+                    </span>
+                  </button>
+                  <span className="rws-ev-move">
+                    <button type="button" onClick={() => moveEvent(i, -1)} disabled={i === 0} aria-label={`Move ${s(e.title) || "function"} earlier`}>
+                      ↑
+                    </button>
+                    <button type="button" onClick={() => moveEvent(i, 1)} disabled={i === events.length - 1} aria-label={`Move ${s(e.title) || "function"} later`}>
+                      ↓
+                    </button>
                   </span>
-                  <span className="rs-ev-chev" aria-hidden>
-                    {isOpen ? "–" : "+"}
-                  </span>
-                </button>
+                </div>
                 {isOpen && (
-                  <div className="rs-ev-body">
-                      <Field label="Name" htmlFor={`rs-e${i}-t`}>
-                        <input id={`rs-e${i}-t`} className="vs-input" value={s(e.title)} maxLength={40} placeholder="e.g. Sangeet" onChange={(ev) => setEvent(i, "title", ev.target.value)} />
+                  <div className="rws-ev-body">
+                    <Field label="Name" htmlFor={`rws-e${i}-t`}>
+                      <input id={`rws-e${i}-t`} className="vs-input" value={s(e.title)} maxLength={40} placeholder="e.g. Sangeet" onChange={(ev) => setEvent(i, "title", ev.target.value)} />
+                    </Field>
+                    <div className="rws-row3 rws-row3-tight">
+                      <Field label="Date" htmlFor={`rws-e${i}-d`}>
+                        <input id={`rws-e${i}-d`} type="date" className="vs-input" value={s(e.date)} onChange={(ev) => setEvent(i, "date", ev.target.value)} />
                       </Field>
-                      <div className="rs-row3 rs-row3-tight">
-                        <Field label="Date" htmlFor={`rs-e${i}-d`}>
-                          <input id={`rs-e${i}-d`} type="date" className="vs-input" value={s(e.date)} onChange={(ev) => setEvent(i, "date", ev.target.value)} />
-                        </Field>
-                        <Field label="Starts" htmlFor={`rs-e${i}-s`}>
-                          <input id={`rs-e${i}-s`} type="time" className="vs-input" value={s(e.time)} onChange={(ev) => setEvent(i, "time", ev.target.value)} />
-                        </Field>
-                        <Field label="Ends" htmlFor={`rs-e${i}-e`}>
-                          <input id={`rs-e${i}-e`} type="time" className="vs-input" value={s(e.endTime)} onChange={(ev) => setEvent(i, "endTime", ev.target.value)} />
-                        </Field>
-                      </div>
-                    <div className="vs-row2">
-                      <Field label="Venue" htmlFor={`rs-e${i}-v`}>
-                        <input id={`rs-e${i}-v`} className="vs-input" value={s(e.venue)} maxLength={80} placeholder="e.g. The Leela Palace, Udaipur" onChange={(ev) => setEvent(i, "venue", ev.target.value)} />
+                      <Field label="Starts" htmlFor={`rws-e${i}-s`}>
+                        <input id={`rws-e${i}-s`} type="time" className="vs-input" value={s(e.time)} onChange={(ev) => setEvent(i, "time", ev.target.value)} />
                       </Field>
-                      <Field label="Address" htmlFor={`rs-e${i}-a`}>
-                        <input id={`rs-e${i}-a`} className="vs-input" value={s(e.address)} maxLength={140} placeholder="Street, city" onChange={(ev) => setEvent(i, "address", ev.target.value)} />
+                      <Field label="Ends" htmlFor={`rws-e${i}-e`}>
+                        <input id={`rws-e${i}-e`} type="time" className="vs-input" value={s(e.endTime)} onChange={(ev) => setEvent(i, "endTime", ev.target.value)} />
                       </Field>
                     </div>
-                    <Field label="Google Maps link (optional)" htmlFor={`rs-e${i}-m`} hint="Paste the share link from Google Maps. Empty: we search the venue and address.">
-                      <input id={`rs-e${i}-m`} className="vs-input" inputMode="url" value={s(e.mapUrl)} maxLength={400} placeholder="https://maps.app.goo.gl/…" onChange={(ev) => setEvent(i, "mapUrl", ev.target.value.trim())} />
+                    <div className="vs-row2">
+                      <Field label="Venue" htmlFor={`rws-e${i}-v`}>
+                        <input id={`rws-e${i}-v`} className="vs-input" value={s(e.venue)} maxLength={80} placeholder="e.g. Durbar Hall, City Palace" onChange={(ev) => setEvent(i, "venue", ev.target.value)} />
+                      </Field>
+                      <Field label="Address" htmlFor={`rws-e${i}-a`}>
+                        <input id={`rws-e${i}-a`} className="vs-input" value={s(e.address)} maxLength={140} placeholder="Street, city" onChange={(ev) => setEvent(i, "address", ev.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label="Google Maps link (optional)" htmlFor={`rws-e${i}-m`} hint="Paste the share link from Google Maps. Empty: we search the venue and address." error={mapBad ? "That doesn't look like a link. It should start with https://" : undefined}>
+                      <input id={`rws-e${i}-m`} className="vs-input" inputMode="url" value={s(e.mapUrl)} maxLength={400} placeholder="https://maps.app.goo.gl/…" onChange={(ev) => setEvent(i, "mapUrl", ev.target.value.trim())} />
                     </Field>
-                    <Field label="Dress code" htmlFor={`rs-e${i}-dc`}>
-                      <input id={`rs-e${i}-dc`} className="vs-input" value={s(e.dressCode)} maxLength={60} placeholder="e.g. Shades of yellow" onChange={(ev) => setEvent(i, "dressCode", ev.target.value)} />
+                    <Field label="Dress code" htmlFor={`rws-e${i}-dc`}>
+                      <input id={`rws-e${i}-dc`} className="vs-input" value={s(e.dressCode)} maxLength={60} placeholder="e.g. Shades of yellow" onChange={(ev) => setEvent(i, "dressCode", ev.target.value)} />
                     </Field>
-                    <div className="rs-sws" role="radiogroup" aria-label="Dress-code colour">
+                    <div className="rws-sws" role="radiogroup" aria-label="Dress-code colour">
                       {SWATCHES.map((c) => (
-                        <button key={c} type="button" role="radio" aria-checked={s(e.dressColor).toLowerCase() === c.toLowerCase()} aria-label={c} className="rs-sw" style={{ background: c }} onClick={() => setEvent(i, "dressColor", c)} />
+                        <button key={c} type="button" role="radio" aria-checked={s(e.dressColor).toLowerCase() === c.toLowerCase()} aria-label={c} className="rws-sw" style={{ background: c }} onClick={() => setEvent(i, "dressColor", c)} />
                       ))}
-                      <label className="rs-sw rs-sw-custom" aria-label="Custom colour">
+                      <label className="rws-sw rws-sw-custom" aria-label="Custom colour">
                         <input type="color" value={/^#[0-9a-f]{6}$/i.test(s(e.dressColor)) ? s(e.dressColor) : "#c9a24a"} onChange={(ev) => setEvent(i, "dressColor", ev.target.value)} />
                       </label>
                     </div>
-                    <Field label="A line for guests (optional)" htmlFor={`rs-e${i}-n`}>
-                      <textarea id={`rs-e${i}-n`} className="vs-input vs-area" rows={2} value={s(e.note)} maxLength={200} placeholder="e.g. The baraat leaves the hotel at 7 pm sharp." onChange={(ev) => setEvent(i, "note", ev.target.value)} />
+                    <Field label="A line for guests (optional)" htmlFor={`rws-e${i}-n`}>
+                      <textarea id={`rws-e${i}-n`} className="vs-input vs-area" rows={2} value={s(e.note)} maxLength={200} placeholder="e.g. The baraat leaves the hotel at 7 pm sharp." onChange={(ev) => setEvent(i, "note", ev.target.value)} />
                     </Field>
-                    <div className="rs-ev-tools">
-                      <button type="button" onClick={() => moveEvent(i, -1)} disabled={i === 0}>
-                        ↑ Earlier
+                    <div className="rws-ev-tools">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (events.length >= RW_LIMITS.events) return;
+                          const taken = new Set(events.map((q) => s(q.id)));
+                          const copyRow = { ...e, id: newId(taken), title: `${s(e.title)} (2)`.slice(0, 40) };
+                          set("events", [...events.slice(0, i + 1), copyRow, ...events.slice(i + 1)]);
+                          setOpenEv(i + 1);
+                        }}
+                        disabled={events.length >= RW_LIMITS.events}
+                      >
+                        Duplicate
                       </button>
-                      <button type="button" onClick={() => moveEvent(i, 1)} disabled={i === events.length - 1}>
-                        ↓ Later
-                      </button>
-                      <button type="button" className="is-danger" disabled={events.length <= 1} onClick={() => { set("events", events.filter((_, j) => j !== i)); setOpenEv(null); }}>
+                      <button type="button" className="is-danger" disabled={events.length <= 1} onClick={() => removeEvent(i)}>
                         Remove
                       </button>
                     </div>
@@ -480,48 +709,182 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
             );
           })}
         </ol>
+        {undo && (
+          <p className="rws-undo" role="status">
+            Removed {s(undo.row.title) || "a function"}.{" "}
+            <button
+              type="button"
+              onClick={() => {
+                const next = [...events];
+                next.splice(Math.min(undo.at, next.length), 0, undo.row);
+                set("events", next.slice(0, RW_LIMITS.events));
+                setUndo(null);
+              }}
+            >
+              Undo
+            </button>
+          </p>
+        )}
         {events.length < RW_LIMITS.events ? (
-          <div className="rs-quick">
+          <div className="rws-quick">
             <span>Add:</span>
             {QUICK_FUNCTIONS.filter((q) => !events.some((e) => s(e.title).toLowerCase() === q.title.toLowerCase())).map((q) => (
-              <button key={q.title} type="button" className="rs-chip" onClick={() => addEvent(q)}>
+              <button key={q.title} type="button" className="rws-chip" onClick={() => addEvent(q)}>
                 + {q.title}
               </button>
             ))}
-            <button type="button" className="rs-chip" onClick={() => addEvent()}>
+            <button type="button" className="rws-chip" onClick={() => addEvent()}>
               + Other
             </button>
           </div>
         ) : (
-          <p className="rs-hint">All {RW_LIMITS.events} functions are in. Remove one to add another.</p>
+          <p className="rws-hint">All {RW_LIMITS.events} functions are in. Remove one to add another.</p>
         )}
       </section>
 
-      {/* ── Photos ─────────────────────────────────────────────────────── */}
+      {/* ── 3 Photos ───────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-photos" aria-label="Photos">
-        <Head n={3} title="Photos" sub={`Up to ${RW_LIMITS.photos}. Any shape works. Tap a photo to resize it or set its focus. Drag to reorder. Photos you use in your story or on a family card don't repeat in the gallery.`} />
-        <MasonryEditor photos={photos} onChange={setPhotos} max={RW_LIMITS.photos} mask="arch" />
+        <Head n={3} icon="photo" title="Photos" sub={`${photos.length} of ${RW_LIMITS.photos}. Tap a photo to make it wide, tall or large, set its focus and zoom. Drag ⠿ to reorder. Photos used as the portrait, in your story or on a family card don't repeat in the gallery.`} />
+        <MasonryEditor photos={photos} onChange={setPhotos} max={RW_LIMITS.photos} mask="rounded" />
       </section>
 
-      {/* ── The invitation ─────────────────────────────────────────────── */}
+      {/* ── 4 The invitation ───────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-letter" aria-label="Your invitation">
-        <Head n={4} title="Your invitation" sub="The words your guests read first, in English and Hindi side by side." />
+        <Head n={4} icon="letter" title="Your invitation" sub="The words your guests read first, in English and Hindi side by side." />
         <div className="vs-row2">
-          <Field label="In English" htmlFor="rs-letter" count={`${letter.length}/1500`}>
-            <textarea id="rs-letter" className="vs-input vs-area rs-letter" rows={8} value={letter} maxLength={1500} placeholder={royalWeddingDay.copy.letterPlaceholder} onChange={(e) => updateMf("letter", e.target.value)} />
+          <Field label="In English" htmlFor="rws-letter" count={`${letter.length}/1500`}>
+            <textarea id="rws-letter" className="vs-input vs-area rws-letter" rows={8} value={letter} maxLength={1500} placeholder={royalWeddingDay.copy.letterPlaceholder} onChange={(e) => updateMf("letter", e.target.value)} />
           </Field>
-          <Field label="हिन्दी में (optional)" htmlFor="rs-hindi" count={`${hindi.length}/700`}>
-            <textarea id="rs-hindi" lang="hi" className="vs-input vs-area rs-letter" rows={8} value={hindi} maxLength={700} placeholder="सर्वशक्तिमान की कृपा और बड़ों के आशीर्वाद से…" onChange={(e) => set("hindiMessage", e.target.value)} />
+          <Field label="हिन्दी में (optional)" htmlFor="rws-hindi" count={`${hindi.length}/700`}>
+            <textarea id="rws-hindi" lang="hi" className="vs-input vs-area rws-letter" rows={8} value={hindi} maxLength={700} placeholder="ईश्वर की असीम कृपा और बड़ों के आशीर्वाद से…" onChange={(e) => set("hindiMessage", e.target.value)} />
+          </Field>
+        </div>
+        <Toggle checked={x.invocation !== false} onChange={(v) => set("invocation", v)}>
+          “॥ श्री गणेशाय नमः ॥” over the gateway (off: “॥ शुभ विवाह ॥”)
+        </Toggle>
+        <Toggle checked={x.lang === "hi"} onChange={(v) => set("lang", v ? "hi" : "en")}>
+          Open the invitation in Hindi (guests can switch)
+        </Toggle>
+      </section>
+
+      {/* ── 5 Our story ────────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-story" aria-label="Our story">
+        <Head n={5} icon="heart" title="Our story" sub={`A few moments: how you met, the proposal, the yes. Up to ${RW_LIMITS.story}, each with a photo in a gold-framed window.`} />
+        <ol className="rws-story">
+          {story.map((c, i) => (
+            <li key={i} className="rws-ch">
+              <div className="rws-row3 rws-row3-story">
+                <Field label="When" htmlFor={`rws-s${i}-w`}>
+                  <input id={`rws-s${i}-w`} className="vs-input" value={c.when} maxLength={24} placeholder="2019" onChange={(e) => set("story", story.map((q, j) => (j === i ? { ...q, when: e.target.value } : q)))} />
+                </Field>
+                <Field label="Title" htmlFor={`rws-s${i}-t`}>
+                  <input id={`rws-s${i}-t`} className="vs-input" value={c.title} maxLength={60} placeholder="How we met" onChange={(e) => set("story", story.map((q, j) => (j === i ? { ...q, title: e.target.value } : q)))} />
+                </Field>
+              </div>
+              <Field label="What happened" htmlFor={`rws-s${i}-l`}>
+                <textarea id={`rws-s${i}-l`} className="vs-input vs-area" rows={2} value={c.line} maxLength={240} onChange={(e) => set("story", story.map((q, j) => (j === i ? { ...q, line: e.target.value } : q)))} />
+              </Field>
+              <div className="rws-ch-tools">
+                <PhotoPick
+                  label="Chapter photo"
+                  value={n(c.photo)}
+                  photos={photos}
+                  onPick={(k) => set("story", story.map((q, j) => (j === i ? { ...q, photo: k } : q)))}
+                  onUpload={(f) => void uploadTo(f, (k) => set("story", (latest.current.extras.story as Chapter[]).map((q, j) => (j === i ? { ...q, photo: k } : q))))}
+                  onFrame={() => setFraming({ k: n(c.photo), aspect: 0.8, title: `Frame the photo for “${c.title || `chapter ${i + 1}`}”` })}
+                />
+                <button type="button" className="rws-x" onClick={() => set("story", story.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            </li>
+          ))}
+        </ol>
+        {story.length < RW_LIMITS.story && (
+          <button type="button" className="rws-chip" onClick={() => set("story", [...story, { when: "", title: "", line: "", photo: 0 }])}>
+            + Add a chapter
+          </button>
+        )}
+      </section>
+
+      {/* ── 6 Guest info ───────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-guests" aria-label="Guest info">
+        <Head n={6} icon="compass" title="Guest info" sub="What guests ask on WhatsApp, answered once: where to stay, how to get there, who to call." />
+        <h4 className="rws-h4">Who to call</h4>
+        <p className="rws-hint">Up to {RW_MAX_CONTACTS} family members. Guests get a call button and a WhatsApp button for each.</p>
+        <ol className="rws-contacts">
+          {contacts.map((c, i) => {
+            const bad = !!s(c.phone).trim() && !phoneOf(s(c.phone));
+            return (
+              <li key={i} className="rws-contact">
+                <div className="rws-row3 rws-row3-contact">
+                  <Field label="Name" htmlFor={`rws-c${i}-n`}>
+                    <input id={`rws-c${i}-n`} className="vs-input" value={s(c.name)} maxLength={40} placeholder="e.g. Kabir Singhania" onChange={(e) => setContact(i, "name", e.target.value)} />
+                  </Field>
+                  <Field label="Relation" htmlFor={`rws-c${i}-r`}>
+                    <input id={`rws-c${i}-r`} className="vs-input" value={s(c.relation)} maxLength={40} placeholder="e.g. Vihaan's brother" onChange={(e) => setContact(i, "relation", e.target.value)} />
+                  </Field>
+                  <Field label="Phone" htmlFor={`rws-c${i}-p`} error={bad ? "A 10-digit mobile number, with or without +91." : undefined}>
+                    <input id={`rws-c${i}-p`} className="vs-input" type="tel" inputMode="tel" autoComplete="off" value={s(c.phone)} maxLength={16} placeholder="+91 98290 11223" onChange={(e) => setContact(i, "phone", e.target.value)} />
+                  </Field>
+                </div>
+                <button type="button" className="rws-x" onClick={() => set("contacts", contacts.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        {contacts.length < RW_MAX_CONTACTS && (
+          <button type="button" className="rws-chip" onClick={() => set("contacts", [...contacts, { name: "", relation: "", phone: "" }])}>
+            + Add a contact
+          </button>
+        )}
+
+        <h4 className="rws-h4">Good to know</h4>
+        <p className="rws-hint">Stay, weather, shuttles, kids. Start a line with a heading and a colon: “Stay: …”.</p>
+        {Array.from({ length: RW_LIMITS.faq }, (_, i) => (
+          <input
+            key={i}
+            className="vs-input rws-thing"
+            aria-label={`Good to know ${i + 1}`}
+            value={things[i] ?? ""}
+            maxLength={180}
+            placeholder={["Stay: Rooms are held at …", "Weather: Evenings get cool, bring a shawl", "Getting around: Shuttles every 30 minutes", "Children: Little ones are welcome", "Parking: Valet at the main gate", "Gifts: Your blessings are enough"][i]}
+            onChange={(e) => {
+              const next = Array.from({ length: RW_LIMITS.faq }, (_, j) => (j === i ? e.target.value : things[j] ?? ""));
+              set("things", next);
+            }}
+          />
+        ))}
+        <Field label="Getting there" htmlFor="rws-gt">
+          <textarea id="rws-gt" className="vs-input vs-area" rows={3} value={s(x.gettingThere)} maxLength={500} placeholder="Airport, station, shuttles, who meets guests…" onChange={(e) => set("gettingThere", e.target.value)} />
+        </Field>
+
+        <h4 className="rws-h4">Livestream (optional)</h4>
+        <Field label="YouTube Live or Zoom link" htmlFor="rws-live" hint="“Watch live” lights up 30 minutes before the wedding and stays on until it ends." error={live && !/^https:\/\/\S+$/i.test(live) ? "Paste the full link, starting with https://" : undefined}>
+          <input id="rws-live" className="vs-input" inputMode="url" value={live} maxLength={300} placeholder="https://youtube.com/live/…" onChange={(e) => set("liveUrl", e.target.value.trim())} />
+        </Field>
+
+        <h4 className="rws-h4">Shagun by UPI (optional, off when empty)</h4>
+        <p className="rws-hint">For guests who ask. Shown politely (“your blessings are the greatest gift”) with a UPI button on phones and a copyable id. We never handle the money.</p>
+        <div className="vs-row2">
+          <Field label="UPI id" htmlFor="rws-upi" error={upi && !isUpiId(upi) ? "A UPI id looks like name@bank." : undefined}>
+            <input id="rws-upi" className="vs-input" value={upi} maxLength={60} placeholder="e.g. aanya.rathore@okhdfc" autoComplete="off" onChange={(e) => set("upiId", e.target.value.trim())} />
+          </Field>
+          <Field label="Name on the account" htmlFor="rws-upin">
+            <input id="rws-upin" className="vs-input" value={s(x.upiName)} maxLength={60} placeholder="e.g. Aanya Rathore" onChange={(e) => set("upiName", e.target.value)} />
           </Field>
         </div>
       </section>
 
-      {/* ── Theme & music ──────────────────────────────────────────────── */}
-      <section className="vs-sec" id="vs-sec-music" aria-label="Theme and music">
-        <Head n={5} title="Theme & music" sub="Light or dark, always in gold. The music plays after the guest taps the gates." />
-        <ThemePicker value={s(x.theme) || "maroon"} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} label="Theme" />
-        <p className="rs-hint" style={{ marginTop: 8 }}>
-          {WEDDING_THEMES[(s(x.theme) || "maroon") as keyof typeof WEDDING_THEMES]?.blurb}
+      {/* ── 7 Look & music ─────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-music" aria-label="Look and music">
+        <Head n={7} icon="music" title="Look & music" sub="Three daylight palettes, always in sandstone and gold. The song starts when the guest opens the gateway." />
+        <ThemePicker themes={LIGHT_THEMES} grouped={false} value={themeId} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} label="Palette" />
+        <p className="rws-hint" style={{ marginTop: 8 }}>
+          {RW_THEME_LABELS[themeId]} · {WEDDING_THEMES[themeId as keyof typeof WEDDING_THEMES]?.blurb}
+          {legacyDark && " · Your page was made with a dark palette; it now opens in daylight sandstone. Pick any palette to save it."}
         </p>
         <div style={{ marginTop: 18 }}>
           <MusicPicker
@@ -541,200 +904,182 @@ export default function RoyalStudio({ mf, updateMf, updateExtra, ai, password, o
         </div>
       </section>
 
-      {/* ── More details ───────────────────────────────────────────────── */}
-      <section className="vs-sec" id="vs-sec-finish" aria-label="More details">
-        <details className="rs-more">
-          <summary>
-            <Head n="✦" title="More details" sub="Your story, family photos, good to know, a film, RSVP settings, the closing line and a password." />
-          </summary>
+      {/* ── 8 RSVP & send ──────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-finish" aria-label="RSVP and send">
+        <Head n={8} icon="send" title="RSVP & send" sub="Replies come to your email with a running total, per function." />
+        <div className="rws-row3">
+          <Field label="Reply by" htmlFor="rws-by">
+            <input id="rws-by" type="date" className="vs-input" value={s(x.rsvpBy)} onChange={(e) => set("rsvpBy", e.target.value)} />
+          </Field>
+          <Field label="Max guests per reply" htmlFor="rws-max">
+            <input id="rws-max" type="number" min={1} max={10} className="vs-input" value={n(x.maxGuests) || 4} onChange={(e) => set("maxGuests", Math.min(10, Math.max(1, Math.round(Number(e.target.value) || 1))))} />
+          </Field>
+        </div>
+        <Toggle checked={x.rsvpMeal !== false} onChange={(v) => set("rsvpMeal", v)}>
+          Ask for a meal preference (veg / non-veg / Jain)
+        </Toggle>
+        <Toggle checked={x.blessings !== false} onChange={(v) => set("blessings", v)}>
+          Show the blessings wall
+        </Toggle>
 
-          <h4 className="rs-h4">Our story</h4>
-          <p className="rs-hint">A few moments: how you met, the proposal, the yes. Up to {RW_LIMITS.story}, each with a photo.</p>
-          <ol className="rs-story">
-            {story.map((c, i) => (
-              <li key={i} className="rs-ch">
-                <div className="rs-row3 rs-row3-story">
-                  <Field label="When" htmlFor={`rs-s${i}-w`}>
-                    <input id={`rs-s${i}-w`} className="vs-input" value={c.when} maxLength={24} placeholder="2019" onChange={(e) => set("story", story.map((q, j) => (j === i ? { ...q, when: e.target.value } : q)))} />
-                  </Field>
-                  <Field label="Title" htmlFor={`rs-s${i}-t`}>
-                    <input id={`rs-s${i}-t`} className="vs-input" value={c.title} maxLength={60} placeholder="How we met" onChange={(e) => set("story", story.map((q, j) => (j === i ? { ...q, title: e.target.value } : q)))} />
-                  </Field>
-                </div>
-                <Field label="What happened" htmlFor={`rs-s${i}-l`}>
-                  <textarea id={`rs-s${i}-l`} className="vs-input vs-area" rows={2} value={c.line} maxLength={240} onChange={(e) => set("story", story.map((q, j) => (j === i ? { ...q, line: e.target.value } : q)))} />
-                </Field>
-                <div className="rs-ch-tools">
-                  <PhotoPick
-                    label="Chapter photo"
-                    value={n(c.photo)}
-                    photos={photos}
-                    onPick={(k) => set("story", story.map((q, j) => (j === i ? { ...q, photo: k } : q)))}
-                    onUpload={(f) => void uploadTo(f, (k) => set("story", (latest.current.extras.story as Chapter[]).map((q, j) => (j === i ? { ...q, photo: k } : q))))}
-                  />
-                  <button type="button" className="rs-x" onClick={() => set("story", story.filter((_, j) => j !== i))}>
-                    Remove
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ol>
-          {story.length < RW_LIMITS.story && (
-            <button type="button" className="rs-chip" onClick={() => set("story", [...story, { when: "", title: "", line: "", photo: 0 }])}>
-              + Add a chapter
-            </button>
+        <h4 className="rws-h4">Extras</h4>
+        <div className="vs-row2">
+          <Field label="Pre-wedding film (YouTube link)" htmlFor="rws-vid">
+            <input id="rws-vid" className="vs-input" inputMode="url" value={s(x.videoUrl)} maxLength={200} placeholder="https://youtu.be/…" onChange={(e) => set("videoUrl", e.target.value.trim())} />
+          </Field>
+          <Field label="Wedding hashtag" htmlFor="rws-tag">
+            <input id="rws-tag" className="vs-input" value={s(x.hashtag)} maxLength={40} placeholder="#AanyaWedsVihaan" onChange={(e) => set("hashtag", e.target.value)} />
+          </Field>
+        </div>
+        <Field label="Closing line" htmlFor="rws-end" hint="As the palace gateway closes at the very end.">
+          <input id="rws-end" className="vs-input" value={mf.endLine} maxLength={90} placeholder="With love, the Sharma & Mehta families" onChange={(e) => updateMf("endLine", e.target.value)} />
+        </Field>
+        {password && (
+          <Field label="Password (optional)" htmlFor="rws-pw" hint="Guests type it to open the invitation. Leave empty for no lock.">
+            <input id="rws-pw" className="vs-input" value={password.value} maxLength={128} placeholder="e.g. the bride's nickname" autoComplete="off" onChange={(e) => password.set(e.target.value)} />
+          </Field>
+        )}
+
+        <div className="rws-card rws-personal">
+          <h4 className="rws-h4" style={{ marginTop: 0 }}>
+            Send personal invites
+          </h4>
+          <p className="rws-hint">
+            Each guest&apos;s link opens on “Dear <i>their name</i>, you are warmly invited” and fills in their RSVP name. {owner?.published ? "Paste your invitation link once (Share → Copy link)." : "Publish first, then paste your invitation link here."}
+          </p>
+          <Field label="Your invitation link" htmlFor="rws-link" error={link && !linkOk ? "Paste the full link, starting with https://" : undefined}>
+            <input id="rws-link" className="vs-input" inputMode="url" value={link} placeholder="https://subhsandesh.in/…" onChange={(e) => saveLink(e.target.value)} />
+          </Field>
+          <Field label="Guest names (one per line)" htmlFor="rws-guests">
+            <textarea id="rws-guests" className="vs-input vs-area" rows={3} value={guestList} placeholder={"Sharma family\nNani ji\nRohan & Priya"} onChange={(e) => setGuestList(e.target.value)} />
+          </Field>
+          {linkOk && guests.length > 0 && (
+            <ul className="rws-links">
+              {guests.map((g) => {
+                const u = personalUrl(link.trim(), g);
+                const msg = `Dear ${g}, the palace gateway is open: you're invited to the royal wedding of ${coupleName} 👑\n${u}`;
+                return (
+                  <li key={g}>
+                    <span>{g}</span>
+                    <a className="rws-mini is-wa" href={`https://wa.me/?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer">
+                      WhatsApp
+                    </a>
+                    <button type="button" className="rws-mini" onClick={() => void copy(u)}>
+                      {copied === u ? "Copied ✓" : "Copy link"}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-
-          <h4 className="rs-h4">Families</h4>
-          <Field label="With the blessings of (grandparents, optional)" htmlFor="rs-bo">
-            <input id="rs-bo" className="vs-input" value={s(x.blessingsOf)} maxLength={160} placeholder="e.g. Smt. Kamla Devi & Late Shri Ram Prasad Sharma" onChange={(e) => set("blessingsOf", e.target.value)} />
-          </Field>
-          <div className="vs-row2">
-            <div>
-              <Field label="Under the bride's family" htmlFor="rs-bn">
-                <input id="rs-bn" className="vs-input" value={s(x.brideNote)} maxLength={100} placeholder="e.g. Udaipur" onChange={(e) => set("brideNote", e.target.value)} />
-              </Field>
-              <PhotoPick label="Bride's family photo" value={n(x.bridePhoto)} photos={photos} onPick={(k) => set("bridePhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("bridePhoto", k))} />
-            </div>
-            <div>
-              <Field label="Under the groom's family" htmlFor="rs-gn">
-                <input id="rs-gn" className="vs-input" value={s(x.groomNote)} maxLength={100} placeholder="e.g. Jaipur" onChange={(e) => set("groomNote", e.target.value)} />
-              </Field>
-              <PhotoPick label="Groom's family photo" value={n(x.groomPhoto)} photos={photos} onPick={(k) => set("groomPhoto", k)} onUpload={(f) => void uploadTo(f, (k) => set("groomPhoto", k))} />
-            </div>
-          </div>
-
-          <h4 className="rs-h4">Good to know</h4>
-          <p className="rs-hint">Dress code, parking, where to stay, who to call. Start a line with a heading and a colon: “Stay: …”.</p>
-          {Array.from({ length: RW_LIMITS.faq }, (_, i) => (
-            <input
-              key={i}
-              className="vs-input rs-thing"
-              aria-label={`Good to know ${i + 1}`}
-              value={things[i] ?? ""}
-              maxLength={180}
-              placeholder={["Stay: Rooms are held at …", "Parking: Valet at the main gate", "Weather: Evenings get cool, bring a shawl", "Contact: Call Kabir on …", "Kids: Little ones are welcome", "Gifts: Your blessings are enough"][i]}
-              onChange={(e) => {
-                const next = Array.from({ length: RW_LIMITS.faq }, (_, j) => (j === i ? e.target.value : things[j] ?? ""));
-                set("things", next);
-              }}
-            />
-          ))}
-          <Field label="Getting there" htmlFor="rs-gt">
-            <textarea id="rs-gt" className="vs-input vs-area" rows={3} value={s(x.gettingThere)} maxLength={500} placeholder="Airport, station, shuttles, who meets guests…" onChange={(e) => set("gettingThere", e.target.value)} />
-          </Field>
-
-          <h4 className="rs-h4">Extras</h4>
-          <div className="vs-row2">
-            <Field label="Pre-wedding film (YouTube link)" htmlFor="rs-vid">
-              <input id="rs-vid" className="vs-input" inputMode="url" value={s(x.videoUrl)} maxLength={200} placeholder="https://youtu.be/…" onChange={(e) => set("videoUrl", e.target.value.trim())} />
-            </Field>
-            <Field label="Wedding hashtag" htmlFor="rs-tag">
-              <input id="rs-tag" className="vs-input" value={s(x.hashtag)} maxLength={40} placeholder="#AnanyaWedsArjun" onChange={(e) => set("hashtag", e.target.value)} />
-            </Field>
-          </div>
-
-          <h4 className="rs-h4">RSVP</h4>
-          <p className="rs-hint">Replies come to your email, with a running total.</p>
-          <div className="rs-row3">
-            <Field label="Reply by" htmlFor="rs-by">
-              <input id="rs-by" type="date" className="vs-input" value={s(x.rsvpBy)} onChange={(e) => set("rsvpBy", e.target.value)} />
-            </Field>
-            <Field label="Max guests per reply" htmlFor="rs-max">
-              <input id="rs-max" type="number" min={1} max={10} className="vs-input" value={n(x.maxGuests) || 4} onChange={(e) => set("maxGuests", Math.min(10, Math.max(1, Math.round(Number(e.target.value) || 1))))} />
-            </Field>
-          </div>
-          <label className="rs-tog">
-            <input type="checkbox" checked={x.rsvpMeal !== false} onChange={(e) => set("rsvpMeal", e.target.checked)} /> Ask for a meal preference (veg / non-veg / Jain)
-          </label>
-          <label className="rs-tog">
-            <input type="checkbox" checked={x.blessings !== false} onChange={(e) => set("blessings", e.target.checked)} /> Show the blessings wall
-          </label>
-          <label className="rs-tog">
-            <input type="checkbox" checked={x.invocation !== false} onChange={(e) => set("invocation", e.target.checked)} /> Open with Shri Ganesh (off = the royal crest)
-          </label>
-          <label className="rs-tog">
-            <input type="checkbox" checked={x.lang === "hi"} onChange={(e) => set("lang", e.target.checked ? "hi" : "en")} /> Open the invitation in Hindi (guests can switch)
-          </label>
-
-          <h4 className="rs-h4">The finish</h4>
-          <Field label="Closing line" htmlFor="rs-end" hint="Under the Shubh Vivah seal at the very end.">
-            <input id="rs-end" className="vs-input" value={mf.endLine} maxLength={90} placeholder="With love, the Sharma & Mehta families" onChange={(e) => updateMf("endLine", e.target.value)} />
-          </Field>
-          {password && (
-            <Field label="Password (optional)" htmlFor="rs-pw" hint="Guests type it to open the invitation. Leave empty for no lock.">
-              <input id="rs-pw" className="vs-input" value={password.value} maxLength={128} placeholder="e.g. the bride's nickname" autoComplete="off" onChange={(e) => password.set(e.target.value)} />
-            </Field>
-          )}
-        </details>
+        </div>
       </section>
+
+      <PhotoCropper
+        open={!!framed}
+        src={framed?.url ?? ""}
+        crop={cropOf(framed)}
+        aspect={framing?.aspect ?? 1}
+        title={framing?.title ?? "Frame the photo"}
+        themeStyle={themeStyle}
+        onChange={setCrop}
+        onClose={() => setFraming(null)}
+      />
     </div>
   );
 }
 
-const RS_CSS = `
-.rs { --rs-gold: #b8892e; }
-.rs-hint { margin: 2px 0 10px; font-size: 13px; line-height: 1.45; opacity: .72; }
-.rs-count { font-weight: 500; opacity: .6; }
-.rs-sub { margin: 4px 0 10px; font-size: 13px; font-weight: 700; color: var(--vw-accent); }
-.rs-row3 { display: grid; gap: 0 10px; grid-template-columns: 1fr 1fr; }
-.rs-row3 > :last-child:nth-child(3) { grid-column: 1 / -1; }
-@media (min-width: 560px) { .rs-row3 { grid-template-columns: 1fr 1fr 1.4fr; } .rs-row3 > :last-child:nth-child(3) { grid-column: auto; } .rs-row3-tight { grid-template-columns: 1.3fr 1fr 1fr; } .rs-row3-story { grid-template-columns: 1fr 3fr; } }
-.rs-ai { position: relative; margin: 6px 0 4px; padding: 18px; border-radius: 20px; background: linear-gradient(140deg, #3a0913, #5e1424 60%, #7a1f2b); color: #fbecd4; box-shadow: 0 18px 40px -24px rgba(58,9,19,.7); }
-.rs-ai::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: linear-gradient(110deg,#8a6a1f,#e9cf7a 35%,#fff3c4 50%,#c9a43f 65%,#7a5a14); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
-.rs-ai-k { margin: 0; font: 700 11px/1 var(--vw-font-ui); letter-spacing: .24em; color: #e9cf7a; }
-.rs-ai-h { margin: 8px 0 4px; font: 600 21px/1.2 var(--vw-font-serif); }
-.rs-ai-p { margin: 0 0 12px; font-size: 13.5px; opacity: .85; }
-.rs-ai-in { background: rgba(255,248,235,.97) !important; min-height: 116px; font-size: 15px !important; line-height: 1.5 !important; }
-.rs-ai .rs-chip { background: rgba(255,236,214,.1); color: #fbecd4; border-color: rgba(233,207,122,.35); }
-.rs-ai-go { margin-top: 12px; width: 100%; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer; font: 700 15.5px/1 var(--vw-font-ui); color: #3a0913; background: linear-gradient(110deg,#c9a43f,#e9cf7a 40%,#fff3c4 55%,#d9b05c); box-shadow: 0 10px 24px -12px rgba(233,207,122,.8); }
-.rs-ai-go:disabled { opacity: .75; cursor: progress; }
-.rs-ai-note { margin: 10px 0 0; font-size: 13.5px; color: #ffcfc4; }
-.rs-ai-note.is-ok { color: #e9cf7a; }
-.rs-chips, .rs-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
-.rs-quick > span { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
-.rs-chip { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; }
-.rs-chip:hover { border-color: var(--vw-accent); }
-.rs-seg { display: flex; gap: 6px; padding: 4px; margin: 0 0 18px; border-radius: 999px; background: var(--vw-soft); width: fit-content; max-width: 100%; }
-.rs-seg button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--vw-font-ui); color: var(--vw-paper-ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 44vw; }
-.rs-seg button[aria-checked=true] { background: var(--vw-accent); color: var(--vw-accent-ink); }
-.rs-evs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.rs-ev { border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); overflow: hidden; }
-.rs-ev.is-open { border-color: var(--rs-gold); box-shadow: 0 12px 30px -22px rgba(58,9,19,.5); }
-.rs-ev-head { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 14px; border: 0; background: none; text-align: left; cursor: pointer; color: var(--vw-paper-ink); }
-.rs-ev-sw { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--rs-gold); }
-.rs-ev-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.rs-ev-t b { font: 600 17px/1.2 var(--vw-font-serif); }
-.rs-ev-t small { font-size: 12.5px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rs-ev-chev { font-size: 22px; line-height: 1; color: var(--vw-accent); width: 24px; text-align: center; }
-.rs-ev-body { padding: 4px 14px 14px; border-top: 1px dashed var(--vw-edge); }
-.rs-ev-tools, .rs-ch-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.rs-ev-tools button, .rs-x { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: none; font: 600 13px/1 var(--vw-font-ui); color: var(--vw-paper-ink); cursor: pointer; }
-.rs-ev-tools button:disabled { opacity: .35; cursor: default; }
-.rs-ev-tools .is-danger, .rs-x { color: #b3261e; }
-.rs-sws { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 16px; }
-.rs-sw { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--vw-edge); cursor: pointer; padding: 0; }
-.rs-sw[aria-checked=true] { box-shadow: 0 0 0 2.5px var(--vw-accent); }
-.rs-sw-custom { background: conic-gradient(#f2c94c, #4f9b6a, #2e5aac, #7b3fa0, #e86a92, #a3122b, #f2c94c); overflow: hidden; }
-.rs-sw-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-.rs-letter { min-height: 200px; font-family: var(--vw-font-serif); font-size: 16px; line-height: 1.6; }
-.rs-more > summary { list-style: none; cursor: pointer; }
-.rs-more > summary::-webkit-details-marker { display: none; }
-.rs-more > summary .vs-secH::after { content: " ▾"; color: var(--vw-accent); }
-.rs-more[open] > summary .vs-secH::after { content: " ▴"; }
-.rs-h4 { margin: 22px 0 6px; font: 700 12px/1 var(--vw-font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--vw-accent); }
-.rs-story { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 12px; }
-.rs-ch { padding: 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); }
-.rs-thing { margin-bottom: 8px; }
-.rs-tog { display: flex; gap: 10px; align-items: center; min-height: 44px; font-size: 14.5px; cursor: pointer; }
-.rs-tog input { width: 20px; height: 20px; accent-color: var(--vw-accent); }
-.rs-pick { margin: 0 0 14px; }
-.rs-pick-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 999px; border: 1.5px dashed var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1.2 var(--vw-font-ui); cursor: pointer; }
-.rs-pick-btn img, .rs-pick-btn > span:first-child { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
-.rs-pick-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scroll-snap-type: x proximity; }
-.rs-pick-th, .rs-pick-none { flex: none; width: 64px; height: 64px; border-radius: 12px; border: 2px solid transparent; padding: 0; overflow: hidden; background: var(--vw-soft); cursor: pointer; scroll-snap-align: start; font: 600 12px/1 var(--vw-font-ui); color: var(--vw-paper-ink); }
-.rs-pick-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.rs-pick-th.is-on, .rs-pick-none.is-on { border-color: var(--vw-accent); }
-.rs-dash { margin: 4px 0 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; padding: 0 14px; background: var(--vw-paper); }
-.rs-dash > summary { min-height: 52px; display: flex; align-items: center; font: 700 15px/1 var(--vw-font-ui); cursor: pointer; color: var(--vw-accent); }
+const RWS_CSS = `
+.pds { --rws-gold: #B88A35; --rws-gold-soft: #E8D3AE; }
+.rws-hint { margin: 2px 0 10px; font-size: 13px; line-height: 1.45; color: var(--vw-ink-soft, #7A5A40); }
+.rws-err { margin: 4px 0 10px; font-size: 13px; line-height: 1.4; color: #B3261E; font-weight: 600; }
+.rws-count { font-weight: 500; opacity: .6; }
+.rws-sub { margin: 14px 0 6px; font-size: 13px; font-weight: 700; color: var(--vw-accent); }
+.rws-head { align-items: center; }
+.rws-medal { position: relative; flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: #641C2A; background: radial-gradient(circle at 50% 35%, #FFF8E6, #F1DBA8); box-shadow: inset 0 0 0 1.5px var(--rws-gold), 0 6px 14px -8px rgba(110,60,20,.6); }
+.rws-medal i { position: absolute; right: -4px; bottom: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; display: grid; place-items: center; font: 700 11px/1 var(--vw-font-ui); font-style: normal; color: #FFF8EC; background: var(--vw-accent); box-shadow: 0 0 0 2px var(--vw-paper); }
+.rws-card { margin: 10px 0 14px; padding: 14px; border-radius: 18px; background: linear-gradient(180deg, #FFFDF8, #FBF3E3); box-shadow: inset 0 0 0 1.5px var(--rws-gold-soft); }
+.rws-card .rws-sub { margin-top: 0; }
+.rws-row3 { display: grid; gap: 0 10px; grid-template-columns: 1fr 1fr; }
+.rws-row3 > :last-child:nth-child(3) { grid-column: 1 / -1; }
+@media (min-width: 560px) { .rws-row3 { grid-template-columns: 1fr 1fr 1.4fr; } .rws-row3 > :last-child:nth-child(3) { grid-column: auto; } .rws-row3-tight { grid-template-columns: 1.3fr 1fr 1fr; } .rws-row3-story { grid-template-columns: 1fr 3fr; } .rws-row3-contact { grid-template-columns: 1.2fr 1fr 1.1fr; } }
+.rws-ai { position: relative; margin: 6px 0 8px; padding: 20px 18px 18px; border-radius: 22px; background: radial-gradient(120% 90% at 0% 0%, #FFF6DF 0%, #FBEBCB 55%, #F4DDB0 100%); color: #3A2414; box-shadow: 0 18px 40px -26px rgba(110,60,20,.55); overflow: hidden; }
+.rws-ai::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; background: linear-gradient(110deg,#B88A35,#E6C677 35%,#FFF3C4 50%,#C99A45 65%,#8A5A1C); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.rws-ai::after { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,.7), rgba(255,255,255,0)); pointer-events: none; }
+.rws-ai-k { margin: 0; font: 700 11px/1 var(--vw-font-ui); letter-spacing: .22em; text-transform: uppercase; color: #8E2A3C; }
+.rws-ai-h { margin: 8px 0 4px; font: 600 22px/1.2 var(--vw-font-serif); }
+.rws-ai-p { margin: 0 0 12px; font-size: 13.5px; color: #6A4A30; }
+.rws-ai-in { position: relative; z-index: 1; background: #FFFDF8 !important; min-height: 116px; font-size: 15px !important; line-height: 1.5 !important; }
+.rws-ai-go { position: relative; z-index: 1; margin-top: 12px; width: 100%; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer; font: 700 15.5px/1 var(--vw-font-ui); color: #FFF8EC; background: linear-gradient(110deg, #641C2A, #8E2A3C 55%, #A84A4E); box-shadow: 0 12px 26px -12px rgba(110,50,19,.8); transition: transform .15s ease; }
+.rws-ai-go:active { transform: scale(.98); }
+.rws-ai-go:disabled { opacity: .75; cursor: progress; }
+.rws-ai-go.is-ghost { background: #FFFDF8; color: #641C2A; box-shadow: inset 0 0 0 1.5px #C9A24A; }
+.rws-ai-own { position: relative; z-index: 1; margin-top: 10px; }
+.rws-ai-own > summary { min-height: 44px; display: flex; align-items: center; justify-content: center; font: 600 14px/1.2 var(--vw-font-ui); color: #641C2A; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.rws-ai-skip { position: relative; z-index: 1; margin: 4px 0 0; text-align: center; font-size: 13px; color: #7A5550; }
+.rws-ai-note { margin: 10px 0 0; font-size: 13.5px; color: #B3261E; font-weight: 600; }
+.rws-ai-note.is-ok { color: #2F7A45; }
+.rws-chips, .rws-quick { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+.rws-quick > span { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
+.rws-chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; }
+.rws-chip:hover { border-color: var(--vw-accent); }
+.rws-seg { display: flex; gap: 6px; padding: 4px; margin: 0 0 12px; border-radius: 999px; background: var(--vw-soft); width: fit-content; max-width: 100%; }
+.rws-seg button { min-height: 42px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--vw-font-ui); color: var(--vw-paper-ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 44vw; }
+.rws-seg button[aria-checked=true] { background: var(--vw-accent); color: var(--vw-accent-ink); }
+.rws-evs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rws-ev { border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); overflow: hidden; }
+.rws-ev.is-open { border-color: var(--rws-gold); box-shadow: 0 12px 30px -22px rgba(110,60,20,.5); }
+.rws-ev-top { display: flex; align-items: stretch; }
+.rws-ev-head { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 6px 10px 14px; border: 0; background: none; text-align: left; cursor: pointer; color: var(--vw-paper-ink); }
+.rws-ev-move { display: flex; align-items: center; gap: 2px; padding-right: 6px; }
+.rws-ev-move button { width: 36px; height: 44px; border: 0; border-radius: 10px; background: none; font-size: 16px; color: var(--vw-accent); cursor: pointer; }
+.rws-ev-move button:disabled { opacity: .25; cursor: default; }
+.rws-ev-sw { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--rws-gold); }
+.rws-ev-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rws-ev-t b { font: 600 17px/1.2 var(--vw-font-serif); }
+.rws-ev-t small { font-size: 12.5px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rws-ev-chev { font-size: 22px; line-height: 1; color: var(--vw-accent); width: 24px; text-align: center; }
+.rws-ev-body { padding: 4px 14px 14px; border-top: 1px dashed var(--vw-edge); }
+.rws-ev-tools, .rws-ch-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rws-ev-tools button, .rws-x { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: none; font: 600 13px/1 var(--vw-font-ui); color: var(--vw-paper-ink); cursor: pointer; }
+.rws-ev-tools button:disabled { opacity: .35; cursor: default; }
+.rws-ev-tools .is-danger, .rws-x { color: #B3261E; }
+.rws-undo { margin: 10px 0 0; padding: 10px 14px; border-radius: 12px; background: #3A2414; color: #FFF6E3; font-size: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rws-undo button { border: 0; background: none; color: #E6C677; font: 700 14px/1 var(--vw-font-ui); min-height: 36px; cursor: pointer; }
+.rws-sws { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 16px; }
+.rws-sw { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--vw-edge); cursor: pointer; padding: 0; }
+.rws-sw[aria-checked=true] { box-shadow: 0 0 0 2.5px var(--vw-accent); }
+.rws-sw-custom { background: conic-gradient(#f2c94c, #4f9b6a, #2e5aac, #7b3fa0, #e86a92, #a3122b, #f2c94c); overflow: hidden; }
+.rws-sw-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.rws-letter { min-height: 200px; font-family: var(--vw-font-serif); font-size: 16px; line-height: 1.6; }
+.rws-h4 { margin: 22px 0 6px; font: 700 12px/1 var(--vw-font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--vw-accent); }
+.rws-story, .rws-contacts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 12px; }
+.rws-ch, .rws-contact { padding: 12px; border: 1.5px solid var(--vw-edge); border-radius: 16px; background: var(--vw-paper); }
+.rws-thing { margin-bottom: 8px; }
+.rws-tog { display: flex; gap: 12px; align-items: center; min-height: 46px; font-size: 14.5px; cursor: pointer; }
+.rws-tog input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.rws-tog-ui { position: relative; flex: none; width: 42px; height: 24px; border-radius: 999px; background: var(--vw-edge); transition: background .2s ease; }
+.rws-tog-ui::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s ease; }
+.rws-tog input:checked + .rws-tog-ui { background: var(--vw-accent); }
+.rws-tog input:checked + .rws-tog-ui::after { transform: translateX(18px); }
+.rws-tog input:focus-visible + .rws-tog-ui { outline: 2px solid var(--rws-gold); outline-offset: 2px; }
+.rws-pick { margin: 0 0 14px; }
+.rws-pick-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rws-pick-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 4px 14px 4px 4px; border-radius: 14px; border: 1.5px dashed var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1.2 var(--vw-font-ui); cursor: pointer; }
+.rws-pick-btn img, .rws-pick-btn > span:first-child { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; display: grid; place-items: center; background: var(--vw-soft); font-size: 18px; }
+.rws-pick-btn.is-round { border-radius: 999px; }
+.rws-pick-btn.is-round img, .rws-pick-btn.is-round > span:first-child { border-radius: 50%; }
+.rws-frame { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--vw-soft); color: var(--vw-accent); font: 700 13px/1 var(--vw-font-ui); cursor: pointer; }
+.rws-pick-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scroll-snap-type: x proximity; }
+.rws-pick-th, .rws-pick-none { flex: none; width: 64px; height: 64px; border-radius: 12px; border: 2px solid transparent; padding: 0; overflow: hidden; background: var(--vw-soft); cursor: pointer; scroll-snap-align: start; font: 600 12px/1 var(--vw-font-ui); color: var(--vw-paper-ink); }
+.rws-pick-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rws-pick-th.is-on, .rws-pick-none.is-on { border-color: var(--vw-accent); }
+.rws-dash { margin: 4px 0 12px; border: 1.5px solid var(--rws-gold); border-radius: 16px; padding: 0 14px; background: var(--vw-paper); }
+.rws-dash > summary { min-height: 52px; display: flex; gap: 8px; align-items: center; font: 700 15px/1 var(--vw-font-ui); cursor: pointer; color: var(--vw-accent); }
+.rws-personal .vs-field:last-of-type { margin-bottom: 6px; }
+.rws-links { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.rws-links li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--vw-paper); box-shadow: inset 0 0 0 1px var(--vw-edge); }
+.rws-links li > span { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rws-mini { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: none; font: 600 12.5px/1 var(--vw-font-ui); color: var(--vw-paper-ink); text-decoration: none; cursor: pointer; }
+.rws-mini.is-wa { border-color: #1FA855; color: #fff; background: #1FA855; }
 `;
