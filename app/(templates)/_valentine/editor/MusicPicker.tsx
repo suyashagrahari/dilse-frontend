@@ -223,10 +223,11 @@ export const MUSIC_CSS = `
 .vmp-song { display: flex; gap: 12px; align-items: center; padding: 8px; border-radius: 16px; background: #fff; border: 2px solid var(--vw-accent); }
 .vmp-thumb { flex: none; width: 112px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.18)); }
 .vmp-songTx { min-width: 0; display: grid; gap: 2px; }
-.vmp-songTx b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vmp-songTx b { font-size: 15px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; }
 .vmp-songTx small { font-size: 12px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vmp-songActs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
-.vmp-songActs .vmp-listen { min-height: 36px; padding: 0 14px; font-size: 13px; box-shadow: 0 3px 0 var(--vw-accent-deep); }
+.vmp-songActs .vp-chip { min-height: 40px; }
+.vmp-songActs .vmp-listen { min-height: 40px; padding: 0 14px; font-size: 13px; box-shadow: 0 3px 0 var(--vw-accent-deep); }
 .vmp-empty { margin: 0; font-size: 13.5px; font-weight: 600; }
 .vmp-opt { font-weight: 500; opacity: .6; }
 .vmp-startRow { display: flex; gap: 10px; align-items: center; }
@@ -237,7 +238,7 @@ export const MUSIC_CSS = `
 .vmp-sug { display: flex; align-items: center; gap: 10px; padding: 6px; min-height: 52px; border-radius: 14px; border: 2px solid var(--vw-edge); background: #fff; color: var(--vw-paper-ink); text-align: left; cursor: pointer; font-family: var(--vw-font-ui); }
 .vmp-sug img { flex: none; width: 64px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.18)); }
 .vmp-sug span { display: grid; min-width: 0; }
-.vmp-sug b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vmp-sug b { font-size: 13px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; }
 .vmp-sug small { font-size: 11.5px; opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vmp-sug.is-on { border-color: var(--vw-accent); background: var(--vw-soft); }
 @media (max-width: 380px) { .vmp-mode small { display: none; } .vmp-mode { min-height: 76px; } }
