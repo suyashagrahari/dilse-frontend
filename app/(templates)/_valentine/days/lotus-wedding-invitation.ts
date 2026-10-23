@@ -92,32 +92,39 @@ const LEGACY_DEMO_RE = /^https:\/\/cdn\.subhsandesh\.in\/gifts-media\/templates\
 /** A stored repo-art link → the same-origin path this host serves from public/. Anything else is unchanged. */
 export const lwLocalUrl = (url: string): string => {
   const own = REPO_ART_RE.exec(url);
-  if (own) return own[1];
   // Drafts saved before the demo photos moved into the repo still point at the old CDN copies.
-  const old = LEGACY_DEMO_RE.exec(url);
-  return old ? `/wedding-v3/lotus/demo/${old[1]}` : url;
+  const old = own ? null : LEGACY_DEMO_RE.exec(url);
+  const path = own ? own[1] : old ? `/wedding-v3/lotus/demo/${old[1]}` : url;
+  // The uncropped fireworks demo is almost all night sky (a black tile); older drafts get the lifted crop.
+  return path === "/wedding-v3/lotus/demo/rw-10.webp" ? "/wedding-v3/lotus/demo/rw-10-sangeet.webp" : path;
 };
 /** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
 export const lwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
 
-/** 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it). */
+/**
+ * 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it).
+ * The order and the one wide + two tall spans are tuned (a simulation of the kit's
+ * shortest-column masonry) so the wall ends level at 2, 3 and 4 columns — no ragged
+ * bottom, no hole beside a wide tile. The sangeet frame is a tight, lifted crop of the
+ * fireworks shot (rw-10-sangeet): the full frame was ~90% night sky and read as a black tile.
+ */
 export const LW_DEMO_PHOTOS: LovePhoto[] = [
+  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar", span: "wide" },
+  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35, span: "tall" },
+  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi" },
+  { url: `${DEMO_BASE}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras" },
+  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35, span: "tall" },
+  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
   { url: `${DEMO_BASE}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
   { url: `${DEMO_BASE}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
+  { url: `${DEMO_BASE}/rw-10-sangeet.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Sangeet night" },
+  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning" },
   { url: `${DEMO_BASE}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
-  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
-  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_BASE}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
-  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
-  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
   { url: `${DEMO_BASE}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
   { url: `${DEMO_BASE}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
   { url: `${DEMO_BASE}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
 ];

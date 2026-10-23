@@ -1,7 +1,7 @@
 "use client";
 
-// ─── The functions: temple-arch cards ────────────────────────────────────────
-// Each function is an ivory card under a sage arch that carries its date (day,
+// ─── The functions: ivory cards with a date plate ────────────────────────────
+// Each function is an ivory card under a rounded sage plate with its date (day,
 // month, weekday), with a white-gold lotus piece growing from the corner (bud,
 // pod, bloom or leaf in turn), then time, venue, a dress-code swatch, a note,
 // and three actions: directions, add to calendar, WhatsApp. "Save all dates"
@@ -59,7 +59,7 @@ export default function LotusEvents({ events, couple, locale, labels: l }: Lotus
               <article className="lw-ev-card">
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                 <img {...img(SPRIGS[i % SPRIGS.length], { lazy: true })} className="lw-ev-sprig" aria-hidden />
-                <div className="lw-ev-arch">
+                <div className="lw-ev-plate">
                   {d ? (
                     <>
                       <span className="lw-ev-day">{d.day}</span>
