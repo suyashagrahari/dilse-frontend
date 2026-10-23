@@ -1,20 +1,20 @@
 import { Home, Heart, CalendarDays, Camera, HandHeart } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "christian-wedding",
   type: "wedding",
   category: "wedding",
-  title: "Christian Wedding Invitation",
+  title: "Christian Wedding Invitation ✦ — Church Doors That Open",
   description:
-    "Elegant sage & watercolor wedding invitation with couple story, RSVP-style events, gallery & blessings — same powerful editor as our animated cards.",
+    "Tall oak church doors under a stained-glass rose window swing open with a bell, doves fly out over a flower-strewn aisle: your names, a Bible verse, the order of service, every function with map and dress code, RSVP per function, a gallery and a blessings wall with voice notes. Ivory, dusty rose and sage; the AI writes it from a few questions.",
   emoji: "⛪",
-  color: "from-emerald-700 to-rose-900/80",
+  color: "from-stone-200 to-rose-200",
   previewText: "Join Us — We’re Getting Married! ✝️",
   bodyText: "Two hearts, one covenant. Join us as we celebrate before God, family, and friends.",
-  bgGradient: "from-emerald-50 via-stone-50 to-white",
-  coverImage: templateMedia("christian-wedding", "cover-poster.webp"),
+  bgGradient: "from-stone-50 via-rose-50 to-emerald-50",
+  // The owner's card art, served from the repo (public/wedding-v3, never the CDN).
+  coverImage: "/wedding-v3/christian-wedding/card.webp",
   tabs: [
     { id: "home", icon: Home, label: "Card" },
     { id: "couple", icon: Heart, label: "Us" },
@@ -22,8 +22,8 @@ export const config: TemplatePageConfig = {
     { id: "gallery", icon: Camera, label: "Gallery" },
     { id: "blessings", icon: HandHeart, label: "Blessings" },
   ],
-  navActiveColor: "text-emerald-800",
-  navActiveBg: "bg-emerald-800/10",
+  navActiveColor: "text-emerald-700",
+  navActiveBg: "bg-emerald-700/10",
   floatStyle: "hearts",
   pages: {
     cover: {
