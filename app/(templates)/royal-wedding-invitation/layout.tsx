@@ -4,8 +4,8 @@ import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJs
 
 // Title, description, keywords, FAQs and the HowTo live in lib/seo-data.ts
 // ("royal-wedding-invitation"), which also puts the page in the sitemap, /llms.txt and
-// the agent catalog. The og:image is ./opengraph-image.tsx (1200×630, rendered
-// at build time); Next adds it to openGraph and twitter on its own.
+// the agent catalog. The og:image is ./opengraph-image.jpg (1200×630, 60 KB, a still
+// of the gateway opening); Next adds it to openGraph and twitter on its own.
 const SLUG = "royal-wedding-invitation";
 const tpl = TEMPLATE_SEO[SLUG];
 

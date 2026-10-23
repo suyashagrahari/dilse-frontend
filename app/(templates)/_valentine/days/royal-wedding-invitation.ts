@@ -1,19 +1,27 @@
 // ─── Royal Wedding Invitation 👑 ($20, the flagship wedding tier) ─────────────
 //
-// A cinematic royal palace experience on the engine: palace gates swing open
-// (light spills out, petals fall, the shehnai starts), the couple's crest
-// stamps in gold foil, then one long royal scroll: the invitation in English
-// and Hindi, the families, a flip countdown with the muhurat, the story told
-// in chapters, every function (dress-code swatch, map, calendar), an optional
-// pre-wedding film, a 40-photo masonry gallery in arched foil frames, good to
-// know, RSVP per function (headcount + meal + a note), a blessings wall and a
-// diya-lantern finale with the "Shubh Vivah" seal.
+// A daylight Mughal palace on the engine: an ivory sandstone gateway, closed
+// by two pierced jaali screens under a brass toran, with a caparisoned
+// elephant on each side. One tap: the toran sways, the screens slide apart
+// into the piers, light spills through, the elephants walk in and bow,
+// petals fall, the shehnai starts, and the camera walks through the gateway
+// into the courtyard (pink chhatris, a peacock, gold lanterns, the couple).
+// Then one long royal scroll: the invitation in English and Hindi, the
+// families in a pietra-dura border, the farmaan with the date and the havan,
+// a flip countdown, the story, every function with its illustrated couple,
+// the venue, film, gallery, guest info (who to call, livestream, shagun),
+// RSVP per function, a blessings wall and the gateway closing on Shubh Vivah.
 //
 // Field mapping on the engine: recipientName = the bride, senderName = the
 // groom (the wedding kit's RSVP mails read them as the couple), letter = the
 // English invitation, endLine = the closing line, photos = ONE pool of up to
-// 40 (the gallery, plus the story chapters and family cards, which point into
-// it by 1-based index and are then left out of the gallery).
+// 40 (the portrait, story chapters and family cards point into it by 1-based
+// index and are then left out of the gallery).
+//
+// Light themes only in the picker. Pages published before the 2026-10 redesign
+// may store a dark theme id (maroon / noir / emerald): those ids stay valid and
+// render in the light sandstone palette (components/rw/model.ts), never remapped
+// in the database.
 //
 // Server twin: server/src/config/valentineDays.ts ("royal-wedding-invitation");
 // keys and limits must match (valentineDays.test.ts pins them).
@@ -27,11 +35,14 @@ import { WEDDING_TIER_LIMITS, type WeddingEvent } from "../../_wedding/types";
 
 const SLUG = "royal-wedding-invitation" as const;
 export const RW_LIMITS = WEDDING_TIER_LIMITS[SLUG];
+/** Family members guests can call (tap to call / WhatsApp). */
+export const RW_MAX_CONTACTS = 4;
 
 export const RW_THEME_LABELS: Record<string, string> = {
-  blush: "Blush Pink",
-  champagne: "Champagne",
-  powder: "Powder Blue",
+  champagne: "Sandstone & Gold",
+  blush: "Rani Pink Mahal",
+  powder: "Lake Palace Blue",
+  // Legacy ids (dark, before the redesign): still valid, shown in sandstone.
   maroon: "Royal Maroon & Gold",
   noir: "Black & Gold",
   emerald: "Emerald & Gold",
@@ -53,24 +64,24 @@ export const RW_SONGS: readonly SongSuggestion[] = [
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
 ];
 
-/** The editor chrome (form sheet, top bar): ivory paper, maroon ink, gold. The guest page wears extras.theme. */
+/** The editor chrome (form sheet, top bar): ivory sandstone, soft maroon ink, antique gold. The guest page wears extras.theme. */
 const THEME: DayTheme = {
-  bg: "linear-gradient(180deg, #FFFBF3 0%, #F8EEDD 60%, #F1E2C6 100%)",
-  base: "#FBF4E6",
+  bg: "linear-gradient(180deg, #FFFCF6 0%, #FAF1E2 60%, #F3E4CA 100%)",
+  base: "#FBF5EA",
   paper: "#FFFDF8",
-  glass: "rgba(255,253,248,.82)",
-  ink: "#3B0F18",
-  inkSoft: "#7A5048",
-  paperInk: "#3B0F18",
-  accent: "#8E1B2E",
-  accentDeep: "#5E0F1E",
-  accentInk: "#FFF6E3",
-  soft: "#F6E7CF",
-  edge: "#E3CDA6",
-  gold: "#C9A24A",
+  glass: "rgba(255,253,248,.84)",
+  ink: "#3E1A20",
+  inkSoft: "#7A5550",
+  paperInk: "#3E1A20",
+  accent: "#8E2A3C",
+  accentDeep: "#641C2A",
+  accentInk: "#FFF7EA",
+  soft: "#F7EADA",
+  edge: "#E8D4B0",
+  gold: "#C29A48",
   dark: false,
   particles: ["✨", "🌼", "🪔"],
-  confetti: ["#C9A24A", "#E9CF7A", "#8E1B2E", "#FFF3C4"],
+  confetti: ["#C29A48", "#E9CF7A", "#B0405A", "#E86A92", "#FFF3C4"],
 };
 
 /** Five functions to start from; the sender can add up to eight (Roka, Baraat, Cocktail…). */
@@ -82,31 +93,50 @@ export const RW_DEMO_EVENTS: WeddingEvent[] = [
   { id: "reception", title: "Reception", date: "2027-02-13", time: "20:00", endTime: "23:59", venue: "The Leela Palace", address: "Lake Pichola, Udaipur", mapUrl: "", dressCode: "Black tie", dressColor: "#1C1C24", note: "Dinner, toasts and dancing to celebrate the newlyweds." },
 ];
 
-/** Demo photos (CC0 / Unsplash licence, ATTRIBUTION.md), hosted on our CDN. */
+/** The old demo host. Pages published before the redesign store these links; they keep resolving. */
 const DEMO_CDN = "https://cdn.subhsandesh.in/gifts-media/templates/wedding/demo";
 export { DEMO_CDN as RW_DEMO_CDN };
 
-/** 1–16 fill the gallery; 17 and 18 are story chapters 3 and 4 (so they stay out of it). */
+/**
+ * Demo photos (CC0 / Unsplash licence, media-src/templates/wedding/ATTRIBUTION.md) now ship IN THE
+ * REPO under public/wedding-v3/demo, never on the CDN or S3. The engine and the server keep only
+ * https photo links, so a draft stores them on the site's own domain; every render maps that back
+ * to the same-origin path (rwLocalUrl), so local, staging and prod each serve their own copy.
+ */
+const SITE_ORIGIN = "https://subhsandesh.in";
+const DEMO_BASE = `${SITE_ORIGIN}/wedding-v3/demo`;
+const REPO_ART_RE = /^https:\/\/(?:www\.)?subhsandesh\.in(\/wedding-v3\/[^?#\s]+)$/i;
+/** A stored repo-art link → the same-origin path this host serves from public/. Anything else is unchanged. */
+export const rwLocalUrl = (url: string): string => REPO_ART_RE.exec(url)?.[1] ?? url;
+/** The inverse, for anything the studio hands back: a same-origin repo path → the https link the engine keeps. */
+export const rwStoredUrl = (url: string): string => (url.startsWith("/wedding-v3/") ? `${SITE_ORIGIN}${url}` : url);
+
+/** 1–15 fill the gallery; 16 and 17 are story chapters 3 and 4 (so they stay out of it). rw-10 (a night sky, near-black at tile size) is left out. */
 export const RW_DEMO_PHOTOS: LovePhoto[] = [
-  { url: `${DEMO_CDN}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
-  { url: `${DEMO_CDN}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
-  { url: `${DEMO_CDN}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
-  { url: `${DEMO_CDN}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
-  { url: `${DEMO_CDN}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-10.webp`, w: 1050, h: 1400, cropX: 50, cropY: 35, caption: "Sangeet night", span: "tall" },
-  { url: `${DEMO_CDN}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
-  { url: `${DEMO_CDN}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
-  { url: `${DEMO_CDN}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
-  { url: `${DEMO_CDN}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
-  { url: `${DEMO_CDN}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-01.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "The bride" },
+  { url: `${DEMO_BASE}/rw-02.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-03.webp`, w: 1024, h: 768, cropX: 50, cropY: 50, caption: "Haldi morning", span: "wide" },
+  { url: `${DEMO_BASE}/rw-04.webp`, w: 1400, h: 1047, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-05.webp`, w: 680, h: 1024, cropX: 50, cropY: 35, caption: "Pheras", span: "tall" },
+  { url: `${DEMO_BASE}/rw-06.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-07.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "First dance" },
+  { url: `${DEMO_BASE}/rw-08.webp`, w: 684, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-09.webp`, w: 931, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-11.webp`, w: 1024, h: 487, cropX: 50, cropY: 50, caption: "Mehendi", span: "wide" },
+  { url: `${DEMO_BASE}/rw-12.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-13.webp`, w: 1024, h: 683, cropX: 50, cropY: 50, caption: "Shringar" },
+  { url: `${DEMO_BASE}/rw-14.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-15.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-16.webp`, w: 683, h: 1024, cropX: 50, cropY: 35 },
+  { url: `${DEMO_BASE}/rw-17.webp`, w: 1400, h: 1050, cropX: 50, cropY: 50 },
+  { url: `${DEMO_BASE}/rw-18.webp`, w: 1024, h: 683, cropX: 50, cropY: 50 },
 ];
+
+export interface RwContact {
+  name: string;
+  relation: string;
+  phone: string;
+}
 
 export interface RwExtras {
   theme: string;
@@ -120,21 +150,31 @@ export interface RwExtras {
   blessingsOf: string;
   bridePhoto: number;
   groomPhoto: number;
+  /** Added 2026-10 (optional on old pages): the couple's portrait in the courtyard; 0 = the illustrated couple. */
+  couplePhoto?: number;
   muhurat: string;
   hashtag: string;
   events: WeddingEvent[];
   story: { when: string; title: string; line: string; photo: number }[];
   things: string[];
   gettingThere: string;
+  /** Added 2026-10 (optional on old pages). */
+  contacts?: RwContact[];
+  upiId?: string;
+  upiName?: string;
+  liveUrl?: string;
   videoUrl: string;
   rsvpBy: string;
   maxGuests: number;
   rsvpMeal: boolean;
   blessings: boolean;
+  invocation?: boolean;
   [k: string]: unknown;
 }
 
 const ev = (k: string, label: string, max: number, placeholder?: string) => ({ key: k, kind: "text" as const, label, max, placeholder });
+
+const evDone = (mf: { extras: Record<string, unknown> }) => Array.isArray(mf.extras.events) && (mf.extras.events as { title?: string; date?: string }[]).some((e) => !!e.title && !!e.date);
 
 export const royalWeddingDay: DayConfig<RwExtras> = {
   slug: SLUG,
@@ -157,11 +197,13 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     editAfterPublish: true,
     nav: [
       { id: "names", label: "The couple", emoji: "👑" },
-      { id: "details", label: "Functions", emoji: "🪔" },
+      { id: "details", label: "Functions", emoji: "🪔", done: evDone },
       { id: "photos", label: "Photos", emoji: "📸" },
       { id: "letter", label: "Invitation", emoji: "✉️" },
-      { id: "music", label: "Theme & music", emoji: "🎵" },
-      { id: "finish", label: "More details", emoji: "✦" },
+      { id: "story", label: "Our story", emoji: "💞", done: () => null },
+      { id: "guests", label: "Guest info", emoji: "🧭", done: () => null },
+      { id: "music", label: "Look & music", emoji: "🎵" },
+      { id: "finish", label: "RSVP & send", emoji: "✦" },
     ],
   },
   music: {
@@ -171,7 +213,8 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     suggestionsNote: "Shehnai, filmi wedding songs and a few English ones · or paste any YouTube link",
   },
   extras: [
-    { key: "theme", kind: "enum", label: "Theme", default: "maroon", hidden: true, options: WEDDING_THEME_IDS.map((id) => ({ value: id, label: RW_THEME_LABELS[id] ?? id })) },
+    // Every id stays valid (old pages); the studio offers the light ones only.
+    { key: "theme", kind: "enum", label: "Theme", default: "champagne", hidden: true, options: WEDDING_THEME_IDS.map((id) => ({ value: id, label: RW_THEME_LABELS[id] ?? id })) },
     { key: "lang", kind: "enum", label: "Opens in", default: "en", hidden: true, options: [{ value: "en", label: "English" }, { value: "hi", label: "हिन्दी" }] },
     { key: "nameOrder", kind: "enum", label: "Show names as", default: "bride", hidden: true, options: [{ value: "bride", label: "Bride first" }, { value: "groom", label: "Groom first" }] },
     { key: "hindiMessage", kind: "longtext", max: 700, label: "Invitation in Hindi", hidden: true },
@@ -182,6 +225,7 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     { key: "blessingsOf", kind: "text", max: 160, label: "With the blessings of", hidden: true },
     { key: "bridePhoto", kind: "number", min: 0, max: RW_LIMITS.photos, default: 0, label: "Bride's family photo", hidden: true },
     { key: "groomPhoto", kind: "number", min: 0, max: RW_LIMITS.photos, default: 0, label: "Groom's family photo", hidden: true },
+    { key: "couplePhoto", kind: "number", min: 0, max: RW_LIMITS.photos, default: 0, label: "The couple's portrait", hidden: true },
     { key: "muhurat", kind: "text", max: 60, label: "Muhurat", hidden: true },
     { key: "hashtag", kind: "text", max: 40, label: "Wedding hashtag", hidden: true },
     {
@@ -198,6 +242,13 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     },
     { key: "things", kind: "list", maxItems: RW_LIMITS.faq, itemMax: 180, label: "Good to know", hidden: true },
     { key: "gettingThere", kind: "longtext", max: 500, label: "Getting there", hidden: true },
+    {
+      key: "contacts", kind: "objlist", maxItems: RW_MAX_CONTACTS, label: "Who to call", itemTitle: "Contact", hidden: true,
+      item: [ev("name", "Name", 40), ev("relation", "Relation", 40), ev("phone", "Phone", 16)],
+    },
+    { key: "upiId", kind: "text", max: 60, label: "UPI ID for shagun", hidden: true },
+    { key: "upiName", kind: "text", max: 60, label: "Name on the UPI account", hidden: true },
+    { key: "liveUrl", kind: "text", max: 300, label: "Livestream link", hidden: true },
     { key: "videoUrl", kind: "text", max: 200, label: "Pre-wedding film", hidden: true },
     { key: "rsvpBy", kind: "text", max: 10, label: "Reply by", input: "date", hidden: true },
     { key: "maxGuests", kind: "number", min: 1, max: 10, default: 4, label: "Guests per reply", hidden: true },
@@ -211,7 +262,7 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     senderName: "Vihaan",
     petName: "",
     letter:
-      "By the grace of the Almighty and with the blessings of our elders, the Rathore and Singhania families joyfully invite you to the wedding of Aanya and Vihaan.\n\nFive days by Lake Pichola, a little haldi, a lot of dancing and the seven pheras under the stars. Your presence is our greatest honour.",
+      "By the grace of the Almighty and with the blessings of our elders, the Rathore and Singhania families joyfully invite you to the wedding of Aanya and Vihaan.\n\nFive days by Lake Pichola: a little haldi, a lot of dancing and the seven pheras under the stars. The palace gates are open, and your presence is our greatest honour.",
     photos: RW_DEMO_PHOTOS.map((p) => ({ ...p })),
     gifs: {},
     music: true,
@@ -220,7 +271,7 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     musicStart: 0,
     endLine: "With love and gratitude, the Rathore & Singhania families",
     extras: {
-      theme: "maroon",
+      theme: "champagne",
       lang: "en",
       nameOrder: "bride",
       hindiMessage:
@@ -232,27 +283,36 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
       blessingsOf: "Smt. Kamla Devi & Late Shri Bhanwar Singh Rathore",
       bridePhoto: 0,
       groomPhoto: 0,
+      couplePhoto: 0,
       muhurat: "Shubh muhurat 9:15 pm",
       hashtag: "#AanyaWedsVihaan",
       events: RW_DEMO_EVENTS.map((e) => ({ ...e })),
       story: [
-        { when: "2019", title: "Two strangers at a book fair", line: "We reached for the same copy of a Ruskin Bond. Neither of us let go, so we split the bill and the book.", photo: 0 },
-        { when: "2021", title: "The long-distance years", line: "Jaipur to Bengaluru, two time zones of busy, one rule: never sleep on a fight, never skip the goodnight call.", photo: 0 },
-        { when: "2025", title: "The question by the lake", line: "Sunset at Lake Pichola, a ring hidden in a kulhad of chai. She said yes before he could finish the sentence.", photo: 17 },
-        { when: "2027", title: "Forever begins", line: "Now our families become one. Come and bless us.", photo: 18 },
+        { when: "2019", title: "Two strangers at a book fair", line: "They reached for the same copy of a Ruskin Bond. Neither let go, so they split the bill and the book.", photo: 0 },
+        { when: "2021", title: "The long-distance years", line: "Jaipur to Bengaluru, two cities of busy, one rule: never sleep on a fight, never skip the goodnight call.", photo: 0 },
+        { when: "2025", title: "The question by the lake", line: "Sunset at Lake Pichola, a ring hidden in a kulhad of chai. She said yes before he could finish the sentence.", photo: 16 },
+        { when: "2027", title: "Forever begins", line: "Now two families become one. Come and bless them.", photo: 17 },
       ],
       things: [
         "Stay: Rooms for out-of-town guests are held at The Leela Palace from 9 to 14 Feb.",
         "Weather: February evenings by the lake get cool, so bring a shawl.",
         "Getting around: Boats to Jagmandir leave the City Palace jetty every 15 minutes from 6 pm.",
-        "Contact: For anything at all, call Kabir (Vihaan's brother) on +91 98290 00000.",
+        "Children: Little ones are very welcome; there is a play corner at every function.",
       ],
       gettingThere: "Udaipur's Maharana Pratap Airport is 25 minutes from the city. Our hospitality desk will meet you at arrivals and at Udaipur City railway station.",
+      contacts: [
+        { name: "Kabir Singhania", relation: "Vihaan's brother", phone: "+91 98290 11223" },
+        { name: "Riya Rathore", relation: "Aanya's cousin", phone: "+91 94140 55667" },
+      ],
+      upiId: "",
+      upiName: "",
+      liveUrl: "",
       videoUrl: "",
       rsvpBy: "2027-01-15",
       maxGuests: 4,
       rsvpMeal: true,
       blessings: true,
+      invocation: true,
     },
   },
   copy: {
@@ -267,12 +327,12 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     endLinePlaceholder: "With love, the Sharma & Mehta families",
     endLineHint: "The closing line under the Shubh Vivah seal.",
     sheetTitle: "Your royal invitation",
-    sheetSub: "Describe your wedding and we'll fill in everything. Change any of it.",
+    sheetSub: "Answer a few questions and we'll fill in everything. Change any of it.",
     extrasTitle: "Functions",
     extrasSub: "Every function with its own map, timings and dress code.",
-    publishing: "Opening the palace gates…",
+    publishing: "Opening the palace gateway…",
     storyTitle: "Describe your wedding 👑",
     replyText: "",
   },
-  share: { title: "The palace gates are open 👑 You're invited", accent: "#7A1F2B" },
+  share: { title: "The palace gateway is open 👑 You're invited", accent: "#8E2A3C" },
 };

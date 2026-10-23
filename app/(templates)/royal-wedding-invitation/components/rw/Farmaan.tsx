@@ -1,15 +1,16 @@
 "use client";
 
-// ─── The farmaan: a royal scroll that unrolls to the date (spec 6.3 scene 5) ─
-// Two turned gold rods and a parchment body. When the scroll is 35% on screen
-// the body wipes open from the top (one clip-path inset, one shot) while the
-// bottom rod travels down with it (translateY); then the gold-and-ruby mohar
-// presses onto the paper (--ease-press) with a short vibrate. Reduced motion:
-// already open, seal in place.
+// ─── The farmaan: a royal decree that unrolls to the date ────────────────────
+// Two turned brass rods and a parchment body (template1's parchment, multiplied
+// over ivory). When the scroll is 35% on screen the body opens from the top
+// (scaleY on the paper, the bottom rod travelling with it) and the wax mohar
+// with the couple's initials presses on. Below it, the flip countdown sits in
+// a sandstone medallion with a gold jhumka swaying on each side.
+// Reduced motion: already open, seal in place.
 
 import { useEffect, useRef, useState } from "react";
-import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
-import { artImg } from "./art";
+import { Countdown, Reveal, initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import { A, img } from "../assets";
 import type { Strings } from "./model";
 
 export interface FarmaanProps {
@@ -17,6 +18,7 @@ export interface FarmaanProps {
   lang: "en" | "hi";
   locale: string;
   date: string;
+  rawTime: string;
   time: string;
   muhurat: string;
   venue: string;
@@ -31,8 +33,9 @@ function parts(date: string, locale: string) {
   return { weekday: f({ weekday: "long" }), day: f({ day: "numeric" }), month: f({ month: "long" }), year: f({ year: "numeric" }) };
 }
 
-export default function Farmaan({ s, lang, locale, date, time, muhurat, venue, first, second }: FarmaanProps) {
+export default function Farmaan({ s, lang, locale, date, rawTime, time, muhurat, venue, first, second }: FarmaanProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const paper = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
   const [state, setState] = useState<"rolled" | "open" | "sealed">("rolled");
 
@@ -40,20 +43,17 @@ export default function Farmaan({ s, lang, locale, date, time, muhurat, venue, f
     if (reduce) return;
     const el = ref.current;
     if (!el) return;
+    // The bottom rod starts rolled up under the top one: it travels the paper's height.
+    if (paper.current) el.style.setProperty("--rw-ph", `${paper.current.offsetHeight}px`);
     let t = 0;
     const io = new IntersectionObserver(
       ([en]) => {
         if (!en.isIntersecting) return;
         io.disconnect();
         setState("open");
-        t = window.setTimeout(() => {
-          setState("sealed");
-          try {
-            navigator.vibrate?.(12);
-          } catch {}
-        }, 1650);
+        t = window.setTimeout(() => setState("sealed"), 1300);
       },
-      { threshold: 0.35 },
+      { threshold: 0.3 },
     );
     io.observe(el);
     return () => {
@@ -65,10 +65,10 @@ export default function Farmaan({ s, lang, locale, date, time, muhurat, venue, f
   const p = parts(date, locale);
   const shown = reduce ? "sealed" : state;
   return (
-    <div ref={ref} className={`rw-farmaan is-${shown}`}>
-      <span className="rw-rod rw-rod-top" aria-hidden />
-      <div className="rw-scroll-body">
-        <div className="rw-scroll-paper">
+    <div className="rw-day">
+      <div ref={ref} className={`rw-farmaan is-${shown}`}>
+        <span className="rw-rod is-top" aria-hidden />
+        <div className="rw-paper" ref={paper}>
           <p className="rw-f-k" lang={lang}>
             {s.decree}
           </p>
@@ -85,8 +85,6 @@ export default function Farmaan({ s, lang, locale, date, time, muhurat, venue, f
           {muhurat && <p className="rw-f-muhurat">{muhurat}</p>}
           {venue && <p className="rw-f-venue">{venue}</p>}
           <span className="rw-mohar" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...artImg("gold/gold-sunburst-ring-01", { lazy: true })} />
             <b>
               {initialOf(first)}
               <i>&amp;</i>
@@ -94,10 +92,21 @@ export default function Farmaan({ s, lang, locale, date, time, muhurat, venue, f
             </b>
           </span>
         </div>
-        <span className="rw-rod-track" aria-hidden>
-          <span className="rw-rod rw-rod-bottom" />
-        </span>
+        <span className="rw-rod is-bottom" aria-hidden />
       </div>
+
+      <Reveal effect="zoom" className="rw-count">
+        {[0, 1].map((i) => (
+          <span key={i} className={`rw-count-jhumka is-${i ? "r" : "l"}`} aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...img(A.jhumka, { lazy: true })} />
+          </span>
+        ))}
+        <p className="wk-eyebrow rw-count-k" lang={lang}>
+          {s.countdown}
+        </p>
+        <Countdown date={date} time={rawTime || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
+      </Reveal>
     </div>
   );
 }
