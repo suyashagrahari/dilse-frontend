@@ -10,7 +10,8 @@
 //   - a one-line portrait or a story chapter needs a concrete word of the text,
 //     and may not give anyone a job the text never mentions;
 //   - "the X & Y families" needs X and Y in the parents' names;
-//   - a midnight start needs the text to say so.
+//   - a midnight start needs the text to say so;
+//   - a function date needs its day of the month in the text, and not be past.
 // What is dropped shows up as an empty field in the review screen.
 //
 // One-shot: it checks the fill that follows `setFillSource` and then forgets
@@ -108,6 +109,13 @@ export function factCheck(n: Cw2Data, raw: string): Cw2Data {
       return grounded(text, src, notThese) && !inventsRole(text, src);
     });
   }
+
+  // A date needs its day from the text ("in March" alone gets the 1st and a guessed year),
+  // unless the text dates it relative to another day ("the evening before"); and never one already behind us.
+  const today = new Date().toISOString().slice(0, 10);
+  const relative = /before|after|\beve\b|next day|following|previous|same day|that (?:day|evening|night)/.test(src);
+  const dayTold = (iso: string) => relative || new RegExp(`(^|[^0-9])0?${Number(iso.slice(8, 10))}(st|nd|rd|th)?([^0-9]|$)`).test(src);
+  next.events = next.events.map((e) => (e.date && (e.date < today || !dayTold(e.date)) ? { ...e, date: "" } : e));
 
   // A start time of midnight is the model filling a blank.
   if (!/midnight|12\s*a\.?m|00:00/.test(src)) next.events = next.events.map((e) => (e.time === "00:00" ? { ...e, time: "" } : e));
