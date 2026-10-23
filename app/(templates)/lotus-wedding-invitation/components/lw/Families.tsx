@@ -2,7 +2,7 @@
 
 // ─── The two families, under the elders' blessings ───────────────────────────
 // "With the blessings of" in a small gold band, then the bride's and the
-// groom's side as two arched cards (each with its framed photo when there is
+// groom's side as two rounded cards (each with its framed photo when there is
 // one, drawn with the sender's focal point and zoom), a gold lotus bud between
 // them on wide screens. The order follows the couple's name order.
 

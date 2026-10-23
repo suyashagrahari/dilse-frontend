@@ -895,7 +895,7 @@ const LWS_CSS = `
 .lws-ai-note.is-ok { color: #e9cf7a; }
 .lws-chips, .lws-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
 .lws-quick > span { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
-.lws-chip { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; }
+.lws-chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--vw-edge); background: var(--vw-paper); color: var(--vw-paper-ink); font: 600 13px/1 var(--vw-font-ui); cursor: pointer; }
 .lws-chip:hover { border-color: var(--vw-accent); }
 .lws-seg { display: flex; gap: 6px; padding: 4px; margin: 0 0 18px; border-radius: 999px; background: var(--vw-soft); width: fit-content; max-width: 100%; }
 .lws-seg button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--vw-font-ui); color: var(--vw-paper-ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 44vw; }
@@ -907,7 +907,7 @@ const LWS_CSS = `
 .lws-ev-sw { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--lws-gold); }
 .lws-ev-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .lws-ev-t b { font: 600 17px/1.2 var(--vw-font-serif); }
-.lws-ev-t small { font-size: 12.5px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lws-ev-t small { font-size: 12.5px; line-height: 1.4; opacity: .65; overflow-wrap: anywhere; }
 .lws-ev-chev { font-size: 22px; line-height: 1; color: var(--vw-accent); width: 24px; text-align: center; }
 .lws-ev-body { padding: 4px 14px 14px; border-top: 1px dashed var(--vw-edge); }
 .lws-ev-tools, .lws-ch-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -915,7 +915,7 @@ const LWS_CSS = `
 .lws-ev-tools button:disabled { opacity: .35; cursor: default; }
 .lws-ev-tools .is-danger, .lws-x { color: #b3261e; }
 .lws-sws { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 16px; }
-.lws-sw { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--vw-edge); cursor: pointer; padding: 0; }
+.lws-sw { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--vw-edge); cursor: pointer; padding: 0; }
 .lws-sw[aria-checked=true] { box-shadow: 0 0 0 2.5px var(--vw-accent); }
 .lws-sw-custom { background: conic-gradient(#f2c94c, #4f9b6a, #2e5aac, #7b3fa0, #e86a92, #a3122b, #f2c94c); overflow: hidden; }
 .lws-sw-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }

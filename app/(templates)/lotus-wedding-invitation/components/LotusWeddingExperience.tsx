@@ -7,7 +7,7 @@
 // gold string lights, the sage arch badge with the date, the couple before the
 // gopuram) → the invitation in English + Hindi under joined hands → the two
 // families → the date and a flip countdown under brass lamps → our story on a
-// growing lotus stem → the functions as temple-arch cards → the venue with the
+// growing lotus stem → the functions as date-plate cards → the venue with the
 // gopuram → live stream → film → gallery → good to know + family contacts →
 // RSVP → blessings → shagun → share → the lotus blooms again on "Shubh Vivah".
 //
@@ -77,6 +77,13 @@ function Head({ eyebrow, title, lang }: { eyebrow: ReactNode; title?: ReactNode;
     </Reveal>
   );
 }
+
+/** 2 columns on phones, 3 on tablets, 4 from a laptop; the wall itself stops at 1080px (css). */
+const GALLERY_COLUMNS = [
+  { min: 0, columns: 2 },
+  { min: 600, columns: 3 },
+  { min: 900, columns: 4 },
+];
 
 const MONTHS_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
 
@@ -299,7 +306,7 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
       {m.gallery.length > 0 && (
         <Section id="gallery" ornament={null} width="wide" className="lw-sec lw-sec-gallery">
           <Head eyebrow={s.galleryEyebrow} title={s.gallery} lang={lang} />
-          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} frame="foil" tileCaptions label={s.gallery} />
+          <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} columns={GALLERY_COLUMNS} frame="foil" tileCaptions label={s.gallery} />
         </Section>
       )}
 
