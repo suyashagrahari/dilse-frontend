@@ -1,10 +1,20 @@
 "use client";
 
+// ─── The Reception Night editor: form state, AI fill, save, publish ──────────
+//
+// Flow (the share-page-builder pattern): the demo invitation → Create → the AI
+// guided questions (or "I'll fill it myself") → the stepped form, with the
+// invitation itself as the live preview → Save shows the preview → Publish
+// (sign in first when needed, then it publishes on its own) → Share.
+//
+// Every value that arrives from outside (a draft, a page reopened from the
+// profile, the AI) goes through normalizeReception. Saves always send the
+// original fields too (withLegacyFields keeps receptionDate / venue in step
+// with the main event), so older readers of the page keep working.
+
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { type TabId, type EditMode, type ReceptionData, DEMO_DATA } from "../components/types";
-
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -13,459 +23,385 @@ import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useResumeDraft } from "@/lib/draft/resume";
+import { useStoryFill } from "@/hooks/useStoryFill";
+import { readAt, parsePath } from "@/lib/ai-fill/applyPatch";
+import { DEMO_DATA, DEMO_EVENTS, type EditMode, type ReceptionData } from "../components/types";
+import { normalizeReception, withLegacyFields } from "../components/model";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "reception";
+const TITLE = "Reception Night";
+const DRAFT_KEY = "reception_draft";
+const WIP_KEY = "reception_mf_draft";
+const STEP_KEY = "reception_step";
+
+export const EDITOR_STEPS = [
+  { id: "couple", label: "Couple", emoji: "💍" },
+  { id: "evening", label: "Evening", emoji: "🥂" },
+  { id: "photos", label: "Photos", emoji: "📸" },
+  { id: "invite", label: "Invitation", emoji: "✉️" },
+  { id: "story", label: "Story", emoji: "📖" },
+  { id: "guests", label: "Guest info", emoji: "🧭" },
+  { id: "look", label: "Look & music", emoji: "🎼" },
+  { id: "send", label: "RSVP & send", emoji: "💌" },
+] as const;
+
+export const DEMO = normalizeReception(DEMO_DATA);
+
+/** Everything the server stores, the original fields included. */
+export function toBody(raw: ReceptionData, password: string) {
+  const d = withLegacyFields(raw);
+  return {
+    brideName: d.brideName,
+    groomName: d.groomName,
+    receptionDate: d.receptionDate,
+    venue: d.venue,
+    venueAddress: d.venueAddress,
+    venueMapQuery: d.venueMapQuery,
+    venueTimings: d.venueTimings,
+    tagline: d.tagline,
+    heroImage: d.heroImage,
+    bride: d.bride,
+    groom: d.groom,
+    families: d.families,
+    galleryImages: d.galleryImages,
+    sharePhoto: d.sharePhoto || "",
+    events: d.events.filter((e) => e.title || e.venue || e.date),
+    story: d.story.filter((c) => c.title || c.line),
+    contacts: d.contacts.filter((c) => c.name && c.phone),
+    things: d.things.filter((t) => t.text),
+    music: d.music,
+    theme: d.theme,
+    lang: d.lang,
+    invitation: d.invitation,
+    hindiMessage: d.hindiMessage,
+    blessingsOf: d.blessingsOf,
+    hashtag: d.hashtag,
+    closingLine: d.closingLine,
+    gettingThere: d.gettingThere,
+    videoUrl: d.videoUrl,
+    liveUrl: d.liveUrl,
+    upiId: d.upiId,
+    upiName: d.upiName,
+    rsvpBy: d.rsvpBy,
+    maxGuests: d.maxGuests,
+    rsvpMeal: d.rsvpMeal,
+    password: password || "",
+  };
+}
+
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+type Seg = NonNullable<ReturnType<typeof parsePath>>[number];
+/** Set a leaf to "" (the parents must exist; nothing is created). */
+function clearAt(root: unknown, segs: Seg[]) {
+  let o: unknown = root;
+  for (let i = 0; i < segs.length - 1; i++) {
+    const s = segs[i];
+    o = s.kind === "key" ? (o as Record<string, unknown> | null)?.[s.key] : (o as unknown[] | null)?.[s.index];
+    if (!o || typeof o !== "object") return;
+  }
+  const last = segs[segs.length - 1];
+  if (last.kind === "key") (o as Record<string, unknown>)[last.key] = "";
+  else (o as unknown[])[last.index] = "";
+}
+
+/**
+ * After an AI fill: clear what is still the DEMO's (a field the model left
+ * empty would otherwise keep "Priya's" details), drop demo rows nobody wrote,
+ * and copy the names where the page also prints them.
+ */
+export function tidyAfterFill(next: ReceptionData, before: ReceptionData, declared: string[]): ReceptionData {
+  const d: ReceptionData = JSON.parse(JSON.stringify(next));
+  // 1. Declared fields the model left as the demo had them (and the sender never changed).
+  for (const path of declared) {
+    if (path === "tagline" || path === "brideName" || path === "groomName") continue;
+    const segs = parsePath(path);
+    if (!segs) continue;
+    const demoVal = readAt(DEMO, segs);
+    if (!same(readAt(d, segs), demoVal) || !same(readAt(before, segs), demoVal)) continue;
+    clearAt(d, segs);
+  }
+  // 2. Rows: an event / chapter / contact with nothing left is dropped; the
+  //    undeclared demo details of a row the model rewrote are cleared.
+  d.events = d.events
+    .map((e, i) => {
+      const demo = DEMO.events[i];
+      if (!demo || !same(before.events[i], demo)) return e;
+      return {
+        ...e,
+        address: e.address === demo.address ? "" : e.address,
+        endTime: e.endTime === demo.endTime ? "" : e.endTime,
+        note: e.note === demo.note ? "" : e.note,
+        mapUrl: e.mapUrl === demo.mapUrl ? "" : e.mapUrl,
+        dressColor: e.dressColor === demo.dressColor ? "" : e.dressColor,
+      };
+    })
+    .filter((e) => e.title);
+  // A part on the same night takes the main date when the model gave it none.
+  const mainDate = d.events.find((e) => e.date)?.date ?? "";
+  d.events = d.events.map((e) => (e.date || !mainDate ? e : { ...e, date: mainDate }));
+  d.story = d.story
+    .map((c, i) => (DEMO.story[i] && same(before.story[i], DEMO.story[i]) && c.when === DEMO.story[i].when ? { ...c, when: "" } : c))
+    .filter((c) => c.title || c.line);
+  d.contacts = d.contacts.filter((c) => c.name && c.phone);
+  // 3. Undeclared demo details.
+  if (same(before.things, DEMO.things)) d.things = [];
+  if (before.gettingThere === DEMO.gettingThere) d.gettingThere = "";
+  if (before.hashtag === DEMO.hashtag) d.hashtag = `#${d.brideName.replace(/\s+/g, "")}Weds${d.groomName.replace(/\s+/g, "")}`.slice(0, 40);
+  for (const k of ["bride", "groom"] as const) {
+    const p = d[k];
+    const demo = DEMO[k];
+    const first = k === "bride" ? d.brideName : d.groomName;
+    if (before[k].name === demo.name) p.name = first;
+    if (same(before[k].tags, demo.tags)) p.tags = [];
+  }
+  if (same(before.wishes, DEMO.wishes)) d.wishes = [];
+  return d;
+}
+
+function readDraft(key: string): Record<string, unknown> | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function useReceptionEditor() {
   const router = useRouter();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
+  const { pushToast } = useToast();
 
-  const [darkMode, setDarkMode] = useState(true);
-  const [themeReady, setThemeReady] = useState(false);
-  const toggleDark = useCallback(() => setDarkMode((d) => !d), []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("reception-theme");
-    if (saved) {
-      setDarkMode(saved === "dark");
-    } else {
-      const global = localStorage.getItem("theme"); // set by next-themes
-      setDarkMode(global !== "light"); // dark unless user explicitly chose light
-    }
-    setThemeReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!themeReady) return;
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("reception-theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("reception-theme", "light");
-    }
-  }, [darkMode, themeReady]);
-
-  // Restore global theme when navigating away so next-themes stays in sync
-  useEffect(() => {
-    return () => {
-      const global = localStorage.getItem("theme");
-      if (global === "light") {
-        document.documentElement.classList.remove("dark");
-      } else {
-        document.documentElement.classList.add("dark");
-      }
-    };
-  }, []);
-
-  const [tab, setTab] = useState<TabId>("home");
-  const [content, setContent] = useState<ReceptionData>(DEMO_DATA);
+  const [ready, setReady] = useState(false);
+  const [content, setContent] = useState<ReceptionData>(DEMO);
+  const [mf, setMf] = useState<ReceptionData>(DEMO);
+  const [editMode, setEditMode] = useState<EditMode>(null);
+  const [step, setStep] = useState(0);
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const [editMode, setEditMode] = useState<EditMode>(null);
-  const [pendingContent, setPendingContent] = useState<ReceptionData | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [pagePassword, setPagePassword] = useState("");
-  const [showPwValue, setShowPwValue] = useState(false);
-  const [hasPasswordSet, setHasPasswordSet] = useState(false);
-
-  // AI text mode
-  const [aiName, setAiName] = useState("");
-  const [aiSender, setAiSender] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-
-  // AI card extraction
   const [extractLoading, setExtractLoading] = useState(false);
+  const [pagePassword, setPagePassword] = useState("");
+  const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  // Shared form data (used for manual + ai-edit modes)
-  const [mf, setMf] = useState<ReceptionData>({ ...DEMO_DATA });
-  const [manualStep, setManualStep] = useState(0);
-  const preEditContentRef = useRef<ReceptionData>(DEMO_DATA);
-  const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
   const pendingPublishRef = useRef<{ data: ReceptionData; password: string } | null>(null);
-  // Set when the post-sign-in effect takes the pending publish. The effect runs
-  // on the auth flip, BEFORE AuthModal's onSuccess, so by the time
-  // closeAuthSuccess looks, pendingPublishRef is already empty and it used to
-  // read that as "nothing to publish" and open the write-it / AI chooser over
-  // the page that was publishing.
+  // The post-sign-in effect takes the pending publish BEFORE AuthModal's
+  // onSuccess runs; this tells closeAuthSuccess not to reopen the editor.
   const resumedPublishRef = useRef(false);
-  /**
-   * True while the auth-deferred publish below is creating the row.
-   *
-   * Adoption in `useDraft` answers the same event — a token appearing — and
-   * used to POST a row of its own, leaving a duplicate behind as a draft. This
-   * tells it to stand down. A ref because both effects run in the same commit,
-   * so a state flag would still read as the previous render's value.
-   */
+  /** True while the auth-deferred publish is creating the row (useDraft stands down). */
   const publishInFlightRef = useRef(false);
-  const fromPreviewRef = useRef(false);
+  /** The form as it was when the sender started the questions (tidyAfterFill compares against it). */
+  const mfBeforeFill = useRef<ReceptionData>(DEMO);
+  const declaredRef = useRef<string[]>([]);
 
-  // Persist WIP draft to sessionStorage while filling the form
+  // ── AI guided fill ───────────────────────────────────────────────────────
+  const fill = useStoryFill<ReceptionData>({
+    slug: TEMPLATE,
+    demo: DEMO,
+    current: mf,
+    onFilled: (n) => setMf(normalizeReception(tidyAfterFill(normalizeReception(n), mfBeforeFill.current, declaredRef.current))),
+    namePaths: { recipient: "brideName", sender: "groomName" },
+  });
   useEffect(() => {
-    if (editMode !== "manual") return;
-    try { sessionStorage.setItem("reception_mf_draft", JSON.stringify(mf)); } catch {}
-  }, [mf, editMode]);
+    declaredRef.current = fill.schema?.fields.map((f) => f.path) ?? [];
+  }, [fill.schema]);
 
-  // Restore completed draft on mount (user filled form, saved preview, then refreshed)
+  // ── Restore on mount: a saved preview, or names typed on a guest's page ──
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("reception_draft");
-      if (raw) {
-        const saved = JSON.parse(raw);
-        setContent((prev) => ({ ...prev, ...saved }));
-        setMf((prev) => ({ ...prev, ...saved }));
-        if (saved.password) setPagePassword(saved.password);
-        if (saved.completed) {
-          setIsPersonalized(true);
-          setEditMode("preview");
-        }
+    const saved = readDraft(DRAFT_KEY);
+    if (saved) {
+      const d = normalizeReception(saved);
+      setContent(d);
+      setMf(d);
+      if (typeof saved.password === "string") setPagePassword(saved.password);
+      if (saved.completed) {
+        setIsPersonalized(true);
+        setEditMode("preview");
       }
+    } else {
+      const pre = readDraft("reception_prefill");
+      if (pre) {
+        try {
+          sessionStorage.removeItem("reception_prefill");
+        } catch {}
+        setMf((m) => ({ ...m, brideName: String(pre.brideName || m.brideName), groomName: String(pre.groomName || m.groomName) }));
+      }
+    }
+    try {
+      const s = Number(sessionStorage.getItem(STEP_KEY));
+      if (s >= 0 && s < EDITOR_STEPS.length) setStep(s);
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setReady(true);
   }, []);
 
-  const [publishing, setPublishing] = useState(false);
-  const { pushToast } = useToast();
-
-
+  // Autosave the form while it is open, with a quiet "Saved" stamp.
+  useEffect(() => {
+    if (editMode !== "manual") return;
+    const t = window.setTimeout(() => {
+      try {
+        sessionStorage.setItem(WIP_KEY, JSON.stringify(mf));
+        sessionStorage.setItem(STEP_KEY, String(step));
+        setSavedAt(Date.now());
+      } catch {}
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [mf, step, editMode]);
 
   const headers = useCallback(
-    () => ({
+    (token: string | null | undefined = accessToken) => ({
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${token}`,
       ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
     }),
     [accessToken],
   );
 
-  const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
-  const closeAuth = useCallback(() => {
-    setShowAuth(false);
-    pendingPublishRef.current = null;
-    // We own the row from here; adoption stands down (see useDraft).
-    publishInFlightRef.current = true;
-  }, []);
+  const updateMf = useCallback(<K extends keyof ReceptionData>(key: K, val: ReceptionData[K]) => setMf((p) => ({ ...p, [key]: val })), []);
+  const patchMf = useCallback((patch: Partial<ReceptionData>) => setMf((p) => ({ ...p, ...patch })), []);
 
-  const closeAuthSuccess = useCallback(() => {
-    setShowAuth(false);
-    const resumed = resumedPublishRef.current;
-    resumedPublishRef.current = false;
-    if (!pendingPublishRef.current && !resumed) {
-      setEditMode("choose");
-    }
-    // if pendingPublishRef.current exists, the auto-publish useEffect will fire
-  }, []);
-
-  // No auth check — anyone can open the form and fill it
+  // ── Entering the editor ──────────────────────────────────────────────────
+  /** Create / Edit: the AI questions first (when there is a schema), else the form. */
   const handleEditClick = useCallback(() => {
-    setEditMode("choose");
-  }, []);
-
-  // Wrapped setEditMode for EditSheet: if user dismisses while in fromPreview flow,
-  // return to "preview" instead of null so Edit+Publish buttons remain visible.
-  const setEditModeFromSheet = useCallback((mode: EditMode) => {
-    if (mode === null && fromPreviewRef.current) {
-      fromPreviewRef.current = false;
-      setEditMode("preview");
-    } else {
-      if (mode === null || mode === "preview") fromPreviewRef.current = false;
-      setEditMode(mode);
-    }
-  }, []);
-
-  // From preview: go back into the form to edit
-  const handleEditFromPreview = useCallback(() => {
-    fromPreviewRef.current = true;
-    setMf({ ...content });
-    const source = previewSourceRef.current;
-    if (source === "ai-edit") {
-      setEditMode("ai-edit");
-    } else {
-      setManualStep(0);
-      setEditMode("manual");
-    }
-  }, [content]);
-
-  const startAiTextMode = useCallback(() => {
-    setAiName(isPersonalized ? content.brideName : "");
-    setAiSender(isPersonalized ? content.groomName : "");
-    setAiPrompt("");
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
-    setEditMode("ai-text");
-  }, [isPersonalized, content]);
-
-  const startAiCardMode = useCallback(() => {
-    setEditMode("ai-card");
-  }, []);
-
-  const startManualMode = useCallback(() => {
     if (isPersonalized) {
-      setMf({ ...content });
-    } else {
-      try {
-        const draft = sessionStorage.getItem("reception_mf_draft");
-        setMf(draft ? JSON.parse(draft) : { ...DEMO_DATA });
-      } catch {
-        setMf({ ...DEMO_DATA });
-      }
+      setMf(normalizeReception(content));
+      setEditMode("manual");
+      return;
     }
-    setManualStep(0);
+    const wip = readDraft(WIP_KEY);
+    if (wip) {
+      setMf(normalizeReception(wip));
+      setEditMode("manual");
+      return;
+    }
+    setMf(DEMO);
+    mfBeforeFill.current = DEMO;
+    setEditMode(fill.schema ? "ai" : "manual");
+  }, [isPersonalized, content, fill.schema]);
+
+  const startManual = useCallback(() => {
+    fill.dismiss();
     setEditMode("manual");
-  }, [isPersonalized, content]);
+  }, [fill]);
 
-  const updateMf = useCallback(
-    (key: keyof ReceptionData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
-    [],
+  /** "✦ Let AI write it" from inside the form. */
+  const openAi = useCallback(() => {
+    mfBeforeFill.current = mf;
+    fill.reset();
+    setEditMode("ai");
+  }, [fill, mf]);
+
+  const closeEditor = useCallback(() => {
+    fill.dismiss();
+    setEditMode(isPersonalized ? "preview" : null);
+  }, [isPersonalized, fill]);
+
+  // ── The printed card: a photo of it → the form (kept as a second door) ───
+  const handleCardExtract = useCallback(
+    async (images: string[]) => {
+      if (images.length === 0) return;
+      setExtractLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/reception-pages/extract-card`, { method: "POST", headers: headers(), body: JSON.stringify({ images }) });
+        const result = await res.json();
+        if (result.success && result.data) {
+          const x = result.data as Record<string, string>;
+          setMf((prev) => {
+            const ev0 = prev.events[0] ?? DEMO_EVENTS[0];
+            const iso = /^\d{4}-\d{2}-\d{2}/.test(x.receptionDate || "") ? x.receptionDate : "";
+            return normalizeReception({
+              ...prev,
+              brideName: x.brideName || prev.brideName,
+              groomName: x.groomName || prev.groomName,
+              tagline: x.tagline || prev.tagline,
+              bride: { ...prev.bride, name: x.brideName || prev.bride.name, description: x.brideDescription || prev.bride.description },
+              groom: { ...prev.groom, name: x.groomName || prev.groom.name, description: x.groomDescription || prev.groom.description },
+              families: { bride: x.familyBride || prev.families.bride, groom: x.familyGroom || prev.families.groom },
+              events: [
+                {
+                  ...ev0,
+                  date: iso ? iso.slice(0, 10) : ev0.date,
+                  time: iso && /T(\d{2}:\d{2})/.test(iso) ? iso.slice(11, 16) : ev0.time,
+                  venue: x.venue || ev0.venue,
+                  address: x.venueAddress || ev0.address,
+                  note: "",
+                },
+                ...prev.events.slice(1),
+              ],
+            });
+          });
+          setEditMode("manual");
+          setStep(0);
+          pushToast({ type: "success", title: "Read your card", message: "Check every detail below" });
+        } else {
+          pushToast({ type: "info", title: "Couldn't read that card", message: result.error || "Try a clearer photo" });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Couldn't read that card", message: "Please try again" });
+      } finally {
+        setExtractLoading(false);
+      }
+    },
+    [headers, pushToast],
   );
 
-  const bulkUpdateMf = useCallback(
-    (data: Partial<ReceptionData>) => setMf((p) => ({ ...p, ...data })),
-    [],
-  );
-
-  // AI text generation → goes to ai-edit mode for review
-  const handleAiGenerate = useCallback(async () => {
-    if (!aiName.trim() || !aiPrompt.trim()) return;
-    setAiLoading(true);
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({
-          prompt: `Reception invitation for ${aiName} & ${aiSender}. ${aiPrompt}`,
-          templateId: "reception",
-          templateType: "reception",
-        }),
-      });
-      const data = await res.json();
-      if (data.body || data.brideDescription || data.tagline) {
-        const generated = data;
-        // Merge AI output into mf so user can review in ai-edit mode
-        setMf((prev) => ({
-          ...prev,
-          brideName: aiName.trim() || prev.brideName,
-          groomName: aiSender.trim() || prev.groomName,
-          tagline: generated.tagline || prev.tagline,
-          venueTimings: generated.venueTimings || prev.venueTimings,
-          bride: {
-            ...prev.bride,
-            name: aiName.trim() || prev.bride.name,
-            description: generated.brideDescription || generated.body || prev.bride.description,
-          },
-          groom: {
-            ...prev.groom,
-            name: aiSender.trim() || prev.groom.name,
-            description: generated.groomDescription || prev.groom.description,
-          },
-        }));
-        setEditMode("ai-edit");
-      } else {
-        pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
-      }
-    } catch {
-      pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
-    } finally {
-        publishInFlightRef.current = false;
-      setAiLoading(false);
+  // ── Save → preview ───────────────────────────────────────────────────────
+  const handleSavePreview = useCallback(() => {
+    if (!mf.brideName.trim() || !mf.groomName.trim()) {
+      setStep(0);
+      pushToast({ type: "info", title: "Add both names first", message: "The bride's and the groom's names are needed" });
+      return false;
     }
-  }, [aiName, aiSender, aiPrompt, headers, pushToast]);
-
-  // Card extraction via OpenAI Vision → goes to ai-edit for review
-  const handleCardExtract = useCallback(async (images: string[]) => {
-    if (images.length === 0) return;
-    setExtractLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/reception-pages/extract-card`, {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({ images }),
-      });
-      const result = await res.json();
-      if (result.success && result.data) {
-        const d = result.data;
-        setMf((prev) => ({
-          ...prev,
-          brideName: d.brideName || prev.brideName,
-          groomName: d.groomName || prev.groomName,
-          receptionDate: d.receptionDate || prev.receptionDate,
-          venue: d.venue || prev.venue,
-          venueAddress: d.venueAddress || prev.venueAddress,
-          venueMapQuery: d.venueMapQuery || prev.venueMapQuery,
-          venueTimings: d.venueTimings || prev.venueTimings,
-          tagline: d.tagline || prev.tagline,
-          bride: {
-            ...prev.bride,
-            name: d.brideName || prev.bride.name,
-            description: d.brideDescription || prev.bride.description,
-          },
-          groom: {
-            ...prev.groom,
-            name: d.groomName || prev.groom.name,
-            description: d.groomDescription || prev.groom.description,
-          },
-          families: {
-            bride: d.familyBride || prev.families.bride,
-            groom: d.familyGroom || prev.families.groom,
-          },
-        }));
-        setEditMode("ai-edit");
-      } else {
-        pushToast({ type: "info", title: "Extraction failed", message: result.error || "Please try again" });
-      }
-    } catch {
-      pushToast({ type: "info", title: "Extraction failed", message: "Please try again" });
-    } finally {
-      setExtractLoading(false);
-    }
-  }, [headers, pushToast]);
-
-  // After ai-edit review → preview
-  const handleAiEditPreview = useCallback(() => {
-    if (!mf.brideName.trim()) return;
-    setPendingContent(mf);
-    setContent((prev) => { preEditContentRef.current = prev; return mf; });
-    previewSourceRef.current = "ai-edit";
+    const d = withLegacyFields(mf);
+    setContent(d);
     setIsPersonalized(true);
     setEditMode("preview");
     try {
-      sessionStorage.setItem("reception_draft", JSON.stringify({ ...mf, password: pagePassword, completed: true }));
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ ...d, password: pagePassword, completed: true }));
     } catch {}
-  }, [mf, pagePassword]);
-
-  const handleManualPreview = useCallback(() => {
-    if (!mf.brideName.trim()) return;
-    setPendingContent(mf);
-    setContent((prev) => { preEditContentRef.current = prev; return mf; });
-    previewSourceRef.current = "manual";
-    setIsPersonalized(true);
-    setEditMode("preview");
-    try {
-      sessionStorage.setItem("reception_draft", JSON.stringify({ ...mf, password: pagePassword, completed: true, step: manualStep }));
-    } catch {}
-  }, [mf, pagePassword, manualStep]);
+    return true;
+  }, [mf, pagePassword, pushToast]);
 
   const saveToServer = useCallback(
     async (data: ReceptionData, password?: string) => {
       if (!accessToken) return;
-      const body = {
-        brideName: data.brideName,
-        groomName: data.groomName,
-        receptionDate: data.receptionDate,
-        venue: data.venue,
-        venueAddress: data.venueAddress,
-        venueMapQuery: data.venueMapQuery,
-        venueTimings: data.venueTimings,
-        tagline: data.tagline,
-        heroImage: data.heroImage,
-        bride: data.bride,
-        groom: data.groom,
-        families: data.families,
-        galleryImages: data.galleryImages,
-        sharePhoto: data.sharePhoto || "",
-        password: password || "",
-      };
+      const body = toBody(data, password ?? "");
       if (pageId) {
-        await fetch(`${API_URL}/reception-pages/${pageId}`, {
-          method: "PUT", headers: headers(), body: JSON.stringify(body),
-        });
-      } else {
-        const res = await fetch(`${API_URL}/reception-pages`, {
-          method: "POST", headers: headers(), body: JSON.stringify(body),
-        });
-        const result = await res.json();
-        if (result.success) setPageId(result.data._id);
-        // Answered so the draft path can learn the id of a row it just created.
-        // Without it a create looks like a failure, the content stays dirty, and
-        // the next milestone creates a SECOND identical draft. The five other
-        // saveToServer editors already returned it.
-        return result;
+        const res = await fetch(`${API_URL}/reception-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(body) });
+        return res.json();
       }
+      const res = await fetch(`${API_URL}/reception-pages`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+      const result = await res.json();
+      if (result.success) setPageId(result.data._id);
+      return result;
     },
     [accessToken, pageId, headers],
   );
 
-  const handleConfirmSave = useCallback(async () => {
-    if (!pendingContent) return;
-    setSaving(true);
-    try {
-      await saveToServer({ ...pendingContent }, pagePassword);
-      setIsPersonalized(true);
-      setShareUrl(null);
-      setEditMode(null);
-      setPendingContent(null);
-      setHasPasswordSet(!!pagePassword);
-      try { sessionStorage.removeItem("reception_mf_draft"); } catch {}
-      pushToast({
-        type: "success",
-        title: pagePassword ? "Saved with password!" : "Changes saved!",
-        message: pagePassword ? "Share the password with your guests" : "Your invitation is ready to publish",
-      });
-    } catch {
-      pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-    } finally {
-      setSaving(false);
-    }
-  }, [pendingContent, pagePassword, saveToServer, pushToast]);
-
-  // Keep handlePasswordDone for any legacy callers
-  const handlePasswordDone = handleConfirmSave;
-
-  const handleDiscardPreview = useCallback(() => {
-    if (!pendingContent) { setEditMode(null); return; }
-    setContent(preEditContentRef.current);
-    setPendingContent(null);
-    const source = previewSourceRef.current;
-    previewSourceRef.current = null;
-    if (source === "manual") {
-      setManualStep(5);
-      setEditMode("manual");
-    } else if (source === "ai-edit") {
-      setEditMode("ai-edit");
-    } else {
-      setEditMode("choose");
-    }
-  }, [pendingContent]);
-
-  // ── Reopening from the profile ────────────────────────────────────────────
-  //
-  // This editor ignored `?edit=<id>` entirely, so the profile's Edit button
-  // opened it on demo content — and saving from there overwrote the user's page
-  // with a fresh one. Nothing about that was visible: no error, no empty state,
-  // just the wrong page.
-  //
-  // The fields come from DEMO_DATA rather than a hand-written list, so a field
-  // added to this template later survives a reopen without anyone remembering.
+  // ── Reopening from the profile (?edit=<id>) ─────────────────────────────
   useResumeDraft({
     base: `${API_URL}/reception-pages`,
     accessToken,
-    defaults: DEMO_DATA,
-    ready: themeReady,
+    // Every key, with the new fields EMPTY — an older page must not inherit the demo's story.
+    defaults: normalizeReception({}, { fillEvents: false }),
+    ready,
     onLoaded: (data, id) => {
-      setContent(data);
-      setMf({ ...data });
+      const d = normalizeReception(data);
+      setContent(d);
+      setMf(d);
       setPageId(id);
       setIsPersonalized(true);
+      setEditMode("preview");
     },
   });
 
-  // ── Auto-draft ────────────────────────────────────────────────────────────
-  //
-  // What this adds that `saveToServer` did not: work built while signed OUT is
-  // held in the browser and promoted to a real draft — photos to S3 — the moment
-  // the visitor signs up or logs in. `saveToServer` returns early without a
-  // token, so everything built before signing in was lost at the first
-  // navigation.
-  //
-  // `enabled: isPersonalized` keeps every visitor who merely opened the editor
-  // out of their own profile: the demo content is not a draft.
+  // ── Auto-draft (signed-out work is promoted on sign-in) ──────────────────
   const draft = useDraft({
     publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
@@ -475,31 +411,70 @@ export function useReceptionEditor() {
     isAuthenticated,
     accessToken,
     pageId,
-    // The editor's own save, which already handles create vs update and already
-    // sets `pageId`. Nothing about the wire shape is restated here.
     persist: async (d) => {
       const r = await saveToServer(d, pagePassword);
       const id = r?.data?._id ? String(r.data._id) : pageId;
       return id || null;
     },
     onAdopted: (d) => {
-      // The adopted payload carries CDN URLs where the browser held base64, so
-      // the form has to be told — otherwise the next save sends the base64 back
-      // and re-uploads it.
-      setContent(d);
-      setMf({ ...d });
+      const n = normalizeReception(d);
+      setContent(n);
+      setMf(n);
       setIsPersonalized(true);
     },
   });
 
-  // ── The milestones ────────────────────────────────────────────────────────
-  //
-  // Watching `editMode` rather than calling `saveNow()` from each place that
-  // sets it: a transition is impossible to forget in a way a call site is not.
-  // Leaving the editor and backgrounding the tab are handled inside the hook.
   useEffect(() => {
     if (editMode === null || editMode === "preview") void draft.saveNow();
   }, [editMode, draft]);
+
+  // ── Publish ──────────────────────────────────────────────────────────────
+  const publishWith = useCallback(
+    async (data: ReceptionData, password: string, token: string, existingId: string | null) => {
+      setPublishing(true);
+      try {
+        const h = headers(token);
+        const body = toBody(data, password);
+        let id = existingId;
+        if (!id) {
+          const res = await fetch(`${API_URL}/reception-pages`, { method: "POST", headers: h, body: JSON.stringify(body) });
+          const result = await res.json();
+          if (!result.success) throw new Error(result.error || "Create failed");
+          id = String(result.data._id);
+          setPageId(id);
+        } else {
+          const res = await fetch(`${API_URL}/reception-pages/${id}`, { method: "PUT", headers: h, body: JSON.stringify(body) });
+          const result = await res.json().catch(() => ({}));
+          if (!res.ok || result.success === false) throw new Error(result.error || "Save failed");
+        }
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet.
+        const gate = await ensurePublishAllowed({ slug: TEMPLATE, templateType: "reception", pageId: id, templateTitle: TITLE }, setPublishing);
+        if (gate === "cancelled") return;
+        const pubRes = await fetch(`${API_URL}/reception-pages/${id}/publish`, { method: "POST", headers: h });
+        const pub = await pubRes.json();
+        if (pub.success) {
+          setShareUrl(pub.data.shareUrl as string);
+          setEditMode(null);
+          try {
+            sessionStorage.removeItem(DRAFT_KEY);
+            sessionStorage.removeItem(WIP_KEY);
+          } catch {}
+          void fill.persistStory({ title: `${data.brideName} & ${data.groomName}'s reception` });
+          track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
+          pushToast({ type: "publish", title: "Published!", message: "Tap Share to send it" });
+        } else {
+          track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: typeof pub?.error === "string" ? pub.error : "publish_rejected" });
+          pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+        }
+      } catch (e) {
+        pushToast({ type: "info", title: "Publish failed", message: e instanceof Error && e.message.length < 90 ? e.message : "Please try again" });
+      } finally {
+        setPublishing(false);
+        publishInFlightRef.current = false;
+      }
+    },
+    [headers, pushToast, fill],
+  );
 
   const handlePublish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
@@ -510,168 +485,97 @@ export function useReceptionEditor() {
       setShowAuth(true);
       return;
     }
-    setPublishing(true);
-    try {
-      let id = pageId;
-      const body = {
-        brideName: content.brideName, groomName: content.groomName,
-        receptionDate: content.receptionDate, venue: content.venue,
-        venueAddress: content.venueAddress, venueMapQuery: content.venueMapQuery,
-        venueTimings: content.venueTimings, tagline: content.tagline,
-        heroImage: content.heroImage, bride: content.bride, groom: content.groom,
-        families: content.families, galleryImages: content.galleryImages,
-        sharePhoto: content.sharePhoto || "",
-        password: pagePassword || "",
-      };
-      if (!id) {
-        const res = await fetch(`${API_URL}/reception-pages`, {
-          method: "POST", headers: headers(), body: JSON.stringify(body),
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error("Create failed");
-        id = result.data._id as string;
-        setPageId(id);
-      } else {
-        await fetch(`${API_URL}/reception-pages/${id}`, {
-          method: "PUT", headers: headers(), body: JSON.stringify(body),
-        });
-      }
-      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
-      // and the publish request is only made when it will succeed.
-      const gate = await ensurePublishAllowed(
-        { slug: TEMPLATE, templateType: "reception", pageId: id, templateTitle: "Luxury Reception Night" },
-        setPublishing,
-      );
-      if (gate === "cancelled") return;
+    await publishWith(content, pagePassword, accessToken, pageId);
+  }, [isAuthenticated, accessToken, content, pagePassword, pageId, publishWith]);
 
-      const pubRes = await fetch(`${API_URL}/reception-pages/${id}/publish`, { method: "POST", headers: headers(), });
-      const pubResult = await pubRes.json();
-      if (pubResult.success) {
-        const url = pubResult.data.shareUrl as string;
-        setShareUrl(url);
-        setEditMode(null); // published — no editor sheet stays open over it
-        setEditMode(null);
-        try { sessionStorage.removeItem("reception_draft"); } catch {}
-        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published!", message: "Tap Share to send it" });
-      } else {
-        track(EVENTS.PUBLISH_FAILED, {
-          template: TEMPLATE,
-          reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
-        });
-        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
-      }
-    } catch {
-      pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
-    } finally {
-      setPublishing(false);
-    }
-  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
-
-  // Auto-publish after login when pendingPublishRef is set
+  // Auto-publish after sign-in when a publish was waiting.
   useEffect(() => {
     if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
     resumedPublishRef.current = true;
-    const authHeaders = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
-    };
-    (async () => {
-      setPublishing(true);
-      try {
-        const body = {
-          brideName: data.brideName, groomName: data.groomName,
-          receptionDate: data.receptionDate, venue: data.venue,
-          venueAddress: data.venueAddress, venueMapQuery: data.venueMapQuery,
-          venueTimings: data.venueTimings, tagline: data.tagline,
-          heroImage: data.heroImage, bride: data.bride, groom: data.groom,
-          families: data.families, galleryImages: data.galleryImages,
-          sharePhoto: data.sharePhoto || "",
-          password: password || "",
-        };
-        const res = await fetch(`${API_URL}/reception-pages`, {
-          method: "POST", headers: authHeaders, body: JSON.stringify(body),
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error("Create failed");
-        const id = result.data._id as string;
-        setPageId(id);
-        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
-        // and the publish request is only made when it will succeed.
-        const gate = await ensurePublishAllowed(
-          { slug: TEMPLATE, templateType: "reception", pageId: id, templateTitle: "Luxury Reception Night" },
-          setPublishing,
-        );
-        if (gate === "cancelled") return;
-
-        const pubRes = await fetch(`${API_URL}/reception-pages/${id}/publish`, { method: "POST", headers: authHeaders, });
-        const pubResult = await pubRes.json();
-        if (pubResult.success) {
-          const url = pubResult.data.shareUrl as string;
-          setShareUrl(url);
-          setEditMode(null); // published — no editor sheet stays open over it
-          setEditMode(null);
-          try { sessionStorage.removeItem("reception_draft"); } catch {}
-          pushToast({ type: "publish", title: "Published!", message: "Tap Share to send it" });
-        }
-      } catch {
-        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
-      } finally {
-        setPublishing(false);
-      }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    publishInFlightRef.current = true;
+    void publishWith(data, password, accessToken, null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
-  const handleCopy = useCallback(
-    (url?: string) => {
-      const link = url || shareUrl;
-      if (link) {
-        navigator.clipboard.writeText(link);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-        if (!url) pushToast({ type: "success", title: "Link copied!" });
-      }
-    },
-    [shareUrl, pushToast],
-  );
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null;
+  }, []);
+  const closeAuthSuccess = useCallback(() => {
+    setShowAuth(false);
+    const resumed = resumedPublishRef.current;
+    resumedPublishRef.current = false;
+    if (!pendingPublishRef.current && !resumed) setEditMode((m) => m ?? "preview");
+  }, []);
+
+  /** Save edits to an already-published page (the same link). */
+  const handleSaveChanges = useCallback(async () => {
+    if (!accessToken || !pageId) return;
+    setSaving(true);
+    try {
+      const r = await saveToServer(content, pagePassword);
+      if (r && r.success === false) throw new Error();
+      pushToast({ type: "success", title: "Changes saved", message: "Your guests see them on the same link" });
+    } catch {
+      pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+    } finally {
+      setSaving(false);
+    }
+  }, [accessToken, pageId, saveToServer, content, pagePassword, pushToast]);
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
       password: pagePassword,
-      text: `${content.brideName || "Bride"} & ${content.groomName || "Groom"} warmly invite you to their reception on SubhSandesh!`,
+      text: `${content.brideName} & ${content.groomName} warmly invite you to their wedding reception 🥂`,
       title: "Reception Invitation",
       cardTitle: "You are invited to our reception",
       cardNote: "Scan for the venue, the timings and the evening's programme.",
-      senderName: `${content.brideName || "Bride"} & ${content.groomName || "Groom"}`,
-      accent: "#e11d48",
+      senderName: `${content.brideName} & ${content.groomName}`,
+      accent: "#B8892E",
       slug: "reception",
     });
   }, [shareUrl, pagePassword, content]);
 
-
   return {
-    tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
-    saving, publishing, pagePassword, showPwValue,
-    aiName, aiSender, aiPrompt, aiLoading, extractLoading,
-    mf, manualStep,
-    darkMode, themeReady, toggleDark,
-
-    setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
-    setPagePassword, setShowPwValue, setMf,
-    updateMf, bulkUpdateMf, handleTabChange,
-
-    goBack, closeAuth, closeAuthSuccess, handleEditClick, handleEditFromPreview, startAiTextMode, startAiCardMode, startManualMode,
-    handleAiGenerate, handleCardExtract, handleAiEditPreview, handleManualPreview,
-    handleConfirmSave, handlePasswordDone, handleDiscardPreview,
-    handlePublish, handleCopy, handleShare,
-    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
-    showShare: !!shareUrl,
-    shareLabel: copied ? "Copied!" : "Share",
+    ready,
+    content,
+    mf,
+    setMf,
+    updateMf,
+    patchMf,
+    editMode,
+    setEditMode,
+    step,
+    setStep,
+    isPersonalized,
+    pageId,
+    shareUrl,
+    showAuth,
+    publishing,
+    saving,
+    extractLoading,
+    pagePassword,
+    setPagePassword,
+    savedAt,
+    accessToken,
+    fill,
+    goBack,
+    handleEditClick,
+    startManual,
+    openAi,
+    closeEditor,
+    handleCardExtract,
+    handleSavePreview,
+    handlePublish,
+    handleSaveChanges,
+    handleShare,
+    closeAuth,
+    closeAuthSuccess,
   };
 }
+
+export type ReceptionEditor = ReturnType<typeof useReceptionEditor>;
