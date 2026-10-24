@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { REVIEWS_ROW1, REVIEWS_ROW2 } from "./data";
+import { CELEBRATION_STORIES } from "./data";
 
 const stagger = {
   hidden: {},
@@ -12,8 +12,7 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
-function RevCard({ r }: { r: typeof REVIEWS_ROW1[0] }) {
-  const initials = r.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+function StoryCard({ r }: { r: typeof CELEBRATION_STORIES[number] }) {
   return (
     <div className="rev-card" style={{ flexShrink: 0, width: 300, marginRight: 20 }}>
       <div style={{
@@ -27,41 +26,23 @@ function RevCard({ r }: { r: typeof REVIEWS_ROW1[0] }) {
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(61,12,17,0.09)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(61,12,17,0.06)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
         {/* Gold top accent */}
         <div style={{ position: 'absolute', top: 0, left: 20, right: 20, height: 2, background: 'linear-gradient(90deg,transparent,#c9a84c60,transparent)', borderRadius: '0 0 2px 2px' }} />
-
-        {/* Stars + tag */}
+        {/* Occasion + example label */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: 2 }}>
-            {[1, 2, 3, 4, 5].map(i => (
-              <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="#c9a84c">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            ))}
-          </div>
           <span style={{ fontSize: 9, color: '#c9a84c', fontWeight: 700, letterSpacing: '0.05em', background: 'rgba(201,168,76,0.1)', padding: '3px 9px', borderRadius: 6, border: '1px solid rgba(201,168,76,0.28)', whiteSpace: 'nowrap' }}>
             {r.tag}
           </span>
+          <span style={{ fontSize: 9, color: '#9a7070', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Example</span>
         </div>
-
-        {/* Quote */}
-        <p style={{ fontSize: 13, color: '#6b4545', lineHeight: 1.72, marginBottom: 14, fontStyle: 'italic', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const }}>
-          &ldquo;{r.review}&rdquo;
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 700, color: '#1a0507', lineHeight: 1.3, marginBottom: 8 }}>{r.title}</div>
+        <p style={{ fontSize: 13, color: '#6b4545', lineHeight: 1.72, marginBottom: 14, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const }}>
+          {r.story}
         </p>
-
         {/* Gold divider */}
-        <div style={{ height: 1, background: 'linear-gradient(90deg,rgba(201,168,76,0.4),rgba(61,12,17,0.06))', marginBottom: 14, flexShrink: 0 }} />
-
-        {/* Reviewer */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#3d0c11', border: '2px solid rgba(201,168,76,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#c9a84c', letterSpacing: '0.02em' }}>{initials}</span>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1a0507', fontFamily: "'Playfair Display',serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#9a7070" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
-              <span style={{ fontSize: 10, color: '#9a7070', fontWeight: 500 }}>{r.city}</span>
-            </div>
-          </div>
+        <div style={{ height: 1, background: 'linear-gradient(90deg,rgba(201,168,76,0.4),rgba(61,12,17,0.06))', marginBottom: 12, flexShrink: 0 }} />
+        {/* Where it travelled */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z" /></svg>
+          <span style={{ fontSize: 11, color: '#7a5050', fontWeight: 600, letterSpacing: '0.02em' }}>{r.places}</span>
         </div>
       </div>
     </div>
@@ -69,7 +50,7 @@ function RevCard({ r }: { r: typeof REVIEWS_ROW1[0] }) {
 }
 
 export default function TestimonialsSection() {
-  const all = [...REVIEWS_ROW1, ...REVIEWS_ROW2];
+  const all = CELEBRATION_STORIES;
   const row = [...all, ...all];
 
   return (
@@ -98,7 +79,7 @@ export default function TestimonialsSection() {
 
           {/* Occasions strip */}
           <motion.div className="test-occasions" variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: '#fff', borderRadius: 16, border: '1px solid rgba(61,12,17,0.09)', boxShadow: '0 2px 16px rgba(61,12,17,0.07)', overflow: 'hidden', marginBottom: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 680 }}>
-            {['Weddings', 'Birthdays', 'Anniversaries', 'Festivals', 'Holi', 'Eid', 'Diwali', 'Baby Showers', 'Christmas', 'Lohri'].map((occ, i, arr) => (
+            {['Weddings', 'Birthdays', 'Anniversaries', 'Festivals', 'Holi', 'Eid', 'Diwali', 'Baby Showers', 'Christmas', 'Graduations'].map((occ, i, arr) => (
               <div key={occ} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRight: i < arr.length - 1 ? '1px solid rgba(61,12,17,0.06)' : 'none' }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#c9a84c', flexShrink: 0 }} />
                 <span style={{ fontSize: 10, color: '#5a3535', fontWeight: 600, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{occ}</span>
@@ -121,14 +102,14 @@ export default function TestimonialsSection() {
 
         <div style={{ overflowX: 'hidden', overflowY: 'visible', padding: '10px 0' }}>
           <div className="test-marquee" style={{ display: 'flex', animation: 'marquee 64s linear infinite', width: 'max-content' }}>
-            {row.map((r, i) => <RevCard key={i} r={r} />)}
+            {row.map((r, i) => <StoryCard key={i} r={r} />)}
           </div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ width: 28, height: 1, background: 'rgba(61,12,17,0.15)' }} />
-          <span className="test-hint-desktop" style={{ fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>HOVER TO PAUSE · REAL STORIES FROM REAL FAMILIES</span>
-          <span className="test-hint-mobile" style={{ display: 'none', fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>REAL STORIES · REAL FAMILIES</span>
+          <span className="test-hint-desktop" style={{ fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>HOVER TO PAUSE · HOW FAMILIES CELEBRATE AROUND THE WORLD</span>
+          <span className="test-hint-mobile" style={{ display: 'none', fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>CELEBRATING AROUND THE WORLD</span>
           <div style={{ width: 28, height: 1, background: 'rgba(61,12,17,0.15)' }} />
         </div>
       </motion.div>
