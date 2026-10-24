@@ -20,9 +20,9 @@ import { SeasonProvider } from "@/hooks/useSeason";
 import WeddingHubClient from "./WeddingHubClient";
 import { WEDDING_FAQS } from "./content";
 
-const TITLE = "Wedding Invitations Online — Digital Shaadi Cards with RSVP | SubhSandesh";
+const TITLE = "Indian Wedding Invitations Online — Digital E-Invites with RSVP | SubhSandesh";
 const DESCRIPTION =
-  "Digital wedding invitations that open like a celebration: palace doors, lotus temples, Mughal gardens and Christian chapels. Every function on one link, RSVP per function, music, photos, Hindi & English. Personalise with AI and share on WhatsApp.";
+  "Digital Indian wedding invitations that open like a celebration: palace doors, peacock gardens, lotus temples and Christian chapels. Haldi to reception on one link, RSVP per function, music, photos, Hindi & English. Fill it with AI and send it on WhatsApp to family anywhere in the world.";
 const OG_IMAGE = `${SITE_URL}/wedding-v3/hub/og-wedding.jpg`;
 
 export const metadata: Metadata = buildMeta({
@@ -30,19 +30,23 @@ export const metadata: Metadata = buildMeta({
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/wedding` },
   keywords: [
-    "wedding invitation online",
+    "indian wedding invitation",
     "digital wedding invitation",
-    "e-invite for wedding",
-    "shaadi card online",
-    "whatsapp wedding invitation",
-    "wedding invitation with rsvp",
+    "hindu wedding e-invite",
     "christian wedding invitation",
+    "wedding website with rsvp",
+    "whatsapp wedding invitation",
+    "online wedding invitation",
+    "nri wedding invitation",
+    "indian wedding invitation for guests abroad",
+    "shaadi card online",
+    "haldi mehndi sangeet invitation",
     "reception invitation",
     "court marriage invitation",
     "hindi wedding card",
   ],
   openGraph: {
-    title: "Wedding Invitations that open like a celebration",
+    title: "Indian wedding invitations that open like a celebration",
     description: DESCRIPTION,
     url: `${SITE_URL}/wedding`,
     images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "SubhSandesh digital wedding invitations" }],
