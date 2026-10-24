@@ -6,9 +6,8 @@
 // owner's art in public/wedding-v3 (cut to page-weight variants in /hub/lux).
 // Sections, top to bottom — each a full-width band, none boxed in a card:
 //
-//   hero          — a palace door opens on a peacock terrace (HubHero)
+//   hero          — a peacock terrace at golden hour (HubHero)
 //   journey       — Roka → Haldi → Mehndi → Sangeet → Baraat → Pheras → Reception (HubJourney)
-//   openings      — ten live door/window/lotus/envelope reveals (HubOpenings)
 //   all designs   — sticky filter chips + the gallery's own cards
 //   world         — one link to family in eight cities, live clocks (HubWorld)
 //   how it works  — pick → AI → share → RSVPs, with little animations
@@ -46,7 +45,6 @@ import { HERO_CSS } from "./hero.css";
 import { SECTIONS_CSS } from "./sections.css";
 import HubHero from "./HubHero";
 import HubJourney from "./HubJourney";
-import HubOpenings from "./HubOpenings";
 import HubWorld from "./HubWorld";
 
 type Item = TemplateListItem & { premium: boolean };
@@ -201,7 +199,6 @@ export default function WeddingHubClient() {
 
       <HubHero />
       <HubJourney visible={visible} />
-      <HubOpenings visible={visible} />
 
       {/* ── All designs ──────────────────────────────────────────────────── */}
       <section className="whBand whDesigns" id="designs" aria-labelledby="wh-designs">
