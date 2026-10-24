@@ -25,6 +25,7 @@ import { persistDraft } from "@/lib/draft/persistDraft";
 import type { SearchData } from "../components/types";
 import { DEMO_DATA, searchedDataToBody } from "../components/demoData";
 import { dbToSearchData, normaliseSearchData, personaliseLeftovers } from "../components/coerce";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const TEMPLATE = "searched";
 const DRAFT_KEY = "searched_draft";
@@ -383,7 +384,7 @@ export function useSearchedEditor() {
     window.setTimeout(() => setCopied(false), 1600);
   }, [shareUrl, pagePassword, content.recipient.name]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   return {
     content,

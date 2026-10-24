@@ -31,6 +31,7 @@ import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useToast } from "@/lib/toast/useToast";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "valentine-gf";
@@ -324,7 +325,7 @@ function ValentineGfPage() {
         onEdit={handleStartCreate}
         onPublish={handlePublish}
         onShare={handleShare}
-        onBack={() => router.push("/templates")}
+        onBack={() => goBackFromTemplate(router)}
         shareLabel="Share"
         showPublish={isPersonalized && !shareUrl && !publishing}
         showShare={!!shareUrl}

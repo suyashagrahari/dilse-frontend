@@ -23,6 +23,7 @@ import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { DEMO, SLUG, fromDb, fromDraft, newEventId, toBody, toHHMM, verseFor, type CwData } from "../chapel/model";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const DRAFT_KEY = "cw_chapel_draft:v1";
 /** Older editors' keys: still read once, so nobody loses a half-made invitation. */
@@ -188,7 +189,7 @@ export function useChapelEditor() {
   }, [ready, isAuthenticated, setMf]);
 
   // ── Navigation ────────────────────────────────────────────────────────────
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   /** "Create" / "Edit": the guided AI first on a fresh page, the form otherwise. */
   const startCreate = useCallback(() => {

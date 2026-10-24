@@ -15,6 +15,7 @@ import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 import { pickTheme } from "../../_love/theme";
 import { FLAGS_THEMES } from "../components/themes";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const DRAFT_KEY = "flags_draft";
 const BASE = `${API_URL}/flags-pages`;
@@ -465,7 +466,7 @@ export function useFlagsEditor() {
     });
   }, [shareUrl, pagePassword, content.theme]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   // Always from the server response — never constructed here.
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;

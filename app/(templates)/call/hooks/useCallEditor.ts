@@ -44,6 +44,7 @@ import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "call";
@@ -654,7 +655,7 @@ export function useCallEditor() {
     pushToast({ type: "success", title: "Tag link copied", message: "Send it to her friends" });
   }, [contribLink, pushToast]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   return {
     content,

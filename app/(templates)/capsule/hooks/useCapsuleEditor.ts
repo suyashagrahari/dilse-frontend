@@ -50,6 +50,7 @@ import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { useResumeDraft } from "@/lib/draft/resume";
 import { persistDraft } from "@/lib/draft/persistDraft";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const BASE = `${API_URL}/capsule-pages`;
 
@@ -523,7 +524,7 @@ export function useCapsuleEditor() {
     });
   }, [shareUrl]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   return {
     draft: exposedDraft,

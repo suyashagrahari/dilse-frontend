@@ -30,6 +30,7 @@ import {
   resolveMedia,
 } from "../components/mediaStore";
 import { uploadImage } from "../components/upload";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor, and the aiFill key. */
 const TEMPLATE = "happy-ganesh-chaturthi";
@@ -644,7 +645,7 @@ export function useGaneshEditor() {
     });
   }, [shareUrl, pagePassword, content]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
 
