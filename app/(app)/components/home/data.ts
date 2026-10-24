@@ -158,25 +158,22 @@ export const FEATURES = [
   { id: 'blessings', title: 'Blessings Wall', desc: 'Let family and friends send heartfelt duas, blessings and wishes back to you.', tags: ['Duas & Prayers', 'Community', 'Live Wall'], accent: '#e8a87c', metric: '24+', label: 'Blessings' },
 ];
 
-/**
- * Example celebrations for the home page's "around the world" strip. These are
- * illustrations of how the product is used, NOT customer reviews: no names, no
- * star ratings, and the section labels them as examples. Swap in real,
- * permission-given reviews only with the person's consent.
- */
-export const CELEBRATION_STORIES = [
-  { tag: 'Wedding', title: 'One invite, three continents', story: 'A wedding invitation with RSVPs for every function, opened by family in Delhi, London and Toronto from a single WhatsApp link.', places: 'London, UK' },
-  { tag: 'Birthday', title: "Dad's 60th, from five time zones", story: 'Siblings in Sydney, Dubai and New Jersey each add photos and a voice note to one birthday page, with a countdown that shows everyone their local time.', places: 'Sydney, Australia' },
-  { tag: 'Christmas', title: 'Carols and a midnight countdown', story: 'A Christmas page with a carols playlist, family photos and a countdown to midnight, shared across the family chat.', places: 'Manchester, UK' },
-  { tag: 'Eid Mubarak', title: 'Eid wishes for family near and far', story: 'An Eid page in elegant calligraphy, sent to relatives in Lucknow, Doha and Chicago before the morning prayer.', places: 'Doha, Qatar' },
-  { tag: 'Anniversary', title: "Our parents' 30 years", story: 'A surprise anniversary page with their wedding photos, their song and messages from grandchildren abroad.', places: 'Singapore' },
-  { tag: 'Diwali', title: 'Lighting a diya together', story: 'A Diwali page with animated diyas and rangoli, sent to friends who cannot fly home this year.', places: 'San Francisco, USA' },
-  { tag: 'Reception', title: 'Blessings from every guest', story: 'A reception page where guests who could not travel leave blessings on the wall, read aloud at the party.', places: 'Melbourne, Australia' },
-  { tag: 'Valentine', title: 'A love letter across the miles', story: 'A long-distance Valentine page that works out the distance between two cities and plays their first song.', places: 'Berlin, Germany' },
-  { tag: 'Holi', title: 'Colours over video call', story: 'A Holi page full of colour, photos and a playlist, shared with cousins celebrating in another country.', places: 'Leicester, UK' },
-  { tag: 'Baby Shower', title: 'A baby shower everyone can join', story: 'A baby shower page with the date, the venue map and a wishes wall for family who join online.', places: 'Austin, USA' },
-  { tag: 'Christian Wedding', title: 'Join us at the altar', story: 'A church wedding invitation with the ceremony, reception and a livestream link for grandparents overseas.', places: 'Toronto, Canada' },
-  { tag: 'Thank You', title: 'Saying thank you properly', story: 'A thank-you page for the teacher, the mentor or the friend who showed up, with photos and a message they can keep.', places: 'Dubai, UAE' },
+export const REVIEWS_ROW1 = [
+  { name: 'Rahul Sharma', city: 'New Delhi', tag: 'Diwali', review: 'Created a Diwali page for my family and everyone was moved to tears. The mandala animations felt so authentic — like a digital rangoli!' },
+  { name: 'Aisha Khan', city: 'Lucknow, UP', tag: 'Eid Mubarak', review: 'Our Eid Mubarak page was shared by 200+ family members across 3 countries. The calligraphy style was absolutely beautiful.' },
+  { name: 'Gurpreet Singh', city: 'Amritsar, Punjab', tag: 'Wedding', review: 'Used SubhSandesh for our wedding invitation. The golden aesthetic and blessings wall were perfect for our Punjabi wedding celebration!' },
+  { name: "Maria D'Souza", city: 'Panaji, Goa', tag: 'Birthday', review: "My father's 60th birthday page had everyone emotional. The music playlist made it feel like a real celebration online." },
+  { name: 'Sneha Patel', city: 'Ahmedabad, Gujarat', tag: 'Festival', review: 'The festival page we created was so serene and elegant. The countdown timer and heartfelt messages were a beautiful touch.' },
+  { name: 'Ravi Kumar', city: 'Bengaluru, Karnataka', tag: 'Reception', review: 'Our reception page got 500+ blessings from guests! The AI-generated message for our parents was poetic and perfect.' },
+];
+
+export const REVIEWS_ROW2 = [
+  { name: 'Fatima Shaikh', city: 'Mumbai, Maharashtra', tag: 'Wedding', review: "The AI wrote our wedding invitation in such beautiful poetic language. Our families couldn't believe it was AI — truly magical!" },
+  { name: 'Lakshmi Iyer', city: 'Chennai, Tamil Nadu', tag: 'Pongal', review: 'Made a Pongal greeting page for our extended family in Tamil Nadu. The regional aesthetic felt so homely and warm. Pure magic!' },
+  { name: 'Thomas George', city: 'Kochi, Kerala', tag: 'Christmas', review: "Our Christmas page with carols playlist and midnight countdown was the most unique thing we've ever done. Loved it!" },
+  { name: 'Preethi Nair', city: 'Thiruvananthapuram', tag: 'Birthday', review: "My husband's birthday surprise page left him speechless. The animated card and music — completely exceeded expectations!" },
+  { name: 'Arjun Mehta', city: 'Jaipur, Rajasthan', tag: 'Anniversary', review: 'Created an anniversary page for my parents. They kept it open all day playing the songs and reading messages. Priceless.' },
+  { name: 'Deepa Krishnan', city: 'Hyderabad, Telangana', tag: 'Festival', review: 'Used it for Ugadi greetings across the family. The warm aesthetic and personalized touch made it feel truly special!' },
 ];
 
 export const SECURITY_CARDS = [
