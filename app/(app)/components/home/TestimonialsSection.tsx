@@ -85,7 +85,7 @@ export default function TestimonialsSection() {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
           <motion.span variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 20px', borderRadius: 24, border: '1px solid rgba(61,12,17,0.2)', color: '#3d0c11', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', background: 'rgba(61,12,17,0.06)', marginBottom: 20 }}>
             <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#c9a84c" /></svg>
-            Trusted Across India
+            Trusted Around the World
             <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#c9a84c" /></svg>
           </motion.span>
           <motion.h2 variants={fadeUp} style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(30px,4.5vw,54px)', fontWeight: 700, color: '#1a0507', letterSpacing: '-1.5px', marginBottom: 16, lineHeight: 1.1 }}>
@@ -93,7 +93,7 @@ export default function TestimonialsSection() {
             <em style={{ color: '#c9a84c', fontStyle: 'italic' }}>every special moment</em>
           </motion.h2>
           <motion.p variants={fadeUp} style={{ color: '#7a5050', fontSize: 15, lineHeight: 1.8, maxWidth: 520, margin: '0 auto 32px' }}>
-            SubhSandesh brings joy to every Indian home — celebrating weddings, birthdays, festivals, and every special milestone with love.
+            Families around the world use SubhSandesh to celebrate weddings, birthdays, festivals and every milestone — one link that reaches loved ones in any country.
           </motion.p>
 
           {/* Occasions strip */}
@@ -136,7 +136,7 @@ export default function TestimonialsSection() {
       {/* Stats bar */}
       <motion.div className="test-stats" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.7, delay: 0.2 }}
         style={{ maxWidth: 800, margin: '52px auto 0', padding: '0 44px', display: 'flex', position: 'relative', zIndex: 1, background: '#fff', border: '1px solid rgba(201,168,76,0.28)', borderRadius: 20, boxShadow: '0 4px 28px rgba(61,12,17,0.08)' }}>
-        {[{ num: '50,000+', label: 'Happy Families' }, { num: '28', label: 'States Covered' }, { num: '4.9★', label: 'Avg. Rating' }, { num: '12+', label: 'Occasions' }].map((s, i) => (
+        {[{ num: '50,000+', label: 'Happy Families' }, { num: '🌍', label: 'Shared Worldwide' }, { num: '4.9★', label: 'Avg. Rating' }, { num: '12+', label: 'Occasions' }].map((s, i) => (
           <div key={i} style={{ flex: 1, textAlign: 'center', padding: '22px 12px', borderRight: i < 3 ? '1px solid rgba(61,12,17,0.07)' : 'none' }}>
             <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 700, color: '#3d0c11', lineHeight: 1, marginBottom: 6 }}>{s.num}</div>
             <div style={{ fontSize: 11, color: '#9a7070', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>{s.label}</div>

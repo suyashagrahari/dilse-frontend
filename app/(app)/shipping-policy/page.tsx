@@ -76,11 +76,7 @@ const SECTIONS: LegalSection[] = [
             "Check your profile — published pages are listed there even if the share window was closed.",
             "Make sure you are signed in with the same account you used to pay.",
             <>
-              Still missing? Email {mail} or call{" "}
-              <a href={`tel:${BUSINESS.phone.tel}`} style={{ color: "#2a0a0e", fontWeight: 700 }}>
-                {BUSINESS.phone.display}
-              </a>{" "}
-              with your account email and payment date. Support is available {BUSINESS.hoursShort}.
+              Still missing? Email {mail} with your account email and payment date. Support is available {BUSINESS.hoursShort}.
             </>,
           ]}
         />

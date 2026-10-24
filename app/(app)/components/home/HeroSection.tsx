@@ -85,7 +85,7 @@ export default function HeroSection() {
                 background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(8px)'
               }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#c9a84c', display: 'inline-block', animation: 'shimmer 2s infinite' }} />
-                INDIA&apos;S #1 CELEBRATION STUDIO
+                WORLD&apos;S #1 CELEBRATION STUDIO
               </span>
             </motion.div>
 

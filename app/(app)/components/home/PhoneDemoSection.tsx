@@ -93,7 +93,7 @@ export default function PhoneDemoSection() {
           <em style={{ color: '#c9a84c', fontStyle: 'italic' }}>beautiful pages</em> for every occasion
         </motion.h2>
         <motion.p variants={fadeUp} style={{ fontSize: 15, color: '#7a5050', lineHeight: 1.8, maxWidth: 460, margin: '0 auto' }}>
-          Real celebration pages made with SubhSandesh — each one an emotional masterpiece shared with love across India.
+          Real celebration pages made with SubhSandesh — each one an emotional masterpiece shared with love around the world.
         </motion.p>
       </motion.div>
 

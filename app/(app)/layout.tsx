@@ -24,7 +24,7 @@ const MAIN_TABS = [{ href: "/templates" }, { href: "/feedback" }, { href: "/" },
 export const metadata: Metadata = buildMeta({
   title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",
   description:
-    "Create stunning personalised celebration pages for weddings, birthdays, Holi, Eid, and every Indian occasion. AI-powered messages, photo galleries, music playlists, and more.",
+    "The world's celebration studio: create personalised pages for weddings, birthdays, anniversaries, Christmas, Eid, Diwali and every occasion. AI-written messages, photo galleries, music and RSVPs on one link you can share with anyone, in any country.",
 });
 
 export default function AppLayout({

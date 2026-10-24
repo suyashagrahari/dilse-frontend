@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, CheckCircle2, Clock, Mail, Phone, Send } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Mail, Send } from "lucide-react";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import BusinessDetails from "@/components/legal/BusinessDetails";
@@ -89,12 +89,6 @@ export default function ContactUsClient() {
               <a href={`mailto:${BUSINESS.email}`}>
                 <Mail size={14} aria-hidden="true" />
                 <span>{BUSINESS.email}</span>
-              </a>
-            </li>
-            <li>
-              <a href={`tel:${BUSINESS.phone.tel}`}>
-                <Phone size={14} aria-hidden="true" />
-                <span>{BUSINESS.phone.display}</span>
               </a>
             </li>
             <li className="ctChipStatic">

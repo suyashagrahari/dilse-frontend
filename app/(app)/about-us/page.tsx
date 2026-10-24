@@ -25,7 +25,7 @@ import BusinessDetails from "@/components/legal/BusinessDetails";
 export const metadata: Metadata = buildMeta({
   title: "About Us | SubhSandesh",
   description:
-    "Learn about SubhSandesh and how we craft heartfelt Indian celebration pages with premium design and emotion-first storytelling.",
+    "SubhSandesh is a Bengaluru-built celebration studio used around the world: personalised pages for weddings, birthdays, anniversaries and festivals, with photos, music and RSVPs on one shareable link.",
   alternates: { canonical: `${SITE_URL}/about-us` },
 });
 
@@ -57,7 +57,7 @@ const MAKES = [
 
 const VALUES = [
   { Icon: Heart, title: "Emotion first", text: "Feelings, blessings and family stories come before features." },
-  { Icon: Users, title: "Made for all of India", text: "Every state, language, religion and tradition should feel at home." },
+  { Icon: Users, title: "Made for the whole world", text: "Every country, language, faith and tradition should feel at home." },
   { Icon: Lock, title: "Private by design", text: "Your moment is shared with the people you choose." },
   { Icon: Wand2, title: "Premium, not plain", text: "Beyond chats and simple posts — pages worth revisiting for years." },
 ] as const;
@@ -119,8 +119,8 @@ export default function AboutUsPage() {
               <em> Founder of SubhSandesh.</em>
             </h1>
             <p className="auLead">
-              In India, celebrations are not just events — they are emotions, blessings, memories, and family
-              stories. SubhSandesh helps you express love in a deeper way.
+              Everywhere in the world, celebrations are not just events — they are emotions, blessings, memories,
+              and family stories. SubhSandesh helps you express love in a deeper way, wherever your people are.
             </p>
           </div>
 
@@ -146,14 +146,15 @@ export default function AboutUsPage() {
             <p className="auEyebrow">Our story</p>
             <h2 className="auH2">Why I Created This</h2>
             <p>
-              I created SubhSandesh because in India, celebrations are not just events — they are emotions, blessings,
-              memories, and family stories. I wanted to build something that helps people express love in a deeper way,
-              beyond plain chats and simple posts.
+              I created SubhSandesh because celebrations are not just events — they are emotions, blessings, memories,
+              and family stories. I wanted to build something that helps people express love in a deeper way, beyond
+              plain chats and simple posts, and that works the same whether your family is in one city or spread across
+              five countries.
             </p>
             <p>
-              My dream is to connect hearts across all Indian states, languages, and traditions — from every religion,
-              every family, every festival, every special moment. Whether someone celebrates a wedding, birthday, Eid,
-              Holi, Diwali, or any personal milestone, SubhSandesh should feel like home.
+              My dream is to connect hearts across the world — every country, language and tradition, every religion,
+              every family, every festival, every special moment. Whether someone celebrates a wedding, a birthday,
+              Christmas, Eid, Holi, Diwali or any personal milestone, SubhSandesh should feel like home.
             </p>
             <p>
               My motto is simple:

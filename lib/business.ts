@@ -1,11 +1,11 @@
 // ── The registered business, in one place ────────────────────────────────────
 //
 // Razorpay (and its banking partner) verifies these against the merchant's KYC
-// when reviewing an international-payments request, and rejects an application
-// whose website shows a different name, address or phone than the one on file.
-// Every surface that prints them — Contact Us, About Us, the footer and each
-// legal policy — reads from here, so they cannot drift apart. Change a value
-// here only if it has changed on the Razorpay account too.
+// when reviewing an international-payments request. Every surface that prints
+// them — Contact Us, About Us, the footer and each legal policy — reads from
+// here, so they cannot drift apart. The address is the Bengaluru one on the
+// Udyam certificate (UDYAM-KR-03-0764364). No phone number is published:
+// support runs on email.
 
 export const BUSINESS = {
   /** Trade name, exactly as registered. */
@@ -15,14 +15,13 @@ export const BUSINESS = {
   /** Business commencement date. */
   established: "4 March 2026",
   address: {
-    /** Must match the address on the IEC (DGFT) and the Razorpay account. */
-    line1: "Ward No. 06, Indira Nagar, Dumariyaganj",
-    city: "Siddharth Nagar",
-    state: "Uttar Pradesh",
-    postalCode: "272189",
+    /** As on the Udyam certificate. */
+    line1: "Parangi Palaya, Sector 2, HSR Layout",
+    city: "Bengaluru",
+    state: "Karnataka",
+    postalCode: "560102",
     country: "India",
   },
-  phone: { display: "+91 89570 89392", tel: "+918957089392" },
   email: "support@subhsandesh.in",
   hours: "24×7 — all days, including holidays",
   hoursShort: "24×7",
