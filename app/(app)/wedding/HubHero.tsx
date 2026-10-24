@@ -2,8 +2,8 @@
 
 // ─── /wedding — the hero: stepping into an Indian wedding ────────────────────
 //
-// Full-bleed, a full screen tall, no card. A palace door opens on load and the
-// visitor walks through it into a terrace at golden hour: a peacock's train
+// Full-bleed, a full screen tall, no card. The page opens straight onto a
+// terrace at golden hour: a peacock's train
 // fans open behind the couple, two more peacocks keep them company, marigold
 // strands and gold jhumkas sway from the toran, lanterns glow and petals and
 // feathers drift down. Scroll and (on desktop) the pointer move the layers at
@@ -12,10 +12,9 @@
 // Performance: the headline is plain text (the LCP element), the art is sized
 // variants from public/wedding-v3/hub/lux with phone-sized sources, all motion
 // is transform/opacity, the parallax writes two CSS variables in one rAF, and
-// everything stops off-screen. prefers-reduced-motion gets a still scene and
-// no door.
+// everything stops off-screen. prefers-reduced-motion gets a still scene.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarCheck, ChevronDown, Languages, MessageCircle, Music2, Sparkles } from "lucide-react";
 import { LUX } from "./content";
 
@@ -114,86 +113,15 @@ function Fan() {
   );
 }
 
-/** The palace door the page opens with. Once per session at full length; quick after that. */
-function Gate({ onGone }: { onGone: () => void }) {
-  const [phase, setPhase] = useState<"shut" | "open" | "gone">("shut");
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let seen = false;
-    try { seen = sessionStorage.getItem("wh-gate") === "1"; } catch { /* private mode */ }
-    try { sessionStorage.setItem("wh-gate", "1"); } catch { /* private mode */ }
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const t = window.setTimeout(() => { setPhase("gone"); onGone(); }, 0);
-      return () => clearTimeout(t);
-    }
-    const imgs = Array.from(ref.current?.querySelectorAll("img") ?? []);
-    const decoded = Promise.all(imgs.map((i) => i.decode().catch(() => undefined)));
-    const timeout = new Promise((r) => setTimeout(r, seen ? 250 : 1400));
-    let alive = true;
-    const timers: number[] = [];
-    Promise.race([decoded, timeout]).then(() => {
-      if (!alive) return;
-      timers.push(window.setTimeout(() => setPhase("open"), seen ? 60 : 380));
-    });
-    const skip = () => setPhase((p) => (p === "shut" ? "open" : p));
-    window.addEventListener("wheel", skip, { passive: true, once: true });
-    window.addEventListener("touchstart", skip, { passive: true, once: true });
-    window.addEventListener("keydown", skip, { once: true });
-    return () => {
-      alive = false;
-      timers.forEach(clearTimeout);
-      window.removeEventListener("wheel", skip);
-      window.removeEventListener("touchstart", skip);
-      window.removeEventListener("keydown", skip);
-    };
-  }, [onGone]);
-
-  useEffect(() => {
-    if (phase !== "open") return;
-    onGone();
-    const t = window.setTimeout(() => setPhase("gone"), 2300);
-    return () => clearTimeout(t);
-  }, [phase, onGone]);
-
-  if (phase === "gone") return null;
-  return (
-    <div ref={ref} className={`whGate${phase === "open" ? " is-open" : ""}`} aria-hidden onClick={() => setPhase("open")}>
-      <span className="whGateWall" />
-      <span className="whGateToran" />
-      <span className="whGateEle l" />
-      <span className="whGateEle r" />
-      <span className="whGatePot l" />
-      <span className="whGatePot r" />
-      <div className="whGateDoor">
-        <span className="whGateLight" />
-        <span className="whGateRays" />
-        {(["l", "r"] as const).map((s) => (
-          <span key={s} className={`whGateLeaf ${s}`}>
-            {/* Phones get the 820px leaf at any DPR: the door is on screen for two seconds. */}
-            <picture>
-              <source media="(max-width: 767px)" srcSet={`${LUX}/gate-leaf-${s}-820.webp`} />
-              { }
-              <img src={`${LUX}/gate-leaf-${s}-1360.webp`} width={352} height={1360} alt="" fetchPriority="high" decoding="async" />
-            </picture>
-            <i className="whGateShade" />
-          </span>
-        ))}
-        <picture>
-          <source media="(max-width: 767px)" srcSet={`${LUX}/gate-wall-900.webp`} />
-          { }
-          <img className="whGateArch" src={`${LUX}/gate-wall-1500.webp`} width={844} height={1500} alt="" fetchPriority="high" decoding="async" />
-        </picture>
-        <span className="whGateWelcome"><span lang="hi">स्वागतम्</span> Welcome</span>
-      </div>
-    </div>
-  );
-}
 
 export default function HubHero() {
   const hero = useRef<HTMLElement>(null);
   const [entered, setEntered] = useState(false);
-  const onGone = useCallback(() => setEntered(true), []);
+  // The scene plays its entrance as soon as the page paints: no door intro.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   // Parallax: scroll depth and (fine pointers only) the pointer, as CSS vars.
   useEffect(() => {
@@ -340,7 +268,6 @@ export default function HubHero() {
       <a href="#journey" className="whCue">Begin the journey <ChevronDown size={18} aria-hidden /></a>
       <span className="whHeroFade" aria-hidden />
 
-      <Gate onGone={onGone} />
     </section>
   );
 }

@@ -196,60 +196,13 @@ export const HERO_CSS = `
 @keyframes whBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 .whHeroFade { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; z-index: 6; pointer-events: none; background: linear-gradient(180deg, rgba(250,242,232,0), var(--page)); }
 
-/* ── the palace door ─────────────────────────────────────────────────── */
-.whGate { position: absolute; top: 0; left: 0; right: 0; height: 100svh; z-index: 40; overflow: hidden; perspective: 1800px; perspective-origin: 50% 55%; cursor: pointer;
-  transition: opacity 1s ease 1.15s, transform 2s cubic-bezier(.55,0,.2,1) .55s; animation: whGateFail .8s ease 7s forwards; }
-@media (min-width: 768px) { .whGate { height: max(100svh, 720px); } }
-@keyframes whGateFail { to { opacity: 0; visibility: hidden; } }
-.whGate.is-open { opacity: 0; transform: scale(1.55); pointer-events: none; }
-.whGateWall { position: absolute; inset: 0; background:
-    radial-gradient(60% 50% at 50% 100%, rgba(255,214,150,.45), transparent 70%),
-    radial-gradient(rgba(150,110,60,.13) 1px, transparent 1.3px) 0 0 / 7px 7px,
-    linear-gradient(180deg, #f4e6cd, #ead6b3 60%, #e2c99f); }
-.whGateToran { position: absolute; z-index: 5; top: 0; left: 0; right: 0; height: 34px; background: url(${ART}/hub/toran.webp) top left / auto 34px repeat-x; }
-.whGateDoor { position: absolute; left: 50%; bottom: 0; height: 100%; aspect-ratio: 844 / 1500; transform: translateX(-50%); transform-style: preserve-3d; }
 .whHero picture { display: contents; }
-.whGateArch { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%); }
-.whGateEle, .whGatePot { position: absolute; z-index: 6; bottom: 0; pointer-events: none; background: center bottom / contain no-repeat; }
-.whGateEle { width: min(30vw, 300px); aspect-ratio: 420 / 355; bottom: 104px; filter: drop-shadow(0 14px 14px rgba(80,40,10,.25)); }
-.whGateEle.l { left: max(-6vw, calc(50% - 48svh - 30vw)); background-image: url(${LUX}/elephant-l-420.webp); }
-.whGateEle.r { right: max(-6vw, calc(50% - 48svh - 30vw)); background-image: url(${LUX}/elephant-r-420.webp); }
-.whGatePot { width: min(13vw, 110px); aspect-ratio: 144 / 260; display: none; background-image: url(${LUX}/marigold-pots-260.webp); }
-.whGate.is-open .whGateEle.l { transform: translateX(-30%); opacity: 0; transition: transform 1.2s ease, opacity .8s ease; }
-.whGate.is-open .whGateEle.r { transform: translateX(30%); opacity: 0; transition: transform 1.2s ease, opacity .8s ease; }
-@media (min-width: 768px) {
-  .whGateEle { width: min(24vw, 340px); bottom: 2%; }
-  .whGateEle.l { left: calc(50% - 28svh - min(24vw, 340px)); } .whGateEle.r { right: calc(50% - 28svh - min(24vw, 340px)); }
-  .whGatePot { display: block; } .whGatePot.l { left: calc(50% - 28svh - 2vw); } .whGatePot.r { right: calc(50% - 28svh - 2vw); }
-}
-.whGateLight { position: absolute; left: 8.6%; right: 9%; top: 7.5%; bottom: 3%; z-index: 0; background: linear-gradient(180deg, #fff6dc, #ffe2a2 55%, #f6c979); }
-.whGateRays { position: absolute; left: 50%; top: 60%; width: 220%; aspect-ratio: 1; margin: -110% 0 0 -110%; z-index: 1; opacity: 0;
-  background: repeating-conic-gradient(rgba(255,255,255,.7) 0deg 4deg, rgba(255,255,255,0) 4deg 15deg);
-  -webkit-mask: radial-gradient(closest-side, #000 15%, transparent 70%); mask: radial-gradient(closest-side, #000 15%, transparent 70%); transition: opacity 1.2s ease .3s; }
-.whGate.is-open .whGateRays { opacity: 1; }
-.whGateLeaf { position: absolute; z-index: 2; top: 6.94%; height: 90.22%; backface-visibility: hidden; transition: transform 1.9s cubic-bezier(.62,.02,.22,1); }
-.whGateLeaf.l { left: 8.39%; width: 41.46%; transform-origin: 0% 50%; }
-.whGateLeaf.r { left: 49.65%; width: 41.56%; transform-origin: 100% 50%; }
-.whGateLeaf img { display: block; width: 100%; height: 100%; }
-.whGateShade { position: absolute; inset: 0; opacity: 0; transition: opacity 1.9s ease; }
-.whGateLeaf.l .whGateShade { background: linear-gradient(90deg, rgba(25,10,2,.1), rgba(25,10,2,.7)); }
-.whGateLeaf.r .whGateShade { background: linear-gradient(270deg, rgba(25,10,2,.1), rgba(25,10,2,.7)); }
-.whGate.is-open .whGateLeaf.l { transform: rotateY(86deg); }
-.whGate.is-open .whGateLeaf.r { transform: rotateY(-86deg); }
-.whGate.is-open .whGateShade { opacity: 1; }
-.whGateWelcome { position: absolute; z-index: 4; left: 50%; bottom: 16%; transform: translateX(-50%); display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap;
-  padding: 10px 18px; border-radius: 999px; font: 600 13px/1 var(--sans); letter-spacing: .22em; text-transform: uppercase; color: #fbe6b0;
-  background: rgba(40,14,4,.72); box-shadow: inset 0 0 0 1px rgba(242,207,116,.55), 0 10px 24px -10px rgba(0,0,0,.6); transition: opacity .5s ease; }
-.whGateWelcome [lang="hi"] { font: 600 17px/1 var(--deva); letter-spacing: 0; text-transform: none; color: #ffd98a; }
-.whGate.is-open .whGateWelcome { opacity: 0; }
 
 /* off-screen: stop the loops */
 .whHero.is-off .whRays, .whHero.is-off .whCloud, .whHero.is-off .whStrand, .whHero.is-off .whJhumka, .whHero.is-off .whLantern,
 .whHero.is-off .whFan, .whHero.is-off .whDrift i, .whHero.is-off .whFoil, .whHero.is-off .whEyeGlint, .whHero.is-off img { animation-play-state: paused; }
 
 @media (prefers-reduced-motion: reduce) {
-  .whGate { display: none; }
   .whRays, .whCloud, .whStrand, .whJhumka, .whLantern, .whFan, .whFoil, .whEyeGlint, .whCue svg { animation: none; }
   .whDrift { display: none; }
   .whFea, .whHeroCouple, .whPeaStand img, .whPeaFlowers img { transition: none; }
