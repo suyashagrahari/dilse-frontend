@@ -57,14 +57,18 @@ export type Prop = { src: string; w: number; h: number; x: number; y: number; wi
 export type JourneyStep = {
   id: string;
   name: string;
-  hindi: string;
+  /** A short English caption under the name (this section carries no Devanagari). */
+  mood: string;
   /** One line for someone who has never been to an Indian wedding. */
   line: string;
   /** The guest's-eye detail: what to wear, what happens. */
   tip: string;
   tint: string;
   deep: string;
-  couple?: { src: string; w: number; h: number; alt: string };
+  /** The colour of this function's motion layer: petals, beams, embers, sparkles. */
+  glow: string;
+  /** The couple; cx = horizontal centre and ch = height, both in % of the scene. */
+  couple: { src: string; w: number; h: number; alt: string; cx?: number; ch?: number };
   props: Prop[];
   /** The design that suits this function; falls back to the collection if it is hidden for this visitor. */
   slug: string;
@@ -73,10 +77,10 @@ export type JourneyStep = {
 
 export const JOURNEY: JourneyStep[] = [
   {
-    id: "roka", name: "Roka & Engagement", hindi: "रोका · सगाई",
+    id: "roka", name: "Roka & Engagement", mood: "The first yes",
     line: "The two families formally say yes. Rings are exchanged, sweets are shared, and the countdown begins.",
     tip: "Often an intimate evening at home, and the first invitation many couples send.",
-    tint: "#f9e7ee", deep: "#a8395f",
+    tint: "#f9e7ee", deep: "#a8395f", glow: "#e48aa6",
     couple: { src: `${LUX}/c-engagement-600.webp`, w: 376, h: 600, alt: "Illustrated couple at their engagement, the bride in an ivory lehenga" },
     props: [
       { src: `${LUX}/string-lights-900.webp`, w: 900, h: 519, x: 0, y: -4, width: 100, z: 1 },
@@ -86,10 +90,10 @@ export const JOURNEY: JourneyStep[] = [
     slug: "floral-wedding-invitation", cta: "A soft floral invite",
   },
   {
-    id: "haldi", name: "Haldi", hindi: "हल्दी",
+    id: "haldi", name: "Haldi", mood: "The golden glow",
     line: "Friends and family smear the couple with turmeric paste for luck and a bridal glow. Everyone wears yellow, and everyone gets messy.",
     tip: "Morning, outdoors, marigolds everywhere. Wear something you don't mind turning yellow.",
-    tint: "#fcf0c4", deep: "#9a6a06",
+    tint: "#fcf0c4", deep: "#9a6a06", glow: "#f2a618",
     couple: { src: `${LUX}/c-haldi-600.webp`, w: 350, h: 600, alt: "Illustrated couple dressed in yellow for the Haldi" },
     props: [
       { src: `${LUX}/op-shaadi-toran-marigold.webp`, w: 520, h: 193, x: -4, y: -3, width: 108, z: 1 },
@@ -99,10 +103,10 @@ export const JOURNEY: JourneyStep[] = [
     slug: "wedding-invitation-premium", cta: "Every function on one link",
   },
   {
-    id: "mehndi", name: "Mehndi", hindi: "मेहंदी",
+    id: "mehndi", name: "Mehndi", mood: "The henna afternoon",
     line: "Intricate henna is painted on the bride's hands and feet. They say the darker the stain, the deeper the love.",
     tip: "An afternoon of music, snacks and henna artists. Guests often get a little design too.",
-    tint: "#fde3cf", deep: "#b4501a",
+    tint: "#fde3cf", deep: "#b4501a", glow: "#a4471a",
     couple: { src: `${LUX}/c-mehndi-600.webp`, w: 436, h: 600, alt: "Illustrated couple at the Mehndi, the bride in an orange saree" },
     props: [
       { src: `${LUX}/peacock-360.webp`, w: 360, h: 410, x: 68, y: 24, width: 38, z: 2 },
@@ -111,10 +115,10 @@ export const JOURNEY: JourneyStep[] = [
     slug: "garden-wedding-invitation", cta: "A Mughal-garden invite",
   },
   {
-    id: "sangeet", name: "Sangeet", hindi: "संगीत",
+    id: "sangeet", name: "Sangeet", mood: "The music night",
     line: "A night of music and dance. Both families rehearse for weeks to out-perform each other on stage.",
     tip: "Part concert, part dance-off, all party. Bring your best moves.",
-    tint: "#e6eef9", deep: "#34509c",
+    tint: "#e6eef9", deep: "#34509c", glow: "#7d8ff0",
     couple: { src: `${LUX}/c-sangeet-600.webp`, w: 561, h: 600, alt: "Illustrated couple dancing at their Sangeet" },
     props: [
       { src: `${LUX}/lanterns-360.webp`, w: 360, h: 360, x: -4, y: -6, width: 34, z: 1, cls: "sway" },
@@ -123,24 +127,24 @@ export const JOURNEY: JourneyStep[] = [
     slug: "wedding-invitation-premium", cta: "Sangeet to vidaai, one invite",
   },
   {
-    id: "baraat", name: "Baraat", hindi: "बारात",
+    id: "baraat", name: "Baraat", mood: "The grand arrival",
     line: "The groom arrives in a joyful street procession with a brass band, on a horse, in a vintage car or even on an elephant.",
     tip: "The groom's side dances all the way to the venue, and anyone can join in.",
-    tint: "#fbe4d4", deep: "#9c3218",
+    tint: "#fbe4d4", deep: "#9c3218", glow: "#e0662a",
+    couple: { src: `${LUX}/c-baraat-600.webp`, w: 349, h: 600, alt: "Illustrated groom in a navy sherwani arriving with his bride", cx: 62, ch: 72 },
     props: [
-      { src: `${LUX}/chhatri-300.webp`, w: 206, h: 300, x: 6, y: 2, width: 30, z: 1, cls: "sway" },
-      { src: `${LUX}/chhatri-300.webp`, w: 206, h: 300, x: 64, y: 0, width: 30, z: 1, cls: "sway", flip: true },
-      { src: `${LUX}/elephant-l-420.webp`, w: 420, h: 355, x: 17, y: 46, width: 66, z: 3, cls: "march" },
-      { src: `${LUX}/umbrella-guard-300.webp`, w: 128, h: 300, x: 1, y: 52, width: 20, z: 4, cls: "march" },
-      { src: `${LUX}/umbrella-guard-300.webp`, w: 128, h: 300, x: 79, y: 52, width: 20, z: 4, flip: true, cls: "march" },
+      { src: `${LUX}/chhatri-300.webp`, w: 206, h: 300, x: 2, y: 2, width: 26, z: 1, cls: "sway" },
+      { src: `${LUX}/chhatri-300.webp`, w: 206, h: 300, x: 72, y: 0, width: 26, z: 1, cls: "sway", flip: true },
+      { src: `${LUX}/elephant-l-420.webp`, w: 420, h: 355, x: -10, y: 50, width: 56, z: 2, cls: "march" },
+      { src: `${LUX}/umbrella-guard-300.webp`, w: 128, h: 300, x: 80, y: 54, width: 19, z: 4, flip: true, cls: "march" },
     ],
     slug: "royal-wedding-invitation", cta: "Royal gates & elephants",
   },
   {
-    id: "pheras", name: "Pheras", hindi: "फेरे",
+    id: "pheras", name: "Pheras", mood: "The seven vows",
     line: "The wedding itself: around a sacred fire the couple walk seven rounds, each one a promise for their life together.",
     tip: "Usually under a flower-decked mandap, with mantras, a priest and the whole family close by.",
-    tint: "#fbe0df", deep: "#8e1a27",
+    tint: "#fbe0df", deep: "#8e1a27", glow: "#f07a1a",
     couple: { src: `${LUX}/c-wedding-600.webp`, w: 334, h: 600, alt: "Illustrated bride in a red lehenga and groom for the Pheras" },
     props: [
       { src: `${LUX}/floral-arch-900.webp`, w: 900, h: 668, x: -6, y: -8, width: 112, z: 1 },
@@ -149,10 +153,10 @@ export const JOURNEY: JourneyStep[] = [
     slug: "palace-door-wedding-invitation", cta: "Palace doors that open",
   },
   {
-    id: "reception", name: "Reception", hindi: "रिसेप्शन",
+    id: "reception", name: "Reception", mood: "The celebration",
     line: "The newly-weds are welcomed with dinner, toasts and a first dance. It is often the party friends fly in from abroad for.",
     tip: "Evening wear, a long buffet and the couple greeting every guest on stage.",
-    tint: "#eae8f6", deep: "#463686",
+    tint: "#eae8f6", deep: "#463686", glow: "#c9a84c",
     couple: { src: `${LUX}/c-reception-600.webp`, w: 453, h: 600, alt: "Illustrated couple at their reception in a tuxedo and gown" },
     props: [
       { src: `${LUX}/string-lights-900.webp`, w: 900, h: 519, x: 0, y: -6, width: 100, z: 1 },
