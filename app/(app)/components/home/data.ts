@@ -165,18 +165,18 @@ export const FEATURES = [
  * permission-given reviews only with the person's consent.
  */
 export const CELEBRATION_STORIES = [
-  { tag: 'Wedding', title: 'One invite, three continents', story: 'A wedding invitation with RSVPs for every function, opened by family in Delhi, London and Toronto from a single WhatsApp link.', places: 'London, UK' },
-  { tag: 'Birthday', title: "Dad's 60th, from five time zones", story: 'Siblings in Sydney, Dubai and New Jersey each add photos and a voice note to one birthday page, with a countdown that shows everyone their local time.', places: 'Sydney, Australia' },
-  { tag: 'Christmas', title: 'Carols and a midnight countdown', story: 'A Christmas page with a carols playlist, family photos and a countdown to midnight, shared across the family chat.', places: 'Manchester, UK' },
-  { tag: 'Eid Mubarak', title: 'Eid wishes for family near and far', story: 'An Eid page in elegant calligraphy, sent to relatives in Lucknow, Doha and Chicago before the morning prayer.', places: 'Doha, Qatar' },
-  { tag: 'Anniversary', title: "Our parents' 30 years", story: 'A surprise anniversary page with their wedding photos, their song and messages from grandchildren abroad.', places: 'Singapore' },
-  { tag: 'Diwali', title: 'Lighting a diya together', story: 'A Diwali page with animated diyas and rangoli, sent to friends who cannot fly home this year.', places: 'San Francisco, USA' },
-  { tag: 'Reception', title: 'Blessings from every guest', story: 'A reception page where guests who could not travel leave blessings on the wall, read aloud at the party.', places: 'Melbourne, Australia' },
-  { tag: 'Valentine', title: 'A love letter across the miles', story: 'A long-distance Valentine page that works out the distance between two cities and plays their first song.', places: 'Berlin, Germany' },
-  { tag: 'Holi', title: 'Colours over video call', story: 'A Holi page full of colour, photos and a playlist, shared with cousins celebrating in another country.', places: 'Leicester, UK' },
-  { tag: 'Baby Shower', title: 'A baby shower everyone can join', story: 'A baby shower page with the date, the venue map and a wishes wall for family who join online.', places: 'Austin, USA' },
-  { tag: 'Christian Wedding', title: 'Join us at the altar', story: 'A church wedding invitation with the ceremony, reception and a livestream link for grandparents overseas.', places: 'Toronto, Canada' },
-  { tag: 'Thank You', title: 'Saying thank you properly', story: 'A thank-you page for the teacher, the mentor or the friend who showed up, with photos and a message they can keep.', places: 'Dubai, UAE' },
+  { tag: 'Wedding', title: 'One invite, three continents', story: 'A wedding invitation with RSVPs for every function, opened by family in Delhi, London and Toronto from a single WhatsApp link.', places: 'Delhi · London · Toronto' },
+  { tag: 'Birthday', title: "Dad's 60th, from five time zones", story: 'Siblings in Sydney, Dubai and New Jersey each add photos and a voice note to one birthday page, with a countdown that shows everyone their local time.', places: 'Sydney · Dubai · New Jersey' },
+  { tag: 'Christmas', title: 'Carols and a midnight countdown', story: 'A Christmas page with a carols playlist, family photos and a countdown to midnight, shared across the family chat.', places: 'Kochi · Manchester' },
+  { tag: 'Eid Mubarak', title: 'Eid wishes for family near and far', story: 'An Eid page in elegant calligraphy, sent to relatives in Lucknow, Doha and Chicago before the morning prayer.', places: 'Lucknow · Doha · Chicago' },
+  { tag: 'Anniversary', title: "Our parents' 30 years", story: 'A surprise anniversary page with their wedding photos, their song and messages from grandchildren abroad.', places: 'Singapore · Pune' },
+  { tag: 'Diwali', title: 'Lighting a diya together', story: 'A Diwali page with animated diyas and rangoli, sent to friends who cannot fly home this year.', places: 'Jaipur · San Francisco' },
+  { tag: 'Reception', title: 'Blessings from every guest', story: 'A reception page where guests who could not travel leave blessings on the wall, read aloud at the party.', places: 'Hyderabad · Melbourne' },
+  { tag: 'Valentine', title: 'A love letter across the miles', story: 'A long-distance Valentine page that works out the distance between two cities and plays their first song.', places: 'Berlin · Mumbai' },
+  { tag: 'Holi', title: 'Colours over video call', story: 'A Holi page full of colour, photos and a playlist, shared with cousins celebrating in another country.', places: 'Leicester · Ahmedabad' },
+  { tag: 'Baby Shower', title: 'A baby shower everyone can join', story: 'A baby shower page with the date, the venue map and a wishes wall for family who join online.', places: 'Austin · Chennai' },
+  { tag: 'Christian Wedding', title: 'Join us at the altar', story: 'A church wedding invitation with the ceremony, reception and a livestream link for grandparents overseas.', places: 'Goa · Toronto' },
+  { tag: 'Thank You', title: 'Saying thank you properly', story: 'A thank-you page for the teacher, the mentor or the friend who showed up, with photos and a message they can keep.', places: 'Anywhere' },
 ];
 
 export const SECURITY_CARDS = [
