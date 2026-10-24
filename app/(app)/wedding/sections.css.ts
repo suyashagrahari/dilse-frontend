@@ -49,7 +49,7 @@ export const SECTIONS_CSS = `
 @media (min-width: 768px) {
   .whJ { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 44px; align-items: start; }
   .whJStage { display: block; position: sticky; top: max(96px, calc(50svh - 0.5 * min(calc(100svh - 130px), 760px) + 30px)); width: min(100%, calc(min(calc(100svh - 130px), 760px) * .84)); margin: 0 auto; aspect-ratio: .84;
-    border-radius: 999px 999px 28px 28px / 34% 34% 28px 28px; overflow: hidden; isolation: isolate;
+    border-radius: 28px; overflow: hidden; isolation: isolate;
     box-shadow: 0 40px 70px -48px rgba(61,12,17,.65), 0 0 0 1px rgba(201,168,76,.5), 0 0 0 8px rgba(255,250,244,.9), 0 0 0 9px rgba(201,168,76,.35); }
   .whJFrame { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
   .whJFrame.is-on { opacity: 1; }
