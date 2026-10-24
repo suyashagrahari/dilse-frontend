@@ -6,7 +6,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { rememberOrigin, takeRestore } from "@/lib/backNav";
+import { clearRestore, peekRestore, rememberOrigin } from "@/lib/backNav";
 
 export default function OriginTracker() {
   const pathname = usePathname();
@@ -32,23 +32,51 @@ export default function OriginTracker() {
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
-  // Coming back from a template: scroll to the remembered spot once the page
-  // is tall enough (cards and images may still be laying out), for up to 4 s.
+  // Coming back from a template: scroll to the remembered spot. The page may
+  // still be laying out, and the router (or a scroll-locking splash) can reset
+  // the scroll after we set it, so keep re-applying until it has held for a
+  // few frames, for up to 7 s (a gallery that loads more cards as it scrolls needs a moment to grow back), and stop the moment the visitor scrolls.
   useEffect(() => {
-    const y = takeRestore(here);
+    // Peek, don't consume: React may mount this twice in development, and the
+    // first mount's cleanup must not lose the position for the second.
+    const y = peekRestore(here);
     if (y == null) return;
     let raf = 0;
-    const until = performance.now() + 4000;
+    let held = 0;
+    let stopped = false;
+    const until = performance.now() + 7000;
+    const stop = () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+    };
+    const finish = () => {
+      clearRestore();
+      stop();
+    };
     const tick = () => {
-      const tallEnough = document.documentElement.scrollHeight >= y + window.innerHeight * 0.5;
-      if (tallEnough || performance.now() > until) {
-        window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
-        return;
+      if (stopped) return;
+      if (performance.now() > until) return finish();
+      const target = Math.min(y, document.documentElement.scrollHeight - window.innerHeight);
+      if (Math.abs(window.scrollY - target) <= 2) {
+        if (++held >= 10 && target === y) return finish();
+      } else {
+        held = 0;
+        window.scrollTo({ top: target, behavior: "instant" as ScrollBehavior });
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    const opts = { passive: true, once: true } as const;
+    // The visitor scrolling takes over for good.
+    window.addEventListener("wheel", finish, opts);
+    window.addEventListener("touchstart", finish, opts);
+    window.addEventListener("keydown", finish, opts);
+    return () => {
+      stop();
+      window.removeEventListener("wheel", finish);
+      window.removeEventListener("touchstart", finish);
+      window.removeEventListener("keydown", finish);
+    };
   }, [here]);
 
   return null;

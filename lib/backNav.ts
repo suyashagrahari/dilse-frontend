@@ -60,14 +60,17 @@ export function goBackFromTemplate(router: { push: (href: string) => void }, fal
   router.push(fallback);
 }
 
-/** The scroll position to restore for `path`, once; null when there is none. */
-export function takeRestore(path: string): number | null {
+/** The scroll position waiting to be restored for `path`, or null. Not consumed: see clearRestore. */
+export function peekRestore(path: string): number | null {
   const o = read(RESTORE_KEY);
-  if (!o || o.path !== path) return null;
+  return o && o.path === path ? o.y : null;
+}
+
+/** Done restoring (or the visitor took over): forget the pending position. */
+export function clearRestore() {
   try {
     sessionStorage.removeItem(RESTORE_KEY);
   } catch {
     /* ignore */
   }
-  return o.y;
 }
