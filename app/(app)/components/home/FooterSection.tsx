@@ -125,7 +125,7 @@ export default function FooterSection() {
               शुभ संदेश 🪔
             </div>
             <p className="footer-brand-copy" style={{ fontSize: 13.5, color: 'rgba(61,12,17,0.52)', lineHeight: 1.85, maxWidth: 268, marginBottom: 24 }}>
-              Turn your heartfelt wishes into beautiful digital celebration pages — shared with love across India and the world.
+              Turn your heartfelt wishes into beautiful digital celebration pages — shared with love around the world.
             </p>
             <div className="footer-social-row" style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
               {SOCIALS.map(s => (
@@ -210,12 +210,12 @@ export default function FooterSection() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <p style={{ fontSize: 12.5, color: 'rgba(61,12,17,0.38)', margin: 0 }}>© 2026 SubhSandesh</p>
             <div style={{ width: 1, height: 12, background: 'rgba(61,12,17,0.12)' }} />
-            <p style={{ fontSize: 12, color: 'rgba(61,12,17,0.45)', fontStyle: 'italic', margin: 0 }}>Made with ❤️ in India</p>
+            <p style={{ fontSize: 12, color: 'rgba(61,12,17,0.45)', fontStyle: 'italic', margin: 0 }}>Made with ❤️ in Bengaluru, for the world</p>
           </div>
          
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(201,168,76,0.7)', animation: 'pulseSlow 2s ease-in-out infinite' }} />
-            <span style={{ fontSize: 11, color: 'rgba(61,12,17,0.4)', fontWeight: 600, letterSpacing: '0.06em' }}>India&apos;s #1 Digital Celebrations</span>
+            <span style={{ fontSize: 11, color: 'rgba(61,12,17,0.4)', fontWeight: 600, letterSpacing: '0.06em' }}>The World&apos;s #1 Celebration Studio</span>
           </div>
         </div>
       </div>

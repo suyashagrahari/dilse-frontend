@@ -29,8 +29,8 @@ export async function GET() {
   lines.push(
     `${SITE_NAME} (${SITE_URL}) is a free tool to create and share beautiful, ` +
       `personalized digital celebration pages — for birthdays, anniversaries, weddings, ` +
-      `Valentine's Day, and Indian festivals like Holi, Eid and Diwali. Every creation ` +
-      `becomes a shareable link with photos, music and a heartfelt message. Made in India; ` +
+      `Valentine's Day, Christmas and festivals like Holi, Eid and Diwali. Every creation ` +
+      `becomes a shareable link with photos, music and a heartfelt message, used by people in many countries; prices are shown in the visitor's currency. Built in Bengaluru, India; ` +
       `founded by Suyash Agrahari; operating as a registered sole proprietorship in ${BUSINESS.address.city}, ${BUSINESS.address.state} since 4 March 2026.`
   );
   lines.push("");

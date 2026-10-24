@@ -94,7 +94,7 @@ export default function SubhSandeshFooter() {
         <div className="ssfoot-grid">
           <div className="ssfoot-brand">
             <div className="ssfoot-logo"><span className="dot" />SubhSandesh</div>
-            <p>Turn your heartfelt wishes into beautiful digital celebration pages — shared with love across India and the world.</p>
+            <p>Turn your heartfelt wishes into beautiful digital celebration pages — shared with love around the world.</p>
 
             <div className="ssfoot-social">
               <SocialIcons variant="bare" />
@@ -155,14 +155,13 @@ export default function SubhSandeshFooter() {
 
         {/* bottom bar */}
         <div className="ssfoot-bottom">
-          <span>© 2026 {BUSINESS.name}. All rights reserved. · Made with <span className="heart">❤</span> in India</span>
-          <span className="ssfoot-tagline">India&rsquo;s #1 Digital Celebrations</span>
+          <span>© 2026 {BUSINESS.name}. All rights reserved. · Made with <span className="heart">❤</span> in Bengaluru, for the world</span>
+          <span className="ssfoot-tagline">The World&rsquo;s #1 Celebration Studio</span>
           {/* The registered business, in one line — the legal name, proprietor,
               city and a way to reach a person, as payment gateways require. */}
           <address className="ssfoot-business">
             {BUSINESS.name} ({BUSINESS.type}, Proprietor: {BUSINESS.proprietor}) · {BUSINESS.address.line1},{" "}
             {BUSINESS.address.city}, {BUSINESS.address.state} {BUSINESS.address.postalCode} ·{" "}
-            <a href={`tel:${BUSINESS.phone.tel}`}>{BUSINESS.phone.display}</a> ·{" "}
             <a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
           </address>
         </div>

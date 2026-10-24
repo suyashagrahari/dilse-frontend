@@ -5,7 +5,7 @@ export type { TemplateData, HowToData, ReviewData, AggregateRatingData } from "@
 export const SITE_NAME = "SubhSandesh";
 export const SITE_TAGLINE = "Make Every Moment Special";
 export const SITE_DESCRIPTION =
-  "Create stunning personalized pages for birthdays, anniversaries, Valentine's Day, and more. Share your feelings with a beautiful link.";
+  "SubhSandesh is a celebration studio used worldwide: create personalized pages for weddings, birthdays, anniversaries, Valentine's Day and festivals, with photos, music and RSVPs, and share them with one link in any country.";
 import { SITE_URL as _SITE_URL } from "@/lib/config";
 export const SITE_URL = _SITE_URL;
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;

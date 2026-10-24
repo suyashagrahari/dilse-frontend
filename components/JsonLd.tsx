@@ -72,7 +72,6 @@ export function OrganizationJsonLd() {
         // profiles stay on the Person below — see FOUNDER_SAME_AS.
         sameAs: SOCIAL_ACCOUNTS.map((a) => a.href),
         email: BUSINESS.email,
-        telephone: BUSINESS.phone.tel,
         address: {
           "@type": "PostalAddress",
           streetAddress: BUSINESS.address.line1,
@@ -81,16 +80,13 @@ export function OrganizationJsonLd() {
           postalCode: BUSINESS.address.postalCode,
           addressCountry: "IN",
         },
-        areaServed: {
-          "@type": "Country",
-          name: "India",
-        },
+        // Pages are made and opened from anywhere; prices adapt to the visitor's currency.
+        areaServed: { "@type": "Place", name: "Worldwide" },
         knowsLanguage: ["en", "hi"],
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer service",
           email: BUSINESS.email,
-          telephone: BUSINESS.phone.tel,
           hoursAvailable: {
             "@type": "OpeningHoursSpecification",
             dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
@@ -98,7 +94,7 @@ export function OrganizationJsonLd() {
             closes: "23:59",
           },
           availableLanguage: ["English", "Hindi"],
-          areaServed: "IN",
+          areaServed: "Worldwide",
         },
         founder: {
           "@type": "Person",

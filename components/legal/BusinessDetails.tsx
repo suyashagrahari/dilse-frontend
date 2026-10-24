@@ -1,4 +1,4 @@
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin } from "lucide-react";
 import { BUSINESS, BUSINESS_ADDRESS_LINES } from "@/lib/business";
 
 // The registered business, shown on Contact Us, About Us and every legal
@@ -71,11 +71,6 @@ export default function BusinessDetails({ title = "Business Details" }: { title?
           </a>
         </Row>
         <div className="space-y-5">
-          <Row icon={<Phone size={18} />} label="Phone">
-            <a href={`tel:${BUSINESS.phone.tel}`} style={{ color: INK, textDecoration: "none" }}>
-              {BUSINESS.phone.display}
-            </a>
-          </Row>
           <Row icon={<Mail size={18} />} label="Email">
             <a href={`mailto:${BUSINESS.email}`} style={{ color: INK, textDecoration: "none" }}>
               {BUSINESS.email}

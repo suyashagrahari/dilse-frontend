@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, LayoutTemplate, Lock, Mail, MessageCircleQuestion, Phone, Share2, Star } from "lucide-react";
+import { ArrowRight, ChevronDown, LayoutTemplate, Lock, Mail, MessageCircleQuestion, MessageSquare, Share2, Star } from "lucide-react";
 import { buildMeta } from "@/lib/seo";
 import { BUSINESS } from "@/lib/business";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
@@ -8,7 +8,7 @@ import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 export const metadata: Metadata = buildMeta({
   title: "Help | SubhSandesh",
   description:
-    "Find quick help for creating, publishing, and sharing your SubhSandesh celebration pages.",
+    "SubhSandesh Help Center: how to create, password-protect, publish and share a celebration page from any country, plus how to reach 24×7 email support.",
 });
 
 // Each answer describes what the product does today. The questions open with
@@ -42,7 +42,7 @@ const faqs = [
   {
     icon: Mail,
     q: "How do I reach support?",
-    a: `Write to ${BUSINESS.email} or call ${BUSINESS.phone.display}. We are available ${BUSINESS.hoursShort}.`,
+    a: `Write to ${BUSINESS.email} from anywhere in the world, or use the form on the Contact page. We reply within 24 hours and are available ${BUSINESS.hoursShort}.`,
   },
 ];
 
@@ -91,11 +91,11 @@ export default function HelpPage() {
               <span className="hpReachTx"><b>Email</b><span>{BUSINESS.email}</span></span>
               <ArrowRight size={15} className="hpReachGo" aria-hidden="true" />
             </a>
-            <a className="hpReachRow" href={`tel:${BUSINESS.phone.tel}`}>
-              <span className="hpReachIc"><Phone size={16} /></span>
-              <span className="hpReachTx"><b>Phone</b><span>{BUSINESS.phone.display}</span></span>
+            <Link className="hpReachRow" href="/contact-us">
+              <span className="hpReachIc"><MessageSquare size={16} /></span>
+              <span className="hpReachTx"><b>Message us</b><span>Reply within 24 hours</span></span>
               <ArrowRight size={15} className="hpReachGo" aria-hidden="true" />
-            </a>
+            </Link>
           </div>
         </section>
 
