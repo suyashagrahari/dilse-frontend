@@ -23,6 +23,7 @@ import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "happy-rakshabandhan-to-sister";
@@ -572,7 +573,7 @@ export function useSisterEditor() {
     });
   }, [shareUrl, pagePassword, content]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
 

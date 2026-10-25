@@ -13,6 +13,7 @@ import { useToast } from "@/lib/toast/useToast";
 import { useResumeDraft } from "@/lib/draft/resume";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "anniversary-gf";
@@ -85,7 +86,7 @@ export function useAnniversaryEditor() {
   );
 
   const goToGames = useCallback(() => setTab("games"), []);
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
   const closeAuth = useCallback(() => setShowAuth(false), []);
 
   /* ── editing ── */

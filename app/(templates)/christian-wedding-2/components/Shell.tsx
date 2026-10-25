@@ -11,6 +11,7 @@ import { CW2_SONGS, musicSettings } from "../lib/music";
 import Experience from "./Experience";
 import AiWeddingSheet from "./editor/AiWeddingSheet";
 import Studio from "./editor/Studio";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const DOCK_CSS = `
 .c2d { position:fixed; top:calc(10px + env(safe-area-inset-top,0px)); left:10px; right:10px; z-index:200; display:flex; align-items:center; gap:8px; pointer-events:none; }
@@ -51,10 +52,7 @@ export default function Shell() {
     if (!e.editorOpen) setPreviewOpen(false);
   }, [e.editorOpen]);
 
-  const back = () => {
-    if (window.history.length > 1) router.back();
-    else router.push("/templates");
-  };
+  const back = () => goBackFromTemplate(router);
 
   return (
     <div className={`c2-shell${e.editorOpen ? " is-editing" : ""}`}>

@@ -27,6 +27,7 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { readAt, parsePath } from "@/lib/ai-fill/applyPatch";
 import { DEMO_DATA, DEMO_EVENTS, type EditMode, type ReceptionData } from "../components/types";
 import { normalizeReception, withLegacyFields } from "../components/model";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "reception";
@@ -269,7 +270,7 @@ export function useReceptionEditor() {
     [accessToken],
   );
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   const updateMf = useCallback(<K extends keyof ReceptionData>(key: K, val: ReceptionData[K]) => setMf((p) => ({ ...p, [key]: val })), []);
   const patchMf = useCallback((patch: Partial<ReceptionData>) => setMf((p) => ({ ...p, ...patch })), []);

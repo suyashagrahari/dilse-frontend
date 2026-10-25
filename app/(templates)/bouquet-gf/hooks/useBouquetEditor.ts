@@ -16,6 +16,7 @@ import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const DRAFT_KEY = "bouquet_draft";
 const BASE = `${API_URL}/bouquet-gf-pages`;
@@ -387,7 +388,7 @@ export function useBouquetEditor() {
     });
   }, [shareUrl, content.senderName, pagePassword]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
 

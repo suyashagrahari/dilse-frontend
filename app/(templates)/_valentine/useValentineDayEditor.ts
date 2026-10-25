@@ -34,6 +34,7 @@ import {
   type ValentineDayData,
   type ValentineReactions,
 } from "./types";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 type DraftShape = { data?: ValentineDayData; password?: string; completed?: boolean };
 
@@ -407,7 +408,7 @@ export function useValentineDayEditor(slug: DaySlug) {
     });
   }, [shareUrl, content.senderName, pagePassword, day, slug]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
 
   return {

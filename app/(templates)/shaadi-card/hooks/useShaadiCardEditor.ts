@@ -45,6 +45,7 @@ import {
   type ShaadiCardData,
   type ShaadiEvent,
 } from "../components/model";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 const TEMPLATE = SLUG;
 const DRAFT_KEY = "shaadi_card_draft";
@@ -325,7 +326,7 @@ export function useShaadiCardEditor() {
     }
   }, [ready, setMf]);
 
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   /** Commit the form into the preview (and the session draft). */
   const commit = useCallback(

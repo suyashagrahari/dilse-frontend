@@ -4,6 +4,8 @@ import { WebsiteJsonLd } from "@/components/JsonLd";
 import { buildMeta } from "@/lib/seo";
 import { TemplateSearchProvider } from "@/components/TemplateSearchProvider";
 import GlobalEffects from "@/components/GlobalEffects";
+import OriginTracker from "@/components/OriginTracker";
+import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayoutShell from "./AppLayoutShell";
 import AppSplash from "@/components/AppSplash";
@@ -38,6 +40,10 @@ export default function AppLayout({
       <AppLayoutShell>
         <WebsiteJsonLd />
         <GlobalEffects />
+        {/* Remembers page + scroll so a template's Back returns here (lib/backNav). */}
+        <Suspense fallback={null}>
+          <OriginTracker />
+        </Suspense>
         <NavMount />
         {/* Renders nothing unless THIS tab holds an impersonation session.
             Mounted at the layout so it cannot be scrolled past or missed on a

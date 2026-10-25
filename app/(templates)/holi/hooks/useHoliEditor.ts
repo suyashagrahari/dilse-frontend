@@ -12,6 +12,7 @@ import { track } from "@/lib/analytics/track";
 import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "holi";
@@ -180,7 +181,7 @@ export function useHoliEditor() {
   );
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
   // Called when user dismisses auth without logging in → redirect away (private route)
   const closeAuth = useCallback(() => {
     setShowAuth(false);

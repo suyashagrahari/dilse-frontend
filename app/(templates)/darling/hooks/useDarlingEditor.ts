@@ -14,6 +14,7 @@ import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useResumeDraft } from "@/lib/draft/resume";
 import { clearScratch } from "@/lib/draft/localScratch";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "darling";
@@ -294,7 +295,7 @@ export function useDarlingEditor() {
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goToGallery = useCallback(() => setTab("gallery"), []);
   const goToNotes = useCallback(() => setTab("notes"), []);
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
 
   const closeAuth = useCallback(() => {
     setShowAuth(false);

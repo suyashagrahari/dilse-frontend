@@ -12,6 +12,7 @@ import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useResumeDraft } from "@/lib/draft/resume";
+import { goBackFromTemplate } from "@/lib/backNav";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "birthday-gf";
@@ -280,7 +281,7 @@ export function useBirthdayEditor() {
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goToGallery = useCallback(() => setTab("gallery"), []);
-  const goBack = useCallback(() => router.push("/templates"), [router]);
+  const goBack = useCallback(() => goBackFromTemplate(router), [router]);
   const closeAuth = useCallback(() => {
     setShowAuth(false);
     pendingPublishRef.current = null; // discard draft if user dismisses auth
