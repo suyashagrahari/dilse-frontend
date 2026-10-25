@@ -74,6 +74,11 @@ export function useFestival(): FestivalId | null {
   return isFestivalMode(m) ? m : null;
 }
 
+/** True when the wedding season is what the site is wearing. */
+export function useIsWedding(): boolean {
+  return useSeason()?.mode === "wedding";
+}
+
 /** True when the Halloween drop is what the site is wearing. */
 export function useIsHalloween(): boolean {
   return useSeason()?.mode === "halloween";

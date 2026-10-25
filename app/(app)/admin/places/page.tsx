@@ -21,8 +21,9 @@
 //               Premium Studio writes; order is the gallery order
 //               (/admin/template-order) — a reorder here moves these templates
 //               among the slots they already hold in that order.
-//   Drops     — each seasonal drop (Halloween, Dandiya, Diwali…), one tab per
-//               drop the server reports. NO new storage: the drop's `saleSlugs`
+//   Drops     — each seasonal drop (Halloween, Dandiya, Diwali, Wedding…), one tab per
+//               drop the server reports (keyed `drop:<id>`, so the wedding
+//               season's drop never collides with the Wedding hub tab). NO new storage: the drop's `saleSlugs`
 //               in the season settings, written with a patch that names only
 //               that drop's slugs, after re-reading so nothing else moves.
 //
@@ -96,7 +97,11 @@ const sameList = (a: Item[], b: Item[]) =>
 
 const dropLabel = (id: string) =>
   (DROPS as Record<string, { label: string } | undefined>)[id]?.label.replace(/ drop$/, "") ?? id.charAt(0).toUpperCase() + id.slice(1);
-const DROP_TAB_ORDER = ["halloween", "diwali", "dandiya"];
+const DROP_TAB_ORDER = ["wedding", "halloween", "diwali", "dandiya"];
+// Drop tabs are keyed `drop:<id>`, never the bare id: the wedding SEASON's drop
+// is called "wedding", which is also the /wedding hub's own tab here.
+const dropKey = (id: string) => `drop:${id}`;
+const dropIdOf = (key: string) => (key.startsWith("drop:") ? key.slice(5) : key);
 const dropRank = (id: string) => (DROP_TAB_ORDER.includes(id) ? DROP_TAB_ORDER.indexOf(id) : 99);
 const dropPath = (id: string) => (DROPS as Record<string, { path: string } | undefined>)[id]?.path;
 
@@ -108,7 +113,7 @@ export default function PlacesPage() {
 
   const [allowed, setAllowed] = useState(false);
   const [tab, setTab] = useState<string>("gallery");
-  const [dropIds, setDropIds] = useState<string[]>(["halloween", "diwali", "dandiya"]);
+  const [dropIds, setDropIds] = useState<string[]>(["wedding", "halloween", "diwali", "dandiya"]);
   const [tabs, setTabs] = useState<Record<string, TabState>>({});
   const [tiers, setTiers] = useState<Record<string, boolean> | null>(null);
   const [galleryOrder, setGalleryOrder] = useState<string[] | null>(null);
@@ -232,7 +237,7 @@ export default function PlacesPage() {
         const next = { ...all };
         for (const id of ids) {
           const slugs = (drops[id]?.saleSlugs ?? []).map((slug) => ({ slug }));
-          next[id] = { base: slugs, draft: slugs, loaded: true };
+          next[dropKey(id)] = { base: slugs, draft: slugs, loaded: true };
         }
         return next;
       });
@@ -240,7 +245,7 @@ export default function PlacesPage() {
       const msg = e instanceof Error ? e.message : "Could not load";
       setTabs((all) => {
         const next = { ...all };
-        for (const id of dropIds) next[id] = { ...(next[id] ?? { base: [], draft: [] }), loaded: true, error: msg };
+        for (const id of dropIds) next[dropKey(id)] = { ...(next[dropKey(id)] ?? { base: [], draft: [] }), loaded: true, error: msg };
         return next;
       });
     }
@@ -449,29 +454,31 @@ export default function PlacesPage() {
   }, [tiers, cur, api, galleryIdx, effectiveGallery, loadPremium]);
 
   const saveDrop = useCallback(async () => {
+    const id = dropIdOf(tab);
     const slugs = cur.draft.map((i) => i.slug);
     if (slugs.length === 0) throw new Error("A drop needs at least one template");
     if (slugs.length > DROP_MAX) throw new Error(`A drop holds at most ${DROP_MAX} templates`);
     // Read-modify-write: re-read, refuse if this drop changed elsewhere, then
     // send a patch naming only this drop's slugs.
     const before = await api("/admin/super/season");
-    const live = (((before.drops ?? {}) as Record<string, { saleSlugs?: string[] }>)[tab]?.saleSlugs ?? []).map(String);
+    const live = (((before.drops ?? {}) as Record<string, { saleSlugs?: string[] }>)[id]?.saleSlugs ?? []).map(String);
     if (live.join() !== cur.base.map((i) => i.slug).join()) {
       setTabState(tab, { base: live.map((slug) => ({ slug })) });
       throw new Error("This drop was changed elsewhere since you opened it — the saved list was reloaded; check and Save again");
     }
-    const after = await api("/admin/super/season", { method: "PUT", body: JSON.stringify({ drops: { [tab]: { saleSlugs: slugs } } }) });
+    const after = await api("/admin/super/season", { method: "PUT", body: JSON.stringify({ drops: { [id]: { saleSlugs: slugs } } }) });
     // Everything but this drop's slugs must be exactly as it was.
     const strip = (s: Record<string, unknown>) => {
       const c = JSON.parse(JSON.stringify(s)) as Record<string, unknown> & { drops?: Record<string, Record<string, unknown>> };
-      delete c.updatedAt; delete c.updatedBy;
-      if (c.drops?.[tab]) delete c.drops[tab].saleSlugs;
+      // The flat saleSlugs mirror the ACTIVE drop, so they move with it.
+      delete c.updatedAt; delete c.updatedBy; delete c.saleSlugs;
+      if (c.drops?.[id]) delete c.drops[id].saleSlugs;
       return JSON.stringify(c);
     };
-    const saved = (((after.drops ?? {}) as Record<string, { saleSlugs?: string[] }>)[tab]?.saleSlugs ?? slugs).map((slug) => ({ slug }));
+    const saved = (((after.drops ?? {}) as Record<string, { saleSlugs?: string[] }>)[id]?.saleSlugs ?? slugs).map((slug) => ({ slug }));
     setTabState(tab, { base: saved, draft: saved });
     if (strip(before) !== strip(after)) return { msg: "Saved — but other season settings look different now; check /admin/season", tone: "err" as const };
-    return `Saved — the ${dropLabel(tab)} drop now has ${saved.length} template${saved.length === 1 ? "" : "s"}`;
+    return `Saved — the ${dropLabel(id)} drop now has ${saved.length} template${saved.length === 1 ? "" : "s"}`;
   }, [api, cur, tab, setTabState]);
 
   const save = useCallback(async () => {
@@ -535,7 +542,7 @@ export default function PlacesPage() {
     for (const i of tabs.wedding?.draft ?? []) push(i.slug, { id: "wedding", label: "Wedding" });
     const prem = tabs.premium?.loaded && !tabs.premium.error ? tabs.premium.draft.map((i) => i.slug) : [];
     for (const slug of prem) push(slug, { id: "premium", label: "Premium" });
-    for (const id of dropIds) for (const i of tabs[id]?.draft ?? []) push(i.slug, { id, label: `${dropLabel(id)} drop` });
+    for (const id of dropIds) for (const i of tabs[dropKey(id)]?.draft ?? []) push(i.slug, { id: dropKey(id), label: `${dropLabel(id)} drop` });
     return m;
   }, [galleryReady, hidden, excludedDraft, tabs, dropIds]);
   const othersOf = useCallback(
@@ -581,12 +588,12 @@ export default function PlacesPage() {
     { value: "wedding", label: <>💍 Wedding{isDirty(tabs.wedding) && <i className="pl-dot" aria-label="unsaved" />}</> },
     { value: "premium", label: <>👑 Premium{isDirty(tabs.premium) && <i className="pl-dot" aria-label="unsaved" />}</> },
     ...dropIds.map((id) => ({
-      value: id,
-      label: <>{dropLabel(id)}{isDirty(tabs[id]) && <i className="pl-dot" aria-label="unsaved" />}</>,
+      value: dropKey(id),
+      label: <>{dropLabel(id)}{isDirty(tabs[dropKey(id)]) && <i className="pl-dot" aria-label="unsaved" />}</>,
     })),
   ];
 
-  const placeHref = kind === "gallery" ? "/templates" : kind === "wedding" ? "/wedding" : kind === "premium" ? "/templates/premium" : dropPath(tab);
+  const placeHref = kind === "gallery" ? "/templates" : kind === "wedding" ? "/wedding" : kind === "premium" ? "/templates/premium" : dropPath(dropIdOf(tab));
   const status =
     kind === "gallery" ? (cur.draft.length ? "Curated" : "Everything live")
     : kind === "wedding" ? (cur.auto ? "Automatic" : "Curated") : kind === "premium" ? "Tiers" : "Drop list";
@@ -615,7 +622,7 @@ export default function PlacesPage() {
           </div>
         ) : (
           <div className="adk-hero-grid">
-            <HeroStat big label={kind === "drop" ? dropLabel(tab).toUpperCase() : kind.toUpperCase()} value={status} sub={statusSub} tone="#ffe3a3" />
+            <HeroStat big label={kind === "drop" ? dropLabel(dropIdOf(tab)).toUpperCase() : kind.toUpperCase()} value={status} sub={statusSub} tone="#ffe3a3" />
             <HeroStat label="IN THIS PLACE" value={cur.draft.length} tone="#fdf8ee" />
             <HeroStat label="VISIBLE TO VISITORS" value={liveCount} sub="not hidden, not coming soon" />
           </div>

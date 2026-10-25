@@ -23,6 +23,7 @@ import {
 import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
 import HalloweenTeaser, { HALLOWEEN_TEASER_CSS } from "./HalloweenTeaser";
 import FestivalTeaser, { FESTIVAL_TEASER_CSS } from "./FestivalTeaser";
+import WeddingTeaser, { WEDDING_TEASER_CSS } from "./WeddingTeaser";
 import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
 import { useSeason, useSeasonPending } from "@/hooks/useSeason";
 import { SEASON_FALLBACK } from "@/lib/season";
@@ -514,7 +515,7 @@ function TemplatesContent({ room, galleryExclude }: { room: GalleryTab; galleryE
         minHeight: "100dvh",
       }}
     >
-      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS + FESTIVAL_TEASER_CSS}</style>
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS + FESTIVAL_TEASER_CSS + WEDDING_TEASER_CSS}</style>
 
       {/* The Premium room: fades in over the cream page */}
       <PremiumBackdrop active={isPremium} />
@@ -731,7 +732,7 @@ function TemplatesContent({ room, galleryExclude }: { room: GalleryTab; galleryE
                         {premiumShowcase.length > 0 && (
                           <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
                         )}
-                        {teaserPending ? <div className="txSkel" aria-hidden data-season-pending="" /> : seasonMode === "halloween" ? <HalloweenTeaser /> : seasonMode === "dandiya" || seasonMode === "diwali" ? <FestivalTeaser kind={seasonMode} /> : <ValentineTeaser />}
+                        {teaserPending ? <div className="txSkel" aria-hidden data-season-pending="" /> : seasonMode === "halloween" ? <HalloweenTeaser /> : seasonMode === "dandiya" || seasonMode === "diwali" ? <FestivalTeaser kind={seasonMode} /> : seasonMode === "wedding" ? <WeddingTeaser /> : <ValentineTeaser />}
                       </div>
                     ))}
 

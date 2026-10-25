@@ -118,6 +118,7 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/halloween-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/dandiya-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/diwali-offer", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/wedding-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changeFrequency: "yearly" },
   { path: "/refund-policy", priority: 0.3, changeFrequency: "yearly" },

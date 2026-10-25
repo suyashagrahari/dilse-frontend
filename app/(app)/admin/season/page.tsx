@@ -13,9 +13,13 @@
 //      gallery teaser, sticks/mirrors/panda on the hero and blog, /dandiya-offer
 //   🪔 Diwali drop — maroon-gold theme: strip, blog card, gallery teaser,
 //      diyas/lanterns/fireworks on the hero and blog, /diwali-offer
+//   💍 Wedding season drop — a LIGHT ivory/blush/gold theme: strip, blog card,
+//      gallery teaser, marigold torans, swaying jhumkas and drifting petals on
+//      the hero and blog, /wedding-offer, and a sale ribbon on the /wedding hub.
+//      Its sale ships OFF (the server default) — switch it on here.
 //   ⏸  Off — no seasonal banners anywhere
 //
-// Each DROP season (Halloween, Navratri Dandiya, Diwali) keeps its own sale — on/off
+// Each DROP season (Halloween, Navratri Dandiya, Diwali, Wedding) keeps its own sale — on/off
 // and the percent — and its own list of templates, edited under that season's
 // tab. Switching the mode never loses the other season's settings. The
 // discount is real: the server applies the ACTIVE mode's sale to every price
@@ -47,7 +51,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import { refreshPricing } from "@/lib/pricing";
 import { purgeSiteCache } from "@/lib/siteCache";
 import {
-  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVAL_PERCENT_DEFAULT, isDropMode, loadSeason, type DropId, type SeasonMode,
+  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVAL_PERCENT_DEFAULT, isDropMode, loadSeason, WEDDING_PERCENT_DEFAULT, type DropId, type SeasonMode,
 } from "@/lib/season";
 import { GALLERY_BY_SLUG, GALLERY_LIST } from "@/lib/galleryRules";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
@@ -61,11 +65,13 @@ const DROP_DEFAULT: Record<DropId, Drop> = {
   halloween: { saleEnabled: true, salePercent: 49, saleSlugs: [...DROPS.halloween.slugs] },
   dandiya: { saleEnabled: true, salePercent: FESTIVAL_PERCENT_DEFAULT, saleSlugs: [...DROPS.dandiya.slugs] },
   diwali: { saleEnabled: true, salePercent: FESTIVAL_PERCENT_DEFAULT, saleSlugs: [...DROPS.diwali.slugs] },
+  wedding: { saleEnabled: false, salePercent: WEDDING_PERCENT_DEFAULT, saleSlugs: [...DROPS.wedding.slugs] },
 };
 const DROP_UI: Record<DropId, { emoji: string; tab: string; reset: string }> = {
   halloween: { emoji: "🎃", tab: "Halloween drop", reset: "Reset to the two Halloween templates" },
   dandiya: { emoji: "🥢", tab: "Navratri Dandiya drop", reset: "Reset to Be My Dandiya Partner" },
   diwali: { emoji: "🪔", tab: "Diwali drop", reset: "Reset to Happy Diwali" },
+  wedding: { emoji: "💍", tab: "Wedding season drop", reset: "Reset to the 11 wedding invitations" },
 };
 const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
@@ -85,10 +91,11 @@ const MODES: { value: SeasonMode; emoji: string; label: string; note: string }[]
   { value: "halloween", emoji: "🎃", label: "Halloween drop", note: "Running strip under the navbar on home, blog and gallery; Halloween card in posts; critters on the home hero and blog; the offer page." },
   { value: "dandiya", emoji: "🥢", label: "Navratri Dandiya drop", note: "Kumkum-red garba theme: Dandiya strip, blog card and gallery teaser; twirling sticks, mirrors and the dancing panda on the hero and blog; /dandiya-offer. Ends 20 Oct." },
   { value: "diwali", emoji: "🪔", label: "Diwali drop", note: "Maroon-gold Diwali theme: Diwali strip, blog card and gallery teaser; diyas, lanterns, fireworks and rangoli on the hero and blog; /diwali-offer. Ends 8 Nov." },
+  { value: "wedding", emoji: "💍", label: "Wedding season drop", note: "Light ivory, blush & gold: wedding strip, blog card and gallery teaser; marigold torans, swaying jhumkas and drifting petals on the hero and blog; /wedding-offer and a sale ribbon on /wedding. Ends 31 Dec." },
   { value: "off", emoji: "⏸️", label: "Off", note: "No seasonal banners anywhere. The offer pages still open, without the sale." },
 ];
 
-const QUICK = [25, 30, 40, 49];
+const QUICK = [20, 25, 30, 40, 49];
 
 const modeMeta = (m: SeasonMode) => MODES.find((x) => x.value === m) ?? MODES[MODES.length - 1];
 /** "Diwali drop", "Valentine wishlist", "nothing seasonal". */
@@ -358,7 +365,7 @@ export default function AdminSeasonPage() {
   return (
     <AdminPage
       title="Season & offers"
-      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, Navratri Dandiya or Diwali), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates. Visitors in India and abroad can wear different seasons (Who sees what)."
+      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, Navratri Dandiya, Diwali or the wedding season), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates. Visitors in India and abroad can wear different seasons (Who sees what)."
       icon={<Ghost size={18} />}
       width={1280}
     >
@@ -585,7 +592,8 @@ const SSN_CSS = `
 .ssn-err { margin: 12px 0; padding: 12px 14px; border-radius: 12px; color: #b3261e; background: #fff1ef; border: 1px solid rgba(179,38,30,.25); font: 500 13px/1.4 'Inter', sans-serif; }
 .ssn-modes { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
 @media (min-width: 720px) { .ssn-modes { grid-template-columns: repeat(2, minmax(0,1fr)); } }
-@media (min-width: 1100px) { .ssn-modes { grid-template-columns: repeat(5, minmax(0,1fr)); } }
+@media (min-width: 1100px) { .ssn-modes { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media (min-width: 1440px) { .ssn-modes { grid-template-columns: repeat(6, minmax(0,1fr)); } }
 .ssn-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 14px 16px; border-radius: 16px; text-align: left; cursor: pointer;
   border: 1.5px solid rgba(61,12,17,.12); background: #fffdfb; color: #2a0a0e; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
 .ssn-mode:hover { transform: translateY(-1px); }
@@ -602,12 +610,17 @@ const SSN_CSS = `
 .ssn-mode.is-diwali.on { border-color: #ffcf5a; color: #ffe7a8; background: radial-gradient(120% 90% at 50% 120%, rgba(255,190,70,.35), transparent 55%), linear-gradient(180deg, #5e0b10, #2b0508);
   box-shadow: 0 10px 24px -14px rgba(51,6,10,.8), inset 0 0 0 1px #ffcf5a; }
 .ssn-mode.is-diwali.on > span:not(.ssn-mode-e) { color: rgba(255,228,196,.8); }
+.ssn-mode.is-wedding.on { border-color: #c9a24a; color: #5b1a24;
+  background: radial-gradient(120% 90% at 85% 0%, rgba(240,170,170,.38), transparent 55%), radial-gradient(90% 70% at 0% 100%, rgba(255,196,90,.3), transparent 60%), linear-gradient(180deg, #fffaf2, #fbe9e4);
+  box-shadow: 0 10px 24px -14px rgba(122,40,52,.45), inset 0 0 0 1px #c9a24a, inset 0 0 0 4px rgba(255,255,255,.7), inset 0 0 0 5px rgba(201,162,74,.35); }
+.ssn-mode.is-wedding.on > span:not(.ssn-mode-e) { color: #8a5560; }
 .ssn-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 2px; }
 .ssn-tab { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 999px; cursor: pointer;
   border: 1.5px solid rgba(61,12,17,.14); background: #fffdfb; color: #2a0a0e; font: 700 13px/1 'Inter', sans-serif; }
 .ssn-tab.on.is-halloween { color: #f3eefe; border-color: #b9a6f0; background: linear-gradient(135deg, #17132a, #3b2f62); }
 .ssn-tab.on.is-dandiya { color: #fff6ea; border-color: #ffb000; background: linear-gradient(135deg, #7a0f12, #c8141f); }
 .ssn-tab.on.is-diwali { color: #ffe7a8; border-color: #ffcf5a; background: linear-gradient(135deg, #2b0508, #8f1416); }
+.ssn-tab.on.is-wedding { color: #5b1a24; border-color: #c9a24a; background: linear-gradient(135deg, #fffaf2, #f8dcd6); box-shadow: 0 6px 16px -10px rgba(122,40,52,.5); }
 .ssn-tab .ssn-live-in { position: static; padding: 3px 6px; font-size: 8.5px; }
 .ssn-dot { width: 7px; height: 7px; border-radius: 50%; background: #e3742a; }
 .ssn-tabs-note { flex: 1 1 260px; font: 500 12.5px/1.4 'Inter', sans-serif; color: #7f5f5f; }
