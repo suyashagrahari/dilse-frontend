@@ -9,9 +9,12 @@
 //
 // What the server stores is one boolean per slug, and only for slugs somebody has
 // actually decided about. A template nobody has touched shows as "default", which
-// is a real third state and worth showing: it means "whatever the code says",
-// and for a brand-new template the code says hidden. See
-// `server/src/config/templateVisibility.ts`.
+// is a real third state and worth showing: it means "whatever the code says".
+// The code's default depends on the host: on the live (apex) domain a brand-new
+// template starts hidden, everywhere else (staging, a laptop) it starts live.
+// The server sends the default IN FORCE here as `defaultHidden`, so every row
+// below resolves exactly as the public gallery does; `apexDefaultHidden` is only
+// for the note on non-apex hosts. See `server/src/config/templateVisibility.ts`.
 //
 // ── THIS PAGE EDITS THE DEPLOYMENT IT IS SERVED FROM ────────────────────────
 //
@@ -29,7 +32,7 @@ import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { refreshTemplateVisibility } from "@/lib/templateVisibility";
 import { purgeSiteCache } from "@/lib/siteCache";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
-import { Eye, EyeOff, Loader2, Check, RotateCcw, Globe, AlertTriangle, LayoutGrid, Search } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, RotateCcw, Globe, AlertTriangle, LayoutGrid, Search, Info } from "lucide-react";
 import { A, AdminPage, Hero, HeroStat, ChipGroup, SearchBox, Loading, EmptyState, Tag } from "../adminKit";
 
 const OK = A.ok;
@@ -50,6 +53,9 @@ export default function AdminTemplatesPage() {
 
   const [rows, setRows] = useState<Record<string, Row>>({});
   const [defaultHidden, setDefaultHidden] = useState<Set<string>>(new Set());
+  /** Null until loaded (or from an older server that did not say). */
+  const [isApex, setIsApex] = useState<boolean | null>(null);
+  const [apexDefaultHidden, setApexDefaultHidden] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -81,6 +87,8 @@ export default function AdminTemplatesPage() {
       for (const r of json.data.rows as Row[]) map[r.slug] = r;
       setRows(map);
       setDefaultHidden(new Set<string>(json.data.defaultHidden || []));
+      setIsApex(typeof json.data.isApex === "boolean" ? json.data.isApex : null);
+      setApexDefaultHidden(new Set<string>(Array.isArray(json.data.apexDefaultHidden) ? json.data.apexDefaultHidden : []));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load template visibility");
     } finally {
@@ -258,6 +266,15 @@ export default function AdminTemplatesPage() {
             reach visitors within about a minute.
           </span>
         </div>
+        {isApex === false && apexDefaultHidden.size > 0 ? (
+          <div className="tv-host">
+            <Info size={13} style={{ flex: "none", color: "#ffe3a3" }} />
+            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+              This is not the live domain, so templates without an admin decision are <strong style={{ color: "#ffe3a3" }}>live here</strong>.
+              On the live domain {apexDefaultHidden.size} newer templates start hidden until switched on there (marked &ldquo;hidden on live domain&rdquo;).
+            </span>
+          </div>
+        ) : null}
       </Hero>
 
       <div className="tv-controls">
@@ -338,6 +355,11 @@ export default function AdminTemplatesPage() {
                     {!decided ? (
                       <span title="No admin decision on record — following the built-in default">
                         <Tag tone={A.muted}>default</Tag>
+                      </span>
+                    ) : null}
+                    {!decided && isApex === false && apexDefaultHidden.has(t.slug) ? (
+                      <span title="With no admin decision, this template starts hidden on the live domain until it is switched on there">
+                        <Tag tone={A.warn}>hidden on live domain</Tag>
                       </span>
                     ) : null}
                     {t.group === "Webpage" ? <Tag tone={A.info}>webpage</Tag> : null}

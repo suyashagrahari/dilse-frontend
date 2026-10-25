@@ -83,6 +83,24 @@ export function pinFirst<T extends { slug: string }>(list: T[], order?: readonly
   return [...pinned, ...list.filter((t) => !pos.has(t.slug))];
 }
 
+/**
+ * Is this template LISTED on the main gallery (/templates, its search, the
+ * Premium room)? The one rule every main-gallery surface applies, so they
+ * cannot drift:
+ *
+ *   hidden (visibility, the master switch)   → never listed
+ *   live but in the super admin's "Templates page" exclusions → not listed,
+ *       yet still openable by link and still shown in other places
+ *       (/wedding, drops) — those surfaces do NOT call this
+ *   otherwise → listed
+ *
+ * Never use this for the sitemap or SEO pages: an excluded template is still a
+ * public page.
+ */
+export function isListedOnGallery(slug: string, hidden: ReadonlySet<string>, excluded: ReadonlySet<string>): boolean {
+  return !hidden.has(slug) && !excluded.has(slug);
+}
+
 /** slug → registry entry. */
 export const GALLERY_BY_SLUG: ReadonlyMap<string, TemplateListItem> = new Map(GALLERY_LIST.map((t) => [t.slug, t]));
 

@@ -7,7 +7,7 @@
 // fails — the gallery keeps registry order and the code's PREMIUM_SLUGS, so a
 // slow or dead endpoint never blanks or reshuffles anything badly.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_URL } from "@/lib/config";
 import { PREMIUM_SLUGS, ULTRA_PREMIUM_SLUGS } from "@/data/template-registry";
 
@@ -24,12 +24,23 @@ export interface TemplateMeta {
    * An older server without the field reads as `null` everywhere.
    */
   collections: TemplateCollections;
+  /** True once the server has answered (false while loading or if it failed). */
+  loaded: boolean;
 }
 
 export type CollectionItem = { slug: string; group?: string };
-export type TemplateCollections = { wedding: { items: CollectionItem[] } | null };
+export type TemplateCollections = {
+  wedding: { items: CollectionItem[] } | null;
+  /**
+   * Live templates kept OFF the main gallery (/templates, its search and the
+   * Premium room) — server key "gallery-exclude". `null` = nothing excluded,
+   * which is also what an older server without the key reads as. Apply it
+   * only through `isListedOnGallery` (lib/galleryRules.ts).
+   */
+  galleryExclude: { items: CollectionItem[] } | null;
+};
 
-const EMPTY: TemplateMeta = { tiers: {}, ranking: [], order: [], collections: { wedding: null } };
+const EMPTY: TemplateMeta = { tiers: {}, ranking: [], order: [], collections: { wedding: null, galleryExclude: null }, loaded: false };
 
 /** Tolerant read of one place: anything malformed is "automatic" (null). */
 export function parseCollection(raw: unknown): { items: CollectionItem[] } | null {
@@ -46,7 +57,12 @@ export function parseCollection(raw: unknown): { items: CollectionItem[] } | nul
 
 export function parseCollections(raw: unknown): TemplateCollections {
   const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-  return { wedding: parseCollection(o.wedding) };
+  return { wedding: parseCollection(o.wedding), galleryExclude: parseCollection(o["gallery-exclude"]) };
+}
+
+/** The excluded slugs of a parsed `galleryExclude`, lower-cased. */
+export function galleryExcludedSet(c: { items: CollectionItem[] } | null | undefined): ReadonlySet<string> {
+  return new Set((c?.items ?? []).map((i) => i.slug.toLowerCase()));
 }
 
 let meta: TemplateMeta = EMPTY;
@@ -65,6 +81,7 @@ function load(fresh = false): Promise<void> {
           ranking: Array.isArray(json.data.ranking) ? json.data.ranking : [],
           order: Array.isArray(json.data.order) ? json.data.order.filter((x: unknown): x is string => typeof x === "string") : [],
           collections: parseCollections(json.data.collections),
+          loaded: true,
         };
         listeners.forEach((l) => l());
       }
@@ -90,6 +107,21 @@ export function useTemplateMeta(): TemplateMeta {
     return () => { listeners.delete(l); };
   }, []);
   return m;
+}
+
+/**
+ * The slugs kept off the main gallery for this visitor's page.
+ *
+ * `serverList` is what the page's server shell resolved (so a just-excluded
+ * template does not flash in and out); once this tab's own fetch has
+ * answered, that answer wins. Neither known → nothing excluded.
+ */
+export function useGalleryExcluded(serverList?: readonly string[] | null): ReadonlySet<string> {
+  const { collections, loaded } = useTemplateMeta();
+  return useMemo(() => {
+    if (loaded) return galleryExcludedSet(collections.galleryExclude);
+    return new Set((serverList ?? []).map((s) => s.toLowerCase()));
+  }, [loaded, collections.galleryExclude, serverList]);
 }
 
 /** Is this template premium, after super-admin overrides? */
