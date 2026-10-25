@@ -21,7 +21,7 @@
 //
 // No reviews, names, counts or ratings anywhere: features, described honestly.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, CalendarCheck, Check, ChevronRight, Images, Languages,
@@ -38,14 +38,19 @@ import { GALLERY_LIST, isComingSoon, isNewLaunch, pinFirst, rankRooms } from "@/
 import type { TemplateListItem } from "@/types/template-config";
 import {
   FEATURES, LUX, STEPS, WEDDING_FAQS, WEDDING_FILTERS,
-  weddingItems, type WeddingFilter,
+  cdnCover, weddingItems, type WeddingFilter,
 } from "./content";
 import { HUB_CSS } from "./hub.css";
 import { HERO_CSS } from "./hero.css";
 import { SECTIONS_CSS } from "./sections.css";
-import HubHero from "./HubHero";
-import HubJourney from "./HubJourney";
-import HubWorld from "./HubWorld";
+import HubHeroBase from "./HubHero";
+import HubJourneyBase from "./HubJourney";
+import HubWorldBase from "./HubWorld";
+
+// The big decorative bands don't re-render when a filter chip or a favourite changes.
+const HubHero = memo(HubHeroBase);
+const HubJourney = memo(HubJourneyBase);
+const HubWorld = memo(HubWorldBase);
 
 type Item = TemplateListItem & { premium: boolean; group: Exclude<WeddingFilter, "all"> };
 
@@ -70,8 +75,10 @@ function useWeddingTemplates() {
   // Rank badges mean the same thing here as in the gallery: ranked against the
   // whole room, not just the weddings.
   const rankOf = useMemo(() => rankRooms(ranked, createdBy), [ranked, createdBy]);
+  // Covers that live in public/wedding-v3 are served from their CDN twins here.
   const items: Item[] = useMemo(
-    () => weddingItems(pinFirst(ranked, order), collections.wedding, isComingSoon),
+    () => weddingItems(pinFirst(ranked, order), collections.wedding, isComingSoon)
+      .map((t) => ({ ...t, coverImage: cdnCover(t.coverImage) })),
     [ranked, order, collections.wedding],
   );
   return { items, rankOf, createdBy };
@@ -162,6 +169,8 @@ export default function WeddingHubClient() {
   const [filter, setFilter] = useState<WeddingFilter>("all");
   const root = useRef<HTMLElement>(null);
   const finale = useRef<HTMLElement>(null);
+  const designs = useRef<HTMLElement>(null);
+  const how = useRef<HTMLElement>(null);
 
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
@@ -187,12 +196,19 @@ export default function WeddingHubClient() {
 
   useReveal(root, [items.length]);
 
-  // The finale only animates while it is on screen.
+  // The finale, the "how it works" pictures and the cards' sheens only animate
+  // while their band is on screen (is-live; see the pause rules in hub.css.ts).
   useEffect(() => {
-    const el = finale.current;
-    if (!el || !("IntersectionObserver" in window)) return;
-    const io = new IntersectionObserver(([e]) => el.classList.toggle("is-live", e.isIntersecting), { threshold: 0.15 });
-    io.observe(el);
+    const els = [finale.current, designs.current, how.current].filter((e): e is HTMLElement => !!e);
+    if (!els.length || !("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("is-live"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.target.classList.toggle("is-live", e.isIntersecting)),
+      { threshold: 0.01 },
+    );
+    els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
 
@@ -205,7 +221,7 @@ export default function WeddingHubClient() {
       <HubJourney visible={visible} />
 
       {/* ── All designs ──────────────────────────────────────────────────── */}
-      <section className="whBand whDesigns" id="designs" aria-labelledby="wh-designs">
+      <section ref={designs} className="whBand whDesigns" id="designs" aria-labelledby="wh-designs">
         <div className="whIn">
           <div className="whHead">
             <p className="whEyebrow">The collection</p>
@@ -254,7 +270,7 @@ export default function WeddingHubClient() {
       <HubWorld />
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section className="whBand whHow" id="how" aria-labelledby="wh-how">
+      <section ref={how} className="whBand whHow" id="how" aria-labelledby="wh-how">
         <div className="whIn">
           <div className="whHead">
             <p className="whEyebrow">How it works</p>

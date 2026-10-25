@@ -9,6 +9,7 @@
 // and nothing here claims a number, a review or a customer we cannot show.
 
 import type { TemplateListItem } from "@/types/template-config";
+import { MEDIA_BASE } from "@/lib/templateMedia";
 
 /** A wedding template is anything typed or filed as one — so a new wedding design shows up here without an edit. */
 export function isWeddingTemplate(t: Pick<TemplateListItem, "type" | "category" | "slug">): boolean {
@@ -74,11 +75,39 @@ export function weddingItems<T extends Pick<TemplateListItem, "type" | "category
 }
 
 /**
- * Page-weight art for the hub, cut down from the owner's originals in
- * public/wedding-v3 (sizes chosen for the box each piece is drawn in). Served
- * from the app itself — never the CDN.
+ * The hub's art comes from the media CDN (CloudFront → s3://subhsandesh-prod,
+ * key prefix gifts-media/wedding-v3/…, the same relative paths as
+ * public/wedding-v3, which stays in the repo as the source of truth). Upload a
+ * changed file there BEFORE shipping code that references it — no deploy pushes
+ * media. The CDN sends no CORS header, so nothing here may be used as a CSS
+ * mask image, drawn to a canvas or fetched from JS; plain <img> and CSS
+ * backgrounds only.
  */
-export const LUX = "/wedding-v3/hub/lux";
+export const ART = `${MEDIA_BASE}/wedding-v3`;
+
+/**
+ * Page-weight art for the hub, cut down from the owner's originals in
+ * public/wedding-v3 (sizes chosen for the box each piece is drawn in).
+ */
+export const LUX = `${ART}/hub/lux`;
+
+/**
+ * The wedding-v3 covers that have been uploaded to the CDN together with their
+ * @360w/@540w/@720w variants. Only these are swapped: a new public/ cover keeps
+ * loading from the app until it is uploaded and added here.
+ */
+const CDN_COVERS = new Set([
+  "/wedding-v3/christian-wedding/card.webp",
+  "/wedding-v3/lotus/cover.webp",
+  "/wedding-v3/royal/cover.webp",
+  "/wedding-v3/template1/card.webp",
+  "/wedding-v3/template13/card.webp",
+  "/wedding-v3/template3/card.webp",
+]);
+
+/** A wedding-v3 cover under public/ as its CDN twin, so the card takes the pre-sized variants straight from CloudFront. */
+export const cdnCover = (src: string | undefined): string | undefined =>
+  src && CDN_COVERS.has(src) ? `${MEDIA_BASE}${src}` : src;
 
 // ── the journey ──────────────────────────────────────────────────────────────
 

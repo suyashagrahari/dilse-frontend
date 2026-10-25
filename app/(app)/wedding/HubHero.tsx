@@ -9,10 +9,11 @@
 // feathers drift down. Scroll and (on desktop) the pointer move the layers at
 // different depths.
 //
-// Performance: the headline is plain text (the LCP element), the art is sized
-// variants from public/wedding-v3/hub/lux with phone-sized sources, all motion
-// is transform/opacity, the parallax writes two CSS variables in one rAF, and
-// everything stops off-screen. prefers-reduced-motion gets a still scene.
+// Performance: the couple is the LCP element (preloaded at high priority by
+// page.tsx), the art is sized variants of public/wedding-v3/hub/lux served
+// from the CDN with phone-sized sources, all motion is transform/opacity, the
+// parallax writes each layer's translate in one rAF, and everything stops
+// off-screen. prefers-reduced-motion gets a still scene.
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarCheck, ChevronDown, Languages, MessageCircle, Music2, Sparkles } from "lucide-react";
@@ -71,8 +72,9 @@ function FeatherDefs() {
         <ellipse cx="0" cy="-388" rx="33" ry="46" fill="#7a4a1c" />
         <ellipse cx="0" cy="-386" rx="27" ry="38" fill="url(#whEye2)" />
         <ellipse cx="0" cy="-382" rx="15" ry="22" fill="url(#whEye3)" />
-        <ellipse className="whEyeGlint" cx="-6" cy="-396" rx="5" ry="8" fill="#fff" fillOpacity=".55" />
       </g>
+      {/* The glint on each eye is drawn by <GlintFan>, a twin svg above this one. */}
+      <ellipse id="whGlint" cx="-6" cy="-396" rx="5" ry="8" fill="#fff" fillOpacity=".55" />
     </defs>
   );
 }
@@ -92,24 +94,46 @@ function Pic({ phone, ...img }: React.ImgHTMLAttributes<HTMLImageElement> & { ph
   );
 }
 
+/** Parallax per layer .px0–.px4: [px per unit of pointer x, px per px of scroll, px per unit of pointer y]. Mirrors hero.css.ts. */
+const PX: [number, number, number][] = [[0, 0.32, 0], [-8, 0.22, 0], [-12, 0.14, -6], [-18, 0.07, 0], [-26, 0.02, 0]];
+
 const FAN = Array.from({ length: 17 }, (_, i) => -84 + i * 10.5);
 
-/** The peacock's train, fanned open behind the couple. */
-function Fan() {
+/** Every feather of the train, long ones then the short ones in front, each a `<use>` of `href`. */
+function Feathers({ href }: { href: string }) {
   return (
-    <svg className="whFan" viewBox="0 0 1000 520" aria-hidden focusable="false">
-      <FeatherDefs />
+    <>
       {FAN.map((a, i) => (
         <g key={a} className="whFea" style={{ ["--a" as string]: `${a}deg`, ["--d" as string]: `${0.2 + Math.abs(i - 8) * 0.06}s` }}>
-          <use href="#whFeather" x="500" y="500" />
+          <use href={href} x="500" y="500" />
         </g>
       ))}
       {FAN.filter((_, i) => i % 2 === 1).map((a) => (
         <g key={`s${a}`} className="whFea short" style={{ ["--a" as string]: `${a}deg`, ["--d" as string]: ".5s" }}>
-          <use href="#whFeather" x="500" y="500" />
+          <use href={href} x="500" y="500" />
         </g>
       ))}
-    </svg>
+    </>
+  );
+}
+
+/**
+ * The peacock's train, fanned open behind the couple. The eye glints pulse on
+ * a twin svg laid exactly over it: an opacity animation on an svg root runs on
+ * the compositor, while the same animation on 25 shapes inside the train
+ * repainted the whole fan every frame.
+ */
+function Fan() {
+  return (
+    <>
+      <svg className="whFan" viewBox="0 0 1000 520" aria-hidden focusable="false">
+        <FeatherDefs />
+        <Feathers href="#whFeather" />
+      </svg>
+      <svg className="whFan whFanGlint" viewBox="0 0 1000 520" aria-hidden focusable="false">
+        <Feathers href="#whGlint" />
+      </svg>
+    </>
   );
 }
 
@@ -123,24 +147,36 @@ export default function HubHero() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Parallax: scroll depth and (fine pointers only) the pointer, as CSS vars.
+  // Parallax: scroll depth and (fine pointers only) the pointer, written as
+  // each layer's own inline `translate` in one rAF (the same numbers as the
+  // .px0–.px4 rules in hero.css.ts). Writing them as custom properties on the
+  // hero restyled every element inside it on every scroll frame. The hero's
+  // height is read once per resize, never inside a scroll handler.
   useEffect(() => {
     const el = hero.current;
     if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const layers = PX.map((k, i) => ({ k, els: Array.from(el.querySelectorAll<HTMLElement>(`.px${i}`)) }));
     let raf = 0;
     let sy = 0, mx = 0, my = 0, tx = 0, ty = 0;
     let visible = true;
+    let height = el.offsetHeight;
+    const ro = new ResizeObserver(() => { height = el.offsetHeight; });
+    ro.observe(el);
     const paint = () => {
       raf = 0;
+      // Read in the frame, not in the scroll event: reading scrollY there
+      // forces a style + layout pass on every event.
+      sy = Math.min(window.scrollY, height);
       mx += (tx - mx) * 0.12;
       my += (ty - my) * 0.12;
-      el.style.setProperty("--sy", sy.toFixed(1));
-      el.style.setProperty("--mx", mx.toFixed(3));
-      el.style.setProperty("--my", my.toFixed(3));
+      for (const { k, els } of layers) {
+        const v = `${(mx * k[0]).toFixed(2)}px ${(sy * k[1] + my * k[2]).toFixed(2)}px`;
+        for (const n of els) n.style.translate = v;
+      }
       if (Math.abs(tx - mx) > 0.002 || Math.abs(ty - my) > 0.002) raf = requestAnimationFrame(paint);
     };
     const kick = () => { if (!raf && visible) raf = requestAnimationFrame(paint); };
-    const onScroll = () => { sy = Math.min(window.scrollY, el.offsetHeight); kick(); };
+    const onScroll = kick;
     const fine = window.matchMedia("(pointer: fine)").matches;
     const onMove = (e: PointerEvent) => {
       tx = (e.clientX / window.innerWidth) * 2 - 1;
@@ -150,6 +186,7 @@ export default function HubHero() {
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       el.classList.toggle("is-off", !visible);
+      if (visible) kick();
     });
     io.observe(el);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -157,6 +194,7 @@ export default function HubHero() {
     onScroll();
     return () => {
       io.disconnect();
+      ro.disconnect();
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onMove);
@@ -235,6 +273,8 @@ export default function HubHero() {
               src={`${LUX}/c-wedding-800.webp`}
               width={446}
               height={800}
+              // The LCP element on every width (page.tsx preloads the same two files).
+              fetchPriority="high"
               alt="Illustrated bride in a red lehenga and groom in a sherwani, standing before a peacock's fanned train"
             />
           </div>

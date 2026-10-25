@@ -42,6 +42,7 @@ function useClock(on: boolean) {
 
 export default function HubWorld() {
   const ref = useRef<HTMLElement>(null);
+  const map = useRef<SVGSVGElement>(null);
   const [seen, setSeen] = useState(false);
   const [motion, setMotion] = useState(false);
   const now = useClock(seen);
@@ -56,6 +57,17 @@ export default function HubWorld() {
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) { setSeen(true); setMotion(!reduce); }
       el.classList.toggle("is-live", e.isIntersecting);
+      // The envelopes are SMIL, which CSS cannot pause and which re-runs
+      // style and paint on every frame: stop the svg's clock off-screen.
+      // Its clock is held near zero while the page loads, so skip past the
+      // staggered begins (0–2.8s): an envelope before its begin sits at 0,0.
+      const svg = map.current;
+      if (svg) {
+        if (e.isIntersecting) {
+          if (svg.getCurrentTime() < 3) svg.setCurrentTime(3);
+          svg.unpauseAnimations();
+        } else svg.pauseAnimations();
+      }
     }, { threshold: 0.2 });
     io.observe(el);
     return () => io.disconnect();
@@ -106,13 +118,18 @@ export default function HubWorld() {
               <g key={i}>
                 <path d={d} fill="none" stroke="#c9a84c" strokeOpacity=".35" strokeWidth="1.6" strokeDasharray="2 7" strokeLinecap="round" />
                 <path d={d} className="whArc" pathLength={1} fill="none" stroke="url(#whArc)" strokeWidth="2.2" strokeLinecap="round" style={{ transitionDelay: `${0.15 * i}s` }} />
-                {seen && motion && (
-                  <g className="whMover">
-                    <rect x="-8" y="-5.5" width="16" height="11" rx="2" fill="#fffaf2" stroke="#9b1c2a" strokeWidth="1.4" />
-                    <path d="M-8 -5 L0 1.5 L8 -5" fill="none" stroke="#9b1c2a" strokeWidth="1.3" />
-                    <animateMotion dur={`${3.6 + (i % 3) * 0.5}s`} begin={`${0.4 * i}s`} repeatCount="indefinite" path={d} rotate="0" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".45 0 .25 1" />
-                  </g>
-                )}
+              </g>
+            ))}
+          </svg>
+          {/* Everything that moves, on a twin svg in its own layer: the pulses
+              and the envelopes repaint every frame, and on their own they no
+              longer repaint the masked dot field and the arcs underneath. */}
+          <svg ref={map} viewBox="0 0 1000 480" className="whMapFx" aria-hidden focusable="false">
+            {seen && motion && paths.map((d, i) => (
+              <g key={i} className="whMover">
+                <rect x="-8" y="-5.5" width="16" height="11" rx="2" fill="#fffaf2" stroke="#9b1c2a" strokeWidth="1.4" />
+                <path d="M-8 -5 L0 1.5 L8 -5" fill="none" stroke="#9b1c2a" strokeWidth="1.3" />
+                <animateMotion dur={`${3.6 + (i % 3) * 0.5}s`} begin={`${0.4 * i}s`} repeatCount="indefinite" path={d} rotate="0" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".45 0 .25 1" />
               </g>
             ))}
             {CITIES.map((c) => (

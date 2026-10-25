@@ -3,9 +3,14 @@
 // the bottom nav. From 1024px the words sit left and the scene fills the right.
 // Parallax layers (.px0–.px4) read --sy (scroll px) and --mx/--my (pointer,
 // -1…1) and use `translate` so a layer's own transform/animation is untouched.
+// HubHero writes the layers' `translate` inline, per layer, from the same
+// numbers — a custom property set on .whHero would restyle every descendant on
+// every scroll frame; these rules are the fallback before it hydrates.
+//
+// The art is on the CDN (see ART in content.ts). Backgrounds only — the CDN
+// sends no CORS header, so never put one of these URLs in a mask.
 
-const ART = "/wedding-v3";
-const LUX = `${ART}/hub/lux`;
+import { ART, LUX } from "./content";
 
 export const HERO_CSS = `
 .whHero { --sy: 0; --mx: 0; --my: 0; position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column;
@@ -91,7 +96,9 @@ export const HERO_CSS = `
 .whFoil { display: inline; font-style: italic; font-weight: 600;
   background: linear-gradient(100deg, #8b5a2b 0%, #b8862f 22%, #f3d98a 38%, #c9a84c 50%, #8b5a2b 70%, #c9a84c 100%); background-size: 240% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-box-decoration-break: clone; box-decoration-break: clone;
-  animation: whFoil 6s ease-in-out infinite; }
+  animation: whFoil 6s ease-in-out 3; }
+/* The foil sweep moves a background, which repaints the headline on the main
+   thread every frame: three passes on arrival, then it rests on its first frame. */
 @keyframes whFoil { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0% 0; } }
 .whLead { margin: 14px auto 0; max-width: 560px; font-size: 15px; line-height: 1.6; color: var(--muted); text-wrap: pretty; }
 .whLeadMore { display: none; }
@@ -118,7 +125,8 @@ export const HERO_CSS = `
 .whFea.short { filter: saturate(1.15); }
 .is-entered .whFea { transform: rotate(var(--a)) scale(1); opacity: 1; }
 .is-entered .whFea.short { transform: rotate(var(--a)) scale(.7); }
-.whEyeGlint { animation: whGlint 3.2s ease-in-out infinite; }
+/* the eye glints: a twin svg over the train, pulsing as one compositor layer */
+.whFanGlint { position: absolute; inset: 0; pointer-events: none; animation: whFanSway 8s ease-in-out infinite, whGlint 3.2s ease-in-out infinite; }
 @keyframes whGlint { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 .whHalo { position: absolute; left: 50%; bottom: 10%; width: 70%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; pointer-events: none;
   background: radial-gradient(closest-side, rgba(255,250,232,.95), rgba(255,236,190,.5) 45%, rgba(255,236,190,0)); }
@@ -200,10 +208,10 @@ export const HERO_CSS = `
 
 /* off-screen: stop the loops */
 .whHero.is-off .whRays, .whHero.is-off .whCloud, .whHero.is-off .whStrand, .whHero.is-off .whJhumka, .whHero.is-off .whLantern,
-.whHero.is-off .whFan, .whHero.is-off .whDrift i, .whHero.is-off .whFoil, .whHero.is-off .whEyeGlint, .whHero.is-off img { animation-play-state: paused; }
+.whHero.is-off .whFan, .whHero.is-off .whDrift i, .whHero.is-off .whFoil, .whHero.is-off img, .whHero.is-off .whCue svg { animation-play-state: paused; }
 
 @media (prefers-reduced-motion: reduce) {
-  .whRays, .whCloud, .whStrand, .whJhumka, .whLantern, .whFan, .whFoil, .whEyeGlint, .whCue svg { animation: none; }
+  .whRays, .whCloud, .whStrand, .whJhumka, .whLantern, .whFan, .whFoil, .whCue svg { animation: none; }
   .whDrift { display: none; }
   .whFea, .whHeroCouple, .whPeaStand img, .whPeaFlowers img { transition: none; }
   .whFea { transform: rotate(var(--a)) scale(1); opacity: 1; }
