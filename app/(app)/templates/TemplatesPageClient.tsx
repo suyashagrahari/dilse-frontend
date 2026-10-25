@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { categories, templateTypes } from "@/data/template-registry";
-import { FORCE_COMING_SOON, GALLERY_LIST, isNewLaunch, pinFirst, rankRooms } from "@/lib/galleryRules";
+import { FORCE_COMING_SOON, GALLERY_LIST, isListedOnGallery, isNewLaunch, pinFirst, rankRooms } from "@/lib/galleryRules";
 import type { TemplateListItem } from "@/types/template-config";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
@@ -16,7 +16,7 @@ import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { GallerySkeleton } from "@/components/skeleton/Skeletons";
-import { useTemplateMeta, isPremiumSlug } from "@/lib/templateMeta";
+import { useTemplateMeta, isPremiumSlug, useGalleryExcluded } from "@/lib/templateMeta";
 import {
   LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
 } from "./PremiumShowcase";
@@ -300,7 +300,7 @@ function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: bool
   );
 }
 
-function TemplatesContent({ room }: { room: GalleryTab }) {
+function TemplatesContent({ room, galleryExclude }: { room: GalleryTab; galleryExclude?: string[] | null }) {
   const router = useRouter();
   // The teaser beside Premium follows the season: Halloween, Dandiya or Diwali
   // drop, Valentine wishlist, or nothing. Unknown (no answer yet) reads as the pre-season default.
@@ -400,7 +400,16 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   const rankOf = useMemo(() => rankRooms(ranked, createdBy), [ranked, createdBy]);
   // Display order: the super admin's saved order (/admin/template-order) or, when
   // there is none, Dandiya and the ✦ evergreens (PINNED_FIRST); then the ranking.
-  const visible = useMemo(() => pinFirst(ranked, order), [ranked, order]);
+  // …and only what is LISTED on the main gallery: the super admin can keep a
+  // live template off /templates (and its search and Premium room) while it
+  // stays openable and on /wedding or a drop — /admin/places → Templates page.
+  // Ranked above against every live template, so a badge reads the same here
+  // as on /wedding.
+  const excluded = useGalleryExcluded(galleryExclude);
+  const visible = useMemo(
+    () => pinFirst(ranked.filter((t) => isListedOnGallery(t.slug, hiddenTemplates, excluded)), order),
+    [ranked, order, hiddenTemplates, excluded],
+  );
 
   const q = search.trim().toLowerCase();
   const matchBase = (t: TemplateListItem) =>
@@ -772,7 +781,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   );
 }
 
-export default function TemplatesPage({ room = "freemium" }: { room?: GalleryTab }) {
+export default function TemplatesPage({ room = "freemium", galleryExclude = null }: { room?: GalleryTab; galleryExclude?: string[] | null }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -785,7 +794,7 @@ export default function TemplatesPage({ room = "freemium" }: { room?: GalleryTab
 
   return (
     <Suspense fallback={<GallerySkeleton label="Loading templates" />}>
-      <TemplatesContent room={room} />
+      <TemplatesContent room={room} galleryExclude={galleryExclude} />
     </Suspense>
   );
 }

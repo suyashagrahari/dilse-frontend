@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
 import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
 import { getSeasonServer } from "@/lib/season.server";
+import { getGalleryExcludeServer } from "@/lib/templateMeta.server";
 import { SeasonProvider } from "@/hooks/useSeason";
 import TemplatesPageClient from "../TemplatesPageClient";
 
@@ -17,11 +18,11 @@ export const metadata: Metadata = {
 };
 
 export default async function PremiumTemplatesPage() {
-  const [hidden, season] = await Promise.all([getHiddenTemplatesServer(), getSeasonServer()]);
+  const [hidden, season, galleryExclude] = await Promise.all([getHiddenTemplatesServer(), getSeasonServer(), getGalleryExcludeServer()]);
   return (
     <TemplateVisibilityProvider hidden={hidden}>
       <SeasonProvider season={season}>
-        <TemplatesPageClient room="premium" />
+        <TemplatesPageClient room="premium" galleryExclude={galleryExclude} />
       </SeasonProvider>
     </TemplateVisibilityProvider>
   );
