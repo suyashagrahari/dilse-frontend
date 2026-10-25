@@ -22,7 +22,11 @@ import {
 import { useAppSelector } from "@/store/hooks";
 import { isSuperAdmin } from "@/lib/roles";
 
-const ITEMS = [
+/**
+ * Every admin section, in navbar order. The phone's More drawer builds its
+ * Admin list from this too, so the two can never drift apart.
+ */
+export const ADMIN_NAV_ITEMS = [
   { href: "/admin/analytics", label: "Analytics", Icon: BarChart3, superOnly: false },
   { href: "/admin/revenue", label: "Revenue", Icon: BadgeIndianRupee, superOnly: true },
   { href: "/admin/creations", label: "Created", Icon: FilePlus2, superOnly: true },
@@ -44,13 +48,13 @@ const ITEMS = [
   { href: "/admin/early-access", label: "Early access", Icon: KeyRound, superOnly: true },
 ];
 
-export type AdminTab = (typeof ITEMS)[number];
+export type AdminTab = (typeof ADMIN_NAV_ITEMS)[number];
 
 /** The sections this admin can see, in navbar order — the swipe order too. */
 export function useAdminTabs(): AdminTab[] {
   const { user } = useAppSelector((s) => s.auth);
   const sup = isSuperAdmin(user?.role);
-  return ITEMS.filter((i) => !i.superOnly || sup);
+  return ADMIN_NAV_ITEMS.filter((i) => !i.superOnly || sup);
 }
 
 export default function AdminNav() {
