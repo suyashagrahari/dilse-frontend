@@ -32,11 +32,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
 import {
-  X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
-  BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
-  Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus, Megaphone,
-  HeartHandshake, Crown, BadgePercent, ScrollText,
+  X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap, Coins, LogIn, ChevronRight, Heart, UserPlus, Crown, ScrollText,
 } from "lucide-react";
+import { ADMIN_NAV_ITEMS } from "@/app/(app)/admin/AdminNav";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import { roleAtLeast } from "@/lib/roles";
@@ -211,31 +209,15 @@ export default function MoreDrawer({
     { label: user?.influencer ? "Influencer Hub" : "Become an Influencer", icon: <Crown size={17} />, href: "/influencer" },
   ];
 
+  // The same sections, labels and order as the admin navbar (ADMIN_NAV_ITEMS),
+  // so a section added there shows up here too. Super-admin-only sections are
+  // listed only for the super admin — each of them bounces anyone else.
   const adminItems: Item[] = isAdmin
-    ? [
-        { label: "Analytics", icon: <BarChart3 size={17} />, href: "/admin/analytics" },
-        { label: "User Dashboard", icon: <Users size={17} />, href: "/admin/users" },
-        { label: "Template Visibility", icon: <LayoutGrid size={17} />, href: "/admin/templates" },
-        ...(isSuper
-          ? [
-              { label: "Template Pricing", icon: <IndianRupee size={17} />, href: "/admin/pricing" },
-              { label: "Early Access", icon: <KeyRound size={17} />, href: "/admin/early-access" },
-              // Super admin only, like the two above: replying from here sends
-              // mail as SubhSandesh to a named customer.
-              // Retention reads every creator's activity across every template,
-              // so it sits with the other super-admin-only entries.
-              { label: "Returning Creators", icon: <Repeat size={17} />, href: "/admin/recurring" },
-              { label: "Feedback", icon: <Star size={17} />, href: "/admin/feedback" },
-              { label: "Unfinished Drafts", icon: <FileText size={17} />, href: "/admin/drafts" },
-              { label: "Conversations", icon: <MessageSquare size={17} />, href: "/admin/threads" },
-              // Mails a chosen slice of every verified user, so super admin only.
-              { label: "Outreach", icon: <Megaphone size={17} />, href: "/admin/outreach" },
-              { label: "Wishlist", icon: <HeartHandshake size={17} />, href: "/admin/wishlist" },
-              { label: "Influencers", icon: <BadgePercent size={17} />, href: "/admin/influencers" },
-            ]
-          : []),
-        { label: "Contacts", icon: <MessageSquare size={17} />, href: "/admin/contacts" },
-      ]
+    ? ADMIN_NAV_ITEMS.filter((it) => isSuper || !it.superOnly).map(({ label, href, Icon }) => ({
+        label,
+        icon: <Icon size={17} />,
+        href,
+      }))
     : [];
 
   const support: Item[] = [
