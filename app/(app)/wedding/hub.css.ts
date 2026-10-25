@@ -29,6 +29,35 @@ export const HUB_CSS = `
     linear-gradient(90deg, transparent, rgba(201,168,76,.7) 30%, rgba(201,168,76,.7) 44%, transparent 46%, transparent 54%, rgba(201,168,76,.7) 56%, rgba(201,168,76,.7) 70%, transparent) center / 100% 1px no-repeat; }
 .whJourney::before { display: none; }
 
+/* Below the fold, a band is not styled, laid out, painted or animated until it
+   nears the viewport (its loops stop too). The placeholder heights are each
+   band's measured content height at that width (its padding is added on top);
+   "auto" then remembers the real one. */
+.whDesigns, .whWorld, .whHow, .whFaqBand, .whFinale { content-visibility: auto; }
+.whDesigns { contain-intrinsic-size: auto 2156px; }
+.whWorld { contain-intrinsic-size: auto 1540px; }
+.whHow { contain-intrinsic-size: auto 2022px; }
+.whFaqBand { contain-intrinsic-size: auto 1060px; }
+.whFinale { contain-intrinsic-size: auto 347px; }
+@media (min-width: 768px) {
+  .whDesigns { contain-intrinsic-size: auto 2067px; }
+  .whWorld { contain-intrinsic-size: auto 1195px; }
+  .whHow { contain-intrinsic-size: auto 1270px; }
+  .whFaqBand { contain-intrinsic-size: auto 934px; }
+  .whFinale { contain-intrinsic-size: auto 349px; }
+}
+@media (min-width: 1024px) {
+  .whDesigns { contain-intrinsic-size: auto 1675px; }
+  .whWorld { contain-intrinsic-size: auto 1108px; }
+  .whHow { contain-intrinsic-size: auto 912px; }
+  .whFaqBand { contain-intrinsic-size: auto 861px; }
+}
+@media (min-width: 1280px) {
+  .whDesigns { contain-intrinsic-size: auto 1892px; }
+  .whWorld { contain-intrinsic-size: auto 1064px; }
+  .whHow { contain-intrinsic-size: auto 846px; }
+}
+
 /* ── reveal ─────────────────────────────────────────────────────────────── */
 .whR { opacity: 0; transform: translateY(18px); transition: opacity .75s cubic-bezier(.22,1,.36,1), transform .75s cubic-bezier(.22,1,.36,1); }
 .whR.is-in { opacity: 1; transform: none; }
@@ -190,6 +219,12 @@ export const HUB_CSS = `
 .whBurst .flash { position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(closest-side, var(--c), transparent);
   opacity: 0; animation: whFlash 4s ease-out var(--bd) infinite; }
 @keyframes whFlash { 0% { opacity: 0; transform: scale(.2); } 5% { opacity: .9; transform: scale(1); } 30%, 100% { opacity: 0; transform: scale(1.6); } }
+/* NOTE: the journey's own .whBurst rule (sections.css.ts, later in the cascade)
+   also matches these, and its animation reads a --d these never set, so the
+   whole declaration drops and the finale's bursts sit at opacity 0 — they have
+   never been visible. Until that name clash is settled (a design call, since
+   fixing it makes fireworks appear), don't run 75 invisible animations. */
+.whFinale .whBurst { display: none; }
 .whTwinkle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 8px 2px rgba(255,220,140,.7); animation: whTw 2.6s ease-in-out infinite; }
 .whDiyas { position: absolute; z-index: 2; left: 0; right: 0; bottom: 104px; display: flex; justify-content: center; gap: clamp(14px, 4vw, 48px); pointer-events: none; }
 @media (min-width: 768px) { .whDiyas { bottom: 56px; } }
@@ -201,6 +236,9 @@ export const HUB_CSS = `
 @keyframes whFlick { 0%, 100% { transform: scale(1, 1) rotate(-2deg); } 30% { transform: scale(.92, 1.1) rotate(3deg); } 60% { transform: scale(1.05, .94) rotate(-1deg); } }
 @keyframes whGlow { 0%, 100% { opacity: .65; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.08); } }
 .whFinale:not(.is-live) *, .whFinale:not(.is-live) { animation-play-state: paused !important; }
+/* the cards' sheens and the step pictures also rest while their band is off-screen */
+.whDesigns:not(.is-live) .whGrid *, .whDesigns:not(.is-live) .whGrid *::before, .whDesigns:not(.is-live) .whGrid *::after,
+.whHow:not(.is-live) .whSA * { animation-play-state: paused !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .whR { opacity: 1; transform: none; transition: none; }

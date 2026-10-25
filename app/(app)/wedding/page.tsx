@@ -11,6 +11,7 @@
 // list the page prints.
 
 import type { Metadata } from "next";
+import { preconnect, preload } from "react-dom";
 import { buildMeta, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
@@ -18,12 +19,13 @@ import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
 import { getSeasonServer } from "@/lib/season.server";
 import { SeasonProvider } from "@/hooks/useSeason";
 import WeddingHubClient from "./WeddingHubClient";
-import { WEDDING_FAQS } from "./content";
+import { MEDIA_ORIGIN } from "@/lib/templateMedia";
+import { ART, LUX, WEDDING_FAQS } from "./content";
 
 const TITLE = "Indian Wedding Invitations Online — Digital E-Invites with RSVP | SubhSandesh";
 const DESCRIPTION =
   "Digital Indian wedding invitations that open like a celebration: palace doors, peacock gardens, lotus temples and Christian chapels. Haldi to reception on one link, RSVP per function, music, photos, Hindi & English. Fill it with AI and send it on WhatsApp to family anywhere in the world.";
-const OG_IMAGE = `${SITE_URL}/wedding-v3/hub/og-wedding.jpg`;
+const OG_IMAGE = `${ART}/hub/og-wedding.jpg`;
 
 export const metadata: Metadata = buildMeta({
   title: TITLE,
@@ -56,6 +58,12 @@ export const metadata: Metadata = buildMeta({
 
 export default async function WeddingHubPage() {
   const [hidden, season] = await Promise.all([getHiddenTemplatesServer(), getSeasonServer()]);
+  // All the hub's art is on the CDN, and the hero couple is the LCP image.
+  // The media queries match the hero's <picture>, so each device preloads
+  // only the file it shows.
+  preconnect(MEDIA_ORIGIN);
+  preload(`${LUX}/c-wedding-600.webp`, { as: "image", fetchPriority: "high", media: "(max-width: 767px)" });
+  preload(`${LUX}/c-wedding-800.webp`, { as: "image", fetchPriority: "high", media: "(min-width: 768px)" });
   return (
     <TemplateVisibilityProvider hidden={hidden}>
       <SeasonProvider season={season}>

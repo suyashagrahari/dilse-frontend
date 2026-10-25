@@ -13,7 +13,7 @@
 // Motion is transform / opacity / stroke-dashoffset only, pauses whenever the
 // section or a card is off-screen, and switches off for reduced motion.
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { JOURNEY, type JourneyStep } from "./content";
@@ -163,7 +163,8 @@ function Fx({ id, layer }: { id: string; layer: "back" | "front" }) {
   return <span className={`whFx ${layer} fx-${id}`} aria-hidden>{body}</span>;
 }
 
-function Scene({ s }: { s: JourneyStep }) {
+/** Memoised: a scene never changes, and the section re-renders on every step change. */
+const Scene = memo(function Scene({ s }: { s: JourneyStep }) {
   const c = s.couple;
   return (
     <div className={`whJScene sc-${s.id}`} style={{ "--tint": s.tint, "--deep": s.deep, "--glow": s.glow } as Vars}>
@@ -191,26 +192,67 @@ function Scene({ s }: { s: JourneyStep }) {
       <Fx id={s.id} layer="front" />
     </div>
   );
-}
+});
 
 /** Gold filigree in the four corners of a frame (one drawing, rotated). */
-function Corners() {
+const Corners = memo(function Corners() {
   return <>{["tl", "tr", "br", "bl"].map((c) => (
     <svg key={c} className={`whJCorner ${c}`} viewBox="0 0 40 40" aria-hidden>
       <path d="M3 36V18C3 9.7 9.7 3 18 3h18M9 36V20c0-6 5-11 11-11h16" />
       <circle cx="15" cy="15" r="2.2" />
     </svg>
   ))}</>;
-}
+});
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+const WIDE = "(min-width: 768px)";
+const subscribeWide = (cb: () => void) => {
+  const mq = window.matchMedia(WIDE);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+};
+
+/**
+ * Whether the sticky stage is on screen at all (768px and up). The server and
+ * the hydrating render both say no, so the stage's seven scenes (~600 nodes,
+ * display:none on phones) are never sent to, or hydrated on, a phone; on a
+ * wide screen they mount right after hydration, well before the reader
+ * scrolls down to them.
+ */
+function useWide() {
+  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false);
+}
+
 export default function HubJourney({ visible }: { visible: Set<string> }) {
   const [active, setActive] = useState(0);
+  const wide = useWide();
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLOListElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const raf = useRef(0);
+
+  // The stage's scenes mount one per idle slot after hydration (the one in
+  // front at once), so no single task builds all seven.
+  const [ready, setReady] = useState(0);
+  useEffect(() => {
+    if (!wide || ready >= JOURNEY.length) return;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 50));
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout;
+    const id = idle(() => setReady((n) => n + 1));
+    return () => cancel(id);
+  }, [wide, ready]);
+
+  // A stage scene that has finished fading out is hidden with its loops
+  // removed (data-rest), so six invisible scenes cost no layers or frames.
+  // Set outside React so a re-render never clears it.
+  useEffect(() => {
+    const frames = stage.current?.querySelectorAll<HTMLElement>(".whJFrame");
+    if (!frames?.length) return;
+    frames.forEach((f) => { if (f.classList.contains("is-on")) delete f.dataset.rest; });
+    const t = window.setTimeout(() => frames.forEach((f) => { if (!f.classList.contains("is-on")) f.dataset.rest = ""; }), 1500);
+    return () => window.clearTimeout(t);
+  }, [active, wide, ready]);
 
   // Which function is in view: the middle of the viewport on wide screens, the snapped card on phones.
   useEffect(() => {
@@ -288,7 +330,7 @@ export default function HubJourney({ visible }: { visible: Set<string> }) {
         <div className="whJ" style={{ "--p": active / (JOURNEY.length - 1), "--deep": now.deep, "--glow": now.glow, "--tint": now.tint } as Vars}>
           <div className="whJStageWrap" aria-hidden>
             <div className="whJStage" ref={stage} onPointerMove={tilt} onPointerLeave={untilt}>
-              {JOURNEY.map((s, i) => (
+              {wide && JOURNEY.map((s, i) => (i === active || i < ready) && (
                 <div key={s.id} className={`whJFrame${i === active ? " is-on" : ""}`}>
                   <Scene s={s} />
                 </div>

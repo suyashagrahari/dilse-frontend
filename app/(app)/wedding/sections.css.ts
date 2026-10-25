@@ -20,6 +20,9 @@ export const SECTIONS_CSS = `
 .whJCardArt { position: relative; border-radius: 23px; overflow: hidden; isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); }
 .whJCardArt::after { content: ""; position: absolute; inset: 9px; border-radius: 16px; z-index: 9; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.8); }
 .whJCardArt .whJScene { aspect-ratio: 1 / 1.04; }
+/* A card scrolled out of the carousel is not rendered at all; the box keeps its
+   size from the same ratio, so nothing moves when it comes back. */
+.whJCardArt { aspect-ratio: 1 / 1.04; content-visibility: auto; contain-intrinsic-size: auto 10px; }
 .whJText { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 16px 10px 8px; flex: 1; }
 .whJKick { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 11px/1.25 var(--caps); letter-spacing: .18em; text-transform: uppercase; color: var(--deep); }
 .whJNum { flex: none; display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; border-radius: 999px;
@@ -181,6 +184,8 @@ export const SECTIONS_CSS = `
   .whJStage::after { content: ""; position: absolute; inset: 12px; border-radius: 18px; z-index: 9; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.8); }
   .whJFrame { position: absolute; inset: 0; opacity: 0; transform: scale(1.07); transition: opacity .9s ease, transform 1.4s cubic-bezier(.2,.8,.2,1); }
   .whJFrame.is-on { opacity: 1; transform: none; }
+  .whJFrame[data-rest] { visibility: hidden; }
+  .whJFrame[data-rest] * { animation: none !important; }
   .whJFrame .whJScene { --u: 1.5; position: absolute; inset: 0; }
   .whJStage .whJCorner { width: 44px; height: 44px; }
   .whJStage .whJCorner.tl { left: 18px; top: 18px; } .whJStage .whJCorner.tr { right: 18px; top: 18px; }
@@ -234,6 +239,7 @@ export const SECTIONS_CSS = `
 .whMap { position: relative; margin: 0 -8px; }
 @media (min-width: 768px) { .whMap { margin: 0; } }
 .whMapSvg { display: block; width: 100%; height: auto; overflow: visible; }
+.whMapFx { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; will-change: transform; }
 .whArc { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1); }
 .whWorld.is-seen .whArc { stroke-dashoffset: 0; }
 .whPulse { transform-box: fill-box; transform-origin: center; animation: whPulse 2.6s ease-out infinite; }
