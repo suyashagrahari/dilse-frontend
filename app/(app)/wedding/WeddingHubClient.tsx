@@ -38,7 +38,7 @@ import { GALLERY_LIST, isComingSoon, isNewLaunch, pinFirst, rankRooms } from "@/
 import type { TemplateListItem } from "@/types/template-config";
 import {
   FEATURES, LUX, STEPS, WEDDING_FAQS, WEDDING_FILTERS,
-  filterOf, isWeddingTemplate, type WeddingFilter,
+  weddingItems, type WeddingFilter,
 } from "./content";
 import { HUB_CSS } from "./hub.css";
 import { HERO_CSS } from "./hero.css";
@@ -47,14 +47,18 @@ import HubHero from "./HubHero";
 import HubJourney from "./HubJourney";
 import HubWorld from "./HubWorld";
 
-type Item = TemplateListItem & { premium: boolean };
+type Item = TemplateListItem & { premium: boolean; group: Exclude<WeddingFilter, "all"> };
 
 // ── data ─────────────────────────────────────────────────────────────────────
 
-/** Every wedding template this visitor may see, in the gallery's order. */
+/**
+ * Every wedding template this visitor may see: the super admin's curated list
+ * (/admin/places) when one is saved, else the automatic rule in the gallery's
+ * order. See `weddingItems`.
+ */
 function useWeddingTemplates() {
   const { hidden } = useTemplateAccess();
-  const { tiers, ranking, order } = useTemplateMeta();
+  const { tiers, ranking, order, collections } = useTemplateMeta();
   const createdBy = useMemo(() => new Map(ranking.map((r) => [r.slug, r.created])), [ranking]);
   const ranked = useMemo(() => {
     const idx = new Map(GALLERY_LIST.map((t, i) => [t.slug, i]));
@@ -67,8 +71,8 @@ function useWeddingTemplates() {
   // whole room, not just the weddings.
   const rankOf = useMemo(() => rankRooms(ranked, createdBy), [ranked, createdBy]);
   const items: Item[] = useMemo(
-    () => pinFirst(ranked, order).filter((t) => isWeddingTemplate(t) && !isComingSoon(t)),
-    [ranked, order],
+    () => weddingItems(pinFirst(ranked, order), collections.wedding, isComingSoon),
+    [ranked, order, collections.wedding],
   );
   return { items, rankOf, createdBy };
 }
@@ -174,11 +178,11 @@ export default function WeddingHubClient() {
 
   const counts = useMemo(() => {
     const m = new Map<WeddingFilter, number>([["all", items.length]]);
-    for (const t of items) m.set(filterOf(t.slug), (m.get(filterOf(t.slug)) ?? 0) + 1);
+    for (const t of items) m.set(t.group, (m.get(t.group) ?? 0) + 1);
     return m;
   }, [items]);
   const chips = WEDDING_FILTERS.filter((c) => (counts.get(c.id) ?? 0) > 0);
-  const shown = filter === "all" ? items : items.filter((t) => filterOf(t.slug) === filter);
+  const shown = filter === "all" ? items : items.filter((t) => t.group === filter);
   const visible = useMemo(() => new Set(items.map((t) => t.slug)), [items]);
 
   useReveal(root, [items.length]);

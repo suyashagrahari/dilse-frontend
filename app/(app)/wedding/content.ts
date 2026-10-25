@@ -42,6 +42,37 @@ const FILTER_OF: Record<string, WeddingFilter> = {
 
 export const filterOf = (slug: string): WeddingFilter => FILTER_OF[slug] ?? "indian";
 
+const GROUPS = new Set<string>(WEDDING_FILTERS.map((f) => f.id).filter((id) => id !== "all"));
+
+/**
+ * The hub's templates. With a super admin's list (/admin/places → Wedding):
+ * exactly those slugs, in that order, each under its saved group (falling back
+ * to `filterOf`). Without one: the automatic rule, `isWeddingTemplate` +
+ * `filterOf`, over the gallery's order. Either way only templates in `ranked`
+ * (what this visitor may see) and not coming soon make it through.
+ */
+export function weddingItems<T extends Pick<TemplateListItem, "type" | "category" | "slug">>(
+  ordered: T[],
+  curated: { items: { slug: string; group?: string }[] } | null,
+  comingSoon: (t: T) => boolean,
+): (T & { group: Exclude<WeddingFilter, "all"> })[] {
+  type G = Exclude<WeddingFilter, "all">;
+  const groupOf = (slug: string, g?: string): G => (g && GROUPS.has(g) ? (g as G) : (filterOf(slug) as G));
+  if (!curated) {
+    return ordered.filter((t) => isWeddingTemplate(t) && !comingSoon(t)).map((t) => ({ ...t, group: groupOf(t.slug) }));
+  }
+  const bySlug = new Map(ordered.map((t) => [t.slug, t]));
+  const out: (T & { group: G })[] = [];
+  const seen = new Set<string>();
+  for (const { slug, group } of curated.items) {
+    const t = bySlug.get(slug);
+    if (!t || seen.has(slug) || comingSoon(t)) continue;
+    seen.add(slug);
+    out.push({ ...t, group: groupOf(slug, group) });
+  }
+  return out;
+}
+
 /**
  * Page-weight art for the hub, cut down from the owner's originals in
  * public/wedding-v3 (sizes chosen for the box each piece is drawn in). Served

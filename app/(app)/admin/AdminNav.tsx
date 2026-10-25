@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BarChart3, Users, MessageSquare, Star, FileText, Mail, LayoutTemplate,
-  IndianRupee, KeyRound, Repeat, Crown, Megaphone, Heart, BadgePercent, Ghost, BadgeIndianRupee, FilePlus2, ListOrdered,
+  IndianRupee, KeyRound, Repeat, Crown, Megaphone, Heart, BadgePercent, Ghost, BadgeIndianRupee, FilePlus2, ListOrdered, Gem,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { isSuperAdmin } from "@/lib/roles";
@@ -37,6 +37,7 @@ const ITEMS = [
   { href: "/admin/recurring", label: "Recurring", Icon: Repeat, superOnly: true },
   { href: "/admin/templates", label: "Templates", Icon: LayoutTemplate, superOnly: false },
   { href: "/admin/template-order", label: "Template order", Icon: ListOrdered, superOnly: true },
+  { href: "/admin/places", label: "Wedding & places", Icon: Gem, superOnly: true },
   { href: "/admin/premium", label: "Premium Studio", Icon: Crown, superOnly: true },
   { href: "/admin/pricing", label: "Pricing", Icon: IndianRupee, superOnly: true },
   { href: "/admin/influencers", label: "Influencers", Icon: BadgePercent, superOnly: true },
