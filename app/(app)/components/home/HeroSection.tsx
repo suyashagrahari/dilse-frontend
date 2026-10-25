@@ -9,12 +9,14 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
 import { useDropFree } from "@/hooks/useDropFree";
 import { useSeason, useSeasonPending } from "@/hooks/useSeason";
-import { DANDIYA_PATH, DIWALI_PATH, HALLOWEEN_PATH } from "@/lib/season";
+import { DANDIYA_PATH, DIWALI_PATH, HALLOWEEN_PATH, WEDDING_PATH } from "@/lib/season";
 import HalloweenCritters from "@/components/promo/HalloweenCritters";
 import { HalloweenHeroNight } from "@/components/promo/HalloweenCornerWebs";
 import FestivalCritters from "@/components/promo/FestivalCritters";
 import { FestivalHeroNight } from "@/components/promo/FestivalDecor";
 import { Dandiya, Diya, Mirror } from "@/components/promo/festivalArt";
+import { WeddingHeroDecor } from "@/components/promo/WeddingDecor";
+import { Rings } from "@/components/promo/weddingArt";
 
 const STATS = [
   { n: "50K+", l: "Pages Created" },
@@ -39,12 +41,14 @@ export default function HeroSection() {
   const halloween = season?.mode === "halloween";
   const dandiya = season?.mode === "dandiya";
   const diwali = season?.mode === "diwali";
+  const wedding = season?.mode === "wedding";
   // A drop the super admin made free (/admin/pricing) says FREE, not a percent.
-  const dropFree = useDropFree(dandiya ? "dandiya" : diwali ? "diwali" : "halloween") && (halloween || dandiya || diwali);
-  const dropPct = (halloween || dandiya || diwali) && season.sale.enabled ? season.sale.percent : 0;
+  const dropFree = useDropFree(dandiya ? "dandiya" : diwali ? "diwali" : wedding ? "wedding" : "halloween") && (halloween || dandiya || diwali || wedding);
+  const dropPct = (halloween || dandiya || diwali || wedding) && season.sale.enabled ? season.sale.percent : 0;
   const goHalloween = useCallback(() => router.push(HALLOWEEN_PATH), [router]);
   const goDandiya = useCallback(() => router.push(DANDIYA_PATH), [router]);
   const goDiwali = useCallback(() => router.push(DIWALI_PATH), [router]);
+  const goWedding = useCallback(() => router.push(WEDDING_PATH), [router]);
   const avoid = ".hero-btns, .hero-kicker, .hero-copy-pane h1, .hero-desc, .hero-stats, .hero-note, .hwb-wrap, .fsb-wrap";
   return (
     <section id="hero" className="hero-section" style={{
@@ -71,6 +75,11 @@ export default function HeroSection() {
       <FestivalCritters kind="dandiya" scope="parent" avoid={avoid} />
       <FestivalHeroNight kind="diwali" />
       <FestivalCritters kind="diwali" scope="parent" avoid={avoid} />
+      {/* Wedding season: daylight, not a night — an ivory/blush wash with a
+          faint gold jaali and a zari hem, rose and marigold petals drifting
+          down behind the content, and marigold laris with swaying jhumkas
+          hanging from the top corners of the page. */}
+      <WeddingHeroDecor />
 
       <div className="hero-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div className="hero-grid">
@@ -182,6 +191,17 @@ export default function HeroSection() {
                   DIWALI DROP
                   {dropFree ? <span className="hero-wish-off">FREE</span> : dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
                 </motion.button>
+              ) : wedding ? (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={goWedding}
+                  className="hero-wish hero-wedding"
+                  aria-label={dropFree ? "The wedding season drop — free" : dropPct ? `The wedding season drop — ${dropPct}% off` : "The wedding season drop"}>
+                  <span className="hero-wd-r" aria-hidden><Rings size={18} /></span>
+                  WEDDING DROP
+                  {dropFree ? <span className="hero-wish-off">FREE</span> : dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
+                </motion.button>
               ) : season?.mode === "valentine" ? (
                 // The Valentine's week wishlist — joining happens on its page.
                 <motion.button
@@ -285,13 +305,21 @@ export default function HeroSection() {
         .hero-diwali .hero-wish-off { background: linear-gradient(180deg, #ffe7a8, #ffc53d 60%, #e8860c); color: #3a0a04; box-shadow: 0 0 0 1px rgba(255,231,168,.8), 0 0 12px rgba(255,190,70,.85); }
         .hero-diwali::after { background: linear-gradient(90deg, transparent, rgba(255,207,90,.4), transparent); }
         @keyframes heroDwGlow { 50% { box-shadow: 0 0 0 1px rgba(255,207,90,.4), 0 10px 26px -12px rgba(51,6,10,.9), 0 0 34px 4px rgba(255,190,70,.6), inset 0 -10px 18px -12px rgba(255,207,90,1); } }
+        /* Wedding: ivory silk in a gold-zari frame, interlocked rings and a sindoor pill. */
+        .hero-wedding { background: radial-gradient(120% 160% at 100% 0%, rgba(231,154,163,.35), transparent 55%), linear-gradient(135deg, #fffaf2 0%, #fdf0e8 55%, #f9e1dc 100%);
+          color: #4a121c; border-color: #c39a43; letter-spacing: 1.6px;
+          box-shadow: 0 0 0 3px rgba(255,250,242,.9), 0 0 0 4px rgba(195,154,67,.45), 0 10px 26px -14px rgba(110,30,40,.55); }
+        .hero-wedding .hero-wish-off { background: linear-gradient(180deg, #b8324a, #9e1f34 60%, #6e1022); color: #fff3d6; box-shadow: 0 0 0 1px #c39a43; }
+        .hero-wedding::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent); }
+        .hero-wd-r { display: inline-flex; margin: -3px 0; animation: heroWdR 3.2s ease-in-out infinite; }
+        @keyframes heroWdR { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg) scale(1.08); } }
         .hero-fest-l { display: none; }
         @media (max-width: 768px) { .hero-dandiya { letter-spacing: 1.6px; } .hero-fest-s { display: none; } .hero-fest-l { display: inline; } }
         .hero-fest-d { display: inline-flex; margin: -3px 0; filter: drop-shadow(0 0 6px rgba(255,196,77,.95)); }
         .hero-fest-d .fv-flame { animation: heroFestFlick 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
         @keyframes heroFestFlick { from { transform: scale(1, 1) rotate(-4deg); } to { transform: scale(.86, 1.16) rotate(4deg); } }
         .hero-wish.is-on::after { display: none; }
-        @media (prefers-reduced-motion: reduce) { .hero-wish::after, .hero-wish-h, .hero-boo, .hero-dandiya, .hero-diwali, .hero-fest-d .fv-flame, .hero-dd-sticks * { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .hero-wish::after, .hero-wish-h, .hero-boo, .hero-dandiya, .hero-diwali, .hero-wd-r, .hero-fest-d .fv-flame, .hero-dd-sticks * { animation: none; } }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
         .hero-pills::-webkit-scrollbar{display:none;}
         .hero-pills button{scroll-snap-align:center;}

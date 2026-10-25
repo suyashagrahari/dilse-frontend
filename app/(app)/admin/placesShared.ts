@@ -125,7 +125,7 @@ export type SeasonSnapshot = Record<string, unknown> & {
   drops?: Record<string, { saleSlugs?: string[] }>;
 };
 
-const DROP_TAB_ORDER = ["halloween", "diwali", "dandiya"];
+const DROP_TAB_ORDER = ["wedding", "halloween", "diwali", "dandiya"];
 export const dropRank = (id: string) => (DROP_TAB_ORDER.includes(id) ? DROP_TAB_ORDER.indexOf(id) : 99);
 export const dropLabel = (id: string) =>
   (DROPS as Record<string, { label: string } | undefined>)[id]?.label.replace(/ drop$/, "") ?? id.charAt(0).toUpperCase() + id.slice(1);

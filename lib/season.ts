@@ -1,7 +1,7 @@
 // ─── Which seasonal campaign the site is wearing ─────────────────────────────
 //
 // A super admin flips the site between the Valentine wishlist, a seasonal
-// DROP (Halloween, Navratri Dandiya or Diwali) and nothing at all from
+// DROP (Halloween, Navratri Dandiya, Diwali or the wedding season) and nothing at all from
 // /admin/season. Each drop season has its own templates, sale and end date
 // (`DROPS` below); only the active mode's drop is ever shown. Everything seasonal — the running
 // bar under the navbar, the blog cards, the gallery teaser, the critters on the
@@ -35,8 +35,8 @@
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 /** The seasons that have a drop: their own templates, sale, strip and offer page. */
-export type DropId = "halloween" | "dandiya" | "diwali";
-export const DROP_IDS: readonly DropId[] = ["halloween", "dandiya", "diwali"];
+export type DropId = "halloween" | "dandiya" | "diwali" | "wedding";
+export const DROP_IDS: readonly DropId[] = ["halloween", "dandiya", "diwali", "wedding"];
 export type SeasonMode = "valentine" | DropId | "off";
 /** The two Hindu-festival drops, each with its own red theme (components/promo/festivalTheme.ts). */
 export type FestivalId = "dandiya" | "diwali";
@@ -93,11 +93,36 @@ export const DIWALI_ENDS_AT = Date.parse("2026-11-08T23:59:59+05:30");
 
 export const FESTIVAL_PERCENT_DEFAULT = 30;
 
+// The wedding season: not a festival night but the muhurat months, so it wears
+// its own LIGHT theme (ivory, blush and gold — components/promo/weddingTheme.ts)
+// and its own components (Wedding*), the way Halloween has its own. Its drop is
+// the main wedding invitations; the /wedding hub stays the catalogue and points
+// here while the season is on.
+export const WEDDING_PATH = "/wedding-offer";
+export const WEDDING_SLUGS = [
+  "wedding-invitation",
+  "wedding-invitation-premium",
+  "royal-wedding-invitation",
+  "palace-door-wedding-invitation",
+  "garden-wedding-invitation",
+  "floral-wedding-invitation",
+  "lotus-wedding-invitation",
+  "reception",
+  "christian-wedding",
+  "christian-wedding-2",
+  "shaadi-card",
+] as const;
+/** The season's first stretch of muhurat dates runs to the end of the year: the last minute of 31 December 2026, India time. */
+export const WEDDING_ENDS_AT = Date.parse("2026-12-31T23:59:59+05:30");
+/** What the server ships the wedding drop at (sale OFF until a super admin switches it on). */
+export const WEDDING_PERCENT_DEFAULT = 20;
+
 /** Per-drop facts the client owns (the server owns slugs and sale). */
 export const DROPS: Record<DropId, { label: string; path: string; slugs: readonly string[]; endsAt: number; endsLabel: string }> = {
   halloween: { label: "Halloween drop", path: HALLOWEEN_PATH, slugs: HALLOWEEN_SLUGS, endsAt: HALLOWEEN_ENDS_AT, endsLabel: "31 Oct" },
   dandiya: { label: "Navratri Dandiya drop", path: DANDIYA_PATH, slugs: DANDIYA_SLUGS, endsAt: DANDIYA_ENDS_AT, endsLabel: "Dussehra, 20 Oct" },
   diwali: { label: "Diwali drop", path: DIWALI_PATH, slugs: DIWALI_SLUGS, endsAt: DIWALI_ENDS_AT, endsLabel: "Diwali night, 8 Nov" },
+  wedding: { label: "Wedding season drop", path: WEDDING_PATH, slugs: WEDDING_SLUGS, endsAt: WEDDING_ENDS_AT, endsLabel: "31 Dec" },
 };
 
 /**
@@ -162,7 +187,7 @@ const MODES: readonly SeasonMode[] = ["valentine", ...DROP_IDS, "off"];
 
 /**
  * The slugs in the ACTIVE drop: `sale.slugs` while the mode is a drop season
- * (halloween, dandiya, diwali), nothing otherwise. A drop template is reachable (its
+ * (halloween, dandiya, diwali, wedding), nothing otherwise. A drop template is reachable (its
  * builder opens, it publishes) even when /admin/templates hides it from the
  * gallery; it still stays out of every gallery listing. Mirrors `dropSlugs` in
  * server/src/config/seasonSale.ts, which enforces the same rule on publish.

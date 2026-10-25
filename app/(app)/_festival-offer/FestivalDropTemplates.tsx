@@ -32,7 +32,7 @@ import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { formatPrice } from "@/config/templatePricing";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
 import { GALLERY_BY_SLUG, GALLERY_LIST, isComingSoon, rankRooms } from "@/lib/galleryRules";
-import { DROPS, FESTIVE_GIF, type FestivalId } from "@/lib/season";
+import { DROPS, FESTIVE_GIF, type DropId, type FestivalId } from "@/lib/season";
 import { Bandhanwar, Diya, Mirror } from "@/components/promo/festivalArt";
 import { ftVars } from "@/components/promo/festivalTheme";
 import type { TemplateListItem } from "@/types/template-config";
@@ -70,8 +70,8 @@ const FALLBACK: Record<string, TemplateListItem> = {
   },
 };
 
-/** A festival drop's templates for this visitor, in the admin's order. */
-export function useFestivalDropTemplates(kind: FestivalId, slugs: readonly string[] | null | undefined): FestivalDropItem[] {
+/** A drop's templates for this visitor, in the admin's order (the wedding drop's page uses it too). */
+export function useFestivalDropTemplates(kind: DropId, slugs: readonly string[] | null | undefined): FestivalDropItem[] {
   const { blocked } = useTemplateAccess();
   const { tiers } = useTemplateMeta();
   return useMemo(() => {
@@ -111,7 +111,7 @@ export function useFestivalDropDiscount(items: readonly FestivalDropItem[]): { p
   }, [items, pricingFor, settled]);
 }
 
-function SaleTag({ slug, soon }: { slug: string; soon: boolean }) {
+export function SaleTag({ slug, soon }: { slug: string; soon: boolean }) {
   const { pricingFor, settled } = useTemplatePricing();
   if (soon) return <span className="fdTag is-soon">Soon</span>;
   if (!settled) return null;
@@ -126,7 +126,7 @@ function SaleTag({ slug, soon }: { slug: string; soon: boolean }) {
   );
 }
 
-function PriceLine({ slug, name }: { slug: string; name: string }) {
+export function PriceLine({ slug, name }: { slug: string; name: string }) {
   const { pricingFor, settled } = useTemplatePricing();
   // Super admin / "All templates free": the publish gate lets them through
   // free, so the card does not quote a price. Display only.
@@ -159,7 +159,7 @@ function PriceLine({ slug, name }: { slug: string; name: string }) {
   );
 }
 
-function ComingSoonTile({ t }: { t: TemplateListItem }) {
+export function ComingSoonTile({ t }: { t: TemplateListItem }) {
   return (
     <div className="fdSoon" aria-label={`${t.title} — coming soon`}>
       {t.coverImage && (
@@ -192,8 +192,8 @@ function Toran() {
   );
 }
 
-export default function FestivalDropTemplates({ kind, slugs }: { kind: FestivalId; slugs: readonly string[] | null | undefined }) {
-  const items = useFestivalDropTemplates(kind, slugs);
+/** What the gallery feeds its cards — favourites and rank badges — for a drop page's cards. */
+export function useGalleryCardData() {
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
   const favFetched = useAppSelector((s) => s.favorites.fetched);
@@ -219,6 +219,12 @@ export default function FestivalDropTemplates({ kind, slugs }: { kind: FestivalI
       .sort((a, b) => (createdBy.get(b.slug) ?? 0) - (createdBy.get(a.slug) ?? 0) || idx.get(a.slug)! - idx.get(b.slug)!);
     return rankRooms(visible, createdBy);
   }, [hidden, tiers, createdBy]);
+  return { favSlugs, handleFavorite, rankOf, createdBy };
+}
+
+export default function FestivalDropTemplates({ kind, slugs }: { kind: FestivalId; slugs: readonly string[] | null | undefined }) {
+  const items = useFestivalDropTemplates(kind, slugs);
+  const { favSlugs, handleFavorite, rankOf, createdBy } = useGalleryCardData();
 
   return (
     <>

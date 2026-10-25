@@ -46,6 +46,7 @@ import { SECTIONS_CSS } from "./sections.css";
 import HubHeroBase from "./HubHero";
 import HubJourneyBase from "./HubJourney";
 import HubWorldBase from "./HubWorld";
+import SeasonRibbon from "./SeasonRibbon";
 
 // The big decorative bands don't re-render when a filter chip or a favourite changes.
 const HubHero = memo(HubHeroBase);
@@ -218,6 +219,8 @@ export default function WeddingHubClient() {
       <LuxuryMobileTopBrand />
 
       <HubHero />
+      {/* Wedding season only: the sale, the clock and a link to /wedding-offer. */}
+      <SeasonRibbon />
       <HubJourney visible={visible} />
 
       {/* ── All designs ──────────────────────────────────────────────────── */}

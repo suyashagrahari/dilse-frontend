@@ -21,8 +21,9 @@
 //               Premium Studio writes; order is the gallery order
 //               (/admin/template-order) — a reorder here moves these templates
 //               among the slots they already hold in that order.
-//   Drops     — each seasonal drop (Halloween, Dandiya, Diwali…), one tab per
-//               drop the server reports. NO new storage: the drop's `saleSlugs`
+//   Drops     — each seasonal drop (Halloween, Dandiya, Diwali, Wedding…), one tab per
+//               drop the server reports (keyed `drop:<id>`, so the wedding
+//               season's drop never collides with the Wedding hub tab). NO new storage: the drop's `saleSlugs`
 //               in the season settings, written with a patch that names only
 //               that drop's slugs, after re-reading so nothing else moves.
 //
@@ -92,6 +93,10 @@ function info(slug: string) {
 const sameList = (a: Item[], b: Item[]) =>
   a.length === b.length && a.every((x, i) => x.slug === b[i].slug && (x.group ?? "") === (b[i].group ?? ""));
 
+// Drop tabs are keyed `drop:<id>`, never the bare id: the wedding SEASON's drop
+// is called "wedding", which is also the /wedding hub's own tab here.
+const dropKey = (id: string) => `drop:${id}`;
+const dropIdOf = (key: string) => (key.startsWith("drop:") ? key.slice(5) : key);
 
 export default function PlacesPage() {
   const router = useRouter();
@@ -101,7 +106,7 @@ export default function PlacesPage() {
 
   const [allowed, setAllowed] = useState(false);
   const [tab, setTab] = useState<string>("gallery");
-  const [dropIds, setDropIds] = useState<string[]>(["halloween", "diwali", "dandiya"]);
+  const [dropIds, setDropIds] = useState<string[]>(["wedding", "halloween", "diwali", "dandiya"]);
   const [tabs, setTabs] = useState<Record<string, TabState>>({});
   const [tiers, setTiers] = useState<Record<string, boolean> | null>(null);
   const [galleryOrder, setGalleryOrder] = useState<string[] | null>(null);
@@ -208,7 +213,7 @@ export default function PlacesPage() {
         const next = { ...all };
         for (const id of ids) {
           const slugs = (drops[id]?.saleSlugs ?? []).map((slug) => ({ slug }));
-          next[id] = { base: slugs, draft: slugs, loaded: true };
+          next[dropKey(id)] = { base: slugs, draft: slugs, loaded: true };
         }
         return next;
       });
@@ -216,7 +221,7 @@ export default function PlacesPage() {
       const msg = e instanceof Error ? e.message : "Could not load";
       setTabs((all) => {
         const next = { ...all };
-        for (const id of dropIds) next[id] = { ...(next[id] ?? { base: [], draft: [] }), loaded: true, error: msg };
+        for (const id of dropIds) next[dropKey(id)] = { ...(next[dropKey(id)] ?? { base: [], draft: [] }), loaded: true, error: msg };
         return next;
       });
     }
@@ -416,10 +421,11 @@ export default function PlacesPage() {
   }, [tiers, cur, api, galleryIdx, effectiveGallery, loadPremium]);
 
   const saveDrop = useCallback(async () => {
+    const id = dropIdOf(tab);
     // Read-modify-write: refuse if this drop changed elsewhere; only this drop's slugs are sent.
     let r: Awaited<ReturnType<typeof writeDropSlugs>>;
     try {
-      r = await writeDropSlugs(accessToken, tab, cur.base.map((i) => i.slug), cur.draft.map((i) => i.slug));
+      r = await writeDropSlugs(accessToken, id, cur.base.map((i) => i.slug), cur.draft.map((i) => i.slug));
     } catch (e) {
       if (e instanceof DropConflictError) setTabState(tab, { base: e.live.map((slug) => ({ slug })) });
       throw e;
@@ -427,7 +433,7 @@ export default function PlacesPage() {
     const saved = r.saved.map((slug) => ({ slug }));
     setTabState(tab, { base: saved, draft: saved });
     if (r.otherChanged) return { msg: "Saved — but other season settings look different now; check /admin/season", tone: "err" as const };
-    return `Saved — the ${dropLabel(tab)} drop now has ${saved.length} template${saved.length === 1 ? "" : "s"}`;
+    return `Saved — the ${dropLabel(id)} drop now has ${saved.length} template${saved.length === 1 ? "" : "s"}`;
   }, [accessToken, cur, tab, setTabState]);
 
   const save = useCallback(async () => {
@@ -491,7 +497,7 @@ export default function PlacesPage() {
     for (const i of tabs.wedding?.draft ?? []) push(i.slug, { id: "wedding", label: "Wedding" });
     const prem = tabs.premium?.loaded && !tabs.premium.error ? tabs.premium.draft.map((i) => i.slug) : [];
     for (const slug of prem) push(slug, { id: "premium", label: "Premium" });
-    for (const id of dropIds) for (const i of tabs[id]?.draft ?? []) push(i.slug, { id, label: `${dropLabel(id)} drop` });
+    for (const id of dropIds) for (const i of tabs[dropKey(id)]?.draft ?? []) push(i.slug, { id: dropKey(id), label: `${dropLabel(id)} drop` });
     return m;
   }, [galleryReady, hidden, excludedDraft, tabs, dropIds]);
   const othersOf = useCallback(
@@ -537,12 +543,12 @@ export default function PlacesPage() {
     { value: "wedding", label: <>💍 Wedding{isDirty(tabs.wedding) && <i className="pl-dot" aria-label="unsaved" />}</> },
     { value: "premium", label: <>👑 Premium{isDirty(tabs.premium) && <i className="pl-dot" aria-label="unsaved" />}</> },
     ...dropIds.map((id) => ({
-      value: id,
-      label: <>{dropLabel(id)}{isDirty(tabs[id]) && <i className="pl-dot" aria-label="unsaved" />}</>,
+      value: dropKey(id),
+      label: <>{dropLabel(id)}{isDirty(tabs[dropKey(id)]) && <i className="pl-dot" aria-label="unsaved" />}</>,
     })),
   ];
 
-  const placeHref = kind === "gallery" ? "/templates" : kind === "wedding" ? "/wedding" : kind === "premium" ? "/templates/premium" : dropPath(tab);
+  const placeHref = kind === "gallery" ? "/templates" : kind === "wedding" ? "/wedding" : kind === "premium" ? "/templates/premium" : dropPath(dropIdOf(tab));
   const status =
     kind === "gallery" ? (cur.draft.length ? "Curated" : "Everything live")
     : kind === "wedding" ? (cur.auto ? "Automatic" : "Curated") : kind === "premium" ? "Tiers" : "Drop list";
@@ -571,7 +577,7 @@ export default function PlacesPage() {
           </div>
         ) : (
           <div className="adk-hero-grid">
-            <HeroStat big label={kind === "drop" ? dropLabel(tab).toUpperCase() : kind.toUpperCase()} value={status} sub={statusSub} tone="#ffe3a3" />
+            <HeroStat big label={kind === "drop" ? dropLabel(dropIdOf(tab)).toUpperCase() : kind.toUpperCase()} value={status} sub={statusSub} tone="#ffe3a3" />
             <HeroStat label="IN THIS PLACE" value={cur.draft.length} tone="#fdf8ee" />
             <HeroStat label="VISIBLE TO VISITORS" value={liveCount} sub="not hidden, not coming soon" />
           </div>

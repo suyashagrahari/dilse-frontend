@@ -14,6 +14,7 @@ import ActivityToast from "@/components/home/ActivityToast";
 import HydrateOnVisible from "@/components/HydrateOnVisible";
 import HalloweenOfferBar from "@/components/promo/HalloweenOfferBar";
 import FestivalOfferBar from "@/components/promo/FestivalOfferBar";
+import WeddingOfferBar from "@/components/promo/WeddingOfferBar";
 import SeasonPendingStrip from "@/components/promo/SeasonPendingStrip";
 
 // ── Everything below the fold hydrates on approach ──────────────────────────
@@ -52,6 +53,7 @@ export default function HomePageClient() {
         <HalloweenOfferBar source="home-banner" className="hwb-home" />
         <FestivalOfferBar kind="dandiya" source="home-banner" className="fsb-home" />
         <FestivalOfferBar kind="diwali" source="home-banner" className="fsb-home" />
+        <WeddingOfferBar source="home-banner" className="fsb-home" />
         <HeroSection />
         <HydrateOnVisible><ProblemSection /></HydrateOnVisible>
         <HydrateOnVisible><HowItWorksSection /></HydrateOnVisible>
