@@ -18,9 +18,36 @@ export interface TemplateMeta {
   ranking: { slug: string; created: number }[];
   /** Super-admin gallery order (/admin/template-order); empty = the code's PINNED_FIRST. */
   order: string[];
+  /**
+   * Curated places (/admin/places). `wedding` is the /wedding hub's list, in
+   * order, once a super admin saved one; `null` = the hub's automatic rule.
+   * An older server without the field reads as `null` everywhere.
+   */
+  collections: TemplateCollections;
 }
 
-const EMPTY: TemplateMeta = { tiers: {}, ranking: [], order: [] };
+export type CollectionItem = { slug: string; group?: string };
+export type TemplateCollections = { wedding: { items: CollectionItem[] } | null };
+
+const EMPTY: TemplateMeta = { tiers: {}, ranking: [], order: [], collections: { wedding: null } };
+
+/** Tolerant read of one place: anything malformed is "automatic" (null). */
+export function parseCollection(raw: unknown): { items: CollectionItem[] } | null {
+  if (!raw || typeof raw !== "object" || !Array.isArray((raw as { items?: unknown }).items)) return null;
+  const items: CollectionItem[] = [];
+  for (const v of (raw as { items: unknown[] }).items) {
+    if (!v || typeof v !== "object") continue;
+    const { slug, group } = v as { slug?: unknown; group?: unknown };
+    if (typeof slug !== "string" || !slug) continue;
+    items.push(typeof group === "string" && group ? { slug, group } : { slug });
+  }
+  return { items };
+}
+
+export function parseCollections(raw: unknown): TemplateCollections {
+  const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return { wedding: parseCollection(o.wedding) };
+}
 
 let meta: TemplateMeta = EMPTY;
 let inflight: Promise<void> | null = null;
@@ -37,6 +64,7 @@ function load(fresh = false): Promise<void> {
           tiers: json.data.tiers && typeof json.data.tiers === "object" ? json.data.tiers : {},
           ranking: Array.isArray(json.data.ranking) ? json.data.ranking : [],
           order: Array.isArray(json.data.order) ? json.data.order.filter((x: unknown): x is string => typeof x === "string") : [],
+          collections: parseCollections(json.data.collections),
         };
         listeners.forEach((l) => l());
       }
@@ -47,7 +75,7 @@ function load(fresh = false): Promise<void> {
   return inflight;
 }
 
-/** For the admin panel after it changes a tier or the gallery order. */
+/** For the admin panel after it changes a tier, the gallery order or a curated place. */
 export function refreshTemplateMeta(): Promise<void> {
   return load(true);
 }

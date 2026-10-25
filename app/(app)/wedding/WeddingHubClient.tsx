@@ -6,9 +6,8 @@
 // owner's art in public/wedding-v3 (cut to page-weight variants in /hub/lux).
 // Sections, top to bottom — each a full-width band, none boxed in a card:
 //
-//   hero          — a palace door opens on a peacock terrace (HubHero)
+//   hero          — a peacock terrace at golden hour (HubHero)
 //   journey       — Roka → Haldi → Mehndi → Sangeet → Baraat → Pheras → Reception (HubJourney)
-//   openings      — ten live door/window/lotus/envelope reveals (HubOpenings)
 //   all designs   — sticky filter chips + the gallery's own cards
 //   world         — one link to family in eight cities, live clocks (HubWorld)
 //   how it works  — pick → AI → share → RSVPs, with little animations
@@ -39,24 +38,27 @@ import { GALLERY_LIST, isComingSoon, isNewLaunch, pinFirst, rankRooms } from "@/
 import type { TemplateListItem } from "@/types/template-config";
 import {
   FEATURES, LUX, STEPS, WEDDING_FAQS, WEDDING_FILTERS,
-  filterOf, isWeddingTemplate, type WeddingFilter,
+  weddingItems, type WeddingFilter,
 } from "./content";
 import { HUB_CSS } from "./hub.css";
 import { HERO_CSS } from "./hero.css";
 import { SECTIONS_CSS } from "./sections.css";
 import HubHero from "./HubHero";
 import HubJourney from "./HubJourney";
-import HubOpenings from "./HubOpenings";
 import HubWorld from "./HubWorld";
 
-type Item = TemplateListItem & { premium: boolean };
+type Item = TemplateListItem & { premium: boolean; group: Exclude<WeddingFilter, "all"> };
 
 // ── data ─────────────────────────────────────────────────────────────────────
 
-/** Every wedding template this visitor may see, in the gallery's order. */
+/**
+ * Every wedding template this visitor may see: the super admin's curated list
+ * (/admin/places) when one is saved, else the automatic rule in the gallery's
+ * order. See `weddingItems`.
+ */
 function useWeddingTemplates() {
   const { hidden } = useTemplateAccess();
-  const { tiers, ranking, order } = useTemplateMeta();
+  const { tiers, ranking, order, collections } = useTemplateMeta();
   const createdBy = useMemo(() => new Map(ranking.map((r) => [r.slug, r.created])), [ranking]);
   const ranked = useMemo(() => {
     const idx = new Map(GALLERY_LIST.map((t, i) => [t.slug, i]));
@@ -69,8 +71,8 @@ function useWeddingTemplates() {
   // whole room, not just the weddings.
   const rankOf = useMemo(() => rankRooms(ranked, createdBy), [ranked, createdBy]);
   const items: Item[] = useMemo(
-    () => pinFirst(ranked, order).filter((t) => isWeddingTemplate(t) && !isComingSoon(t)),
-    [ranked, order],
+    () => weddingItems(pinFirst(ranked, order), collections.wedding, isComingSoon),
+    [ranked, order, collections.wedding],
   );
   return { items, rankOf, createdBy };
 }
@@ -176,11 +178,11 @@ export default function WeddingHubClient() {
 
   const counts = useMemo(() => {
     const m = new Map<WeddingFilter, number>([["all", items.length]]);
-    for (const t of items) m.set(filterOf(t.slug), (m.get(filterOf(t.slug)) ?? 0) + 1);
+    for (const t of items) m.set(t.group, (m.get(t.group) ?? 0) + 1);
     return m;
   }, [items]);
   const chips = WEDDING_FILTERS.filter((c) => (counts.get(c.id) ?? 0) > 0);
-  const shown = filter === "all" ? items : items.filter((t) => filterOf(t.slug) === filter);
+  const shown = filter === "all" ? items : items.filter((t) => t.group === filter);
   const visible = useMemo(() => new Set(items.map((t) => t.slug)), [items]);
 
   useReveal(root, [items.length]);
@@ -201,7 +203,6 @@ export default function WeddingHubClient() {
 
       <HubHero />
       <HubJourney visible={visible} />
-      <HubOpenings visible={visible} />
 
       {/* ── All designs ──────────────────────────────────────────────────── */}
       <section className="whBand whDesigns" id="designs" aria-labelledby="wh-designs">
