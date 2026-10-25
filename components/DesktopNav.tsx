@@ -33,10 +33,29 @@ export default function DesktopNav() {
     setMounted(true);
   }, []);
 
+  // Passive and once per frame: reading scrollY and setting state on every
+  // scroll event forced a style + layout pass each time and was the biggest
+  // scroll cost on desktop pages.
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 28);
-    window.addEventListener("scroll", fn);
-    return () => window.removeEventListener("scroll", fn);
+    let raf = 0;
+    let last: boolean | null = null;
+    const check = () => {
+      raf = 0;
+      const next = window.scrollY > 28;
+      if (next !== last) {
+        last = next;
+        setScrolled(next);
+      }
+    };
+    const fn = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    raf = requestAnimationFrame(check);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", fn);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
