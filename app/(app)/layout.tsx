@@ -21,7 +21,7 @@ import SwipeTabs from "@/components/SwipeTabs";
 // The bottom nav's tabs, in its left-to-right order: on a phone or tablet a
 // sideways swipe on one of these pages moves to its neighbour, and a swipe
 // past Wedding pulls in the More drawer (BottomNav listens for the event).
-const MAIN_TABS = [{ href: "/templates" }, { href: "/feedback" }, { href: "/" }, { href: "/wedding" }];
+const MAIN_TABS = [{ href: "/feedback" }, { href: "/templates" }, { href: "/" }, { href: "/wedding" }];
 
 export const metadata: Metadata = buildMeta({
   title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",

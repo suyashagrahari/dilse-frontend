@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { animate, useMotionValue } from "framer-motion";
 import { Ellipsis, Home, LayoutTemplate, MessageSquareHeart } from "lucide-react";
-import WeddingRings from "@/components/icons/WeddingRings";
+import BrideGroom from "@/components/icons/BrideGroom";
 import MoreDrawer, { drawerWidth } from "@/components/MoreDrawer";
 import type { PastEndDetail } from "@/components/SwipeTabs";
 
@@ -61,10 +61,10 @@ export default function BottomNav() {
 
   const activeSlot = (() => {
     if (moreOpen && !peeking) return 4;
-    if (pathname.startsWith("/templates")) return 0;
-    // The second slot is the Love Wall — what creators say about SubhSandesh.
+    // The first slot is the Love Wall — what creators say about SubhSandesh.
     // Favorites moved into the More drawer, where the rest of "your stuff" is.
-    if (pathname.startsWith("/feedback")) return 1;
+    if (pathname.startsWith("/feedback")) return 0;
+    if (pathname.startsWith("/templates")) return 1;
     if (pathname === "/") return 2;
     // Slot 3 is the wedding hub (it replaced Manifesto, which now lives in
     // the More drawer and the desktop Company menu).
@@ -90,10 +90,10 @@ export default function BottomNav() {
   const bubbleLeft = ["13%", "31%", "50%", "69%", "87%"][activeSlot];
 
   const bubbleIcon = [
-    <LayoutTemplate key="b-template" size={23} strokeWidth={2.1} />,
     <MessageSquareHeart key="b-lovewall" size={23} strokeWidth={2.1} />,
+    <LayoutTemplate key="b-template" size={23} strokeWidth={2.1} />,
     <Home key="b-home" size={23} strokeWidth={2.1} />,
-    <WeddingRings key="b-wedding" size={23} strokeWidth={2.1} />,
+    <BrideGroom key="b-wedding" size={24} />,
     <Ellipsis key="b-more" size={23} strokeWidth={2.1}  />,
   ][activeSlot];
 
@@ -189,16 +189,16 @@ export default function BottomNav() {
           }}
         >
           <TabItem
-            href="/templates"
-            label="TEMPLATE"
-            slot={0}
-            icon={<LayoutTemplate size={20} color={activeSlot === 0 ? activeColor : mutedColor} strokeWidth={1.9} />}
-          />
-          <TabItem
             href="/feedback"
             label="LOVE WALL"
+            slot={0}
+            icon={<MessageSquareHeart size={20} color={activeSlot === 0 ? activeColor : mutedColor} strokeWidth={1.9} />}
+          />
+          <TabItem
+            href="/templates"
+            label="TEMPLATE"
             slot={1}
-            icon={<MessageSquareHeart size={20} color={activeSlot === 1 ? activeColor : mutedColor} strokeWidth={1.9} />}
+            icon={<LayoutTemplate size={20} color={activeSlot === 1 ? activeColor : mutedColor} strokeWidth={1.9} />}
           />
 
           <TabItem
@@ -212,7 +212,7 @@ export default function BottomNav() {
             href="/wedding"
             label="WEDDING"
             slot={3}
-            icon={<WeddingRings size={20} color={activeSlot === 3 ? activeColor : mutedColor} strokeWidth={1.9} />}
+            icon={<BrideGroom size={22} color={activeSlot === 3 ? activeColor : mutedColor} />}
           />
 
           <button
