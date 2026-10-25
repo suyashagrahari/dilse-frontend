@@ -44,13 +44,16 @@ import { useAppSelector } from "@/store/hooks";
 import { purgeSiteCache } from "@/lib/siteCache";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
-import { PREMIUM_SLUGS, ULTRA_PREMIUM_SLUGS } from "@/data/template-registry";
 import { GALLERY_LIST, GALLERY_BY_SLUG, pinFirst, isComingSoon } from "@/lib/galleryRules";
 import { isPremiumRoom, refreshTemplateMeta, useTemplateMeta } from "@/lib/templateMeta";
 import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
-import { DROPS, DROP_TEMPLATE_FALLBACK } from "@/lib/season";
-import { WEDDING_FILTERS, weddingItems, type WeddingFilter } from "../../wedding/content";
+import { DROP_TEMPLATE_FALLBACK } from "@/lib/season";
+import { WEDDING_FILTERS, type WeddingFilter } from "../../wedding/content";
+import {
+  adminApi, sortItems, useAutoWedding, premiumWrite, writeDropSlugs, DropConflictError, dropLabel, dropRank, dropPath,
+  DROP_MAX, WEDDING_MAX, GALLERY_EXCLUDE_MAX,
+} from "../placesShared";
 import {
   ArrowDown, ArrowUp, ExternalLink, Eye, EyeOff, Gem, GripVertical, Loader2, Plus, RotateCcw, Save, Undo2, X, Globe, Info,
 } from "lucide-react";
@@ -73,11 +76,6 @@ type TabState = {
 type Toast = { msg: string; tone: "ok" | "err" };
 
 const GROUPS = WEDDING_FILTERS.filter((f) => f.id !== "all") as { id: Group; label: string; emoji: string }[];
-const DROP_MAX = 50;
-const WEDDING_MAX = 300;
-const GALLERY_EXCLUDE_MAX = 300;
-/** The Templates page's exclusions carry no order: kept sorted so toggling back is not "unsaved". */
-const sortItems = (items: Item[]) => [...items].sort((a, b) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
 
 /** Name, art and tags for any slug — registry first, then drop fallbacks. */
 function info(slug: string) {
@@ -94,11 +92,6 @@ function info(slug: string) {
 const sameList = (a: Item[], b: Item[]) =>
   a.length === b.length && a.every((x, i) => x.slug === b[i].slug && (x.group ?? "") === (b[i].group ?? ""));
 
-const dropLabel = (id: string) =>
-  (DROPS as Record<string, { label: string } | undefined>)[id]?.label.replace(/ drop$/, "") ?? id.charAt(0).toUpperCase() + id.slice(1);
-const DROP_TAB_ORDER = ["halloween", "diwali", "dandiya"];
-const dropRank = (id: string) => (DROP_TAB_ORDER.includes(id) ? DROP_TAB_ORDER.indexOf(id) : 99);
-const dropPath = (id: string) => (DROPS as Record<string, { path: string } | undefined>)[id]?.path;
 
 export default function PlacesPage() {
   const router = useRouter();
@@ -125,27 +118,13 @@ export default function PlacesPage() {
     setAllowed(true);
   }, [user, isLoading, router]);
 
-  const hdr = useCallback(
-    () => ({ Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }),
-    [accessToken]
-  );
-
   const say = useCallback((msg: string, tone: Toast["tone"] = "ok") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ msg, tone });
     toastTimer.current = setTimeout(() => setToast(null), tone === "err" ? 6000 : 3600);
   }, []);
 
-  const api = useCallback(
-    async (path: string, init?: RequestInit) => {
-      const res = await fetch(`${API_URL}${path}`, { ...init, headers: hdr(), cache: "no-store" });
-      let json: { success?: boolean; error?: string; data?: unknown } = {};
-      try { json = await res.json(); } catch { /* non-JSON error page */ }
-      if (!res.ok || !json?.success) throw new Error(json?.error || `Request failed (${res.status})`);
-      return json.data as Record<string, unknown>;
-    },
-    [hdr]
-  );
+  const api = useCallback((path: string, init?: RequestInit) => adminApi(accessToken, path, init), [accessToken]);
 
   const setTabState = useCallback((id: string, patch: Partial<TabState> | ((t: TabState) => Partial<TabState>)) => {
     setTabs((all) => {
@@ -162,10 +141,7 @@ export default function PlacesPage() {
       (a, b) => (created.get(b.slug) ?? 0) - (created.get(a.slug) ?? 0) || idx.get(a.slug)! - idx.get(b.slug)!
     );
   }, [created]);
-  const autoWedding = useMemo<Item[]>(
-    () => weddingItems(pinFirst(rankedAll, publicOrder), null, () => false).map((t) => ({ slug: t.slug, group: t.group })),
-    [rankedAll, publicOrder]
-  );
+  const autoWedding: Item[] = useAutoWedding();
 
   // ── The effective gallery order (for Premium's order) ─────────────────────
   const effectiveGallery = useMemo(() => {
@@ -407,17 +383,8 @@ export default function PlacesPage() {
     const base = new Set(cur.base.map((i) => i.slug));
     const next = new Set(cur.draft.map((i) => i.slug));
     const writes: { slug: string; method: "PATCH" | "DELETE"; premium?: boolean }[] = [];
-    for (const slug of next) {
-      if (base.has(slug)) continue;
-      // An ✦ template unpinned is already in both rooms; pinned to main → unpin.
-      if (ULTRA_PREMIUM_SLUGS.has(slug)) writes.push({ slug, method: "DELETE" });
-      else writes.push(PREMIUM_SLUGS.has(slug) ? { slug, method: "DELETE" } : { slug, method: "PATCH", premium: true });
-    }
-    for (const slug of base) {
-      if (next.has(slug)) continue;
-      if (ULTRA_PREMIUM_SLUGS.has(slug) || PREMIUM_SLUGS.has(slug)) writes.push({ slug, method: "PATCH", premium: false });
-      else writes.push({ slug, method: "DELETE" });
-    }
+    for (const slug of next) if (!base.has(slug)) writes.push({ slug, ...premiumWrite(slug, true) });
+    for (const slug of base) if (!next.has(slug)) writes.push({ slug, ...premiumWrite(slug, false) });
     let done = 0;
     try {
       for (const w of writes) {
@@ -449,30 +416,19 @@ export default function PlacesPage() {
   }, [tiers, cur, api, galleryIdx, effectiveGallery, loadPremium]);
 
   const saveDrop = useCallback(async () => {
-    const slugs = cur.draft.map((i) => i.slug);
-    if (slugs.length === 0) throw new Error("A drop needs at least one template");
-    if (slugs.length > DROP_MAX) throw new Error(`A drop holds at most ${DROP_MAX} templates`);
-    // Read-modify-write: re-read, refuse if this drop changed elsewhere, then
-    // send a patch naming only this drop's slugs.
-    const before = await api("/admin/super/season");
-    const live = (((before.drops ?? {}) as Record<string, { saleSlugs?: string[] }>)[tab]?.saleSlugs ?? []).map(String);
-    if (live.join() !== cur.base.map((i) => i.slug).join()) {
-      setTabState(tab, { base: live.map((slug) => ({ slug })) });
-      throw new Error("This drop was changed elsewhere since you opened it — the saved list was reloaded; check and Save again");
+    // Read-modify-write: refuse if this drop changed elsewhere; only this drop's slugs are sent.
+    let r: Awaited<ReturnType<typeof writeDropSlugs>>;
+    try {
+      r = await writeDropSlugs(accessToken, tab, cur.base.map((i) => i.slug), cur.draft.map((i) => i.slug));
+    } catch (e) {
+      if (e instanceof DropConflictError) setTabState(tab, { base: e.live.map((slug) => ({ slug })) });
+      throw e;
     }
-    const after = await api("/admin/super/season", { method: "PUT", body: JSON.stringify({ drops: { [tab]: { saleSlugs: slugs } } }) });
-    // Everything but this drop's slugs must be exactly as it was.
-    const strip = (s: Record<string, unknown>) => {
-      const c = JSON.parse(JSON.stringify(s)) as Record<string, unknown> & { drops?: Record<string, Record<string, unknown>> };
-      delete c.updatedAt; delete c.updatedBy;
-      if (c.drops?.[tab]) delete c.drops[tab].saleSlugs;
-      return JSON.stringify(c);
-    };
-    const saved = (((after.drops ?? {}) as Record<string, { saleSlugs?: string[] }>)[tab]?.saleSlugs ?? slugs).map((slug) => ({ slug }));
+    const saved = r.saved.map((slug) => ({ slug }));
     setTabState(tab, { base: saved, draft: saved });
-    if (strip(before) !== strip(after)) return { msg: "Saved — but other season settings look different now; check /admin/season", tone: "err" as const };
+    if (r.otherChanged) return { msg: "Saved — but other season settings look different now; check /admin/season", tone: "err" as const };
     return `Saved — the ${dropLabel(tab)} drop now has ${saved.length} template${saved.length === 1 ? "" : "s"}`;
-  }, [api, cur, tab, setTabState]);
+  }, [accessToken, cur, tab, setTabState]);
 
   const save = useCallback(async () => {
     if (!dirty || busy) return;
