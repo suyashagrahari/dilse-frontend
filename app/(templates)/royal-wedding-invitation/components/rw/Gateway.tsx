@@ -1,9 +1,8 @@
 "use client";
 
 // ─── The palace gateway (the opening) ────────────────────────────────────────
-// A daylight Mughal gateway in ivory sandstone (public/wedding-v3/openings/
-// royal): a pishtaq with a pietra-dura band, a cusped arch and chhatris on the
-// roof. The doorway is closed by two pierced jaali screens; warm light shows
+// A daylight Mughal gateway in ivory sandstone, drawn in SVG (./Palace): a
+// pishtaq with a pietra-dura band, a pointed arch and chhatris on the roof. The doorway is closed by two pierced jaali screens; warm light shows
 // through the lattice. A brass toran hangs across the arch, a caparisoned
 // elephant stands guard at each corner, the couple's initials sit in a gold
 // medallion in the arch. The names are set above the gateway like a royal
@@ -25,6 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
 import { useDayMusic } from "../../../_valentine/music/context";
+import Palace from "./Palace";
 import Petals from "./Petals";
 import { A, GATE, decodeAll, img, seeded } from "../assets";
 import type { Strings } from "./model";
@@ -184,6 +184,8 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
         <img className="rw-gate-cloud is-b" {...img(A.cloud2)} />
       </div>
       <div className="rw-gate-floor" aria-hidden />
+      {/* The white palace balustrade, flush with the very bottom of the screen. */}
+      <span className="rw-gate-rail" aria-hidden />
       {(["l", "r"] as const).map((side) => (
         <span key={side} className={`rw-gate-lamp is-${side}`} aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -195,7 +197,6 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
         {/* Kept quiet so the gateway reads first: a warm halo behind it, the white palace balustrade along the ground line, gold lanterns hanging still from the top corners. */}
         <div className="rw-gate-side" aria-hidden>
           <span className="rw-gate-halo" />
-          <span className="rw-gate-rail" />
         </div>
 
         <div className="rw-stage" onClick={open} aria-hidden>
@@ -225,8 +226,8 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
               );
             })}
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="rw-gateway" data-rw-pre {...img(A.gateway, { high: true })} />
+          {/* The palace façade, drawn (./Palace): the doorway is a hole the jaali screens show through. */}
+          <Palace className="rw-gateway" />
           <span className="rw-medal">
             <span className="rw-medal-ini">
               <b>{initialOf(first)}</b>

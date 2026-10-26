@@ -59,7 +59,7 @@ export const RW_CSS = `
 @keyframes rw-mote { 0% { transform: translate3d(0,0,0); opacity: 0; } 15% { opacity: .9; } 85% { opacity: .6; } 100% { transform: translate3d(var(--dx), -60cqh, 0); opacity: 0; } }
 .rw-screen { position: absolute; top: 0; height: 100%; z-index: 2; transition: transform 1.4s cubic-bezier(.7,0,.2,1), opacity .35s ease 1.1s; }
 .rw-screen img { display: block; width: 100%; height: 100%; filter: sepia(.12) saturate(1.12) brightness(1.05); }
-.rw-gateway { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%); }
+.rw-gateway { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .rw-invoke { margin: 0 0 4px; font: 600 clamp(13px, 3.6vw, 16px)/1.2 var(--wk-font-deva); color: var(--rw-maroon); white-space: nowrap; letter-spacing: .02em; }
 .rw-medal { position: absolute; z-index: 4; left: 50%; top: 32.6%; width: 15.5%; aspect-ratio: 1; transform: translate(-50%,-50%); border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 38%, #FFFDF6 0%, #FBEFD6 62%, #F0DBAE 100%); box-shadow: 0 0 0 .5cqw #FFF9EC, 0 0 0 1cqw #C9A24A, 0 0 0 1.25cqw #FFF4D8, 0 6px 14px -4px rgba(110,60,20,.45); container-type: inline-size; }
 .rw-medal-ini { display: flex; align-items: center; gap: 2cqw; font-family: var(--wk-font-script); color: var(--rw-maroon); }
@@ -77,7 +77,10 @@ export const RW_CSS = `
 /* the quiet court: a halo behind the gateway, the balustrade on the ground line, lanterns at the top corners */
 .rw-gate-side { display: block; position: absolute; inset: 0; pointer-events: none; }
 .rw-gate-halo { position: absolute; left: 50%; bottom: 0; width: calc(var(--sw) * 2.1); height: calc(var(--sh) * 1.15); transform: translateX(-50%); border-radius: 50% 50% 0 0; background: radial-gradient(closest-side at 50% 62%, rgba(255,246,222,.95), rgba(255,236,196,.55) 45%, rgba(255,236,196,0) 100%); }
-.rw-gate-rail { position: absolute; left: 0; right: 0; bottom: -2px; height: calc(var(--sh) * .2); background: url("/wedding-v3/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.32) saturate(1.1) brightness(1.02); opacity: .92; -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(50% - var(--sw) * .86), transparent calc(50% - var(--sw) * .74), transparent calc(50% + var(--sw) * .74), #000 calc(50% + var(--sw) * .86), #000 100%); mask-image: linear-gradient(90deg, #000 0, #000 calc(50% - var(--sw) * .86), transparent calc(50% - var(--sw) * .74), transparent calc(50% + var(--sw) * .74), #000 calc(50% + var(--sw) * .86), #000 100%); }
+.rw-gate-rail { position: absolute; z-index: 4; left: 0; right: 0; bottom: 0; height: clamp(64px, 10svh, 112px); background: url("/wedding-v3/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.3) saturate(1.1) brightness(1.03); pointer-events: none; }
+.rw-gate.is-loading .rw-gate-rail { opacity: 0; }
+.rw-gate:not(.is-loading) .rw-gate-rail { animation: rw-up .9s var(--rw-ease) .2s both; }
+.rw-gate.is-push .rw-gate-rail { opacity: 0; transition: opacity .4s ease; }
 .rw-gate-lamp { position: absolute; z-index: 1; top: 0; width: clamp(96px, 16vw, 230px); pointer-events: none; }
 .rw-gate-lamp img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 16px rgba(110,60,20,.22)); }
 .rw-gate-lamp.is-l { left: clamp(4px, 4vw, 120px); }
@@ -105,7 +108,7 @@ export const RW_CSS = `
 .rw-gate-k { position: relative; }
 /* the floor and the button below the gateway */
 .rw-gate-foot { position: absolute; left: 0; right: 0; bottom: 0; height: var(--foot); z-index: 6; display: flex; align-items: center; justify-content: center; padding: 6px 16px max(10px, env(safe-area-inset-bottom)); transition: opacity .5s ease, transform .6s var(--rw-ease); }
-.rw-gate-foot .rw-gate-cta { margin-top: 0; }
+.rw-gate-foot .rw-gate-cta { margin-top: 0; box-shadow: 0 16px 30px -12px rgba(80,20,30,.6), 0 0 0 6px rgba(255,250,240,.75); }
 .rw-gate:not(.is-loading) .rw-gate-foot { animation: rw-up .8s var(--rw-ease) .6s both; }
 .rw-gate.is-open .rw-gate-foot, .rw-gate.is-push .rw-gate-foot { opacity: 0; transform: translateY(12px); pointer-events: none; }
 .rw-gate-cta { position: relative; margin-top: 10px; display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 26px; border: 0; border-radius: 999px; font: 700 15px/1 var(--wk-font-sans); color: #FFF7EA; cursor: pointer; background: linear-gradient(110deg, var(--rw-maroon-deep), var(--rw-maroon) 55%, color-mix(in srgb, var(--rw-maroon) 78%, #D9905A)); box-shadow: 0 14px 28px -12px rgba(100,28,42,.75), inset 0 1px 0 rgba(255,255,255,.25); -webkit-tap-highlight-color: transparent; transition: transform .2s ease, opacity .3s ease; }
