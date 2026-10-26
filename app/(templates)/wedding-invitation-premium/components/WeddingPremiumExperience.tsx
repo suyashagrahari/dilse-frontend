@@ -28,6 +28,7 @@ import Finale from "./wp/Finale";
 import Hero, { MotifMark } from "./wp/Hero";
 import Opening from "./wp/Opening";
 import Story from "./wp/Story";
+import Lake from "./wp/Lake";
 import Venue from "./wp/Venue";
 import { img } from "./wp/art";
 import { WP_CSS } from "./wp/css";
@@ -204,8 +205,10 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
 
       {/* ── The invitation ──────────────────────────────────────────────── */}
       <Section id="invitation" ornament={null} width="wide" className="wp-sec wp-sec-invite">
-        {/* The section sits on the terrace's watercolour sky; the card is compact and wide (photo beside the words on laptops). */}
-        <div className="wp-sec-wash" aria-hidden />
+        {/* One full screen: the card centred on the terrace's watercolour sky, hills and lake, spanning the whole width (photo beside the words on laptops). */}
+        <div className="wp-sec-wash" aria-hidden>
+          <Lake className="wp-sec-lake" lotus={false} />
+        </div>
         <Reveal className={`wp-invite${m.cover ? " has-photo" : ""}`}>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...img("blossom", { lazy: true })} className="wp-invite-branch" aria-hidden />

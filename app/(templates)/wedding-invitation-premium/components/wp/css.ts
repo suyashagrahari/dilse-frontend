@@ -267,11 +267,13 @@ export const WP_CSS = `
 }
 
 /* ══ The invitation ══════════════════════════════════════ */
-.wp-sec-invite { padding-top: clamp(40px, 6vw, 70px); }
-.wp-sec-invite { position: relative; isolation: isolate; }
+/* one full screen, the card centred; the next section never peeks in */
+.wp-root .wk-section.wp-sec-invite { position: relative; isolation: isolate; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-top: clamp(48px, 8svh, 90px); padding-bottom: clamp(48px, 8svh, 90px); }
 /* the terrace's watercolour sky behind the section */
-.wp-sec-wash { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: url("${A.skyFull.src}") 50% 30% / cover no-repeat; -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 80%, transparent); mask-image: linear-gradient(180deg, transparent, #000 14%, #000 80%, transparent); }
-.wp-sec-wash::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,254,250,.35), rgba(255,254,250,.15) 50%, rgba(255,254,250,.4)); }
+/* the scene spans the full screen width, not just the content column */
+.wp-sec-wash { position: absolute; top: 0; bottom: 0; left: calc(50% - 50vw); width: 100vw; z-index: -1; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 88%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 88%, transparent 100%); }
+.wp-sec-lake { --lv-water: 22%; --lv-hills: 18%; }
+.wp-sec-wash::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 55% at 50% 48%, rgba(255,254,250,.55), rgba(255,254,250,0) 75%); }
 .wp-invite { position: relative; max-width: 1080px; margin: 0 auto; padding: clamp(48px, 8vw, 64px) clamp(20px, 5vw, 56px) clamp(32px, 5vw, 48px); text-align: center; background: rgba(255,254,250,.94); border-radius: 28px; border: 1px solid var(--wp-line); box-shadow: 0 30px 60px -40px rgba(31,62,87,.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .wp-invite::before { content: ""; position: absolute; inset: 10px; border-radius: 20px; border: 1px solid rgba(201,162,74,.3); pointer-events: none; }
 .wp-invite-branch { position: absolute; z-index: 1; top: -34px; right: -14px; width: clamp(150px, 30vw, 260px); height: auto; pointer-events: none; }
@@ -282,6 +284,19 @@ export const WP_CSS = `
 .wp-invite .wk-msg-text p { font-size: clamp(17px, 3.2vw, 19.5px); line-height: 1.6; margin-bottom: .8em; }
 .wp-invite .wk-msg-text.is-deva p { font-size: clamp(16px, 3vw, 18px); line-height: 1.85; }
 .wp-invite .wk-msg-heading { font-size: clamp(40px, 7vw, 58px); margin-bottom: 14px; }
+/* phones: tightened so the whole card fits on one screen */
+@media (max-width: 699px) {
+  .wp-root .wk-section.wp-sec-invite { padding-top: 64px; padding-bottom: 24px; }
+  .wp-invite { padding: 30px 16px 22px; border-radius: 24px; }
+  .wp-invite-portrait { width: 128px; margin-bottom: 10px; border-width: 4px; }
+  .wp-invite .wp-motif { margin-bottom: 2px; }
+  .wp-invite .wp-eyebrow { margin-bottom: 2px; }
+  .wp-invite .wk-msg-heading { font-size: 34px; margin-bottom: 8px; }
+  .wp-invite .wk-msg-text p { font-size: 15px; line-height: 1.5; margin-bottom: .55em; }
+  .wp-invite .wk-msg-text.is-deva p { font-size: 14.5px; line-height: 1.7; }
+  .wp-invite .wk-msg-cols { gap: 10px; }
+  .wp-invite-branch { width: 120px; top: -22px; }
+}
 /* laptops: compact and wide — the arched photo beside the words */
 @media (min-width: 960px) {
   .wp-invite.has-photo { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: center; gap: 48px; text-align: center; padding: 48px 56px; }
