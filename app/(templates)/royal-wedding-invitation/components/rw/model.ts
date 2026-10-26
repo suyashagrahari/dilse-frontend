@@ -2,7 +2,7 @@
 // Untrusted (an old page, the AI fill, a hostile POST): everything is coerced.
 
 import type { LovePhoto } from "../../../_love/types";
-import { isWeddingThemeId, LIGHT_THEMES, type WeddingThemeId } from "../../../_wedding/themes";
+import type { WeddingThemeId } from "../../../_wedding/themes";
 import type { FamilySide, WeddingEvent } from "../../../_wedding/types";
 import { RW_LIMITS, RW_MAX_CONTACTS, rwLocalUrl } from "../../../_valentine/days/royal-wedding-invitation";
 
@@ -190,9 +190,9 @@ export function readRoyal(extras: Record<string, unknown>, photos: LovePhoto[], 
   const order = x.nameOrder === "groom" ? "groom" : "bride";
   const b = bride.trim() || "Bride";
   const g = groom.trim() || "Groom";
-  // Light only. A page published before the redesign on maroon / noir / emerald keeps that id
-  // in the database and renders in the sandstone palette (champagne), so it never looks broken.
-  const theme = isWeddingThemeId(x.theme) && (LIGHT_THEMES as readonly string[]).includes(x.theme as string) ? (x.theme as WeddingThemeId) : "champagne";
+  // One palette for the whole invitation: sandstone (champagne) — ivory, antique gold, soft maroon.
+  // The art is painted for it, so every page (blush, powder or an old dark theme included) renders in it.
+  const theme: WeddingThemeId = "champagne";
 
   return {
     theme,

@@ -18,22 +18,21 @@
 //   4 Invitation   English + Hindi, Shri Ganesh over the gateway
 //   5 Our story    chapters with a photo each (framed in the cropper)
 //   6 Guest info   good to know, getting there, who to call, livestream, shagun
-//   7 Look & music theme + the song (suggested list or any YouTube link)
+//   7 Music        the song (suggested list or any YouTube link); one sandstone palette, no picker
 //   8 RSVP & send  RSVP settings, film, hashtag, closing line, password,
 //                  personal ?to= links for each guest
 // Single photos (portrait, family cards, story chapters) open the shared
 // PhotoCropper in the exact shape the guest page shows them.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
-import { LIGHT_THEMES } from "../../../_wedding/themes";
+import { MasonryEditor, RsvpDashboard } from "../../../_wedding";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
 import PhotoCropper, { CROP_DEFAULT, clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import { themeVars } from "../../../_valentine/theme";
 import type { LovePhoto } from "../../../_valentine/types";
-import { RW_LIMITS, RW_MAX_CONTACTS, RW_THEME_LABELS, royalWeddingDay, rwLocalUrl, rwStoredUrl } from "../../../_valentine/days/royal-wedding-invitation";
+import { RW_LIMITS, RW_MAX_CONTACTS, royalWeddingDay, rwLocalUrl, rwStoredUrl } from "../../../_valentine/days/royal-wedding-invitation";
 import { MAIN_RE, isUpiId, phoneOf, swatchFor } from "../rw/model";
 import { personalUrl } from "../rw/share";
 import RoyalGuided, { type WeddingAnswers } from "./RoyalGuided";
@@ -473,8 +472,6 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
   const token = owner?.token ?? null;
 
   const letter = mf.letter;
-  const legacyDark = !!s(x.theme) && !(LIGHT_THEMES as readonly string[]).includes(s(x.theme));
-  const themeId = legacyDark || !s(x.theme) ? "champagne" : s(x.theme);
   const hindi = s(x.hindiMessage);
   const main = events[mainIdx];
   const upi = s(x.upiId);
@@ -762,9 +759,17 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
         <Toggle checked={x.invocation !== false} onChange={(v) => set("invocation", v)}>
           “॥ श्री गणेशाय नमः ॥” over the gateway (off: “॥ शुभ विवाह ॥”)
         </Toggle>
-        <Toggle checked={x.lang === "hi"} onChange={(v) => set("lang", v ? "hi" : "en")}>
-          Open the invitation in Hindi (guests can switch)
-        </Toggle>
+        <p className="rws-hint" id="rws-lang-l" style={{ marginTop: 14 }}>
+          Invitation language · every heading, button, date, time and the RSVP form follow it; guests can still switch
+        </p>
+        <div className="rws-seg" role="radiogroup" aria-labelledby="rws-lang-l">
+          <button type="button" role="radio" aria-checked={x.lang !== "hi"} onClick={() => set("lang", "en")}>
+            English
+          </button>
+          <button type="button" role="radio" aria-checked={x.lang === "hi"} onClick={() => set("lang", "hi")} lang="hi">
+            हिंदी
+          </button>
+        </div>
       </section>
 
       {/* ── 5 Our story ────────────────────────────────────────────────── */}
@@ -878,15 +883,10 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
         </div>
       </section>
 
-      {/* ── 7 Look & music ─────────────────────────────────────────────── */}
-      <section className="vs-sec" id="vs-sec-music" aria-label="Look and music">
-        <Head n={7} icon="music" title="Look & music" sub="Three daylight palettes, always in sandstone and gold. The song starts when the guest opens the gateway." />
-        <ThemePicker themes={LIGHT_THEMES} grouped={false} value={themeId} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "A").slice(0, 1)} & ${(mf.senderName || "V").slice(0, 1)}`} label="Palette" />
-        <p className="rws-hint" style={{ marginTop: 8 }}>
-          {RW_THEME_LABELS[themeId]} · {WEDDING_THEMES[themeId as keyof typeof WEDDING_THEMES]?.blurb}
-          {legacyDark && " · Your page was made with a dark palette; it now opens in daylight sandstone. Pick any palette to save it."}
-        </p>
-        <div style={{ marginTop: 18 }}>
+      {/* ── 7 Music ───────────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-music" aria-label="Music">
+        <Head n={7} icon="music" title="Music" sub="The song starts when the guest opens the gateway. The look is one hand-painted sandstone palette — ivory, antique gold and soft maroon — made for this art." />
+        <div>
           <MusicPicker
             value={mf}
             suggestions={royalWeddingDay.music?.suggestions}

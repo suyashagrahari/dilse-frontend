@@ -11,7 +11,7 @@
 // stagger; the toran sways while the card is on screen. Rounded rectangles only.
 
 import { useState, type CSSProperties } from "react";
-import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, formatEventDate, formatEventTime, googleCalendarUrl, mapLink, type WeddingEvent } from "../../../_wedding";
+import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, fnTitle, formatEventDate, formatEventTime, googleCalendarUrl, hiTime, mapLink, type WeddingEvent } from "../../../_wedding";
 import { A, img, type WeddingAsset } from "../assets";
 import { MAIN_RE } from "./model";
 
@@ -43,10 +43,11 @@ export interface EventsProps {
   couple: string;
   url?: string;
   locale: string;
+  lang: "en" | "hi";
   labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; saved: string };
 }
 
-export default function Events({ events, couple, url, locale, labels: l }: EventsProps) {
+export default function Events({ events, couple, url, locale, lang, labels: l }: EventsProps) {
   const [flash, setFlash] = useState<string | null>(null);
   const list = events.filter((e) => e.title || e.venue || e.date);
   if (!list.length) return null;
@@ -60,8 +61,9 @@ export default function Events({ events, couple, url, locale, labels: l }: Event
       <ol className={`rw-ev-grid n-${Math.min(list.length, 3)}`}>
         {list.map((e, i) => {
           const date = formatEventDate(e.date, locale);
-          const time = formatEventTime(e.time, locale);
-          const end = formatEventTime(e.endTime, locale);
+          const time = lang === "hi" ? hiTime(e.time) : formatEventTime(e.time, locale);
+          const end = lang === "hi" ? hiTime(e.endTime ?? "") : formatEventTime(e.endTime, locale);
+          const title = fnTitle(e.title, lang);
           const map = mapLink(e);
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
@@ -82,7 +84,7 @@ export default function Events({ events, couple, url, locale, labels: l }: Event
                 </div>
                 <div className="rw-ev-body">
                   {date && <p className="wk-eyebrow rw-ev-date">{date}</p>}
-                  <h3 className="rw-ev-title">{e.title}</h3>
+                  <h3 className="rw-ev-title" lang={title !== e.title ? "hi" : undefined}>{title}</h3>
                   <p className="rw-ev-line">
                     <Icon d={CLOCK} />
                     {time ? `${time}${end ? ` – ${end}` : ""}` : l.tba}

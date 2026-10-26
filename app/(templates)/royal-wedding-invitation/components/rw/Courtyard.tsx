@@ -113,9 +113,12 @@ export default function Courtyard({ open, s, lang, first, second, photo, dateLin
         </div>
       </div>
 
+      {/* Two lengths of balustrade side by side: on laptops they run the full width under the courtyard. */}
       <div className="rw-court-rail" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...img(A.balustrade, { lazy: true })} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="rw-court-rail-2" {...img(A.balustrade, { lazy: true })} />
       </div>
     </header>
   );

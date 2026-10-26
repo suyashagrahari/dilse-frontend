@@ -21,7 +21,7 @@
 // ?to=Name greets the guest on the gateway and pre-fills their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
+import { BLESSINGS_TEXT_HI, BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
 import { A, RW_KIT, img } from "./assets";
@@ -128,7 +128,9 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
 
   const dateLine = m.main?.date ? formatEventDate(m.main.date, locale) : "";
   const shortDate = m.main?.date ? formatEventDate(m.main.date, "en-IN").replace(/^[^,]+,\s*/, "") : "";
-  const mainTime = m.main?.time ? formatEventTime(m.main.time, locale) : "";
+  const mainTime = m.main?.time ? (lang === "hi" ? hiTime(m.main.time) : formatEventTime(m.main.time, locale)) : "";
+  // The RSVP's function chips read in the page's language too (their ids, which the dashboard keys on, stay).
+  const rsvpEvents = useMemo(() => (lang === "hi" ? m.events.map((e) => ({ ...e, title: fnTitle(e.title, "hi") })) : m.events), [lang, m.events]);
   const [url] = useState(() => (typeof window === "undefined" ? "" : window.location.href.split("#")[0]));
   const venueLine = [m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ");
 
@@ -180,12 +182,13 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         <style>{RW_CSS}</style>
         {gate && <Gateway first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} invocation={m.invocation} replay={replay} onOpened={onOpened} />}
 
-        <div className="rw-lang" role="group" aria-label="Language">
+        <div className={`rw-lang${lang === "hi" ? " is-hi" : ""}`} role="group" aria-label={lang === "hi" ? "भाषा" : "Language"}>
+          <span className="rw-lang-pill" aria-hidden />
           <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
             EN
           </button>
           <button type="button" aria-pressed={lang === "hi"} onClick={() => setLang("hi")} lang="hi">
-            हिं
+            हिंदी
           </button>
         </div>
 
@@ -198,18 +201,28 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         <Courtyard open={open} s={s} lang={lang} first={m.first} second={m.second} photo={m.hero} dateLine={dateLine} time={mainTime} muhurat={m.muhurat} venue={venueLine} guest={guest} />
 
         {/* ── The invitation ──────────────────────────────────────────────── */}
-        <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal" className="rw-sec rw-sec-invite">
+        {/* One full screen on the palace sky (clouds over the hedge wall), the card wide and compact, lanterns hanging from the top corners. */}
+        <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="wide" className="rw-sec rw-sec-invite rw-full">
+          <div className="rw-scene" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img className="rw-scene-cloud is-a" {...img(A.cloud, { lazy: true })} />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img className="rw-scene-cloud is-b" {...img(A.cloud2, { lazy: true })} />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img className="rw-scene-hedge" {...img(A.hedge, { lazy: true })} />
+          </div>
           <div className="rw-invite-wrap">
             <Lanterns />
             <Reveal effect="zoom" className="rw-invite">
-              <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament="kalash" heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
+              {/* The Hindi page reads the Hindi letter alone; the English page keeps both side by side. */}
+              <MessageBlock text={lang === "hi" && m.hindiMessage ? m.hindiMessage : data.letter} hindi={lang === "hi" ? undefined : m.hindiMessage} ornament="kalash" heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
             </Reveal>
           </div>
         </Section>
 
         {/* ── Families, inside a pietra-dura border ───────────────────────── */}
         {(hasFamilies || m.blessingsOf) && (
-          <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal" className="rw-sec">
+          <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal" className="rw-sec rw-full">
             <div className="rw-inlay">
               <div className="rw-inlay-in">
                 {m.blessingsOf && (
@@ -228,7 +241,7 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
 
         {/* ── The farmaan: the date + countdown ───────────────────────────── */}
         {m.main?.date && (
-          <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} title={<span lang={lang}>{s.shubh}</span>} ornament={null} width="normal" className="rw-sec rw-sec-day">
+          <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} title={<span lang={lang}>{s.shubh}</span>} ornament={null} width="normal" className="rw-sec rw-sec-day rw-full">
             <Farmaan s={s} lang={lang} locale={locale} date={m.main.date} rawTime={m.main.time} time={mainTime} muhurat={m.muhurat} venue={venueLine} first={m.first} second={m.second} />
           </Section>
         )}
@@ -243,13 +256,13 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         {/* ── Functions ───────────────────────────────────────────────────── */}
         {m.events.length > 0 && (
           <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="rw-sec rw-sec-events">
-            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
+            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} lang={lang} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
           </Section>
         )}
 
         {/* ── The palace venue ────────────────────────────────────────────── */}
         {m.main?.venue && (
-          <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal" className="rw-sec rw-sec-venue">
+          <Section id="venue" eyebrow={<span lang={lang}>{s.venueEyebrow}</span>} ornament={null} width="normal" className="rw-sec rw-sec-venue rw-full">
             <div className="rw-venue">
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="rw-venue-gazebo" {...img(A.gazeboGarden, { lazy: true })} />
@@ -303,22 +316,39 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         )}
 
         {/* ── RSVP ────────────────────────────────────────────────────────── */}
-        {/* The kit's form labels are English only, so its "Kindly reply by <date>" stays English too (no mixed-script line). */}
-        <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow" className="rw-sec rw-sec-rsvp">
-          <Reveal as="p" className="rw-upasthiti">
-            <span lang={lang}>{s.upasthiti}</span>
-          </Reveal>
-          <div ref={rsvpRef}>
-            <Reveal>
-              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale="en-IN" />
+        {/* Laptops: the couple under the pink chhatris in a palace arch beside a wider form; phones: the arch above it. */}
+        <Section id="rsvp" eyebrow={<span lang={lang}>{lang === "hi" ? s.rsvpEyebrow : `RSVP · ${s.rsvpEyebrow}`}</span>} ornament="divider-dots" width="wide" className="rw-sec rw-sec-rsvp">
+          <div className="rw-rsvp">
+            <Reveal effect="zoom" className="rw-rsvp-art">
+              <span className="rw-rsvp-arch" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img className="rw-rsvp-chhatri is-l" {...img(A.chhatri, { lazy: true })} />
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img className="rw-rsvp-chhatri is-r" {...img(A.chhatri, { lazy: true })} />
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img className="rw-rsvp-carpet" {...img(A.carpet, { lazy: true })} />
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img className="rw-rsvp-pair" {...img(A.coupleWedding, { lazy: true })} />
+              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="rw-rsvp-peacock" {...img(A.peacock, { lazy: true })} aria-hidden />
+              <p className="rw-upasthiti">
+                <span lang={lang}>{s.upasthiti}</span>
+              </p>
+              <p className="rw-rsvp-names">{couple}</p>
             </Reveal>
+            <div ref={rsvpRef} className="rw-rsvp-form">
+              <Reveal>
+                <RSVPBlock mode={mode} couple={couple} events={rsvpEvents} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} text={lang === "hi" ? RSVP_TEXT_HI : undefined} />
+              </Reveal>
+            </div>
           </div>
         </Section>
 
         {/* ── Blessings ───────────────────────────────────────────────────── */}
         {m.blessings && (
-          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal" className="rw-sec">
-            <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
+          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="wide" className="rw-sec rw-sec-bless">
+            <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} text={lang === "hi" ? BLESSINGS_TEXT_HI : undefined} />
           </Section>
         )}
 
