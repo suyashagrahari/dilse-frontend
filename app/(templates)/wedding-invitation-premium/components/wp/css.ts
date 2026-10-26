@@ -235,7 +235,8 @@ export const WP_CSS = `
 }
 /* laptops and desktops: the names on one line, the scene framing them from below */
 @media (min-width: 960px) {
-  .wp-hero { padding: clamp(80px, 12svh, 120px) 40px calc(var(--u) * 40); --u: min(.95vw, .78svh); }
+  /* the words sit in the middle of the open sky between the garland and the scene, not pinned to the top */
+  .wp-hero { justify-content: center; padding: clamp(70px, 10svh, 110px) 40px calc(var(--u) * 30); --u: min(.95vw, .78svh); }
   .wp-hero-names { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .18em; font-size: clamp(60px, min(6.2vw, 10.5svh), 116px); }
   .wp-hero-names > i { margin: 0; font-size: .4em; }
   .wp-hero-line { max-width: 46ch; }
