@@ -178,7 +178,8 @@ export const WP_CSS = `
 .wp-hero.is-on .wp-garland { opacity: 1; }
 .wp-garland picture { display: block; flex: 0 0 auto; }
 .wp-garland img { display: block; height: auto; }
-.wp-garland-a { width: 112vw; margin: -4vw -6vw 0; }
+/* the strip is cut flat along its top, so it sits flush against the screen's top edge (no margin) */
+.wp-garland-a { width: 112vw; margin: 0 -6vw; }
 .wp-garland .wp-garland-b { display: none; }
 .wp-scene-top { z-index: 1; }
 .wp-sc-lantern { top: calc(var(--u) * 4); width: calc(var(--u) * 11); --sd: .5s; filter: drop-shadow(0 10px 14px rgba(31,62,87,.16)); }
@@ -226,7 +227,7 @@ export const WP_CSS = `
   .wp-hero { --u: min(1.2vw, .6svh); }
   .wp-sc-couple { left: calc(var(--u) * 2); width: calc(var(--u) * 60); }
   .wp-hero { --gz-r: calc(var(--u) * 2); --gz-h: calc(var(--u) * 62); }
-  .wp-garland-a { width: 104vw; margin: -5vw -2vw 0; }
+  .wp-garland-a { width: 104vw; margin: 0 -2vw; }
   .wp-hero { padding-top: max(150px, 26vw); }
   .wp-sc-lantern { top: 12vw; width: 7vw; }
   .wp-sc-lantern.is-l { left: 10vw; }
@@ -243,7 +244,7 @@ export const WP_CSS = `
   .wp-hero { --gz-r: calc(var(--u) * 5); --gz-h: calc(var(--u) * 70); }
   /* two mirrored strips, each kept to its side of the screen and faded where they meet over the names */
   .wp-garland { justify-content: space-between; }
-  .wp-garland .wp-garland-a, .wp-garland .wp-garland-b { display: block; width: min(44vw, calc(var(--u) * 78)); margin-top: calc(min(44vw, calc(var(--u) * 78)) * -.08); }
+  .wp-garland .wp-garland-a, .wp-garland .wp-garland-b { display: block; width: min(44vw, calc(var(--u) * 78)); margin-top: 0; }
   .wp-garland picture { margin-left: -2vw; }
   .wp-garland-b { margin-right: -2vw; scale: -1 1; }
   .wp-garland-a, .wp-garland-b { -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
