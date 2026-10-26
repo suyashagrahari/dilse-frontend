@@ -50,7 +50,6 @@ export const RW_THEME_LABELS: Record<string, string> = {
 
 /** Verified YouTube uploads (oEmbed 200 + embeddable, 2026-10-19). The shehnai plays by default. */
 export const RW_SONGS: readonly SongSuggestion[] = [
-  { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
   { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal" },
   { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
   { id: "3qpxJEp4Ec4", title: "Kudmayi", artist: "Shahid Mallya" },
@@ -59,6 +58,7 @@ export const RW_SONGS: readonly SongSuggestion[] = [
   { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
   { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh" },
   { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Arijit Singh, Harshdeep Kaur" },
+  { id: "OzEL4CwbPew", title: "Shehnai: Kanyadaan (slow, for the pheras)", artist: "Ustad Bismillah Khan" },
   { id: "Ptk_1Dc2iPY", title: "Canon in D", artist: "Brooklyn Duo" },
   { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
@@ -267,7 +267,7 @@ export const royalWeddingDay: DayConfig<RwExtras> = {
     gifs: {},
     music: true,
     musicMode: "youtube",
-    musicYoutubeId: "OzEL4CwbPew",
+    musicYoutubeId: "1LVpuWpRs3I",
     musicStart: 0,
     endLine: "With love and gratitude, the Rathore & Singhania families",
     extras: {

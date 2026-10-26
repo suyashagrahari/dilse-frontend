@@ -44,7 +44,6 @@ export const WP_THEME_LABELS: Record<string, string> = {
 // ─── Music: Din Shagna Da by default (oEmbed-verified ids, wq-research.md §5) ─
 export const WP_SONGS: readonly SongSuggestion[] = [
   { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal · Phillauri" },
-  { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
   { id: "Ptk_1Dc2iPY", title: "Canon in D (Cello & Piano)", artist: "Brooklyn Duo" },
   { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "Lata Mangeshkar, Udit Narayan" },
   { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Alka Yagnik, Kumar Sanu" },
@@ -53,6 +52,7 @@ export const WP_SONGS: readonly SongSuggestion[] = [
   { id: "V7LwfY5U5WI", title: "Ranjha", artist: "B Praak, Jasleen Royal" },
   { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh" },
   { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Arijit Singh, Harshdeep Kaur" },
+  { id: "OzEL4CwbPew", title: "Shehnai: Kanyadaan (slow, for the pheras)", artist: "Ustad Bismillah Khan" },
   { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
 ];

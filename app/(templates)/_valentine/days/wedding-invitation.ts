@@ -125,15 +125,15 @@ const SHEET_THEME: DayTheme = {
  * (oEmbed 200 — research/music.json 2026-10-19, wq-research.md §5 2026-10-22).
  */
 export const WI_SONGS: readonly SongSuggestion[] = [
-  { id: "OzEL4CwbPew", title: "Wedding Shehnai (Kanyadaan)", artist: "Ustad Bismillah Khan" },
+  { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "DDLJ" },
   { id: "8XtXLVylOoU", title: "Saajanji Ghar Aaye", artist: "Kuch Kuch Hota Hai" },
   { id: "1LVpuWpRs3I", title: "Din Shagna Da", artist: "Jasleen Royal" },
   { id: "3qpxJEp4Ec4", title: "Kudmayi", artist: "Rocky Aur Rani" },
-  { id: "-bNwqXvMuB8", title: "Mehndi Laga Ke Rakhna", artist: "DDLJ" },
   { id: "jCEdTq3j-0U", title: "Gallan Goodiyaan", artist: "Dil Dhadakne Do" },
   { id: "V7LwfY5U5WI", title: "Ranjha", artist: "Shershaah" },
   { id: "BddP6PYo2gs", title: "Kesariya", artist: "Brahmastra" },
   { id: "lwLVJ0E8gN4", title: "Kabira (Encore)", artist: "Yeh Jawaani Hai Deewani" },
+  { id: "OzEL4CwbPew", title: "Shehnai: Kanyadaan (slow, for the pheras)", artist: "Ustad Bismillah Khan" },
   { id: "Ptk_1Dc2iPY", title: "Canon in D", artist: "Brooklyn Duo" },
   { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
@@ -284,7 +284,7 @@ export const weddingInvitationDay: DayConfig<WiExtras> = {
     gifs: {},
     music: true,
     musicMode: "youtube",
-    musicYoutubeId: "OzEL4CwbPew",
+    musicYoutubeId: "-bNwqXvMuB8",
     musicStart: 0,
     endLine: "With love, the Rathore & Singhania families",
     extras: {
