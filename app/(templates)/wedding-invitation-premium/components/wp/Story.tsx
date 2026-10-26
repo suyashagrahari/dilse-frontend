@@ -13,6 +13,8 @@ import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_weddin
 import { img } from "./art";
 import type { WpChapter } from "./model";
 
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+
 export default function Story({ chapters }: { chapters: WpChapter[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
@@ -70,12 +72,9 @@ export default function Story({ chapters }: { chapters: WpChapter[] }) {
         </span>
         <ol className="wp-chapters">
           {chapters.map((c, i) => (
-            <li key={i} className={`wp-ch${c.photo ? "" : " no-photo"}`}>
+            <li key={i} className={`wp-ch${c.photo ? "" : " no-photo"}${i % 2 ? " is-alt" : ""}`}>
               <span className="wp-ch-dot" aria-hidden>
-                <svg viewBox="0 0 24 24" width="22" height="22">
-                  <circle cx="12" cy="12" r="9" fill="#FFFEFA" stroke="#C9A24A" strokeWidth="1.4" />
-                  <path d="M12 6.5l1.6 3.6 3.9.4-2.9 2.6.8 3.9L12 15l-3.4 2 .8-3.9-2.9-2.6 3.9-.4z" fill="#F3B6C8" stroke="#C9A24A" strokeWidth=".8" />
-                </svg>
+                {ROMAN[i] ?? i + 1}
               </span>
               {c.photo && (
                 <Reveal className="wp-ch-photo" effect="zoom">

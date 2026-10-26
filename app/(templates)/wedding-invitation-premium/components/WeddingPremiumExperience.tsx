@@ -203,23 +203,27 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
       />
 
       {/* ── The invitation ──────────────────────────────────────────────── */}
-      <Section id="invitation" ornament={null} width="normal" className="wp-sec wp-sec-invite">
-        <Reveal className="wp-invite">
+      <Section id="invitation" ornament={null} width="wide" className="wp-sec wp-sec-invite">
+        {/* The section sits on the terrace's watercolour sky; the card is compact and wide (photo beside the words on laptops). */}
+        <div className="wp-sec-wash" aria-hidden />
+        <Reveal className={`wp-invite${m.cover ? " has-photo" : ""}`}>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...img("blossom", { lazy: true })} className="wp-invite-branch" aria-hidden />
           {m.cover && (
-            // The couple's cover photo, in an arched gold frame at the top of the invitation.
+            // The couple's cover photo, in an arched gold frame (beside the words on laptops, above them on phones).
             <figure className="wp-invite-portrait">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.cover.url} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.cover)} />
             </figure>
           )}
-          <MotifMark motif={m.motif} className="wp-invite-motif" />
-          <p className="wp-eyebrow" lang={lang}>
-            {s.invitation}
-          </p>
-          {/* The Hindi page reads the Hindi letter alone; the English page keeps both side by side. */}
-          <MessageBlock text={lang === "hi" && m.hindiMessage ? m.hindiMessage : m.letter} hindi={lang === "hi" ? undefined : m.hindiMessage || undefined} ornament={null} heading={m.bilingual ? <span lang={lang}>{s.shubh}</span> : undefined} signature={m.endLine ? undefined : couple} />
+          <div className="wp-invite-body">
+            <MotifMark motif={m.motif} className="wp-invite-motif" />
+            <p className="wp-eyebrow" lang={lang}>
+              {s.invitation}
+            </p>
+            {/* The Hindi page reads the Hindi letter alone; the English page keeps both side by side. */}
+            <MessageBlock text={lang === "hi" && m.hindiMessage ? m.hindiMessage : m.letter} hindi={lang === "hi" ? undefined : m.hindiMessage || undefined} ornament={null} heading={m.bilingual ? <span lang={lang}>{s.shubh}</span> : undefined} signature={m.endLine ? undefined : couple} />
+          </div>
         </Reveal>
       </Section>
 
@@ -251,7 +255,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
 
       {/* ── Our story ───────────────────────────────────────────────────── */}
       {m.story.length > 0 && (
-        <Section id="story" ornament={null} width="wide" className="wp-sec">
+        <Section id="story" ornament={null} width="wide" className="wp-sec wp-sec-story">
           <Head eyebrow={s.storyEyebrow} title={s.story} lang={lang} />
           <Story chapters={m.story} />
         </Section>

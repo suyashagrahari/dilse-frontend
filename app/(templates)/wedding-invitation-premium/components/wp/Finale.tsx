@@ -1,16 +1,17 @@
 "use client";
 
-// ─── The finale: evening on the terrace ──────────────────────────────────────
-// Watercolour foliage hangs from the top, two lanterns glow either side, the
-// pink gazebo rises over the lake and the white balustrade; then the "Shubh
-// Vivah" seal, the names, the closing line, the hashtag, a WhatsApp share and
-// "Replay the opening". A few petals drift down (transform only, paused off
-// screen; none for reduced motion).
+// ─── The finale: the terrace again, one full screen ─────────────────────────
+// The hero's leaf garland flush along the top with two blossom lanterns, the
+// "Shubh Vivah" seal, the names, the closing line, the hashtag, a WhatsApp
+// share and "Replay the opening", and at the foot the still lake, the pink
+// gazebo and the white balustrade. On phones it fills
+// exactly one screen. Nothing moves.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal } from "../../../_wedding";
 import { Icon, WA, openWhatsApp } from "./Actions";
-import { img, seeded } from "./art";
+import { img } from "./art";
+import Lake from "./Lake";
 
 export interface FinaleProps {
   seal: string;
@@ -31,11 +32,6 @@ export interface FinaleProps {
 export default function Finale({ seal, sealHi, bilingual, closing, endLine, first, second, hashtag, lang, whatsapp, replay, shareText, onReplay }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
   const [on, setOn] = useState(false);
-  const drift = useMemo(() => {
-    const r = seeded(23);
-    return Array.from({ length: 10 }, () => ({ left: 4 + r() * 92, size: 10 + r() * 10, delay: -r() * 12, dur: 11 + r() * 8, dx: (r() - 0.5) * 90 }));
-  }, []);
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -46,17 +42,15 @@ export default function Finale({ seal, sealHi, bilingual, closing, endLine, firs
 
   return (
     <section ref={ref} className={`wp-finale${on ? " is-on" : ""}`} aria-label={seal}>
-      <div className="wp-finale-foliage" aria-hidden>
+      {/* The same leaf garland as the hero, flush with the top edge (mirrored into a second strip on wide screens). */}
+      <div className="wp-garland wp-finale-garland" aria-hidden>
         <picture>
-          <source media="(max-width: 700px)" srcSet={img("foliageSm").src} />
+          <source media="(max-width: 700px)" srcSet={img("garlandSm").src} />
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <img {...img("foliage", { lazy: true })} />
+          <img {...img("garland", { lazy: true })} className="wp-garland-a" />
         </picture>
-      </div>
-      <div className="wp-drift" aria-hidden>
-        {drift.map((d, i) => (
-          <i key={i} style={{ left: `${d.left}%`, width: d.size, height: d.size, animationDelay: `${d.delay}s`, animationDuration: `${d.dur}s`, ["--dx" as string]: `${d.dx}px` }} />
-        ))}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("garland", { lazy: true })} className="wp-garland-b" />
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
       <img {...img("lanterns", { lazy: true })} className="wp-finale-lantern wp-finale-lantern-l" aria-hidden />
@@ -92,11 +86,11 @@ export default function Finale({ seal, sealHi, bilingual, closing, endLine, firs
           </button>
         </Reveal>
       </div>
+      {/* The terrace at the foot of the screen: the still lake with lotuses, the gazebo, the balustrade. */}
       <div className="wp-finale-foot" aria-hidden>
+        <Lake className="wp-finale-lake" lotus={false} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...img("gazebo", { lazy: true })} className="wp-finale-gazebo" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("lake", { lazy: true })} className="wp-lake" />
         <span className="wp-balustrade" />
       </div>
     </section>
