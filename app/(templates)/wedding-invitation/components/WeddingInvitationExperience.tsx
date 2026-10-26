@@ -35,7 +35,7 @@ import Jharokha from "./cw/Jharokha";
 import ShareBar from "./cw/ShareBar";
 import Story from "./cw/Story";
 import { CW_CSS } from "./cw/css";
-import { T, longDate, prettyTime, readClassic, type Lang } from "./cw/model";
+import { BLESSINGS_HI, RSVP_HI, T, fnTitle, longDate, prettyTime, readClassic, timeIn, type Lang } from "./cw/model";
 import { prefillRsvpName, useGuestName } from "./cw/share";
 
 /** Two across on a phone, three from a tablet up (the gallery block is capped, so tiles stay large). */
@@ -107,7 +107,7 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
 
   const dateLine = longDate(m.date, locale);
   const shortDate = m.date ? longDate(m.date, "en-IN").replace(/^[^,]+,\s*/, "") : "";
-  const mainTime = prettyTime(m.time, locale);
+  const mainTime = timeIn(m.time, lang);
   const [url] = useState(() => (typeof window === "undefined" ? "" : window.location.href.split("#")[0]));
   const venueLine = [m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ");
 
@@ -169,6 +169,8 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
   const groom = { ...m.groom_, title: s.groomSide };
   const hasFamilies = bride.names.length > 0 || groom.names.length > 0;
   const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 🌸` : `You're invited to the wedding of ${couple} 🌸`;
+  // The RSVP's function chips read in the page's language too (the ids, which the owner's dashboard keys on, stay).
+  const rsvpEvents = useMemo(() => (lang === "hi" ? m.events.map((e) => ({ ...e, title: fnTitle(e.title, "hi") })) : m.events), [lang, m.events]);
   const hasInfo = m.things.length > 0 || !!m.gettingThere || m.contacts.length > 0 || !!m.upiId || !!m.liveUrl;
 
   return (
@@ -177,12 +179,13 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
         <style>{CW_CSS}</style>
         {gate && <Jharokha key={round} first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} invocation={m.invocation} onOpened={onOpened} />}
 
-        <div className="cw-lang" role="group" aria-label="Language">
+        <div className={`cw-lang${lang === "hi" ? " is-hi" : ""}`} role="group" aria-label={s.lang}>
+          <span className="cw-lang-pill" aria-hidden />
           <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
             EN
           </button>
           <button type="button" aria-pressed={lang === "hi"} onClick={() => setLang("hi")} lang="hi">
-            हिं
+            हिंदी
           </button>
         </div>
 
@@ -227,7 +230,8 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
                   <span lang="hi">॥ श्री गणेशाय नमः ॥</span>
                 </p>
               )}
-              <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament={null} heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
+              {/* The Hindi page reads the Hindi letter alone; the English page keeps both side by side. */}
+              <MessageBlock text={lang === "hi" && m.hindiMessage ? m.hindiMessage : data.letter} hindi={lang === "hi" ? undefined : m.hindiMessage} ornament={null} heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
             </div>
           </Reveal>
         </Section>
@@ -288,7 +292,7 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
         {/* ── Functions ───────────────────────────────────────────────────── */}
         {m.events.length > 0 && (
           <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="cw-sec cw-sec-events">
-            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
+            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} lang={lang} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved, swipe: s.swipe }} />
           </Section>
         )}
 
@@ -348,9 +352,8 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
         )}
 
         {/* ── RSVP ────────────────────────────────────────────────────────── */}
-        {/* The kit's form labels are English only, so its "Kindly reply by <date>" stays English too (no mixed-script line). */}
         {m.rsvp && (
-          <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="narrow" className="cw-sec cw-sec-rsvp">
+          <Section id="rsvp" eyebrow={<span lang={lang}>{lang === "hi" ? s.rsvpEyebrow : `RSVP · ${s.rsvpEyebrow}`}</span>} ornament={null} width="narrow" className="cw-sec cw-sec-rsvp">
             <div className="cw-rsvp">
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="cw-rsvp-peony" {...img(A.peonies, { lazy: true })} aria-hidden />
@@ -359,7 +362,7 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
               </Reveal>
               <div ref={rsvpRef}>
                 <Reveal>
-                  <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent={m.events.length > 1} meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={m.events.length > 1 ? s.rsvpIntro : undefined} locale="en-IN" />
+                  <RSVPBlock mode={mode} couple={couple} events={rsvpEvents} perEvent={m.events.length > 1} meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={m.events.length > 1 ? s.rsvpIntro : undefined} locale={locale} text={lang === "hi" ? RSVP_HI : undefined} />
                 </Reveal>
               </div>
             </div>
@@ -369,7 +372,7 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
         {/* ── Blessings ───────────────────────────────────────────────────── */}
         {m.blessings && (
           <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal" className="cw-sec cw-sec-bless">
-            <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
+            <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} text={lang === "hi" ? BLESSINGS_HI : undefined} />
           </Section>
         )}
 

@@ -41,18 +41,30 @@ export interface RSVPBlockProps {
   share?: { slug: string; shareId: string } | null;
   onSubmitted?: (r: RsvpDraft) => void;
   locale?: string;
+  /** Every fixed word on the form, for a page in another language (English by default). */
+  text?: Partial<RsvpText>;
 }
 
-const ATTEND: { v: Attending; label: string; sub: string }[] = [
-  { v: "yes", label: "Joyfully accepts", sub: "We'll be there" },
-  { v: "maybe", label: "Not sure yet", sub: "We'll try our best" },
-  { v: "no", label: "Regretfully declines", sub: "Sending blessings" },
-];
-const MEAL: { v: Meal; label: string }[] = [
-  { v: "veg", label: "Vegetarian" },
-  { v: "nonveg", label: "Non-veg" },
-  { v: "jain", label: "Jain" },
-];
+export interface RsvpText {
+  yes: string; yesSub: string; maybe: string; maybeSub: string; no: string; noSub: string;
+  veg: string; nonveg: string; jain: string;
+  replyBy: string; name: string; namePh: string; attend: string; party: string; fewer: string; more: string;
+  which: string; meal: string; phone: string; optional: string; note: string; notePh: string; password: string;
+  send: string; sending: string; update: string; preview: string; errName: string; errEvents: string;
+  doneYes: string; doneMaybe: string; doneNo: string; thanks: string; thanksName: string;
+  /** {n} guests, {couple} names. */
+  sumYesMany: string; sumYesOne: string; sumCouple: string; sumMaybe: string; sumNo: string; change: string;
+}
+
+export const RSVP_TEXT_EN: RsvpText = {
+  yes: "Joyfully accepts", yesSub: "We'll be there", maybe: "Not sure yet", maybeSub: "We'll try our best", no: "Regretfully declines", noSub: "Sending blessings",
+  veg: "Vegetarian", nonveg: "Non-veg", jain: "Jain",
+  replyBy: "Kindly reply by", name: "Your name", namePh: "e.g. Sharma family", attend: "Will you attend?", party: "Guests in your party", fewer: "One fewer guest", more: "One more guest",
+  which: "Which functions?", meal: "Meal preference", phone: "Phone", optional: "(optional)", note: "A note for the couple", notePh: "Congratulations! Can't wait to dance at the sangeet…", password: "Invitation password",
+  send: "Send RSVP", sending: "Sending…", update: "Update my RSVP", preview: "Preview — guests' answers reach you by email.", errName: "Please add your name so the family knows who's coming.", errEvents: "Tick at least one function you'll attend.",
+  doneYes: "See you there", doneMaybe: "Noted with love", doneNo: "Thank you", thanks: "Thank you", thanksName: "Thank you, {name}",
+  sumYesMany: "All {n} of you are on the list", sumYesOne: "You're on the list", sumCouple: " — {couple} can't wait to celebrate with you", sumMaybe: "We've noted you as a maybe — come back and confirm any time.", sumNo: "You'll be missed. Your blessings mean the world to the families.", change: "Change my response",
+};
 
 export default function RSVPBlock({
   mode,
@@ -69,7 +81,19 @@ export default function RSVPBlock({
   share,
   onSubmitted,
   locale = "en-IN",
+  text,
 }: RSVPBlockProps) {
+  const t = { ...RSVP_TEXT_EN, ...text };
+  const ATTEND: { v: Attending; label: string; sub: string }[] = [
+    { v: "yes", label: t.yes, sub: t.yesSub },
+    { v: "maybe", label: t.maybe, sub: t.maybeSub },
+    { v: "no", label: t.no, sub: t.noSub },
+  ];
+  const MEAL: { v: Meal; label: string }[] = [
+    { v: "veg", label: t.veg },
+    { v: "nonveg", label: t.nonveg },
+    { v: "jain", label: t.jain },
+  ];
   const ctx = useDayShare();
   const target = share === undefined ? ctx : share;
   const uid = useId();
@@ -109,11 +133,11 @@ export default function RSVPBlock({
       meal: meal && draft.attending !== "no" ? draft.meal ?? null : null,
     };
     if (!clean.guestName) {
-      setError("Please add your name so the family knows who's coming.");
+      setError(t.errName);
       return;
     }
     if (perEvent && evs.length && clean.attending !== "no" && !clean.events.length) {
-      setError("Tick at least one function you'll attend.");
+      setError(t.errEvents);
       return;
     }
     setPhase("sending");
@@ -141,20 +165,20 @@ export default function RSVPBlock({
     return (
       <div className="wk-rsvp wk-card wk-foil-border is-done" aria-live="polite">
         {burst > 0 && <PetalBurst key={burst} seed={burst * 13} />}
-        <p className="wk-eyebrow">{yes ? "See you there" : maybe ? "Noted with love" : "Thank you"}</p>
-        <h3 className="wk-rsvp-thanks wk-foil-text wk-shimmer">{first ? `Thank you, ${first}` : "Thank you"}</h3>
+        <p className="wk-eyebrow">{yes ? t.doneYes : maybe ? t.doneMaybe : t.doneNo}</p>
+        <h3 className="wk-rsvp-thanks wk-foil-text wk-shimmer">{first ? t.thanksName.replace("{name}", first) : t.thanks}</h3>
         <p className="wk-rsvp-summary">
           {yes
-            ? `${draft.guests > 1 ? `All ${draft.guests} of you are` : "You're"} on the list${couple ? ` — ${couple} can't wait to celebrate with you` : ""}.`
+            ? `${draft.guests > 1 ? t.sumYesMany.replace("{n}", String(draft.guests)) : t.sumYesOne}${couple ? t.sumCouple.replace("{couple}", couple) : ""}.`
             : maybe
-              ? "We've noted you as a maybe — come back and confirm any time."
-              : "You'll be missed. Your blessings mean the world to the families."}
+              ? t.sumMaybe
+              : t.sumNo}
         </p>
         {yes && evs.length > 0 && draft.events.length > 0 && (
           <p className="wk-rsvp-events">{evs.filter((e) => draft.events.includes(e.id)).map((e) => e.title).join(" · ")}</p>
         )}
         <button type="button" className="wk-btn wk-btn-ghost" onClick={() => setPhase("form")}>
-          Change my response
+          {t.change}
         </button>
       </div>
     );
@@ -168,24 +192,24 @@ export default function RSVPBlock({
           <p className="wk-rsvp-intro">
             {intro}
             {intro && deadline ? " " : ""}
-            {deadline && <span className="wk-rsvp-by">Kindly reply by {formatEventDate(deadline, locale)}</span>}
+            {deadline && <span className="wk-rsvp-by">{t.replyBy} {formatEventDate(deadline, locale)}</span>}
           </p>
         )}
 
         <label className="wk-field">
-          <span className="wk-field-l">Your name</span>
+          <span className="wk-field-l">{t.name}</span>
           <input
             className="wk-input"
             value={draft.guestName}
             maxLength={RSVP_LIMITS.name}
             autoComplete="name"
-            placeholder="e.g. Sharma family"
+            placeholder={t.namePh}
             onChange={(e) => set("guestName", e.target.value)}
           />
         </label>
 
         <fieldset className="wk-field">
-          <legend className="wk-field-l">Will you attend?</legend>
+          <legend className="wk-field-l">{t.attend}</legend>
           <div className={`wk-seg wk-seg-${options.length}`} role="radiogroup">
             {options.map((a) => (
               <label key={a.v} className={`wk-seg-o${draft.attending === a.v ? " is-on" : ""}`}>
@@ -201,14 +225,14 @@ export default function RSVPBlock({
           <>
             <div className="wk-field">
               <span className="wk-field-l" id={`${uid}-g`}>
-                Guests in your party
+                {t.party}
               </span>
               <div className="wk-stepper" role="group" aria-labelledby={`${uid}-g`}>
-                <button type="button" onClick={() => set("guests", Math.max(1, draft.guests - 1))} disabled={draft.guests <= 1} aria-label="One fewer guest">
+                <button type="button" onClick={() => set("guests", Math.max(1, draft.guests - 1))} disabled={draft.guests <= 1} aria-label={t.fewer}>
                   −
                 </button>
                 <output aria-live="polite">{Math.max(1, draft.guests)}</output>
-                <button type="button" onClick={() => set("guests", Math.min(cap, Math.max(1, draft.guests) + 1))} disabled={draft.guests >= cap} aria-label="One more guest">
+                <button type="button" onClick={() => set("guests", Math.min(cap, Math.max(1, draft.guests) + 1))} disabled={draft.guests >= cap} aria-label={t.more}>
                   +
                 </button>
               </div>
@@ -216,7 +240,7 @@ export default function RSVPBlock({
 
             {evs.length > 0 && (
               <fieldset className="wk-field">
-                <legend className="wk-field-l">Which functions?</legend>
+                <legend className="wk-field-l">{t.which}</legend>
                 <div className="wk-chips">
                   {evs.map((ev) => {
                     const on = draft.events.includes(ev.id);
@@ -237,7 +261,7 @@ export default function RSVPBlock({
 
             {meal && (
               <fieldset className="wk-field">
-                <legend className="wk-field-l">Meal preference</legend>
+                <legend className="wk-field-l">{t.meal}</legend>
                 <div className="wk-chips">
                   {MEAL.map((m) => (
                     <label key={m.v} className={`wk-chip${draft.meal === m.v ? " is-on" : ""}`}>
@@ -254,7 +278,7 @@ export default function RSVPBlock({
         {askPhone && (
           <label className="wk-field">
             <span className="wk-field-l">
-              Phone <small>(optional)</small>
+              {t.phone} <small>{t.optional}</small>
             </span>
             <input className="wk-input" type="tel" inputMode="tel" autoComplete="tel" maxLength={RSVP_LIMITS.phone} value={draft.phone ?? ""} onChange={(e) => set("phone", e.target.value)} />
           </label>
@@ -262,14 +286,14 @@ export default function RSVPBlock({
 
         <label className="wk-field">
           <span className="wk-field-l">
-            A note for the couple <small>(optional)</small>
+            {t.note} <small>{t.optional}</small>
           </span>
           <textarea
             className="wk-input wk-area"
             rows={3}
             maxLength={RSVP_LIMITS.message}
             value={draft.message ?? ""}
-            placeholder="Congratulations! Can't wait to dance at the sangeet…"
+            placeholder={t.notePh}
             onChange={(e) => set("message", e.target.value)}
           />
         </label>
@@ -279,7 +303,7 @@ export default function RSVPBlock({
 
         {needPw && (
           <label className="wk-field">
-            <span className="wk-field-l">Invitation password</span>
+            <span className="wk-field-l">{t.password}</span>
             <input className="wk-input" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="off" />
           </label>
         )}
@@ -290,9 +314,9 @@ export default function RSVPBlock({
           </p>
         )}
         <button type="submit" className="wk-btn wk-btn-lg" disabled={phase === "sending"}>
-          {phase === "sending" ? "Sending…" : stored ? "Update my RSVP" : "Send RSVP"}
+          {phase === "sending" ? t.sending : stored ? t.update : t.send}
         </button>
-        {mode === "preview" && <p className="wk-rsvp-preview">Preview — guests&apos; answers reach you by email.</p>}
+        {mode === "preview" && <p className="wk-rsvp-preview">{t.preview}</p>}
       </form>
     </Reveal>
   );

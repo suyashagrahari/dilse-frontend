@@ -13,7 +13,7 @@ export const config: TemplatePageConfig = {
   category: "wedding",
   title: "Wedding Invitation — Elegant Invite with RSVP",
   description:
-    "An elegant wedding invitation website: a wax-seal envelope opens to your names, date and live countdown, the wedding and reception with maps and calendar, your photos in a magazine gallery, your song and one-tap RSVP. Six light and dark gold themes; the AI writes it from a few lines.",
+    "An elegant wedding invitation website: a wax-seal envelope opens to your names, date and live countdown, the wedding and reception with maps and calendar, your photos in a magazine gallery, your song and one-tap RSVP, in English or Hindi. One hand-painted blush and rose-gold look; the AI writes it from a few lines.",
   coverImage: templateMedia("wedding", "covers/wedding-invitation/cover-classic.webp"),
   emoji: "💌",
   color: "from-amber-100 to-yellow-200",

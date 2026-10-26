@@ -15,7 +15,7 @@
 //   4 Invitation   English + Hindi, Shri Ganesh, which language it opens in
 //   5 Our story    chapters with a photo each (framed in the cropper)
 //   6 Guest info   who to call, good to know, getting there, livestream, shagun
-//   7 Look & music the three daylight palettes + the song (list or any YouTube link)
+//   7 Music        the song (list or any YouTube link); one Gulabi palette, no picker
 //   8 RSVP & send  RSVP settings, blessings wall, film, hashtag, closing line,
 //                  password, personal ?to= links, guest replies (once published)
 // Single photos (portrait, story chapters) open the shared PhotoCropper in the
@@ -23,16 +23,15 @@
 // rebuild) open here unchanged: every new key reads as empty / off.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
-import { LIGHT_THEMES } from "../../../_wedding/themes";
+import { MasonryEditor, RsvpDashboard } from "../../../_wedding";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
 import PhotoCropper, { CROP_DEFAULT, clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import { themeVars } from "../../../_valentine/theme";
 import type { LovePhoto } from "../../../_valentine/types";
-import { WI_LIMITS, WI_MAX_CONTACTS, WI_THEME_LABELS, weddingInvitationDay, wiLocalUrl, wiStoredUrl } from "../../../_valentine/days/wedding-invitation";
-import { MAIN_RE, isUpiId, lightTheme, phoneOf, swatchFor } from "../cw/model";
+import { WI_LIMITS, WI_MAX_CONTACTS, weddingInvitationDay, wiLocalUrl, wiStoredUrl } from "../../../_valentine/days/wedding-invitation";
+import { MAIN_RE, isUpiId, phoneOf, swatchFor } from "../cw/model";
 import { personalUrl } from "../cw/share";
 import WeddingGuided, { type WeddingAnswers } from "./WeddingGuided";
 
@@ -626,6 +625,15 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
             );
           })}
         </div>
+        <p className="wis-sub" id="wis-lang-l">Invitation language · every heading, button, date, time and the RSVP form follow it; guests can still switch</p>
+        <div className="wis-seg" role="radiogroup" aria-labelledby="wis-lang-l">
+          <button type="button" role="radio" aria-checked={x.lang !== "hi"} onClick={() => set("lang", "en")}>
+            English
+          </button>
+          <button type="button" role="radio" aria-checked={x.lang === "hi"} onClick={() => set("lang", "hi")} lang="hi">
+            हिंदी
+          </button>
+        </div>
 
         <div className="wis-card">
           <p className="wis-sub">The big day · the countdown, the date strip and the invite card</p>
@@ -825,9 +833,6 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
         <Toggle checked={x.invocation === true} onChange={(v) => set("invocation", v)}>
           The gold Shri Ganesh and “॥ श्री गणेशाय नमः ॥” on the invitation (off: “॥ शुभ विवाह ॥” on the window)
         </Toggle>
-        <Toggle checked={x.lang === "hi"} onChange={(v) => set("lang", v ? "hi" : "en")}>
-          Open the invitation in Hindi (guests can switch)
-        </Toggle>
       </section>
 
       {/* ── 5 Our story ────────────────────────────────────────────────── */}
@@ -941,14 +946,10 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
         </div>
       </section>
 
-      {/* ── 7 Look & music ─────────────────────────────────────────────── */}
-      <section className="vs-sec" id="vs-sec-music" aria-label="Look and music">
-        <Head n={7} icon="music" title="Look & music" sub="Three daylight palettes. The song starts the moment a guest opens the jharokha." />
-        <ThemePicker themes={LIGHT_THEMES} grouped={false} value={lightTheme(x.theme)} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "I").slice(0, 1)} & ${(mf.senderName || "K").slice(0, 1)}`} label="Palette" />
-        <p className="wis-hint" style={{ marginTop: 8 }}>
-          {WI_THEME_LABELS[lightTheme(x.theme)]} · {WEDDING_THEMES[lightTheme(x.theme)]?.blurb}
-        </p>
-        <div style={{ marginTop: 18 }}>
+      {/* ── 7 Music ───────────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-music" aria-label="Music">
+        <Head n={7} icon="music" title="Music" sub="The song starts the moment a guest opens the jharokha. The look is one hand-painted Gulabi palette — blush, rose gold and ivory — made for this art." />
+        <div>
           <MusicPicker
             value={mf}
             suggestions={weddingInvitationDay.music?.suggestions}

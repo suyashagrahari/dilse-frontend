@@ -23,7 +23,17 @@ export interface BlessingsWallProps {
   /** Poll interval while visible, ms. Default 20000; 0 = no polling. */
   refreshMs?: number;
   share?: { slug: string; shareId: string } | null;
+  /** The form's fixed words, for a page in another language (English by default). */
+  text?: Partial<BlessingsText>;
 }
+
+export interface BlessingsText {
+  name: string; blessing: string; placeholder: string; err: string; send: string; sending: string; another: string; ok: string; list: string;
+}
+export const BLESSINGS_TEXT_EN: BlessingsText = {
+  name: "Your name", blessing: "Your blessing", placeholder: "May your love grow brighter every year…", err: "Add your name and a line for the couple.",
+  send: "Send blessing", sending: "Sending…", another: "Add another blessing", ok: "Thank you — your blessing is on the wall.", list: "Blessings",
+};
 
 const SAMPLE: Blessing[] = [
   { id: "s1", name: "Nani", message: "सदा सुखी रहो, मेरे बच्चों। ❤️", createdAt: "" },
@@ -45,7 +55,8 @@ function NoteCard({ b, i, fresh }: { b: Blessing; i: number; fresh?: boolean }) 
   );
 }
 
-export default function BlessingsWall({ mode, title = "Blessings for the couple", intro = "Leave a line of love — it appears here for everyone.", sample = SAMPLE, refreshMs = 20000, share }: BlessingsWallProps) {
+export default function BlessingsWall({ mode, title = "Blessings for the couple", intro = "Leave a line of love — it appears here for everyone.", sample = SAMPLE, refreshMs = 20000, share, text }: BlessingsWallProps) {
+  const t = { ...BLESSINGS_TEXT_EN, ...text };
   const ctx = useDayShare();
   const target = share === undefined ? ctx : share;
   const live = mode === "live" && !!target;
@@ -83,7 +94,7 @@ export default function BlessingsWall({ mode, title = "Blessings for the couple"
     e.preventDefault();
     setError("");
     if (!name.trim() || !msg.trim()) {
-      setError("Add your name and a line for the couple.");
+      setError(t.err);
       return;
     }
     setState("sending");
@@ -111,14 +122,14 @@ export default function BlessingsWall({ mode, title = "Blessings for the couple"
           <h3 className="wk-rsvp-title">{title}</h3>
           {intro && <p className="wk-rsvp-intro">{intro}</p>}
           <label className="wk-field">
-            <span className="wk-field-l">Your name</span>
+            <span className="wk-field-l">{t.name}</span>
             <input className="wk-input" value={name} maxLength={BLESSING_LIMITS.name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
           </label>
           <label className="wk-field">
             <span className="wk-field-l">
-              Your blessing <small>{Array.from(msg).length}/{BLESSING_LIMITS.message}</small>
+              {t.blessing} <small>{Array.from(msg).length}/{BLESSING_LIMITS.message}</small>
             </span>
-            <textarea className="wk-input wk-area" rows={3} maxLength={BLESSING_LIMITS.message} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="May your love grow brighter every year…" />
+            <textarea className="wk-input wk-area" rows={3} maxLength={BLESSING_LIMITS.message} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.placeholder} />
           </label>
           <input className="wk-hp" tabIndex={-1} autoComplete="off" aria-hidden name="website" value={honey} onChange={(e) => setHoney(e.target.value)} />
           {error && (
@@ -127,17 +138,17 @@ export default function BlessingsWall({ mode, title = "Blessings for the couple"
             </p>
           )}
           <button type="submit" className="wk-btn" disabled={state === "sending"}>
-            {state === "sending" ? "Sending…" : state === "sent" ? "Add another blessing" : "Send blessing"}
+            {state === "sending" ? t.sending : state === "sent" ? t.another : t.send}
           </button>
           {state === "sent" && (
             <p className="wk-ok" role="status">
-              Thank you — your blessing is on the wall.
+              {t.ok}
             </p>
           )}
         </form>
       </Reveal>
       {shown.length > 0 && (
-        <ul className="wk-notes" aria-label="Blessings">
+        <ul className="wk-notes" aria-label={t.list}>
           {shown.map((b, i) => (
             <NoteCard key={b.id} b={b} i={i} fresh={b.id === fresh} />
           ))}

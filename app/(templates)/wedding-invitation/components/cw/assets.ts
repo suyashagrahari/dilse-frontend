@@ -14,6 +14,12 @@
 //                     the paper made transparent: scratchpad lattice.cjs)
 //   template8         gold line-art swirl, rose bouquet, gold Ganesha, mandala tile
 //   template3         pink peony bouquet, pampas border (the closing)
+//   template14        the couple dressed for each function (haldi, mehndi,
+//                     sangeet, engagement, wedding, reception) on its card
+//   classic/gold-mandala  template16's gold mandala (480px), the slow halo
+//                     turning behind the couple in the hero
+
+import type { FnKind } from "./model";
 
 export interface CwAsset {
   src: string;
@@ -49,7 +55,18 @@ export const A = {
   peonies: a("template3/11-pink-peony-bouquet.webp", 728, 800),
   pampas: a("template3/13-pampas-grass-border.webp", 800, 553),
   pampasCorner: a("template3/09-pampas-grass-corner.webp", 595, 800),
+  mandalaGold: a("classic/gold-mandala.webp", 480, 480),
 } as const;
+
+/** The couple dressed for each kind of function (template14), for the function cards. */
+export const FN_COUPLE: Record<FnKind, CwAsset> = {
+  haldi: a("template14-couple-haldi-mehndi/07-couple-haldi-yellow.webp", 466, 800),
+  mehndi: a("template14-couple-haldi-mehndi/05-couple-mehndi-orange-saree.webp", 581, 800),
+  sangeet: a("template14-couple-haldi-mehndi/03-couple-sangeet-dancing.webp", 748, 800),
+  engagement: a("template14-couple-haldi-mehndi/06-couple-engagement-ivory-lehenga.webp", 502, 800),
+  wedding: a("template14-couple-haldi-mehndi/08-couple-wedding-red-lehenga.webp", 446, 800),
+  reception: a("template14-couple-haldi-mehndi/04-couple-reception-tux-gown.webp", 604, 800),
+};
 
 /** The kit's paper textures, from this repo (the kit's defaults point at the CDN). */
 export const CW_KIT = {
