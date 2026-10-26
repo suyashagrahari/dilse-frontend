@@ -204,6 +204,10 @@ export const RW_CSS = `
 .rw-court-scene { position: relative; width: min(100%, 430px); aspect-ratio: 1 / .9; }
 .rw-court-sunburst { position: absolute; left: 50%; top: 44%; width: 96%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%) scale(.7); opacity: 0; background: radial-gradient(closest-side, rgba(255,248,226,.95) 0%, rgba(255,236,190,.6) 40%, rgba(255,228,180,0) 72%), repeating-conic-gradient(from 0deg, rgba(214,170,80,.22) 0deg 5deg, rgba(214,170,80,0) 5deg 15deg); -webkit-mask: radial-gradient(closest-side, #000 35%, transparent 100%); mask: radial-gradient(closest-side, #000 35%, transparent 100%); transition: transform 1.6s var(--rw-ease) .2s, opacity 1.2s ease .2s; }
 .rw-court.is-open .rw-court-sunburst { transform: translate(-50%,-50%); opacity: 1; animation: rw-turn 80s linear 1.8s infinite; }
+/* phones and tablets: the scene is narrow and the couple covers its middle, so the rays reach well past the umbrellas and read stronger */
+@media (max-width: 1023px) {
+  .rw-court-sunburst { width: 150%; top: 40%; background: radial-gradient(closest-side, rgba(255,248,226,.95) 0%, rgba(255,236,190,.65) 32%, rgba(255,228,180,0) 70%), repeating-conic-gradient(from 0deg, rgba(214,170,80,.34) 0deg 5deg, rgba(214,170,80,0) 5deg 15deg); -webkit-mask: radial-gradient(closest-side, #000 45%, transparent 100%); mask: radial-gradient(closest-side, #000 45%, transparent 100%); }
+}
 @keyframes rw-turn { from { rotate: 0deg; } to { rotate: 360deg; } }
 .rw-court-chhatri { position: absolute; bottom: 6%; height: 72%; width: auto; opacity: 0; transition: transform 1.3s var(--rw-ease) .25s, opacity .8s ease .25s; filter: drop-shadow(6px 12px 12px rgba(120,40,60,.16)); }
 .rw-court-chhatri.is-l { left: -3%; transform: translate3d(-24%, 10%, 0) rotate(-4deg); transform-origin: 50% 100%; }
