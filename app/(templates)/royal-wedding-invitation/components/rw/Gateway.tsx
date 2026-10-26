@@ -6,7 +6,9 @@
 // roof. The doorway is closed by two pierced jaali screens; warm light shows
 // through the lattice. A brass toran hangs across the arch, a caparisoned
 // elephant stands guard at each corner, the couple's initials sit in a gold
-// medallion in the arch, and the names wait on the courtyard floor below.
+// medallion in the arch. The names are set above the gateway like a royal
+// proclamation (Shri Ganesh, a gold rule, the names in gold-foil script, the
+// date between two rules); the button waits on the courtyard floor below.
 //
 // Loading: every piece is decoded first (the CTA says "Opening your
 // invitation…" until then); then the elephants walk in from the sides.
@@ -266,7 +268,17 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
         <h1 className="rw-gate-names">
           <span>{first}</span> <i>&amp;</i> <span>{second}</span>
         </h1>
-        {dateLine && <p className="rw-gate-date">{dateLine}</p>}
+        {dateLine && (
+          <p className="rw-gate-date">
+            <i aria-hidden />
+            <span>{dateLine}</span>
+            <i aria-hidden />
+          </p>
+        )}
+      </div>
+
+      {/* The invitation to step through, on the courtyard floor under the gateway. */}
+      <div className="rw-gate-foot">
         <button type="button" className="rw-gate-cta" onClick={open} disabled={phase === "loading"} aria-label={`${s.open}: ${first} ${s.and} ${second}`} lang={lang}>
           {phase === "loading" ? (
             <span>{s.opening}</span>

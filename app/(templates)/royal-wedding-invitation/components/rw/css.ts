@@ -36,16 +36,17 @@ export const RW_CSS = `
 .rw-hear { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 59; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; font: 600 14px/1 var(--wk-font-sans); color: #FFF7EA; background: var(--rw-maroon); box-shadow: 0 12px 26px -12px rgba(80,20,30,.7); animation: rw-up .6s var(--rw-ease) both; cursor: pointer; }
 
 /* ══ THE GATEWAY (opening) ════════════════════════════════════════════════ */
-.rw-gate { --copy: clamp(196px, 29svh, 252px); --sh: min(calc(100svh - var(--copy) - 58px), calc(100vw * 1.56)); --sw: calc(var(--sh) * 0.69222); position: fixed; inset: 0; z-index: 60; overflow: hidden; transition: opacity .8s ease; }
-.rw-gate-sky { position: absolute; inset: 0; background: linear-gradient(180deg, #FAEFDC 0, #F9ECD7 58px, #F3E6CA calc(58px + (100% - var(--copy) - 58px) * .35), #F0E1C3 calc(58px + (100% - var(--copy) - 58px) * .6), #EAD7B2 calc(100% - var(--copy))); transition: opacity 1s ease .3s; }
+/* The words sit ABOVE the gateway (--head), the button on the floor BELOW it (--foot). */
+.rw-gate { --head: clamp(170px, 24svh, 230px); --foot: clamp(86px, 11svh, 110px); --copy: calc(var(--head) + var(--foot)); --sh: min(calc(100svh - var(--copy) - 10px), calc(100vw * 1.56)); --sw: calc(var(--sh) * 0.69222); position: fixed; inset: 0; z-index: 60; overflow: hidden; transition: opacity .8s ease; }
+.rw-gate-sky { position: absolute; inset: 0; background: radial-gradient(60% 34% at 50% 14%, rgba(255,250,236,.95), rgba(255,250,236,0) 72%), linear-gradient(180deg, #FBF2E2 0, #F6E9D2 30%, #F1E1C4 70%, #EAD7B2 calc(100% - var(--foot))); transition: opacity 1s ease .3s; }
 .rw-gate-sun { display: none; }
 .rw-gate-cloud { position: absolute; height: auto; opacity: .85; pointer-events: none; }
 .rw-gate-cloud.is-a { top: 4%; left: -12%; width: clamp(200px, 56vw, 520px); animation: rw-drift 46s ease-in-out infinite alternate; }
 .rw-gate-cloud.is-b { top: 12%; right: -14%; width: clamp(220px, 62vw, 600px); opacity: .7; animation: rw-drift 58s ease-in-out -20s infinite alternate-reverse; }
 @keyframes rw-drift { from { transform: translate3d(-4%,0,0); } to { transform: translate3d(8%,0,0); } }
-.rw-gate-floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--copy) + 6px); background: linear-gradient(180deg, #EBD6B0 0%, #F3E4C8 18%, #F7ECD8 100%); box-shadow: 0 -1px 0 rgba(176,128,52,.6); transition: opacity .9s ease .2s; }
+.rw-gate-floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--foot) + 6px); background: linear-gradient(180deg, #EBD6B0 0%, #F3E4C8 18%, #F7ECD8 100%); box-shadow: 0 -1px 0 rgba(176,128,52,.6); transition: opacity .9s ease .2s; }
 .rw-gate-floor::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 10px; background: radial-gradient(circle, rgba(142,42,60,.55) 2.2px, transparent 2.8px) 0 50% / 18px 10px repeat-x; opacity: .7; }
-.rw-gate-cam { position: absolute; left: 0; right: 0; top: 0; bottom: var(--copy); display: flex; align-items: flex-end; justify-content: center; transform-origin: 50% calc(100% - var(--sh) * .366); transition: transform 1.25s cubic-bezier(.6,0,.25,1), opacity .9s ease .3s; }
+.rw-gate-cam { position: absolute; left: 0; right: 0; top: var(--head); bottom: var(--foot); display: flex; align-items: flex-end; justify-content: center; transform-origin: 50% calc(100% - var(--sh) * .366); transition: transform 1.25s cubic-bezier(.6,0,.25,1), opacity .9s ease .3s; }
 .rw-stage { position: relative; flex: none; width: var(--sw); height: var(--sh); container-type: size; cursor: pointer; transition: opacity .8s ease, transform 1s var(--rw-ease); -webkit-tap-highlight-color: transparent; }
 .rw-gate.is-loading .rw-stage { opacity: 0; transform: translateY(14px); }
 
@@ -87,17 +88,26 @@ export const RW_CSS = `
 /* lanterns only where the gateway leaves room beside it (landscape screens) */
 @media (max-aspect-ratio: 6/5) { .rw-gate-lamp { display: none; } }
 @media (min-width: 760px) and (min-aspect-ratio: 6/5) {
-  .rw-gate { --copy: clamp(228px, 30svh, 260px); }
+  .rw-gate { --head: clamp(190px, 25svh, 250px); --foot: clamp(92px, 12svh, 116px); }
 }
 
-.rw-gate-copy { position: absolute; left: 0; right: 0; bottom: 0; height: var(--copy); z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 16px max(14px, env(safe-area-inset-bottom)); text-align: center; transition: opacity .5s ease, transform .6s var(--rw-ease); }
+/* the proclamation above the gateway */
+.rw-gate-copy { position: absolute; left: 0; right: 0; top: 0; height: var(--head); z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: max(58px, calc(env(safe-area-inset-top) + 50px)) 16px 10px; text-align: center; transition: opacity .5s ease, transform .6s var(--rw-ease); }
 .rw-gate-dear { margin: 0 0 2px; font: italic 500 clamp(15px, 4.2vw, 19px)/1.25 var(--wk-font-display); color: #6A4038; text-wrap: balance; max-width: 36rem; }
 .rw-gate-dear b { font-style: normal; font-weight: 600; color: var(--rw-maroon); }
 .rw-gate-k { margin: 0; font: 600 clamp(10.5px, 2.8vw, 12.5px)/1 var(--wk-font-caps); letter-spacing: .34em; text-transform: uppercase; color: #9A6B2A; }
-.rw-gate-names { margin: 2px 0 0; font: 400 clamp(32px, 9.6vw, 56px)/1.08 var(--wk-font-script); color: var(--rw-maroon); text-wrap: balance; }
-.rw-gate-names span { white-space: nowrap; }
+.rw-gate-names { margin: 8px 0 0; font: 400 clamp(36px, 10vw, 66px)/1.12 var(--wk-font-script); text-wrap: balance; }
+.rw-gate-names span { white-space: nowrap; padding: .08em .35em .12em; margin: 0 -.25em -.12em; background: linear-gradient(100deg, #7A1F33 0%, #A83A52 30%, #C9974F 52%, #8E2A3C 78%, #6E1E2E 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .rw-gate-names i { font: normal 400 .52em/1 var(--wk-font-display); color: #B88A35; }
-.rw-gate-date { margin: 0; font: 600 clamp(11px, 3vw, 13.5px)/1 var(--wk-font-caps); letter-spacing: .24em; color: #6A4038; }
+.rw-gate-date { margin: 4px 0 0; display: flex; align-items: center; gap: 12px; font: 600 clamp(11px, 3vw, 13.5px)/1 var(--wk-font-caps); letter-spacing: .26em; color: #6A4038; }
+.rw-gate-date i { display: block; width: clamp(28px, 8vw, 70px); height: 1px; background: linear-gradient(90deg, transparent, #B88A35); }
+.rw-gate-date i:last-child { transform: scaleX(-1); }
+.rw-gate-k { position: relative; }
+/* the floor and the button below the gateway */
+.rw-gate-foot { position: absolute; left: 0; right: 0; bottom: 0; height: var(--foot); z-index: 6; display: flex; align-items: center; justify-content: center; padding: 6px 16px max(10px, env(safe-area-inset-bottom)); transition: opacity .5s ease, transform .6s var(--rw-ease); }
+.rw-gate-foot .rw-gate-cta { margin-top: 0; }
+.rw-gate:not(.is-loading) .rw-gate-foot { animation: rw-up .8s var(--rw-ease) .6s both; }
+.rw-gate.is-open .rw-gate-foot, .rw-gate.is-push .rw-gate-foot { opacity: 0; transform: translateY(12px); pointer-events: none; }
 .rw-gate-cta { position: relative; margin-top: 10px; display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 26px; border: 0; border-radius: 999px; font: 700 15px/1 var(--wk-font-sans); color: #FFF7EA; cursor: pointer; background: linear-gradient(110deg, var(--rw-maroon-deep), var(--rw-maroon) 55%, color-mix(in srgb, var(--rw-maroon) 78%, #D9905A)); box-shadow: 0 14px 28px -12px rgba(100,28,42,.75), inset 0 1px 0 rgba(255,255,255,.25); -webkit-tap-highlight-color: transparent; transition: transform .2s ease, opacity .3s ease; }
 .rw-gate-cta:disabled { cursor: progress; opacity: .8; }
 .rw-gate-cta:active { transform: scale(.97); }
@@ -142,14 +152,14 @@ export const RW_CSS = `
 .rw-gate.is-open .rw-gate-cta, .rw-gate.is-push .rw-gate-cta { opacity: 0; transform: translateY(10px); pointer-events: none; }
 .rw-gate.is-push { pointer-events: none; }
 .rw-gate.is-push .rw-gate-cam { transform: scale(2.7); opacity: 0; }
-.rw-gate.is-push .rw-gate-copy { opacity: 0; transform: translateY(20px); }
+.rw-gate.is-push .rw-gate-copy { opacity: 0; transform: translateY(-20px); }
 .rw-gate.is-push .rw-gate-sky, .rw-gate.is-push .rw-gate-floor { opacity: 0; }
 .rw-gate.is-reduced, .rw-gate.is-reduced * { animation: none !important; transition: none !important; }
 .rw-gate.is-reduced { transition: opacity .4s ease !important; }
 .rw-gate.is-reduced.is-push { opacity: 0; }
 .rw-gate.is-reduced.is-push .rw-gate-cam, .rw-gate.is-reduced.is-push .rw-gate-copy, .rw-gate.is-reduced.is-push .rw-gate-sky, .rw-gate.is-reduced.is-push .rw-gate-floor { transform: none; opacity: 1; }
 /* short phones (≤ 680px tall): a tighter copy band */
-@media (max-height: 680px) { .rw-gate { --copy: 178px; } .rw-invoke { display: none; } .rw-gate-cta { min-height: 46px; margin-top: 6px; } .rw-gate-names { font-size: clamp(28px, 8.6vw, 44px); } }
+@media (max-height: 680px) { .rw-gate { --head: 150px; --foot: 80px; } .rw-invoke { display: none; } .rw-gate-cta { min-height: 46px; margin-top: 6px; } .rw-gate-names { font-size: clamp(28px, 8.6vw, 44px); } }
 
 /* ══ THE COURTYARD (hero) ═════════════════════════════════════════════════ */
 .rw-court { position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(84px, 22vw, 130px) 16px clamp(96px, 24vw, 170px); isolation: isolate; overflow: clip; }
