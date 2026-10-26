@@ -287,10 +287,10 @@ export const RW_CSS = `
 /* ══ SECTIONS ═════════════════════════════════════════════════════════════ */
 .rw-root .wk-section.rw-sec { padding-top: clamp(48px, 7vw, 96px); padding-bottom: clamp(48px, 7vw, 96px); }
 .rw-root .wk-section.rw-sec .wk-section-head { margin-bottom: clamp(24px, 4vw, 40px); }
-.rw-hang { position: absolute; top: -10px; width: clamp(46px, 11vw, 80px); z-index: 2; transform-origin: 50% 0; pointer-events: none; animation: rw-sway 5s ease-in-out infinite; }
+.rw-hang { position: absolute; top: -18px; width: clamp(70px, 19vw, 140px); z-index: 2; transform-origin: 50% 0; pointer-events: none; animation: rw-sway 5s ease-in-out infinite; }
 .rw-hang.is-l { left: 3%; }
 .rw-hang.is-r { right: 3%; animation-delay: -2.4s; }
-.rw-hang img { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 8px rgba(110,40,50,.22)); }
+.rw-hang img { display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 14px rgba(110,60,20,.22)); }
 .rw-hang.is-r img { transform: scaleX(-1); }
 /* Section-by-section scrolling (./useSectionSnap): every section is at least one screen tall, its content centred. */
 .rw-root .wk-section.rw-sec { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-top: max(76px, clamp(48px, 7vw, 96px)); }
@@ -300,11 +300,18 @@ export const RW_CSS = `
 .rw-scene-cloud { position: absolute; height: auto; opacity: .55; }
 .rw-scene-cloud.is-a { left: -6%; top: 6%; width: clamp(260px, 34vw, 560px); }
 .rw-scene-cloud.is-b { right: -8%; top: 18%; width: clamp(240px, 30vw, 520px); }
-.rw-scene-hedge { position: absolute; left: 0; bottom: -2%; width: 100%; height: clamp(120px, 22svh, 240px); object-fit: cover; object-position: 50% 0; opacity: .5; -webkit-mask-image: linear-gradient(180deg, transparent, #000 45%); mask-image: linear-gradient(180deg, transparent, #000 45%); }
+.rw-scene-chhatri { position: absolute; bottom: 0; width: clamp(110px, 16vw, 240px); height: auto; opacity: .9; filter: drop-shadow(0 12px 14px rgba(110,40,50,.15)); }
+.rw-scene-chhatri.is-l { left: -2%; }
+.rw-scene-chhatri.is-r { right: -2%; transform: scaleX(-1); }
+@media (max-width: 699px) { .rw-scene-chhatri { width: 96px; opacity: .55; } }
+.rw-scene-hedge { display: none !important; position: absolute; left: 0; bottom: -2%; width: 100%; height: clamp(120px, 22svh, 240px); object-fit: cover; object-position: 50% 0; opacity: .5; -webkit-mask-image: linear-gradient(180deg, transparent, #000 45%); mask-image: linear-gradient(180deg, transparent, #000 45%); }
 .rw-invite-wrap { position: relative; padding-top: 30px; }
-.rw-invite { position: relative; max-width: 720px; margin: 0 auto; padding: clamp(46px, 9vw, 72px) clamp(18px, 5vw, 56px) clamp(30px, 6vw, 48px); border-radius: clamp(16px, 2.4vw, 22px); background: radial-gradient(100% 70% at 50% 0%, #FFFCF5 0%, var(--wk-surface-solid) 60%), var(--wk-surface-solid); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 60%, transparent), inset 0 0 0 7px var(--wk-surface-solid), inset 0 0 0 8px color-mix(in srgb, var(--rw-maroon) 25%, transparent), 0 30px 60px -40px rgba(90,40,20,.55); }
+/* the invitation: a pointed palace arch of ivory with a double gold line, a gold diamond at its crown */
+.rw-invite { position: relative; max-width: 720px; margin: 0 auto; padding: clamp(70px, 14vw, 110px) clamp(18px, 5vw, 56px) clamp(30px, 6vw, 48px); border-radius: 50% 50% 22px 22px / clamp(90px, 22vw, 170px) clamp(90px, 22vw, 170px) 22px 22px; background: radial-gradient(90% 60% at 50% 12%, #FFFDF7 0%, #FFF8EA 55%, #FBF1DD 100%); box-shadow: inset 0 0 0 1.5px #C9A063, inset 0 0 0 9px #FFFBF2, inset 0 0 0 10.5px color-mix(in srgb, var(--rw-maroon) 30%, transparent), inset 0 0 0 16px #FFFBF2, inset 0 0 0 17px rgba(201,160,99,.55); }
+.rw-invite::after { content: ""; position: absolute; left: 50%; top: -14px; width: 26px; height: 26px; margin-left: -13px; transform: rotate(45deg); border-radius: 4px; background: linear-gradient(135deg, #F3DDA8, #C9974F 50%, #A9743F); box-shadow: 0 0 0 4px #FBF3E2; }
+@media (min-width: 700px) and (max-height: 820px) { .rw-sec-invite .rw-invite { padding-top: 64px; padding-bottom: 24px; } .rw-sec-invite .wk-msg-orn { width: 46px !important; } .rw-root .wk-section.rw-sec-invite .wk-section-head { margin-bottom: 18px; } }
 @media (min-width: 1024px) {
-  .rw-hang { width: 92px; } .rw-hang.is-l { left: calc(50% - 520px - 120px); } .rw-hang.is-r { right: calc(50% - 520px - 120px); }
+  .rw-hang { width: 170px; top: -40px; } .rw-hang.is-l { left: calc(50% - 520px - 150px); } .rw-hang.is-r { right: calc(50% - 520px - 150px); }
   /* compact and wide: the two columns sit side by side so the card is about half as tall */
   .rw-sec-invite .rw-invite { max-width: 1040px; padding: 44px 56px 36px; }
   .rw-sec-invite .wk-msg-text p { font-size: 19px; line-height: 1.6; margin-bottom: .8em; }
@@ -320,15 +327,42 @@ export const RW_CSS = `
   .rw-sec-invite .wk-msg-text p { font-size: 15px; line-height: 1.5; margin-bottom: .55em; }
   .rw-sec-invite .wk-msg-text.is-deva p { font-size: 14.5px; line-height: 1.7; }
   .rw-sec-invite .wk-msg-cols { gap: 10px; }
-  .rw-sec-invite .rw-hang { width: 40px; top: -2px; }
+  .rw-sec-invite .rw-hang { width: 96px; top: -30px; }
+  .rw-sec-invite .rw-hang.is-l { left: -24px; }
+  .rw-sec-invite .rw-hang.is-r { right: -24px; }
+  .rw-sec-invite .rw-invite { padding-top: 70px; }
   .rw-scene-hedge { display: none; }
 }
 
 /* families in a pietra-dura border */
-.rw-inlay { position: relative; padding: 12px; border-radius: 26px; background: radial-gradient(circle, color-mix(in srgb, var(--rw-maroon) 60%, transparent) 2px, transparent 2.6px) 0 0 / 16px 16px, linear-gradient(135deg, #F3E3C3, #EAD3A6); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 70%, transparent), 0 26px 50px -36px rgba(90,40,20,.55); }
-.rw-inlay-in { display: grid; gap: 22px; padding: clamp(22px, 5vw, 40px) clamp(14px, 4vw, 36px); border-radius: 18px; background: var(--wk-surface-solid); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 55%, transparent); }
-.rw-blessings-of { text-align: center; }
-.rw-blessings-names { margin: 6px 0 0; font: italic 500 clamp(18px, 4.4vw, 22px)/1.4 var(--wk-font-display); color: var(--wk-ink); }
+/* families: two arched palace windows joined by a gold mandala, elephants at the outer feet */
+.rw-fam { display: grid; gap: clamp(18px, 3.4svh, 34px); }
+.rw-fam-bless { text-align: center; display: grid; justify-items: center; gap: 8px; }
+.rw-fam-ribbon { position: relative; margin: 0; padding: 7px 26px; font: 600 11.5px/1.2 var(--wk-font-caps); letter-spacing: .26em; text-transform: uppercase; color: #FFF7EA; background: linear-gradient(115deg, #6E1E2E, var(--rw-maroon) 55%, #A8475A); clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%, 10px 50%); }
+.rw-root.is-hi .rw-fam-ribbon { letter-spacing: .02em; font-family: var(--wk-font-deva); font-size: 14px; }
+.rw-fam-elders { margin: 0; max-width: 32rem; font: italic 500 clamp(18px, 4.4vw, 23px)/1.4 var(--wk-font-display); color: var(--wk-ink); text-wrap: balance; }
+.rw-fam-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 0; }
+.rw-fam-win { position: relative; width: min(100%, 360px); padding: 10px; border-radius: 50% 50% 18px 18px / 70px 70px 18px 18px; background: radial-gradient(circle, color-mix(in srgb, var(--rw-maroon) 75%, transparent) 2.4px, transparent 3px) 0 0 / 16px 16px, linear-gradient(135deg, #F3E3C3, #EAD3A6); box-shadow: inset 0 0 0 1.5px #C9A063, 0 0 0 1px rgba(201,160,99,.35); }
+.rw-fam-in { position: relative; padding: clamp(40px, 9vw, 52px) clamp(16px, 4vw, 26px) clamp(20px, 4vw, 26px); text-align: center; border-radius: 50% 50% 12px 12px / 62px 62px 12px 12px; background: radial-gradient(90% 70% at 50% 18%, #FFFDF7, #FFF7E8 70%, #FBF0DC); box-shadow: inset 0 0 0 1.5px #C9A063, inset 0 0 0 7px #FFFBF2, inset 0 0 0 8px rgba(201,160,99,.45); }
+.rw-fam-finial { position: absolute; z-index: 1; left: 50%; top: -16px; width: 22px; height: 22px; margin-left: -11px; transform: rotate(45deg); border-radius: 4px; background: linear-gradient(135deg, #F3DDA8, #C9974F 50%, #A9743F); box-shadow: 0 0 0 4px #FBF3E2; }
+.rw-fam-t { margin: 0 0 8px; font: 600 11.5px/1.3 var(--wk-font-caps); letter-spacing: .28em; text-transform: uppercase; color: #9A6B2A; }
+.rw-root.is-hi .rw-fam-t { letter-spacing: .02em; font-family: var(--wk-font-deva); font-size: 15px; }
+.rw-fam-names { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font: 500 clamp(21px, 5.2vw, 26px)/1.3 var(--wk-font-display); color: var(--rw-maroon); text-wrap: balance; }
+.rw-fam-note { margin: 8px 0 0; font: 600 12px/1.4 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: #8A6A44; }
+.rw-fam-photo { display: block; width: 96px; height: 96px; margin: 0 auto 12px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #FFFBF2, 0 0 0 4.5px #C9A063; }
+/* the knot between the two families */
+.rw-fam-knot { position: relative; z-index: 2; display: grid; place-items: center; width: 74px; height: 74px; margin: -14px 0; }
+.rw-fam-knot img { position: absolute; inset: -10px; width: calc(100% + 20px); height: auto; opacity: .7; }
+.rw-fam-knot b { position: relative; display: grid; place-items: center; width: 50px; height: 50px; border-radius: 50%; font: 400 30px/1 var(--wk-font-script); color: var(--rw-maroon); background: radial-gradient(circle at 50% 38%, #FFFDF6, #FBEFD6); box-shadow: inset 0 0 0 1.5px #C9A063, 0 0 0 4px #FBF3E2; }
+.rw-fam-ele { display: none; }
+@media (min-width: 900px) {
+  .rw-fam-row { grid-template-columns: minmax(0, 360px) auto minmax(0, 360px); justify-content: center; align-items: center; gap: 0 18px; padding: 0 140px; }
+  .rw-fam-row.is-one { grid-template-columns: minmax(0, 360px); }
+  .rw-fam-knot { margin: 0; }
+  .rw-fam-ele { display: block; position: absolute; bottom: -6px; width: 150px; height: auto; filter: drop-shadow(0 12px 10px rgba(90,60,30,.22)); }
+  .rw-fam-ele.is-l { left: 0; }
+  .rw-fam-ele.is-r { right: 0; }
+}
 .rw-root .wk-family-photo { width: clamp(112px, 26vw, 140px); height: auto; aspect-ratio: 4 / 5; border-radius: 16px; box-shadow: 0 0 0 4px var(--wk-surface-solid), 0 0 0 5px color-mix(in srgb, var(--wk-gold) 60%, transparent), 0 18px 34px -24px rgba(80,40,10,.55); }
 
 /* the farmaan + countdown */

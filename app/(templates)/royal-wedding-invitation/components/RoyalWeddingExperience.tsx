@@ -21,13 +21,14 @@
 // ?to=Name greets the guest on the gateway and pre-fills their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BLESSINGS_TEXT_HI, BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
+import { BLESSINGS_TEXT_HI, BlessingsWall, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
 import { A, RW_KIT, img } from "./assets";
 import Courtyard from "./rw/Courtyard";
 import Events from "./rw/Events";
 import Farmaan from "./rw/Farmaan";
+import Families from "./rw/Families";
 import Finale from "./rw/Finale";
 import Gateway, { gatewayOpenedBefore } from "./rw/Gateway";
 import { Contacts, GoodToKnow, LiveButton, Shagun } from "./rw/GuestInfo";
@@ -92,14 +93,14 @@ function Film({ id, label }: { id: string; label: string }) {
   );
 }
 
-/** A pink lantern hanging from each top corner of a section (sways while on screen). */
+/** A gold lantern trio hanging still above each top corner of the invitation card. */
 function Lanterns() {
   return (
     <>
       {[0, 1].map((i) => (
         <span key={i} className={`rw-hang is-${i ? "r" : "l"}`} aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...img(A.lanternPink, { lazy: true })} />
+          <img {...img(A.lanterns, { lazy: true })} />
         </span>
       ))}
     </>
@@ -214,6 +215,10 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
             <img className="rw-scene-cloud is-b" {...img(A.cloud2, { lazy: true })} />
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img className="rw-scene-hedge" {...img(A.hedge, { lazy: true })} />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img className="rw-scene-chhatri is-l" {...img(A.chhatri, { lazy: true })} />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img className="rw-scene-chhatri is-r" {...img(A.chhatri, { lazy: true })} />
           </div>
           <div className="rw-invite-wrap">
             <Lanterns />
@@ -226,20 +231,8 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
 
         {/* ── Families, inside a pietra-dura border ───────────────────────── */}
         {(hasFamilies || m.blessingsOf) && (
-          <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="normal" className="rw-sec rw-full">
-            <div className="rw-inlay">
-              <div className="rw-inlay-in">
-                {m.blessingsOf && (
-                  <Reveal className="rw-blessings-of">
-                    <p className="wk-eyebrow" lang={lang}>
-                      {s.blessingsOf}
-                    </p>
-                    <p className="rw-blessings-names">{m.blessingsOf}</p>
-                  </Reveal>
-                )}
-                {hasFamilies && <FamiliesBlock bride={bride} groom={groom} first={m.familyFirst} heading="" photos />}
-              </div>
-            </div>
+          <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="wide" className="rw-sec rw-full rw-sec-fam">
+            <Families bride={bride} groom={groom} first={m.familyFirst} blessingsOf={m.blessingsOf} blessingsLabel={s.blessingsOf} lang={lang} />
           </Section>
         )}
 
