@@ -232,7 +232,7 @@ type Keys =
   | "open" | "dear" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide"
   | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "galleryEyebrow" | "goodToKnow" | "gettingThere"
   | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "done"
-  | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
+  | "directions" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
   | "upasthiti" | "callUs" | "callUsEyebrow" | "call" | "chat" | "shagun" | "shagunEyebrow" | "shagunLine" | "pay" | "copy" | "copied"
   | "live" | "liveSoon" | "share" | "copyLink" | "card" | "cardMaking" | "inviteSomeone" | "inviteName" | "inviteSend"
   | "together" | "welcome" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "saved";
@@ -270,8 +270,6 @@ export const T: Record<Lang, StringsShape> = {
     units: { d: "Days", h: "Hours", m: "Minutes", s: "Seconds" },
     done: "Just married",
     directions: "Directions",
-    calendar: "Add to calendar",
-    saveAll: "Save all dates",
     dress: "Dress code",
     tba: "Time to be announced",
     play: "Play the film",
@@ -337,8 +335,6 @@ export const T: Record<Lang, StringsShape> = {
     units: { d: "दिन", h: "घंटे", m: "मिनट", s: "सेकंड" },
     done: "विवाह संपन्न",
     directions: "रास्ता",
-    calendar: "कैलेंडर में जोड़ें",
-    saveAll: "सभी तिथियाँ सहेजें",
     dress: "पोशाक",
     tba: "समय की सूचना जल्द",
     play: "फ़िल्म चलाएँ",

@@ -1,17 +1,19 @@
 "use client";
 
-// ─── The finale: the palace door closes softly on "Shubh Vivah" ──────────────
-// The same carved door, small, stands open with lamplight behind; when it is
-// 55% on screen the leaves swing shut (rotateY ±78° → 0, 1.6 s) and the gold
-// frame settles on the seam with the couple's initials. Then the closing line,
-// the hashtag, the share bar, and at the very foot the bride's and groom's
-// hands tied with the mauli thread, rising into view. Reduced motion: the door
-// is simply closed.
+// ─── The finale: the knot is tied ────────────────────────────────────────────
+// The bride's and groom's hands, tied with the mauli thread, in a gold-framed
+// palace arch with warm light behind them. When the arch is 45% on screen it
+// opens from the centre (a circle of light widening to the full window), the
+// picture settles from a slight zoom, the couple's initials sit in a gold medal
+// on the arch's crown, the diyas on its sill light from the centre out and
+// petals fall. Then "Shubh Vivah", the closing line, the hashtag and the share
+// bar. Reduced motion: everything is simply in place.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Reveal, initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import Diya from "./Diya";
 import Petals from "./Petals";
-import { A, LEAF_BOX, img } from "../assets";
+import { A, img } from "../assets";
 
 export interface FinaleProps {
   seal: string;
@@ -26,60 +28,54 @@ export interface FinaleProps {
 }
 
 export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, children }: FinaleProps) {
-  const doorRef = useRef<HTMLDivElement>(null);
+  const knotRef = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
-  const [closed, setClosed] = useState(false);
+  const [tied, setTied] = useState(false);
   useEffect(() => {
     if (reduce) return;
-    const el = doorRef.current;
+    const el = knotRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([en]) => {
         if (en.isIntersecting) {
-          setClosed(true);
+          setTied(true);
           io.disconnect();
         }
       },
-      { threshold: 0.55 },
+      { threshold: 0.45 },
     );
     io.observe(el);
     return () => io.disconnect();
   }, [reduce]);
-  const shut = closed || reduce;
+  const on = tied || reduce;
 
   return (
     <section className="pd-finale" aria-label={seal}>
-      <div ref={doorRef} className={`pd-close${shut ? " is-closed" : ""}`}>
-        <div className="pd-close-door">
-          <div className="pd-door-3d">
-            <div className="pd-door-light" aria-hidden>
-              <span className="pd-door-glow" />
-            </div>
-            {(["left", "right"] as const).map((side) => {
-              const b = LEAF_BOX[side];
-              return (
-                <div key={side} className={`pd-leaf is-${side[0]}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} aria-hidden>
-                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                  <img {...img(side === "left" ? A.leafL : A.leafR, { lazy: true })} />
-                </div>
-              );
-            })}
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img className="pd-door-wall" {...img(A.wall, { lazy: true })} />
-          </div>
-          <span className="pd-close-medal" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img(A.frame, { lazy: true })} />
-            <span className="pd-close-ini">
-              {initialOf(first)}
-              <i>&amp;</i>
-              {initialOf(second)}
-            </span>
+      <div ref={knotRef} className={`pd-knot${on ? " is-on" : ""}`}>
+        <span className="pd-knot-glow" aria-hidden />
+        <div className="pd-knot-arch">
+          <span className="pd-knot-win">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img {...img(A.hands, { lazy: true })} alt={`${first} & ${second}`} />
           </span>
         </div>
-        {closed && !reduce && (
+        <span className="pd-knot-medal" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.frame, { lazy: true })} />
+          <span className="pd-close-ini">
+            {initialOf(first)}
+            <i>&amp;</i>
+            {initialOf(second)}
+          </span>
+        </span>
+        <span className="pd-knot-sill" aria-hidden>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Diya key={i} className="pd-knot-diya" style={{ ["--i" as string]: Math.abs(i - 2) }} />
+          ))}
+        </span>
+        {tied && !reduce && (
           <div className="pd-close-petals" aria-hidden>
-            <Petals kind={["marigold-petal", "rose-petal", "gold-confetti"]} count={12} mode="fall" seed={23} />
+            <Petals kind={["marigold-petal", "rose-petal", "gold-confetti"]} count={14} mode="fall" seed={23} />
           </div>
         )}
       </div>
@@ -108,10 +104,6 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
           {children}
         </Reveal>
       )}
-      <div className="pd-hands" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img(A.hands, { lazy: true })} />
-      </div>
     </section>
   );
 }

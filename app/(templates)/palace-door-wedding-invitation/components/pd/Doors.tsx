@@ -8,17 +8,27 @@
 // leaves can swing INWARD on their outer hinges in real 3D (perspective +
 // rotateY) behind the wall's doorway, the way a haveli door opens.
 //
+// The scene is a haveli at dusk: a maroon wall with a gold bidri lattice, a
+// marigold toran on the lintel and garland strings down the frame, diyas on
+// the threshold, gold dust in the air; on wide screens pillars, hanging
+// lanterns, marigold pots and string lights around the door. It opens dark
+// around one diya whose light spreads to reveal the door, then the decor
+// arrives in turn. While the door is closed, light breathes through its crack.
+//
 // One tap (also the gesture that starts the music):
 //   0.00 s  the frame presses like a knock; copy fades
-//   0.45 s  the leaves swing in (2.1 s), warm light floods the doorway, the
+//   0.35 s  the leaves swing in (2.1 s), warm light floods the doorway, the
 //           rays turn, jhumkas swing harder, petals burst
-//   2.05 s  the camera pushes through the doorway into the courtyard (the
-//           page below, already decoded) and the door layer is removed.
+//   1.75 s  warm light blooms out of the doorway to fill the screen as the
+//           camera eases through it (scale up, centred on the door)
+//   2.25 s  the courtyard (already decoded) starts revealing under the light
+//   3.60 s  the light has faded; the door layer is removed.
 // Every motion is transform/opacity. Every image is decoded before the first
 // frame of the entrance or the swing. Reduced motion: a 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import Diya from "./Diya";
 import Petals from "./Petals";
 import { useDayMusic } from "../../../_valentine/music/context";
 import { A, LEAF_BOX, decodeAll, img, seeded } from "../assets";
@@ -47,6 +57,11 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
   const motes = useMemo(() => {
     const r = seeded(41);
     return Array.from({ length: 9 }, () => ({ left: 20 + r() * 60, delay: -r() * 9, dur: 7 + r() * 5, dx: (r() - 0.5) * 50, size: 3 + r() * 4 }));
+  }, []);
+  // Gold dust drifting through the whole scene, twinkling as it rises.
+  const dust = useMemo(() => {
+    const r = seeded(83);
+    return Array.from({ length: 22 }, () => ({ left: r() * 100, top: 20 + r() * 80, delay: -r() * 12, dur: 9 + r() * 8, dx: (r() - 0.5) * 60, size: 2 + r() * 4 }));
   }, []);
 
   // The page stays still behind the closed door.
@@ -96,13 +111,10 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
     // The courtyard is already in the DOM under the door: decode its art while the leaves swing.
     const court = Array.from(document.querySelectorAll<HTMLImageElement>(".pd-court img"));
     void decodeAll(court, 1600);
-    later(420, () => live.current && setPhase("open"));
-    later(2050, () => {
-      if (!live.current) return;
-      setPhase("push");
-      onOpened();
-    });
-    later(3300, () => live.current && setPhase("gone"));
+    later(350, () => live.current && setPhase("open"));
+    later(1750, () => live.current && setPhase("push"));
+    later(2250, () => live.current && onOpened());
+    later(3600, () => live.current && setPhase("gone"));
   };
 
   if (phase === "gone") return null;
@@ -111,14 +123,31 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
 
   return (
     <div ref={root} className={`pd-gate is-${phase}${reduce ? " is-reduced" : ""}`} data-pd-gate={phase}>
-      <div className="pd-gate-wall" aria-hidden />
+      <div className="pd-gate-wall" aria-hidden>
+        <span className="pd-gate-lattice" style={{ backgroundImage: `url(${A.lattice.src})` }} />
+      </div>
+      {/* Desktop: strings of gold lights draped either side of the door. */}
+      <div className="pd-gate-lights" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="is-l" {...img(A.lights)} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="is-r" {...img(A.lights)} />
+      </div>
       <div className="pd-gate-cam">
-        {/* Desktop: the haveli front around the door (pillars). */}
+        {/* Desktop: the haveli front around the door (pillars, lanterns, marigold pots). */}
         <div className="pd-front" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="pd-front-pillar is-l" {...img(A.pillar)} />
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="pd-front-pillar is-r" {...img(A.pillar)} />
+          {(["l", "r"] as const).map((sd) => (
+            <span key={sd} className={`pd-front-side is-${sd}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-front-pillar" {...img(A.pillar)} />
+              <span className="pd-front-lantern">
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img {...img(A.lanternsGlow)} />
+              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="pd-front-pots" {...img(A.pots)} />
+            </span>
+          ))}
         </div>
 
         <div className="pd-door">
@@ -146,9 +175,20 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
                 </div>
               );
             })}
+            {/* The courtyard's light leaking through the crack between the leaves. */}
+            <span className="pd-door-seam" aria-hidden />
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img className="pd-door-wall" data-pd-pre {...img(A.wall, { high: true })} />
           </div>
+
+          {/* The marigold-and-mango-leaf toran on the lintel, garland strings down the frame. */}
+          {(["l", "r"] as const).map((sd) => (
+            <span key={sd} className={`pd-garland is-${sd}`} style={{ backgroundImage: `url(${A.garland.src})` }} aria-hidden />
+          ))}
+          <span className="pd-toran" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img data-pd-pre {...img(A.toran, { high: true })} />
+          </span>
 
           {/* On the wall and the wood (not 3D). */}
           <p className="pd-door-invoke" lang="hi" aria-hidden>
@@ -167,6 +207,7 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
               </p>
             )}
             <button type="button" className="pd-medal" onClick={open} aria-label={`${s.open}: ${first} ${s.and} ${second}`}>
+              <span className="pd-medal-halo" aria-hidden />
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="pd-medal-ring" data-pd-pre {...img(A.frame, { high: true })} />
               <span className="pd-medal-disc" aria-hidden />
@@ -193,6 +234,13 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
               {s.open}
             </button>
           </div>
+
+          {/* A row of diyas on the threshold, lit one after another. */}
+          <span className="pd-diyas" aria-hidden>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Diya key={i} className={`pd-diya is-${i}`} style={{ ["--i" as string]: Math.abs(i - 2) }} />
+            ))}
+          </span>
         </div>
       </div>
 
@@ -203,9 +251,24 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
         </span>
       ))}
 
+      <span className="pd-gate-dust" aria-hidden>
+        {dust.map((d, i) => (
+          <i key={i} style={{ left: `${d.left}%`, top: `${d.top}%`, width: d.size, height: d.size, animationDelay: `${d.delay}s, ${d.delay * 0.37}s`, animationDuration: `${d.dur}s, ${2 + (i % 4) * 0.6}s`, ["--dx" as string]: `${d.dx}px` }} />
+        ))}
+      </span>
+
+      {/* Stepping through: warm light blooms out of the doorway, fills the screen, then gives way to the page. */}
+      <span className="pd-gate-bloom" aria-hidden />
+
+      {/* The entrance: the scene starts dark around one diya, and its light opens out to reveal the door. */}
+      <span className="pd-gate-iris" aria-hidden />
+      <span className="pd-gate-spark" aria-hidden>
+        <Diya className="pd-diya" />
+      </span>
+
       {swinging && !reduce && (
         <div className="pd-gate-petals" aria-hidden>
-          <Petals kind={["marigold-petal", "rose-petal", "marigold-petal", "gold-confetti"]} count={22} mode="burst" seed={7} />
+          <Petals kind={["marigold-petal", "rose-petal", "marigold-petal", "gold-confetti"]} count={28} mode="burst" seed={7} />
         </div>
       )}
     </div>

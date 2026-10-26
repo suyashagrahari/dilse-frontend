@@ -10,7 +10,7 @@ export const config: TemplatePageConfig = {
   title: "Palace Door Wedding Invitation ✦ — Doors That Open to Your Shaadi",
   description:
     "Carved Rajasthani palace doors swing open to your wedding: your names in a golden frame, a floral mandap with lanterns, jhumka hangings and a havan kund, an illustrated couple for every function from Haldi and Mehendi to the Reception, RSVP per function, 40 photos and a blessings wall. Ivory and gold; the AI writes it.",
-  coverImage: "/wedding-v3/template13/card.webp",
+  coverImage: "/wedding-v3/palace-door/cover-haveli.webp",
   emoji: "🚪",
   color: "from-amber-200 to-orange-300",
   previewText: "the palace doors open for you 🚪",
@@ -33,7 +33,7 @@ export const config: TemplatePageConfig = {
       headerEmoji: "🚪",
       title: "Shubh Vivah",
       subtitle: "With love, the families",
-      wishes: ["RSVP for every function", "Every date on your calendar", "Leave your blessings"],
+      wishes: ["RSVP for every function", "A card for every function", "Leave your blessings"],
       closingEmoji: "🪔",
       closingSubtext: "SubhSandesh",
     },
