@@ -102,7 +102,10 @@ export const RW_CSS = `
   .rw-gate-lamp.is-r { right: calc(var(--lw) * -.27); }
 }
 @media (min-width: 760px) and (min-aspect-ratio: 6/5) {
-  .rw-gate { --head: clamp(190px, 25svh, 250px); --foot: clamp(92px, 12svh, 116px); }
+  /* laptops and desktops: the gateway as large as the screen allows — a tighter title block above, and the gateway stands right on the floor line with the button on the balustrade below */
+  .rw-gate { --head: clamp(184px, 19svh, 204px); --foot: 74px; --sh: min(calc(100svh - var(--copy) - 4px), calc(100vw * 1.56)); }
+  .rw-gate-copy { padding-top: max(40px, calc(env(safe-area-inset-top) + 34px)); padding-bottom: 6px; }
+  .rw-gate-names { font-size: clamp(40px, min(4.6vw, 7svh), 72px); margin-top: 4px; }
 }
 
 /* the proclamation above the gateway */
