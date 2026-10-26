@@ -36,6 +36,7 @@ import Story from "./rw/Story";
 import { RW_CSS } from "./rw/css";
 import { T, readRoyal, type Lang } from "./rw/model";
 import { prefillRsvpName, useGuestName } from "./rw/share";
+import useSectionSnap from "./rw/useSectionSnap";
 
 /** Two across on a phone, three from a tablet up, four on wide desktops. */
 const GALLERY_COLUMNS = [
@@ -160,6 +161,9 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
     return () => io.disconnect();
   }, [guest]);
 
+  // Section-by-section scrolling once the gateway has gone (./rw/useSectionSnap).
+  useSectionSnap(open, ".rw-root .rw-court, .rw-root .wk-section.rw-sec, .rw-root .rw-finale");
+
   const onOpened = () => {
     setOpen(true);
     react("opened");
@@ -256,7 +260,7 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         {/* ── Functions ───────────────────────────────────────────────────── */}
         {m.events.length > 0 && (
           <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="rw-sec rw-sec-events">
-            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} lang={lang} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
+            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} lang={lang} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved, swipe: s.swipe }} />
           </Section>
         )}
 

@@ -1,17 +1,19 @@
 "use client";
 
-// ─── The functions: one illustrated couple per function ──────────────────────
-// Each function is a sandstone durbar card: a brass toran hangs across the
-// top of a sunlit panel tinted by the function's dress-code colour, and the
-// couple stands on a terracotta carpet, dressed for it (haldi yellow, mehendi
-// orange, sangeet dancing, wedding red, reception tux-and-gown, engagement
-// ivory). Under it: the date, time, venue, a dress-code swatch, the note,
-// directions and add-to-calendar (.ics + Google). "Save all dates" at the end.
-// Phones: one column; tablets two; desktops three. Cards rise in with a
-// stagger; the toran sways while the card is on screen. Rounded rectangles only.
+// ─── The functions: a carousel of durbar stages, one per celebration ────────
+// Each function stands in its own pointed palace arch glowing in the
+// function's colour (turmeric for the haldi, henna green for the mehndi,
+// coral for the sangeet, periwinkle for the reception, rose for the wedding),
+// with the couple dressed for it (template14) on a terracotta carpet, the date
+// on a gold calendar leaf and the number in the corner. Below: the name (in
+// Hindi on the Hindi page when it is a known function), time, venue, dress
+// code, note, directions and add-to-calendar (.ics + Google).
+// One horizontal rail on every screen (one card on phones, two on tablets,
+// three on laptops) with scroll-snap, arrows on wide screens and dots, so the
+// whole section always fits one screen. "Save all dates" sits under it.
 
-import { useState, type CSSProperties } from "react";
-import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, fnTitle, formatEventDate, formatEventTime, googleCalendarUrl, hiTime, mapLink, type WeddingEvent } from "../../../_wedding";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { DEFAULT_TZ_OFFSET, FN_TINT, Reveal, downloadWeddingIcs, fnTitle, kindOf, formatEventDate, formatEventTime, googleCalendarUrl, hiTime, mapLink, type WeddingEvent } from "../../../_wedding";
 import { A, img, type WeddingAsset } from "../assets";
 import { MAIN_RE } from "./model";
 
@@ -44,13 +46,57 @@ export interface EventsProps {
   url?: string;
   locale: string;
   lang: "en" | "hi";
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; saved: string };
+  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; saved: string; swipe: string };
 }
 
 export default function Events({ events, couple, url, locale, lang, labels: l }: EventsProps) {
   const [flash, setFlash] = useState<string | null>(null);
+  const [at, setAt] = useState(0);
+  const [edge, setEdge] = useState<{ start: boolean; end: boolean }>({ start: true, end: false });
+  const railRef = useRef<HTMLOListElement>(null);
   const list = events.filter((e) => e.title || e.venue || e.date);
+
+  // Which card the rail rests on (the dots) and whether either end is reached (the arrows).
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const kids = Array.from(el.children) as HTMLElement[];
+      if (!kids.length) return;
+      const left = el.scrollLeft;
+      let best = 0;
+      kids.forEach((k, i) => {
+        if (Math.abs(k.offsetLeft - el.offsetLeft - left) < Math.abs(kids[best].offsetLeft - el.offsetLeft - left)) best = i;
+      });
+      setAt(best);
+      setEdge({ start: left < 8, end: left + el.clientWidth > el.scrollWidth - 8 });
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    measure();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [list.length]);
+
   if (!list.length) return null;
+  const go = (i: number) => {
+    const el = railRef.current;
+    const k = el?.children[Math.max(0, Math.min(list.length - 1, i))] as HTMLElement | undefined;
+    if (el && k) el.scrollTo({ left: k.offsetLeft - el.offsetLeft - parseFloat(getComputedStyle(el).scrollPaddingLeft || "0"), behavior: "smooth" });
+  };
+  const step = (dir: 1 | -1) => {
+    const el = railRef.current;
+    const k = el?.children[0] as HTMLElement | undefined;
+    if (el && k) el.scrollBy({ left: dir * (k.offsetWidth + 20), behavior: "smooth" });
+  };
   const save = (es: readonly WeddingEvent[], key: string, name: string) => {
     const ok = downloadWeddingIcs(es, { couple, url, tz: DEFAULT_TZ_OFFSET }, name);
     setFlash(ok ? key : `${key}:err`);
@@ -58,7 +104,15 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
   };
   return (
     <div className="rw-evs">
-      <ol className={`rw-ev-grid n-${Math.min(list.length, 3)}`}>
+      <div className="rw-ev-wrap">
+      {list.length > 1 && (
+        <button type="button" className="rw-ev-arrow is-prev" onClick={() => step(-1)} disabled={edge.start} aria-label="Previous">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+        </button>
+      )}
+      <ol ref={railRef} className={`rw-ev-grid n-${Math.min(list.length, 3)}`}>
         {list.map((e, i) => {
           const date = formatEventDate(e.date, locale);
           const time = lang === "hi" ? hiTime(e.time) : formatEventTime(e.time, locale);
@@ -68,18 +122,24 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
           const art = coupleFor(e.title, i);
+          const kind = MAIN_RE.test(e.title) ? "wedding" : kindOf(e.title, i);
+          const day = e.date ? new Date(`${e.date}T12:00:00Z`) : null;
           const gcal = e.date ? googleCalendarUrl(e, { couple, url, tz: DEFAULT_TZ_OFFSET }) : "";
           return (
-            <Reveal as="li" key={key} className="rw-ev" delay={(i % 3) * 90}>
+            <Reveal as="li" key={key} className={`rw-ev is-${kind}`} delay={(i % 3) * 90} style={{ ["--fn" as string]: FN_TINT[kind] } as CSSProperties}>
               <article className="rw-ev-card">
-                <div className="rw-ev-alcove" aria-hidden style={swatch ? ({ ["--rw-tint" as string]: swatch } as CSSProperties) : undefined}>
-                  <span className="rw-ev-glow" />
-                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                  <img className="rw-ev-toran" {...img(A.toran, { lazy: true })} />
+                <div className="rw-ev-alcove" aria-hidden>
+                  <span className="rw-ev-arch" />
                   {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                   <img className="rw-ev-carpet" {...img(A.carpet, { lazy: true })} />
                   {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                   <img className="rw-ev-couple" {...img(art, { lazy: true })} />
+                  {day && (
+                    <span className="rw-ev-leaf">
+                      <b>{day.getUTCDate()}</b>
+                      <small>{day.toLocaleDateString(locale, { month: "short", timeZone: "UTC" }).replace(/\.$/, "")}</small>
+                    </span>
+                  )}
                   <span className="rw-ev-no">{String(i + 1).padStart(2, "0")}</span>
                 </div>
                 <div className="rw-ev-body">
@@ -135,6 +195,21 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
           );
         })}
       </ol>
+      {list.length > 1 && (
+        <button type="button" className="rw-ev-arrow is-next" onClick={() => step(1)} disabled={edge.end} aria-label="Next">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
+      </div>
+      {list.length > 1 && (
+        <div className="rw-ev-dots" role="group" aria-label={l.swipe}>
+          {list.map((e, i) => (
+            <button key={e.id || i} type="button" className={i === at ? "is-on" : undefined} aria-label={fnTitle(e.title, lang)} aria-current={i === at || undefined} onClick={() => go(i)} />
+          ))}
+        </div>
+      )}
       {list.filter((e) => e.date).length > 1 && (
         <Reveal className="rw-ev-all">
           <button type="button" className="rw-btn rw-btn-gold" onClick={() => save(list, "all", `wedding-${couple}`)}>

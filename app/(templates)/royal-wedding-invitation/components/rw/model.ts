@@ -234,7 +234,7 @@ type Keys =
   | "open" | "opening" | "dear" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide"
   | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "galleryEyebrow" | "gettingThere"
   | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "done"
-  | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
+  | "directions" | "calendar" | "saveAll" | "swipe" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
   | "upasthiti" | "callUs" | "call" | "chat" | "shagun" | "shagunLine" | "pay" | "copy" | "copied"
   | "live" | "liveSoon" | "copyLink" | "card" | "cardMaking" | "inviteSomeone" | "inviteName" | "inviteSend"
   | "together" | "royalOf" | "welcome" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "saved" | "scroll" | "decree" | "at" | "replay";
@@ -274,6 +274,7 @@ export const T: Record<Lang, StringsShape> = {
     directions: "Directions",
     calendar: "Add to calendar",
     saveAll: "Save all dates",
+    swipe: "Swipe to see every function",
     dress: "Dress code",
     tba: "Time to be announced",
     play: "Play the film",
@@ -343,6 +344,7 @@ export const T: Record<Lang, StringsShape> = {
     directions: "रास्ता",
     calendar: "कैलेंडर में जोड़ें",
     saveAll: "सभी तिथियाँ सहेजें",
+    swipe: "सभी कार्यक्रम देखने के लिए स्वाइप करें",
     dress: "पोशाक",
     tba: "समय की सूचना जल्द",
     play: "फ़िल्म चलाएँ",
