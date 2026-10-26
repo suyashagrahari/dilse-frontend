@@ -172,14 +172,14 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
       {/* The doors stand on the lake terrace: the watercolour sky, hills and lake behind them. */}
       <Lake className="wp-open-lake" />
       <div className="wp-open-wash" aria-hidden />
-      {/* The top border: the crown of template15's pink-and-white floral arch, flush with the top edge, cascading down both sides. */}
+      {/* The top border: template15's floral arch split into its two crowns, hung from the top corners at their own resolution (crisp on any screen). */}
       <div className="wp-open-garland" aria-hidden>
-        <picture>
-          <source media="(max-width: 700px)" srcSet={img("floralTopSm").src} />
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <img {...img("floralTop", { high: true })} />
-        </picture>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("floralCornerL", { high: true })} className="is-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("floralCornerR", { high: true })} className="is-r" />
       </div>
+
       <div className="wp-open-world">
         <div className="wp-open-copy">
           {invocation && (

@@ -1,11 +1,11 @@
 "use client";
 
-// ─── The finale: the terrace again, one full screen ─────────────────────────
-// The hero's leaf garland flush along the top with two blossom lanterns, the
+// ─── The finale: back where it began, one full screen ───────────────────────
+// The opening's world again: the watercolour sky, hills and lake under an
+// ivory wash, template15's floral crowns hung from the top corners, the
 // "Shubh Vivah" seal, the names, the closing line, the hashtag, a WhatsApp
-// share and "Replay the opening", and at the foot the still lake, the pink
-// gazebo and the white balustrade. On phones it fills
-// exactly one screen. Nothing moves.
+// share and "Replay the opening", and the gold doors standing closed at the
+// foot. Exactly one screen on every device. Nothing moves.
 
 import { useEffect, useRef, useState } from "react";
 import { Reveal } from "../../../_wedding";
@@ -42,20 +42,15 @@ export default function Finale({ seal, sealHi, bilingual, closing, endLine, firs
 
   return (
     <section ref={ref} className={`wp-finale${on ? " is-on" : ""}`} aria-label={seal}>
-      {/* The same leaf garland as the hero, flush with the top edge (mirrored into a second strip on wide screens). */}
-      <div className="wp-garland wp-finale-garland" aria-hidden>
-        <picture>
-          <source media="(max-width: 700px)" srcSet={img("garlandSm").src} />
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <img {...img("garland", { lazy: true })} className="wp-garland-a" />
-        </picture>
+      {/* The opening's world again: the watercolour sky, hills and lake, the floral crowns hung from the top corners. */}
+      <Lake className="wp-fin-lake" lotus={false} />
+      <div className="wp-open-wash wp-fin-wash" aria-hidden />
+      <div className="wp-fin-garland" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("garland", { lazy: true })} className="wp-garland-b" />
+        <img {...img("floralCornerL", { lazy: true })} className="is-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("floralCornerR", { lazy: true })} className="is-r" />
       </div>
-      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      <img {...img("lanterns", { lazy: true })} className="wp-finale-lantern wp-finale-lantern-l" aria-hidden />
-      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      <img {...img("lanterns", { lazy: true })} className="wp-finale-lantern wp-finale-lantern-r" aria-hidden />
       <div className="wp-finale-in">
         <Reveal as="p" className="wp-seal">
           {bilingual && <b lang="hi">{sealHi}</b>}
@@ -86,12 +81,20 @@ export default function Finale({ seal, sealHi, bilingual, closing, endLine, firs
           </button>
         </Reveal>
       </div>
-      {/* The terrace at the foot of the screen: the still lake with lotuses, the gazebo, the balustrade. */}
-      <div className="wp-finale-foot" aria-hidden>
-        <Lake className="wp-finale-lake" lotus={false} />
+      {/* The gold doors from the opening, closed again, the terrace glowing faintly through the glass. */}
+      <div className="wp-fdoor-wrap" aria-hidden>
+      <div className="wp-fdoor">
+        <div className="wp-fdoor-ap">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img("terrace", { lazy: true })} />
+        </div>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("gazebo", { lazy: true })} className="wp-finale-gazebo" />
-        <span className="wp-balustrade" />
+        <img {...img("doorL", { lazy: true })} className="wp-fdoor-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("doorR", { lazy: true })} className="wp-fdoor-r" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("frame", { lazy: true })} className="wp-fdoor-frame" />
+      </div>
       </div>
     </section>
   );

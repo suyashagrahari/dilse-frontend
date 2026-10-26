@@ -127,16 +127,20 @@ export const WP_CSS = `
 .wp-open.is-opening .wp-floor, .wp-open.is-push .wp-floor { opacity: 1; scale: 1.5 1; }
 /* the top garland: flush with the screen's top edge; its sides cascade down and fade (the art is cut flat there) */
 .wp-open-garland { position: absolute; z-index: 2; top: 0; left: 0; right: 0; pointer-events: none; opacity: 0; translate: 0 -12px; transition: opacity 1.2s var(--wp-soft) .2s, translate 1.4s var(--wp-ease) .2s; }
-.wp-open-garland img { display: block; width: 100%; height: var(--og-h, auto); object-fit: cover; object-position: 50% 0; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%); mask-image: linear-gradient(180deg, #000 62%, transparent 100%); }
+.wp-open-garland, .wp-fin-garland { --gw: min(50vw, 480px); }
+/* each crown fades along its bottom and its inner (cut) edge */
+.wp-open-garland img, .wp-fin-garland img { position: absolute; top: 0; display: block; width: var(--gw); height: auto; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%), linear-gradient(var(--md, 90deg), #000 68%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(180deg, #000 60%, transparent 100%), linear-gradient(var(--md, 90deg), #000 68%, transparent 100%); mask-composite: intersect; }
+.wp-open-garland .is-r, .wp-fin-garland .is-r { --md: 270deg; }
+.wp-open-garland .is-l, .wp-fin-garland .is-l { left: 0; }
+.wp-open-garland .is-r, .wp-fin-garland .is-r { right: 0; }
 .wp-open.is-ready .wp-open-garland { opacity: 1; translate: 0 0; }
 .wp-open.is-push .wp-open-garland { opacity: 0; transition: opacity .45s ease; }
 /* the crown at its natural shape: a light band of hanging blossom across the middle, dense cascades down
    both sides beside the doors; the words start just under the middle band */
-.wp-open-world { padding-top: max(64px, calc(env(safe-area-inset-top) + 56px), calc(100vw * .375 * .36)); }
+.wp-open-world { padding-top: max(64px, calc(env(safe-area-inset-top) + 56px), calc(min(50vw, 480px) * .8 * .34)); }
 /* a soft ivory halo keeps the words clear of any petal behind them */
 .wp-open-copy::before { content: ""; position: absolute; inset: -18% -14%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(250,253,255,.85), rgba(250,253,255,.5) 60%, transparent); pointer-events: none; }
-/* short screens: the side cascades are trimmed (faded) so they never take more than half the height */
-.wp-open-garland { --og-h: min(37.5vw, 50svh); }
+
 .wp-fxbox { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .wp-fx { position: absolute; display: block; opacity: 0; will-change: transform, opacity; }
 
@@ -272,7 +276,8 @@ export const WP_CSS = `
 /* the terrace's watercolour sky behind the section */
 /* the scene spans the full screen width, not just the content column */
 .wp-sec-wash { position: absolute; top: 0; bottom: 0; left: calc(50% - 50vw); width: 100vw; z-index: -1; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 88%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 88%, transparent 100%); }
-.wp-sec-lake { --lv-water: 22%; --lv-hills: 18%; }
+/* only the watercolour sky here: no hills, no lake */
+.wp-sec-lake .wp-lv-hills, .wp-sec-lake .wp-lv-water { display: none; }
 .wp-sec-wash::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 55% at 50% 48%, rgba(255,254,250,.55), rgba(255,254,250,0) 75%); }
 .wp-invite { position: relative; max-width: 1080px; margin: 0 auto; padding: clamp(48px, 8vw, 64px) clamp(20px, 5vw, 56px) clamp(32px, 5vw, 48px); text-align: center; background: rgba(255,254,250,.94); border-radius: 28px; border: 1px solid var(--wp-line); box-shadow: 0 30px 60px -40px rgba(31,62,87,.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .wp-invite::before { content: ""; position: absolute; inset: 10px; border-radius: 20px; border: 1px solid rgba(201,162,74,.3); pointer-events: none; }
@@ -338,7 +343,7 @@ export const WP_CSS = `
 /* ══ Story ═══════════════════════════════════════════════ */
 /* Story: chapters as ivory cards from the stationery set — an arched photo, a gold roman numeral on the thread, cards alternating sides on laptops */
 .wp-sec-story { position: relative; isolation: isolate; }
-.wp-sec-story::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 40% at 15% 30%, rgba(243,182,200,.18), transparent 70%), radial-gradient(50% 40% at 90% 70%, color-mix(in srgb, var(--wp-blue) 16%, transparent), transparent 70%); }
+.wp-sec-story::before { content: ""; position: absolute; top: 0; bottom: 0; left: calc(50% - 50vw); width: 100vw; z-index: -1; background: radial-gradient(60% 40% at 15% 30%, rgba(243,182,200,.18), transparent 70%), radial-gradient(50% 40% at 90% 70%, color-mix(in srgb, var(--wp-blue) 16%, transparent), transparent 70%); }
 .wp-story { position: relative; display: grid; gap: 26px; --wp-p: 0; }
 @media (min-width: 960px) { .wp-story { grid-template-columns: minmax(240px, .6fr) 1.4fr; gap: clamp(32px, 4vw, 64px); align-items: start; } }
 .wp-story-art { position: relative; width: min(52%, 210px); margin: 0 auto; }
@@ -508,13 +513,11 @@ export const WP_CSS = `
 .wp-root.is-hi .wk-rsvp .wk-field-l, .wp-root.is-hi .wk-bless .wk-field-l { letter-spacing: .01em; font-family: var(--wk-font-deva), var(--wk-font-sans); }
 
 /* ══ Finale ══════════════════════════════════════════════ */
-/* One full screen on phones: garland on top, words in the middle, the terrace at the foot. */
-.wp-finale { position: relative; overflow: hidden; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(150px, 30vw, 230px) 16px 0; text-align: center; background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--wp-pink) 10%, transparent) 50%, color-mix(in srgb, var(--wp-blue) 18%, transparent)); }
-.wp-finale-garland { opacity: 1; z-index: 1; }
-.wp-finale-lantern { position: absolute; z-index: 1; top: clamp(70px, 14vw, 130px); width: clamp(54px, 9vw, 104px); height: auto; filter: drop-shadow(0 10px 14px rgba(31,62,87,.16)); }
-.wp-finale-lantern-l { left: 3%; }
-.wp-finale-lantern-r { right: 3%; transform: scaleX(-1); }
-@media (max-width: 699px) { .wp-finale-lantern { width: 50px; top: 25vw; } }
+/* One full screen everywhere: the opening's sky, hills and lake, floral corners on top, the words, the closed gold doors at the foot. */
+.wp-finale { position: relative; isolation: isolate; overflow: hidden; height: 100svh; min-height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(min(50vw, 480px) * .8 * .34 + 8px) 16px 0; text-align: center; }
+.wp-fin-lake { z-index: -2; --lv-water: 26%; --lv-hills: 18%; }
+.wp-fin-wash { z-index: -1; }
+.wp-fin-garland { position: absolute; z-index: 0; top: 0; left: 0; right: 0; pointer-events: none; }
 .wp-finale-in { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; }
 .wp-seal { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0 0 18px; }
 .wp-seal b { font: 500 clamp(40px, 9vw, 64px)/1.2 var(--wk-font-deva); color: var(--wp-gold-d); }
@@ -525,29 +528,34 @@ export const WP_CSS = `
 .wp-hashtag { margin: 0 0 22px; font: 600 15px/1.4 var(--wk-font-sans); letter-spacing: .06em; color: var(--wp-blue-d); }
 .wp-finale-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 10px; }
 .wp-replay { min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: none; cursor: pointer; font: 600 14px/1 var(--wk-font-sans); color: var(--wp-blue-ink); text-decoration: underline; text-underline-offset: 4px; }
-.wp-finale-foot { position: relative; flex: none; height: clamp(230px, 52vw, 380px); margin: clamp(16px, 4vw, 34px) -16px 0; pointer-events: none; }
-.wp-finale-lake { --lv-water: 46%; --lv-hills: 30%; -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%); mask-image: linear-gradient(180deg, transparent, #000 30%); }
-.wp-finale-lake .wp-lv-sky { opacity: 0; }
-.wp-finale-gazebo { position: absolute; z-index: 1; left: 50%; bottom: 12%; height: 80%; width: auto; translate: -50% 0; filter: drop-shadow(0 16px 20px rgba(31,62,87,.18)); }
-.wp-balustrade { position: absolute; left: 0; right: 0; bottom: 0; background: ${BALUSTRADE} repeat-x 0 100% / auto 100%; }
-.wp-lake { display: block; width: 100%; height: clamp(120px, 30vw, 300px); object-fit: cover; object-position: 50% 80%; -webkit-mask-image: linear-gradient(transparent, #000 30%); mask-image: linear-gradient(transparent, #000 30%); }
-.wp-finale-foot .wp-balustrade { z-index: 2; height: clamp(46px, 11vw, 90px); }
+/* the gold doors from the opening, closed, standing on the terrace (layout.json percentages) */
+/* the doors take whatever height is left under the words (never more than 46% of the screen), standing on the bottom edge */
+.wp-fdoor-wrap { position: relative; z-index: 1; flex: 1 1 0; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: flex-end; padding: 14px 0 max(18px, env(safe-area-inset-bottom)); }
+.wp-fdoor { position: relative; height: 100%; max-height: 46svh; aspect-ratio: 1149 / 1800; filter: drop-shadow(0 26px 34px rgba(31,62,87,.22)); }
+.wp-fdoor img { position: absolute; display: block; }
+.wp-fdoor-ap { position: absolute; left: 12.667%; top: 18.723%; width: 74.667%; height: 76.596%; overflow: hidden; background: #F3E9D8; }
+.wp-fdoor-ap img { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+.wp-fdoor-l, .wp-fdoor-r { top: 18.723%; width: 37.867%; height: 76.596%; }
+.wp-fdoor-l { left: 12.667%; }
+.wp-fdoor-r { left: 49.467%; }
+.wp-fdoor-frame { inset: 0; width: 100%; height: 100%; }
 @media (min-width: 960px) {
-  /* one screen on laptops too: the garland and words share the top, the terrace takes the lower third */
-  .wp-finale { height: 100svh; min-height: 640px; padding-top: clamp(90px, 15svh, 170px); }
-  .wp-finale-foot { height: 34svh; margin-top: 12px; }
-  .wp-seal { margin-bottom: 8px; }
-  .wp-seal b { font-size: clamp(38px, 6svh, 60px); }
-  .wp-finale-names { font-size: clamp(54px, 9svh, 92px); margin-bottom: 4px; }
-  .wp-hashtag { margin-bottom: 12px; }
-  .wp-finale-garland { justify-content: space-between; }
-  .wp-finale-garland .wp-garland-a, .wp-finale-garland .wp-garland-b { display: block; width: min(44vw, 620px); }
-  .wp-finale-garland picture { margin-left: -2vw; }
-  .wp-finale-garland .wp-garland-b { margin-right: -2vw; scale: -1 1; }
-  .wp-finale-garland .wp-garland-a, .wp-finale-garland .wp-garland-b { -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
-  .wp-finale-lantern { top: 90px; }
-  .wp-finale-lantern-l { left: 14vw; }
-  .wp-finale-lantern-r { right: 14vw; }
+  .wp-finale .wp-seal { margin-bottom: 6px; }
+  .wp-finale .wp-seal b { font-size: clamp(36px, 5.4svh, 56px); }
+  .wp-finale-names { font-size: clamp(52px, 8svh, 88px); margin-bottom: 2px; }
+  .wp-finale .wp-hashtag { margin-bottom: 10px; }
+  .wp-finale-actions { flex-direction: row; justify-content: center; gap: 18px; margin-top: 4px; }
+}
+@media (max-width: 959px) {
+  .wp-finale .wp-seal { margin-bottom: 4px; }
+  .wp-finale .wp-seal b { font-size: 34px; }
+  .wp-finale-names { font-size: clamp(44px, 12vw, 64px); margin-bottom: 2px; }
+  .wp-finale-line { font-size: 17px; }
+  .wp-finale .wp-hashtag { margin-bottom: 8px; }
+  .wp-finale-actions { gap: 6px; }
+  .wp-finale-actions .wp-btn.is-lg { min-height: 46px; font-size: 15px; }
+  .wp-fdoor { max-height: 42svh; }
+  .wp-finale { padding-top: max(84px, calc(min(50vw, 480px) * .8 * .34 + 8px)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .wp-root *, .wp-root *::before, .wp-root *::after { animation: none !important; }

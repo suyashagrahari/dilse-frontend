@@ -51,6 +51,9 @@ export const A = {
   // the crown of template15's floral arch (1600 × 600 of its 1600 × 1188): the opening's top garland
   floralTop: { src: `${P}/floral-top-1600.webp`, w: 1600, h: 600 },
   floralTopSm: { src: `${P}/floral-top-800.webp`, w: 800, h: 300 },
+  // the arch's two halves at full resolution (800 × 640 each): the opening's and the finale's corner garlands
+  floralCornerL: { src: `${P}/floral-corner-l.webp`, w: 800, h: 640 },
+  floralCornerR: { src: `${P}/floral-corner-r.webp`, w: 800, h: 640 },
   jhumka: { src: `${P}/jhumka-260.webp`, w: 260, h: 521 },
   goldLanterns: { src: `${P}/gold-lanterns-500.webp`, w: 500, h: 500 },
   urn: { src: `${P}/urn-320.webp`, w: 320, h: 452 },
