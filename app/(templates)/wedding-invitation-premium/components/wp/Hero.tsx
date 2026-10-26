@@ -5,8 +5,8 @@
 // hills and a calm lake (./Lake); a banana plant with a peacock perched in it
 // behind the couple on their pink sofa at the left; the pink gazebo at the
 // right with a peacock on its cornice and a palm behind it; anthuriums and a
-// shrub at the front corners; palm and anthurium leaves with blossom lanterns
-// hanging in from the top corners; the white balustrade along the front. The names sit in rose script
+// shrub at the front corners; template6's leaves-and-anthurium garland as the
+// top border with blossom lanterns hanging from it; the white balustrade along the front. The names sit in rose script
 // in the sky above it all. Nothing loops or drifts: each layer fades in once
 // after the doors open (.is-on), then the page is still. Phones: words on
 // top, the terrace below, all on the first screen.
@@ -80,8 +80,18 @@ export default function Hero(p: HeroProps) {
         {art("shrub", "wp-sc-shrub")}
         {art("couple", "wp-sc-couple")}
         {art("anthurium", "wp-sc-flora")}
-        {art("foliage", "wp-sc-leaves is-l")}
-        {art("foliage", "wp-sc-leaves is-r")}
+      </div>
+      {/* The top border: template6's leaves-and-anthurium garland, mirrored into a second half on wide screens. */}
+      <div className="wp-garland" aria-hidden>
+        <picture>
+          <source media="(max-width: 700px)" srcSet={img("garlandSm").src} />
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <img {...img("garland", { high: true })} className="wp-garland-a" />
+        </picture>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("garland", { lazy: true })} className="wp-garland-b" />
+      </div>
+      <div className="wp-scene wp-scene-top" aria-hidden>
         {art("lanterns", "wp-sc-lantern is-l", true)}
         {art("lanterns", "wp-sc-lantern is-r", true)}
       </div>

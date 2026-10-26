@@ -52,6 +52,9 @@ export const A = {
   jhumka: { src: `${P}/jhumka-260.webp`, w: 260, h: 521 },
   goldLanterns: { src: `${P}/gold-lanterns-500.webp`, w: 500, h: 500 },
   urn: { src: `${P}/urn-320.webp`, w: 320, h: 452 },
+  // template6's lower border (leaves + anthuriums only; the flamingo legs painted out), the hero's top garland
+  garland: { src: `${P}/leaf-garland-1600.webp`, w: 1600, h: 530 },
+  garlandSm: { src: `${P}/leaf-garland-800.webp`, w: 800, h: 265 },
 } satisfies Record<string, Art>;
 
 export type ArtKey = keyof typeof A;
