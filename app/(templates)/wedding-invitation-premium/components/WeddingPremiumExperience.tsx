@@ -19,7 +19,7 @@
 // ?to=<name> greets the guest by name and signs their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BLESSINGS_TEXT_HI, BlessingsWall, Countdown, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
+import { BLESSINGS_TEXT_HI, BlessingsWall, photoImgStyle, Countdown, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { Contacts, Icon, LiveStream, PLAY, ShareBar, Shagun, pageUrl } from "./wp/Actions";
 import Events from "./wp/Events";
@@ -196,7 +196,6 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         time={mainTime}
         muhurat={m.muhurat}
         place={place}
-        cover={m.cover}
         main={main}
         events={m.events}
         couple={couple}
@@ -208,6 +207,13 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         <Reveal className="wp-invite">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...img("blossom", { lazy: true })} className="wp-invite-branch" aria-hidden />
+          {m.cover && (
+            // The couple's cover photo, in an arched gold frame at the top of the invitation.
+            <figure className="wp-invite-portrait">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={m.cover.url} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.cover)} />
+            </figure>
+          )}
           <MotifMark motif={m.motif} className="wp-invite-motif" />
           <p className="wp-eyebrow" lang={lang}>
             {s.invitation}

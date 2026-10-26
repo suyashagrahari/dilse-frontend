@@ -1,19 +1,24 @@
 "use client";
 
-// ─── The hero: the lake terrace, just through the doors ──────────────────────
-// A powder-blue watercolour sky with the flamingo border along the top; the
-// couple's names in script with the date, muhurat and city; the cover photo in
-// an ivory, gold-edged rounded frame between the pink gazebo and the peacock;
-// the lake and the white balustrade along the bottom. Phones stack it (words
-// first, then the photo); at ≥960px it is a two-column spread. One
-// rAF-throttled scroll listener writes --wp-sy for a gentle parallax (off for
-// reduced motion and low-end phones).
+// ─── The hero: the Lake Terrace, painted like template6's card ───────────────
+// The whole card, opened up into a screen: the pack's watercolour sky with
+// drifting cloud wisps, misty hills and a still lake with lotuses (./Lake),
+// palm and anthurium leaves hanging in from the top corners with blossom
+// lanterns, a banana plant on the left with a peacock perched in it, the pink
+// gazebo on the right with a second peacock on its dome and a palm behind it,
+// the white balustrade along the front, the
+// couple on their pink sofa at the left and a shrub at the right. The names
+// float in rose script in the sky above it all. Every layer enters on its own
+// beat once the doors have opened (.is-on) and then breathes (sways, bobs,
+// drifts): transform / opacity only, reduced-motion aware. Phones: the card's
+// portrait: words on top, the terrace below. The cover photo moved to the
+// invitation (an arched portrait), so the scene is always the painting.
 
-import { useEffect, useRef, useState } from "react";
-import { photoImgStyle, useWeddingReducedMotion, type WeddingEvent } from "../../../_wedding";
-import type { LovePhoto } from "../../../_love/types";
+import { useEffect, useRef } from "react";
+import { useWeddingReducedMotion, type WeddingEvent } from "../../../_wedding";
 import { HeroActions } from "./Actions";
 import { img } from "./art";
+import Lake from "./Lake";
 import type { Motif, Strings } from "./model";
 
 export interface HeroProps {
@@ -29,7 +34,6 @@ export interface HeroProps {
   time: string;
   muhurat: string;
   place: string;
-  cover: LovePhoto | null;
   main?: WeddingEvent;
   events: WeddingEvent[];
   couple: string;
@@ -66,10 +70,8 @@ export default function Hero(p: HeroProps) {
   const { open, lite, s, lang } = p;
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
-  // A cover that no longer loads (an old CDN link) gives way to the couple illustration.
-  const [broken, setBroken] = useState<string | null>(null);
-  const cover = p.cover && p.cover.url !== broken ? p.cover : null;
 
+  // A gentle parallax: the far layers drift slower than the near ones as the guest scrolls.
   useEffect(() => {
     const el = ref.current;
     if (!el || reduce || lite) return;
@@ -95,97 +97,74 @@ export default function Hero(p: HeroProps) {
   }, [reduce, lite]);
 
   const d = (ms: number) => ({ ["--d" as string]: `${ms}ms` });
+  // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+  const art = (k: Parameters<typeof img>[0], c: string, lazy = false) => <img key={c} {...img(k, { lazy, high: !lazy })} className={`wp-sc ${c}`} />;
   return (
     <header ref={ref} className={`wp-hero${open ? " is-on" : ""}`}>
-      <div className="wp-hero-sky" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("sky", { high: true })} />
-      </div>
-      <div className="wp-hero-flamingo" aria-hidden>
-        <picture>
-          <source media="(max-width: 700px)" srcSet={img("flamingoSm").src} />
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <img {...img("flamingo", { high: true })} />
-        </picture>
+      <Lake className="wp-hero-lake" />
+      <div className="wp-scene" aria-hidden>
+        {art("palmTall", "wp-sc-palm")}
+        {art("gazebo", "wp-sc-gazebo")}
+        {art("peacockGreen", "wp-sc-peacock-r")}
+        {art("bananaA", "wp-sc-banana")}
+        {art("peacockGreen", "wp-sc-peacock-l")}
+        <span className="wp-sc-rail" />
+        {art("shrub", "wp-sc-shrub")}
+        {art("couple", "wp-sc-couple")}
+        {art("anthurium", "wp-sc-flora")}
+        {art("foliage", "wp-sc-leaves is-l")}
+        {art("foliage", "wp-sc-leaves is-r")}
+        {art("lanterns", "wp-sc-lantern is-l", true)}
+        {art("lanterns", "wp-sc-lantern is-r", true)}
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      <img {...img("lanterns", { lazy: true })} className="wp-hero-lantern wp-hero-lantern-l" aria-hidden />
-      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      <img {...img("lanterns", { lazy: true })} className="wp-hero-lantern wp-hero-lantern-r" aria-hidden />
-
-      <div className="wp-hero-grid">
-        <div className="wp-hero-words">
-          <MotifMark motif={p.motif} className="wp-in" />
-          {p.guest && (
-            <p className="wp-hero-dear wp-in" style={d(60)} lang={lang}>
-              {s.dear} {p.guest},
-            </p>
-          )}
-          <p className="wp-hero-kicker wp-in" style={d(120)} lang={lang}>
-            {s.together}
+      <div className="wp-hero-words">
+        <MotifMark motif={p.motif} className="wp-in" />
+        {p.guest && (
+          <p className="wp-hero-dear wp-in" style={d(60)} lang={lang}>
+            {s.dear} {p.guest},
           </p>
-          <h1 className="wp-hero-names">
-            <span className="wp-in" style={d(220)}>
-              {p.first}
-            </span>
-            <i className="wp-in" style={d(320)}>
-              &amp;
-            </i>
-            <span className="wp-in" style={d(420)}>
-              {p.second}
-            </span>
-          </h1>
-          <p className="wp-hero-line wp-in" style={d(540)} lang={lang}>
-            {s.inviteLine}
-          </p>
-          <span className="wp-rule wp-in" style={d(600)} aria-hidden>
-            <i />
+        )}
+        <p className="wp-hero-kicker wp-in" style={d(120)} lang={lang}>
+          {s.together}
+        </p>
+        <h1 className="wp-hero-names">
+          <span className="wp-in" style={d(220)}>
+            {p.first}
           </span>
-          {(p.dateLine || p.time) && (
-            <p className="wp-hero-when wp-in" style={d(660)}>
-              {[p.dateLine, p.time].filter(Boolean).join(" · ")}
-            </p>
-          )}
-          {p.muhurat && (
-            <p className="wp-hero-muhurat wp-in" style={d(720)}>
-              {p.muhurat}
-            </p>
-          )}
-          {p.place && (
-            <p className="wp-hero-place wp-in" style={d(780)}>
-              {p.place}
-            </p>
-          )}
-          <div className="wp-in" style={d(860)}>
-            <HeroActions main={p.main} all={p.events} couple={p.couple} s={s} shareText={p.shareText} />
-          </div>
-        </div>
-
-        <div className="wp-hero-art" aria-hidden={!cover}>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...img("banana", { high: true })} className="wp-hero-banana" aria-hidden />
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...img("peacock", { high: true })} className="wp-hero-peacock" aria-hidden />
-          {cover ? (
-            <figure className="wp-hero-photo wp-in" style={d(300)}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cover.url} alt={p.couple} decoding="async" fetchPriority="high" style={photoImgStyle(cover)} onError={() => setBroken(cover.url)} />
-            </figure>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-            <img {...img("couple", { high: true })} className="wp-hero-couple wp-in" style={d(300)} aria-hidden />
-          )}
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...img("anthurium", { high: true })} className="wp-hero-flora" aria-hidden />
+          <i className="wp-in" style={d(320)}>
+            &amp;
+          </i>
+          <span className="wp-in" style={d(420)}>
+            {p.second}
+          </span>
+        </h1>
+        <p className="wp-hero-line wp-in" style={d(540)} lang={lang}>
+          {s.inviteLine}
+        </p>
+        <span className="wp-rule wp-in" style={d(600)} aria-hidden>
+          <i />
+        </span>
+        {(p.dateLine || p.time) && (
+          <p className="wp-hero-when wp-in" style={d(660)}>
+            {[p.dateLine, p.time].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {p.muhurat && (
+          <p className="wp-hero-muhurat wp-in" style={d(720)}>
+            {p.muhurat}
+          </p>
+        )}
+        {p.place && (
+          <p className="wp-hero-place wp-in" style={d(780)}>
+            {p.place}
+          </p>
+        )}
+        <div className="wp-in" style={d(860)}>
+          <HeroActions main={p.main} all={p.events} couple={p.couple} s={s} shareText={p.shareText} />
         </div>
       </div>
 
-      <div className="wp-hero-lake" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("lake", { high: true })} className="wp-lake" />
-        <span className="wp-balustrade" />
-      </div>
       <a className="wp-hero-scroll" href="#invitation" aria-label={s.scroll}>
         <span lang={lang}>{s.scroll}</span>
         <i aria-hidden />

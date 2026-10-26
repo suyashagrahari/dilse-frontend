@@ -42,6 +42,16 @@ export const A = {
   blossom: { src: `${P}/blossom-640.webp`, w: 640, h: 403 },
   lanterns: { src: `${P}/lanterns-360.webp`, w: 360, h: 615 },
   peacock: { src: `${P}/peacock-360.webp`, w: 360, h: 662 },
+  // The Lake Terrace scene (template6 + template15), right-sized for the slots they fill.
+  skyFull: { src: `${P}/sky-1920.webp`, w: 1920, h: 1080 },
+  peacockGreen: { src: `${P}/peacock-green-300.webp`, w: 300, h: 612 },
+  bananaA: { src: `${P}/banana-a-560.webp`, w: 560, h: 830 },
+  palmTall: { src: `${P}/palm-420.webp`, w: 420, h: 671 },
+  shrub: { src: `${P}/shrub-520.webp`, w: 520, h: 414 },
+  floralArch: { src: `${P}/floral-arch-1100.webp`, w: 1100, h: 817 },
+  jhumka: { src: `${P}/jhumka-260.webp`, w: 260, h: 521 },
+  goldLanterns: { src: `${P}/gold-lanterns-500.webp`, w: 500, h: 500 },
+  urn: { src: `${P}/urn-320.webp`, w: 320, h: 452 },
 } satisfies Record<string, Art>;
 
 export type ArtKey = keyof typeof A;
