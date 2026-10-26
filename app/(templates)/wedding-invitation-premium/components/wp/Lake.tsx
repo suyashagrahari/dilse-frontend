@@ -5,9 +5,8 @@
 // lake; the pack's landscape is a flat crop with the couple and gazebo baked
 // in, so the hills and water are drawn here instead: three soft ranges (an
 // feTurbulence wash gives them a watercolour edge), the lake as layered
-// gradients with slow shimmer lines, and a few lotuses bobbing on the water.
-// The sky is the pack's own watercolour; two cloud wisps drift across it.
-// transform / opacity only; reduced motion freezes it.
+// gradients, and (optionally) a few lotuses resting on the water.
+// The sky is the pack's own watercolour. Everything here is still.
 
 import { useId } from "react";
 import { img } from "./art";
@@ -18,8 +17,6 @@ export default function Lake({ lotus = true, className }: { lotus?: boolean; cla
     <div className={`wp-lakeview ${className ?? ""}`} aria-hidden>
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
       <img {...img("skyFull", { high: true })} className="wp-lv-sky" />
-      <span className="wp-lv-cloud is-a" />
-      <span className="wp-lv-cloud is-b" />
       <svg className="wp-lv-hills" viewBox="0 0 1600 300" preserveAspectRatio="none">
         <defs>
           <filter id={`wc${id}`} x="-5%" y="-20%" width="110%" height="140%">
@@ -47,9 +44,6 @@ export default function Lake({ lotus = true, className }: { lotus?: boolean; cla
         </g>
       </svg>
       <div className="wp-lv-water">
-        <span className="wp-lv-shine is-a" />
-        <span className="wp-lv-shine is-b" />
-        <span className="wp-lv-shine is-c" />
         {lotus &&
           [
             ["18%", "34%", 54, "0s"],

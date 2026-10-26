@@ -1,21 +1,14 @@
 "use client";
 
-// ─── The hero: the Lake Terrace, painted like template6's card ───────────────
-// The whole card, opened up into a screen: the pack's watercolour sky with
-// drifting cloud wisps, misty hills and a still lake with lotuses (./Lake),
-// palm and anthurium leaves hanging in from the top corners with blossom
-// lanterns, a banana plant on the left with a peacock perched in it, the pink
-// gazebo on the right with a second peacock on its dome and a palm behind it,
-// the white balustrade along the front, the
-// couple on their pink sofa at the left and a shrub at the right. The names
-// float in rose script in the sky above it all. Every layer enters on its own
-// beat once the doors have opened (.is-on) and then breathes (sways, bobs,
-// drifts): transform / opacity only, reduced-motion aware. Phones: the card's
-// portrait: words on top, the terrace below. The cover photo moved to the
-// invitation (an arched portrait), so the scene is always the painting.
+// ─── The hero: the Lake Terrace, painted like template6's card, kept quiet ───
+// A still watercolour: the pack's sky over misty hills and a calm lake
+// (./Lake), the couple on their pink sofa at the left, the pink gazebo at the
+// right, the white balustrade along the front. The names sit in rose script
+// in the sky above it all. Nothing loops or drifts: each layer fades in once
+// after the doors open (.is-on), then the page is still. Phones: words on
+// top, the terrace below, all on the first screen.
 
-import { useEffect, useRef } from "react";
-import { useWeddingReducedMotion, type WeddingEvent } from "../../../_wedding";
+import type { WeddingEvent } from "../../../_wedding";
 import { HeroActions } from "./Actions";
 import { img } from "./art";
 import Lake from "./Lake";
@@ -67,55 +60,17 @@ export function MotifMark({ motif, className }: { motif: Motif; className?: stri
 }
 
 export default function Hero(p: HeroProps) {
-  const { open, lite, s, lang } = p;
-  const ref = useRef<HTMLElement>(null);
-  const reduce = useWeddingReducedMotion();
-
-  // A gentle parallax: the far layers drift slower than the near ones as the guest scrolls.
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || reduce || lite) return;
-    let raf = 0;
-    let on = true;
-    const tick = () => {
-      raf = 0;
-      el.style.setProperty("--wp-sy", String(Math.min(900, Math.max(0, window.scrollY))));
-    };
-    const onScroll = () => {
-      if (on && !raf) raf = requestAnimationFrame(tick);
-    };
-    const io = new IntersectionObserver(([en]) => {
-      on = en.isIntersecting;
-    });
-    io.observe(el);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [reduce, lite]);
-
+  const { open, s, lang } = p;
   const d = (ms: number) => ({ ["--d" as string]: `${ms}ms` });
   // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
   const art = (k: Parameters<typeof img>[0], c: string, lazy = false) => <img key={c} {...img(k, { lazy, high: !lazy })} className={`wp-sc ${c}`} />;
   return (
-    <header ref={ref} className={`wp-hero${open ? " is-on" : ""}`}>
-      <Lake className="wp-hero-lake" />
+    <header className={`wp-hero${open ? " is-on" : ""}`}>
+      <Lake className="wp-hero-lake" lotus={false} />
       <div className="wp-scene" aria-hidden>
-        {art("palmTall", "wp-sc-palm")}
         {art("gazebo", "wp-sc-gazebo")}
-        {art("peacockGreen", "wp-sc-peacock-r")}
-        {art("bananaA", "wp-sc-banana")}
-        {art("peacockGreen", "wp-sc-peacock-l")}
         <span className="wp-sc-rail" />
-        {art("shrub", "wp-sc-shrub")}
         {art("couple", "wp-sc-couple")}
-        {art("anthurium", "wp-sc-flora")}
-        {art("foliage", "wp-sc-leaves is-l")}
-        {art("foliage", "wp-sc-leaves is-r")}
-        {art("lanterns", "wp-sc-lantern is-l", true)}
-        {art("lanterns", "wp-sc-lantern is-r", true)}
       </div>
 
       <div className="wp-hero-words">

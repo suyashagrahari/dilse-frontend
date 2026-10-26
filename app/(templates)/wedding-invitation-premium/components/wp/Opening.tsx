@@ -6,7 +6,7 @@
 // two etched-glass doors closed in it. Deliberately quiet: the watercolour
 // sky and lake behind (./Lake) under an ivory wash, a light spray of
 // blossom over the doorway's crown
-// (template15, faded at every cut edge) and a few glints on the gold.
+// (template15, faded at every cut edge).
 // Through the glass the sunlit terrace is already faintly visible.
 // One tap (also the gesture that starts the music, via the engine):
 //   0.00 s  a soft crystal chime; a reflection sweeps across both panes
@@ -229,17 +229,9 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...img("frame", { high: true })} className="wp-frame" aria-hidden />
             <span className="wp-floor" aria-hidden />
-            {/* A light spray of blossom over the doorway's crown and a few glints on the gold. */}
+            {/* A light spray of blossom over the doorway's crown. */}
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...img("floralArch", { high: true })} className="wp-arch" aria-hidden />
-            {[
-              ["30%", "24%", "0s"],
-              ["70%", "40%", "1.6s"],
-              ["50%", "66%", "2.8s"],
-            ].map(([l, t, dl], i) => (
-              // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-              <img key={i} {...img("sparkle")} className="wp-glint" style={{ left: l, top: t, animationDelay: dl }} aria-hidden />
-            ))}
             <div className="wp-fxbox" ref={fxRef} aria-hidden />
           </div>
         </div>
