@@ -46,6 +46,8 @@ export const CW_CSS = `
 @keyframes cw-mote { 0% { transform: translate3d(0,0,0) rotate(0); opacity: 0; } 10% { opacity: .75; } 85% { opacity: .6; } 100% { transform: translate3d(var(--dx), 110vh, 0) rotate(var(--rot)); opacity: 0; } }
 .cw-gate-tree { position: absolute; bottom: -2%; z-index: 1; height: min(56svh, 520px); pointer-events: none; transition: transform 1s var(--cw-ease), opacity .8s ease; }
 .cw-gate-tree img { display: block; height: 100%; width: auto; filter: drop-shadow(0 10px 18px rgba(90,40,40,.18)); }
+.cw-gate-tree.is-l img { -webkit-mask-image: linear-gradient(90deg, #000 72%, transparent 98%); mask-image: linear-gradient(90deg, #000 72%, transparent 98%); }
+.cw-gate-tree.is-r img { -webkit-mask-image: linear-gradient(270deg, #000 72%, transparent 98%); mask-image: linear-gradient(270deg, #000 72%, transparent 98%); }
 .cw-gate-tree.is-l { left: -16vw; transform-origin: 0 100%; }
 .cw-gate-tree.is-r { right: -16vw; transform-origin: 100% 100%; }
 .cw-pampas { position: absolute; bottom: -2%; z-index: 1; width: clamp(120px, 34vw, 300px); pointer-events: none; }
@@ -92,7 +94,7 @@ export const CW_CSS = `
 .cw-ap-bloom { position: absolute; left: 50%; top: 46%; width: 190%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%) scale(.55); opacity: .35; background: radial-gradient(closest-side, #FFFFFF 0%, #FFE9EC 28%, rgba(255,217,223,.7) 55%, rgba(255,217,223,0) 100%); transition: transform 1.8s var(--cw-ease), opacity 1s ease; }
 .cw-ap-rays { position: absolute; left: -30%; top: -10%; width: 160%; height: auto; opacity: 0; transform: scale(.9); mix-blend-mode: screen; transition: opacity 1.1s ease .12s, transform 2s var(--cw-ease) .12s; }
 .cw-ap-names { position: absolute; left: 4%; right: 4%; top: 30%; display: flex; flex-direction: column; align-items: center; text-align: center; color: #7A2E44; opacity: 0; transform: translateY(24px); transition: opacity .7s ease .8s, transform 1s var(--cw-ease) .8s; container-type: inline-size; }
-.cw-ap-names b { font: 400 17cqw/1.05 var(--wk-font-script); white-space: nowrap; text-shadow: 0 2px 14px rgba(255,255,255,.9); }
+.cw-ap-names b { font: 400 16cqw/1.15 var(--wk-font-script); white-space: nowrap; padding: 0 .3em; text-shadow: 0 2px 14px rgba(255,255,255,.9); }
 .cw-ap-names b:last-child { transition-delay: .09s; }
 .cw-ap-names i { font: 500 7cqw/1.2 var(--wk-font-caps); font-style: normal; color: #A0566A; }
 .cw-frame { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(0 22px 26px rgba(120,40,60,.22)); }
@@ -113,7 +115,8 @@ export const CW_CSS = `
 .cw-gate-names { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .cw-gate-eyebrow { font: 600 clamp(10.5px, 1.5svh, 12.5px)/1.2 var(--wk-font-caps); letter-spacing: .32em; text-transform: uppercase; color: #A0566A; }
 .cw-root.is-hi .cw-gate-eyebrow { letter-spacing: .04em; font-family: var(--wk-font-deva); font-size: 15px; }
-.cw-gate-couple { font: 400 clamp(32px, min(9vw, 5.6svh), 54px)/1.12 var(--wk-font-script); color: #8E3B52; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; padding: 0 .12em; }
+/* Script capitals swing far past their glyph box: generous padding (no clipping), pulled back with negative margins so the layout is unchanged. */
+.cw-gate-couple { font: 400 clamp(30px, min(8.4vw, 5.6svh), 54px)/1.25 var(--wk-font-script); color: #8E3B52; white-space: nowrap; max-width: 98vw; overflow: visible; padding: .08em .45em .12em; margin: -.08em -.2em -.12em; }
 .cw-gate-couple i { font-style: normal; font-family: var(--wk-font-display); font-size: .6em; color: #B07A64; }
 .cw-gate-date { font: 600 clamp(11px, 1.6svh, 13.5px)/1.3 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: #6A3A46; }
 .cw-gate-cta { position: relative; display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; font: 700 15px/1 var(--wk-font-sans); color: #FFF7F5; cursor: pointer; background: linear-gradient(115deg, #8E3B52, #B4566E 50%, #D38E8B); box-shadow: 0 16px 30px -14px rgba(110,40,58,.75), inset 0 1px 0 rgba(255,255,255,.35); -webkit-tap-highlight-color: transparent; }
@@ -215,7 +218,8 @@ export const CW_CSS = `
 .cw-hero-eyebrow { margin: 0; font: 600 clamp(11px, 3vw, 13px)/1.4 var(--wk-font-caps); letter-spacing: .26em; text-transform: uppercase; color: var(--wk-gold-ink); text-wrap: balance; }
 .cw-root.is-hi .cw-hero-eyebrow { letter-spacing: .04em; font: 600 16px/1.4 var(--wk-font-deva); }
 .cw-hero-names { margin: 4px 0 0; display: flex; flex-direction: column; align-items: center; font-weight: 400; line-height: 1; }
-.cw-hero-n { font: 400 clamp(56px, 16vw, 104px)/1.08 var(--wk-font-script); padding: 0 .14em; text-wrap: balance; word-break: keep-all; max-width: 100%; }
+/* The foil gradient is clipped to the text box (background-clip: text), so the box must hold the swashes: padding all round, negative margins keep the rhythm. */
+.cw-hero-n { font: 400 clamp(56px, 16vw, 104px)/1.08 var(--wk-font-script); padding: .14em .42em .2em; margin: -.14em -.3em -.2em; text-wrap: balance; word-break: keep-all; max-width: calc(100% + .6em); }
 .cw-hero-names.is-long .cw-hero-n { font-size: clamp(46px, 12.5vw, 92px); }
 .cw-hero-names.is-xlong .cw-hero-n { font-size: clamp(38px, 10vw, 80px); }
 .cw-hero-amp { position: relative; font: 500 clamp(18px, 5vw, 26px)/1 var(--wk-font-caps); letter-spacing: .3em; color: var(--wk-gold-ink); margin: .5em 0 .55em .3em; }
@@ -538,7 +542,7 @@ export const CW_CSS = `
 .cw-finale-seal { margin: 6px 0 0; display: grid; gap: 2px; }
 .cw-finale-seal b { font: 600 clamp(30px, 8vw, 42px)/1.2 var(--wk-font-deva); color: #8E3B52; }
 .cw-finale-seal small { font: 600 12px/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
-.cw-finale-names { margin: 6px 0 0; font: 400 clamp(46px, 12vw, 80px)/1.12 var(--wk-font-script); padding: 0 .12em; max-width: 100%; text-wrap: balance; }
+.cw-finale-names { margin: 6px -.3em 0; font: 400 clamp(44px, 11vw, 80px)/1.25 var(--wk-font-script); padding: .1em .45em .15em; max-width: calc(100% + .6em); text-wrap: balance; }
 .cw-finale-names span { font-family: var(--wk-font-display); font-size: .5em; }
 .cw-finale-line { margin: 0; max-width: 32rem; font: italic 400 clamp(17px, 4.4vw, 21px)/1.45 var(--wk-font-display); color: var(--wk-muted); text-wrap: balance; }
 .cw-hashtag { margin: 4px 0 0; font: 600 15px/1 var(--wk-font-sans); letter-spacing: .04em; color: var(--wk-accent); }
