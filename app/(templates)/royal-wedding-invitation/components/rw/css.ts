@@ -557,7 +557,8 @@ export const RW_CSS = `
 }
 .rw-finale-in { position: relative; z-index: 1; display: grid; justify-items: center; gap: 6px; }
 .rw-fin-words { display: grid; justify-items: center; gap: 6px; }
-.rw-close-stage { position: relative; aspect-ratio: 1246 / 1800; container-type: inline-size; }
+/* height from padding (1800/1246), not aspect-ratio: it never collapses to zero in any browser */
+.rw-close-stage { position: relative; height: 0; padding-top: 144.462%; container-type: inline-size; }
 .rw-close .rw-ap-glow { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
 .rw-close .rw-screen { transition: transform 1.4s cubic-bezier(.6,0,.2,1), opacity .3s ease; }
 .rw-close .rw-screen.is-l { transform: translateX(-105%); opacity: 0; }
@@ -578,7 +579,7 @@ export const RW_CSS = `
   .rw-fin-words { justify-items: center; }
 }
 .rw-finale-k { margin: 6px 0 0; }
-.rw-finale-names { margin: 6px 0 0; font: 400 clamp(46px, 12vw, 80px)/1.1 var(--wk-font-script); padding: 0 .1em; }
+.rw-finale-names { margin: 6px -.3em 0; font: 400 clamp(42px, 11vw, 76px)/1.25 var(--wk-font-script); padding: .1em .45em .16em; max-width: calc(100% + .6em); text-wrap: balance; }
 .rw-finale-names span { font-family: var(--wk-font-display); font-size: .5em; }
 .rw-finale-line { margin: 0; max-width: 32rem; font: italic 400 clamp(17px, 4.4vw, 21px)/1.45 var(--wk-font-display); color: var(--wk-muted); }
 .rw-hashtag { margin: 4px 0 0; font: 600 15px/1 var(--wk-font-sans); letter-spacing: .04em; color: var(--rw-maroon); }

@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 // ─── The palace gateway, drawn in SVG (replaces the gateway-frame picture) ───
 // A Mughal pishtaq in ivory sandstone: a central dome on a drum with arched
 // windows and a gold kalash finial, a chhatri on each corner, a scalloped
@@ -23,21 +25,25 @@ function merlons(x0: number, x1: number, y: number, w = 34, h = 26) {
   return `${d} Z`;
 }
 
-function Chhatri({ cx, base }: { cx: number; base: number }) {
+function Chhatri({ cx, base, u }: { cx: number; base: number; u: (n: string) => string }) {
   return (
     <g>
-      <rect x={cx - 52} y={base - 8} width={104} height={14} rx={3} fill="url(#pl-gold)" />
-      <rect x={cx - 44} y={base + 6} width={14} height={86} fill="url(#pl-stone)" stroke="#D9BE8A" strokeWidth={2} />
-      <rect x={cx + 30} y={base + 6} width={14} height={86} fill="url(#pl-stone)" stroke="#D9BE8A" strokeWidth={2} />
+      <rect x={cx - 52} y={base - 8} width={104} height={14} rx={3} fill={`url(#${u("gold")})`} />
+      <rect x={cx - 44} y={base + 6} width={14} height={86} fill={`url(#${u("stone")})`} stroke="#D9BE8A" strokeWidth={2} />
+      <rect x={cx + 30} y={base + 6} width={14} height={86} fill={`url(#${u("stone")})`} stroke="#D9BE8A" strokeWidth={2} />
       <path d={`M${cx - 30} ${base + 92} V${base + 40} a30 34 0 0 1 60 0 V${base + 92}`} fill="#F3E3C3" opacity={0.7} />
-      <path d={`M${cx - 58} ${base - 8} C${cx - 58} ${base - 70} ${cx - 20} ${base - 96} ${cx} ${base - 104} C${cx + 20} ${base - 96} ${cx + 58} ${base - 70} ${cx + 58} ${base - 8} Z`} fill="url(#pl-dome)" stroke="#C9A063" strokeWidth={3} />
-      <line x1={cx} y1={base - 104} x2={cx} y2={base - 146} stroke="url(#pl-gold)" strokeWidth={5} strokeLinecap="round" />
-      <circle cx={cx} cy={base - 122} r={7} fill="url(#pl-gold)" />
+      <path d={`M${cx - 58} ${base - 8} C${cx - 58} ${base - 70} ${cx - 20} ${base - 96} ${cx} ${base - 104} C${cx + 20} ${base - 96} ${cx + 58} ${base - 70} ${cx + 58} ${base - 8} Z`} fill={`url(#${u("dome")})`} stroke="#C9A063" strokeWidth={3} />
+      <line x1={cx} y1={base - 104} x2={cx} y2={base - 146} stroke={`url(#${u("gold")})`} strokeWidth={5} strokeLinecap="round" />
+      <circle cx={cx} cy={base - 122} r={7} fill={`url(#${u("gold")})`} />
     </g>
   );
 }
 
 export default function Palace({ className }: { className?: string }) {
+  // Unique per instance: the opening and the finale both draw the palace, and a gradient
+  // id shared with a hidden copy would render this one blank.
+  const uid = useId().replace(/:/g, "");
+  const u = (n: string) => `pl-${n}-${uid}`;
   const body = `M120 418 H1126 V${AB} H120 Z M${AX} ${AY} V${AB} H${AR} V${AY} Z`;
   const band = `M146 448 H1100 V${AB} H146 Z M206 508 V${AB} H1040 V508 Z`;
   // The pointed (ogee) arch over the doorway; the medallion sits in its tympanum.
@@ -46,34 +52,34 @@ export default function Palace({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
       <defs>
-        <linearGradient id="pl-stone" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={u("stone")} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#FCF4E4" />
           <stop offset=".55" stopColor="#F5E7CC" />
           <stop offset="1" stopColor="#EAD5AE" />
         </linearGradient>
-        <linearGradient id="pl-side" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={u("side")} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#E8D2A8" />
           <stop offset=".12" stopColor="#F7EBD3" stopOpacity="0" />
           <stop offset=".88" stopColor="#F7EBD3" stopOpacity="0" />
           <stop offset="1" stopColor="#E8D2A8" />
         </linearGradient>
-        <linearGradient id="pl-gold" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={u("gold")} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#F3DDA8" />
           <stop offset=".35" stopColor="#C9974F" />
           <stop offset=".6" stopColor="#F6E2A6" />
           <stop offset="1" stopColor="#A9743F" />
         </linearGradient>
-        <radialGradient id="pl-dome" cx=".38" cy=".3" r=".8">
+        <radialGradient id={u("dome")} cx=".38" cy=".3" r=".8">
           <stop offset="0" stopColor="#FFFDF7" />
           <stop offset=".6" stopColor="#F6E8CE" />
           <stop offset="1" stopColor="#E3CBA0" />
         </radialGradient>
-        <linearGradient id="pl-tymp" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={u("tymp")} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#FFFAF0" />
           <stop offset="1" stopColor="#F8EBD3" />
         </linearGradient>
         {/* Pietra-dura: a maroon eight-petal flower with a gold heart, inlaid every 46px. */}
-        <pattern id="pl-pd" x="146" y="448" width="60" height="60" patternUnits="userSpaceOnUse">
+        <pattern id={u("pd")} x="146" y="448" width="60" height="60" patternUnits="userSpaceOnUse">
           <rect width="60" height="60" fill="#FBF3E2" />
           <g transform="translate(30 30)">
             {[0, 45, 90, 135].map((r) => (
@@ -84,44 +90,44 @@ export default function Palace({ className }: { className?: string }) {
           </g>
           {[0, 60].map((x) => [0, 60].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#C9974F" />))}
         </pattern>
-        <filter id="pl-soft" x="-10%" y="-10%" width="120%" height="120%">
+        <filter id={u("soft")} x="-10%" y="-10%" width="120%" height="120%">
           <feDropShadow dx="0" dy="14" stdDeviation="16" floodColor="#7A4A20" floodOpacity=".18" />
         </filter>
       </defs>
 
-      <g filter="url(#pl-soft)">
+      <g filter={`url(#${u("soft")})`}>
         {/* The central dome on its drum, with a gold kalash. */}
-        <rect x="452" y="296" width="342" height="124" fill="url(#pl-stone)" stroke="#D9BE8A" strokeWidth="2" />
+        <rect x="452" y="296" width="342" height="124" fill={`url(#${u("stone")})`} stroke="#D9BE8A" strokeWidth="2" />
         {[488, 556, 624, 692].map((x) => (
           <path key={x} d={`M${x} 404 V352 a26 30 0 0 1 52 0 V404 Z`} fill="#F1DEB9" stroke="#C9A063" strokeWidth="2" />
         ))}
-        <rect x="440" y="284" width="366" height="16" rx="4" fill="url(#pl-gold)" />
-        <path d="M466 286 C466 166 560 112 623 96 C686 112 780 166 780 286 Z" fill="url(#pl-dome)" stroke="#C9A063" strokeWidth="3" />
+        <rect x="440" y="284" width="366" height="16" rx="4" fill={`url(#${u("gold")})`} />
+        <path d="M466 286 C466 166 560 112 623 96 C686 112 780 166 780 286 Z" fill={`url(#${u("dome")})`} stroke="#C9A063" strokeWidth="3" />
         {/* gold ribs on the dome */}
         {["M520 286 C524 200 576 128 623 98", "M726 286 C722 200 670 128 623 98", "M572 286 C576 190 602 126 623 98", "M674 286 C670 190 644 126 623 98"].map((d) => (
           <path key={d} d={d} fill="none" stroke="#D4A24C" strokeOpacity=".75" strokeWidth="3" />
         ))}
         <path d="M498 270 C506 196 560 140 610 112" fill="none" stroke="#FFFFFF" strokeOpacity=".7" strokeWidth="6" strokeLinecap="round" />
-        <path d="M466 286 H780" stroke="url(#pl-gold)" strokeWidth="8" />
-        <line x1="623" y1="96" x2="623" y2="22" stroke="url(#pl-gold)" strokeWidth="7" strokeLinecap="round" />
-        <circle cx="623" cy="70" r="11" fill="url(#pl-gold)" />
-        <circle cx="623" cy="40" r="7" fill="url(#pl-gold)" />
+        <path d="M466 286 H780" stroke={`url(#${u("gold")})`} strokeWidth="8" />
+        <line x1="623" y1="96" x2="623" y2="22" stroke={`url(#${u("gold")})`} strokeWidth="7" strokeLinecap="round" />
+        <circle cx="623" cy="70" r="11" fill={`url(#${u("gold")})`} />
+        <circle cx="623" cy="40" r="7" fill={`url(#${u("gold")})`} />
 
         {/* The corner chhatris. */}
-        <Chhatri cx={196} base={330} />
-        <Chhatri cx={1050} base={330} />
+        <Chhatri cx={196} base={330} u={u} />
+        <Chhatri cx={1050} base={330} u={u} />
 
         {/* The façade, with the doorway cut out of it. */}
-        <path d={body} fillRule="evenodd" fill="url(#pl-stone)" />
-        <path d={body} fillRule="evenodd" fill="url(#pl-side)" />
+        <path d={body} fillRule="evenodd" fill={`url(#${u("stone")})`} />
+        <path d={body} fillRule="evenodd" fill={`url(#${u("side")})`} />
         {/* Roof cornice and the scalloped parapet. */}
-        <path d={merlons(122, 1124, 418)} fill="url(#pl-stone)" stroke="#D9BE8A" strokeWidth="2" />
-        <rect x="108" y="410" width="1030" height="18" rx="4" fill="url(#pl-gold)" />
+        <path d={merlons(122, 1124, 418)} fill={`url(#${u("stone")})`} stroke="#D9BE8A" strokeWidth="2" />
+        <rect x="108" y="410" width="1030" height="18" rx="4" fill={`url(#${u("gold")})`} />
 
         {/* The pietra-dura band, edged in gold. */}
-        <path d={band} fillRule="evenodd" fill="url(#pl-pd)" />
-        <path d="M146 1580 V448 H1100 V1580" fill="none" stroke="url(#pl-gold)" strokeWidth="7" />
-        <path d="M206 1580 V508 H1040 V1580" fill="none" stroke="url(#pl-gold)" strokeWidth="6" />
+        <path d={band} fillRule="evenodd" fill={`url(#${u("pd")})`} />
+        <path d="M146 1580 V448 H1100 V1580" fill="none" stroke={`url(#${u("gold")})`} strokeWidth="7" />
+        <path d="M206 1580 V508 H1040 V1580" fill="none" stroke={`url(#${u("gold")})`} strokeWidth="6" />
 
         {/* Spandrel arabesques either side of the arch. */}
         {[1, -1].map((s) => (
@@ -134,29 +140,29 @@ export default function Palace({ className }: { className?: string }) {
         ))}
 
         {/* The arch: cream tympanum, double gold line. */}
-        <path d={arch} fill="url(#pl-tymp)" />
-        <path d={arch} fill="none" stroke="url(#pl-gold)" strokeWidth="8" strokeLinejoin="round" />
+        <path d={arch} fill={`url(#${u("tymp")})`} />
+        <path d={arch} fill="none" stroke={`url(#${u("gold")})`} strokeWidth="8" strokeLinejoin="round" />
         <path d={archInner} fill="none" stroke="#B4566E" strokeOpacity=".55" strokeWidth="2.5" />
 
         {/* Fluted pilasters with gold capitals and bases beside the doorway. */}
         {[AX - 46, AR].map((x) => (
           <g key={x}>
-            <rect x={x} y={AY} width="46" height={AB - AY} fill="url(#pl-stone)" stroke="#D9BE8A" strokeWidth="2" />
+            <rect x={x} y={AY} width="46" height={AB - AY} fill={`url(#${u("stone")})`} stroke="#D9BE8A" strokeWidth="2" />
             {[10, 23, 36].map((f) => (
               <line key={f} x1={x + f} y1={AY + 30} x2={x + f} y2={AB - 30} stroke="#DCC394" strokeWidth="3" />
             ))}
-            <rect x={x - 8} y={AY - 18} width="62" height="26" rx="4" fill="url(#pl-gold)" />
-            <rect x={x - 8} y={AB - 26} width="62" height="26" rx="4" fill="url(#pl-gold)" />
+            <rect x={x - 8} y={AY - 18} width="62" height="26" rx="4" fill={`url(#${u("gold")})`} />
+            <rect x={x - 8} y={AB - 26} width="62" height="26" rx="4" fill={`url(#${u("gold")})`} />
           </g>
         ))}
         {/* A fine gold line framing the doorway itself. */}
-        <rect x={AX} y={AY} width={AR - AX} height={AB - AY} fill="none" stroke="url(#pl-gold)" strokeWidth="6" />
+        <rect x={AX} y={AY} width={AR - AX} height={AB - AY} fill="none" stroke={`url(#${u("gold")})`} strokeWidth="6" />
 
         {/* Three marble steps. */}
         <path d="M196 1580 H1050 L1072 1640 H174 Z" fill="#FBF5EA" stroke="#D9BE8A" strokeWidth="2" />
         <path d="M174 1640 H1072 L1096 1704 H150 Z" fill="#F6ECDB" stroke="#D9BE8A" strokeWidth="2" />
         <path d="M150 1704 H1096 L1122 1772 H124 Z" fill="#F1E3CA" stroke="#D9BE8A" strokeWidth="2" />
-        <line x1="196" y1="1582" x2="1050" y2="1582" stroke="url(#pl-gold)" strokeWidth="4" />
+        <line x1="196" y1="1582" x2="1050" y2="1582" stroke={`url(#${u("gold")})`} strokeWidth="4" />
       </g>
     </svg>
   );

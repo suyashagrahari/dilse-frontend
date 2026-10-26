@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 // ─── One leaf of the palace doors, drawn in SVG (replaces the jaali picture) ─
 // Ivory wood framed in gold: a pointed-arch window of pierced jaali (an
 // eight-point star lattice in gold over a warm, translucent cream, so the
@@ -11,7 +13,8 @@ const W = 360;
 const H = 880;
 
 export default function Door({ side }: { side: "l" | "r" }) {
-  const id = `rw-door-${side}`;
+  // Unique per instance (the opening and the finale both draw the doors).
+  const id = `rw-door-${side}-${useId().replace(/:/g, "")}`;
   // The meeting edge (where the handle and the gold astragal sit) faces the centre.
   const meet = side === "l" ? W - 14 : 14;
   const ringX = side === "l" ? W - 44 : 44;
