@@ -182,20 +182,18 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
         <img className="rw-gate-cloud is-b" {...img(A.cloud2)} />
       </div>
       <div className="rw-gate-floor" aria-hidden />
+      {(["l", "r"] as const).map((side) => (
+        <span key={side} className={`rw-gate-lamp is-${side}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.lanterns)} />
+        </span>
+      ))}
 
       <div className="rw-gate-cam">
-        {/* Desktop and tablet: the garden court beside the gateway. */}
+        {/* Kept quiet so the gateway reads first: a warm halo behind it, the white palace balustrade along the ground line, gold lanterns hanging still from the top corners. */}
         <div className="rw-gate-side" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="rw-gate-hedge is-l" {...img(A.hedge)} />
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="rw-gate-hedge is-r" {...img(A.hedge)} />
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="rw-gate-chhatri is-l" {...img(A.chhatri)} />
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="rw-gate-chhatri is-r" {...img(A.chhatri)} />
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="rw-gate-peacock" {...img(A.peacock)} />
+          <span className="rw-gate-halo" />
+          <span className="rw-gate-rail" />
         </div>
 
         <div className="rw-stage" onClick={open} aria-hidden>

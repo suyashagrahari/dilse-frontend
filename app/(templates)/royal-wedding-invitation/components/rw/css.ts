@@ -73,23 +73,22 @@ export const RW_CSS = `
 .rw-ele.is-l img { transform-origin: 75% 95%; }
 .rw-ele.is-r img { transform-origin: 25% 95%; }
 
-/* the garden court beside the gateway (tablets and desktops, landscape-ish) */
-.rw-gate-side { display: none; }
+/* the quiet court: a halo behind the gateway, the balustrade on the ground line, lanterns at the top corners */
+.rw-gate-side { display: block; position: absolute; inset: 0; pointer-events: none; }
+.rw-gate-halo { position: absolute; left: 50%; bottom: 0; width: calc(var(--sw) * 2.1); height: calc(var(--sh) * 1.15); transform: translateX(-50%); border-radius: 50% 50% 0 0; background: radial-gradient(closest-side at 50% 62%, rgba(255,246,222,.95), rgba(255,236,196,.55) 45%, rgba(255,236,196,0) 100%); }
+.rw-gate-rail { position: absolute; left: 0; right: 0; bottom: -2px; height: calc(var(--sh) * .2); background: url("/wedding-v3/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.32) saturate(1.1) brightness(1.02); opacity: .92; -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(50% - var(--sw) * .86), transparent calc(50% - var(--sw) * .74), transparent calc(50% + var(--sw) * .74), #000 calc(50% + var(--sw) * .86), #000 100%); mask-image: linear-gradient(90deg, #000 0, #000 calc(50% - var(--sw) * .86), transparent calc(50% - var(--sw) * .74), transparent calc(50% + var(--sw) * .74), #000 calc(50% + var(--sw) * .86), #000 100%); }
+.rw-gate-lamp { position: absolute; z-index: 1; top: 0; width: clamp(96px, 16vw, 230px); pointer-events: none; }
+.rw-gate-lamp img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 16px rgba(110,60,20,.22)); }
+.rw-gate-lamp.is-l { left: clamp(4px, 4vw, 120px); }
+.rw-gate-lamp.is-r { right: clamp(4px, 4vw, 120px); transform: scaleX(-1); }
+.rw-gate.is-loading .rw-gate-lamp, .rw-gate.is-loading .rw-gate-side { opacity: 0; }
+.rw-gate:not(.is-loading) .rw-gate-lamp, .rw-gate:not(.is-loading) .rw-gate-side { animation: rw-up .9s var(--rw-ease) .2s both; }
+.rw-gate.is-push .rw-gate-lamp { opacity: 0; transition: opacity .4s ease; }
+/* lanterns only where the gateway leaves room beside it (landscape screens) */
+@media (max-aspect-ratio: 6/5) { .rw-gate-lamp { display: none; } }
 @media (min-width: 760px) and (min-aspect-ratio: 6/5) {
-  .rw-gate-side { display: block; position: absolute; inset: 0; pointer-events: none; }
-  .rw-gate-hedge { position: absolute; bottom: -2px; width: clamp(240px, 26vw, 460px); height: auto; opacity: .95; }
-  .rw-gate-hedge.is-l { right: calc(50% + var(--sw) * .36); }
-  .rw-gate-hedge.is-r { left: calc(50% + var(--sw) * .36); transform: scaleX(-1); }
-  .rw-gate-chhatri { position: absolute; bottom: 0; height: calc(var(--sh) * .66); width: auto; filter: drop-shadow(10px 14px 16px rgba(120,40,60,.18)); }
-  .rw-gate-chhatri.is-l { right: calc(50% + var(--sw) * .5 + 3vw); transform-origin: 50% 100%; }
-  .rw-gate-chhatri.is-r { left: calc(50% + var(--sw) * .5 + 3vw); transform: scaleX(-1); }
-  .rw-gate-peacock { position: absolute; bottom: 0; height: calc(var(--sh) * .44); width: auto; left: calc(50% + var(--sw) * .5 + 3vw + var(--sh) * .36); transform: scaleX(-1); }
-  .rw-gate:not(.is-loading) .rw-gate-side > * { animation: rw-rise 1.2s var(--rw-ease) .15s both; }
-  .rw-gate:not(.is-loading) .rw-gate-chhatri { animation-delay: .3s; }
-  .rw-gate:not(.is-loading) .rw-gate-peacock { animation-delay: .55s; }
-  .rw-gate { --copy: clamp(190px, 25svh, 240px); }
+  .rw-gate { --copy: clamp(228px, 30svh, 260px); }
 }
-@media (min-width: 760px) and (min-aspect-ratio: 6/5) and (max-width: 1100px) { .rw-gate-peacock { display: none; } }
 
 .rw-gate-copy { position: absolute; left: 0; right: 0; bottom: 0; height: var(--copy); z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 16px max(14px, env(safe-area-inset-bottom)); text-align: center; transition: opacity .5s ease, transform .6s var(--rw-ease); }
 .rw-gate-dear { margin: 0 0 2px; font: italic 500 clamp(15px, 4.2vw, 19px)/1.25 var(--wk-font-display); color: #6A4038; text-wrap: balance; max-width: 36rem; }
