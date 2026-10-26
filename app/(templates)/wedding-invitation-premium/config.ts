@@ -1,10 +1,12 @@
 import { Sparkles, Heart, CalendarDays, Camera, Mail } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
 
-// Gallery card. The cover is three phones showing the real page (the French
-// doors, the names on the terrace, the sangeet card with its couple) under the
-// flamingo border: rendered from headless captures, master at
-// media-src/templates/wedding/covers/wedding-invitation-premium/cover-phones.webp
+// Gallery card. The cover is three phones showing the real page (the gold
+// doors under the floral corners in the centre, the terrace hero, the sangeet
+// card with its couple) on the opening's own background — watercolour sky,
+// misty hills, the lake and template15's floral corners: rendered from
+// headless captures, master at
+// media-src/templates/wedding/covers/wedding-invitation-premium/cover-doors.webp
 // (1080 × 1350, with @360w/@540w/@720w). Served from the repo like the rest of
 // this template's art (the 720px variant); to move it to the CDN, upload the
 // four files next to cover-poster.webp and point this at templateMedia(…).
@@ -15,7 +17,7 @@ export const config: TemplatePageConfig = {
   title: "Wedding Invitation ✦ Premium — Every Function, One Link",
   description:
     "Your Indian wedding on one link: your love story, Haldi, Mehendi, Sangeet, Wedding and Reception with maps, timings and dress codes, both families, up to 20 photos in a Pinterest-style gallery, your song, and an RSVP for each function. In English or Hindi, in one hand-painted Lake Terrace look; the AI drafts it all.",
-  coverImage: "/wedding-v3/premium/cover-phones.webp",
+  coverImage: "/wedding-v3/premium/cover-doors.webp",
   emoji: "💍",
   color: "from-rose-200 to-amber-200",
   previewText: "every function, one beautiful link 💍",
