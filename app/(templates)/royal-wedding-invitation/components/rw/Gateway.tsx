@@ -2,9 +2,9 @@
 
 // ─── The palace gateway (the opening) ────────────────────────────────────────
 // A daylight Mughal gateway in ivory sandstone, drawn in SVG (./Palace): a
-// pishtaq with a pietra-dura band, a pointed arch and chhatris on the roof. The doorway is closed by two pierced jaali screens; warm light shows
-// through the lattice. A brass toran hangs across the arch, a caparisoned
-// elephant stands guard at each corner, the couple's initials sit in a gold
+// pishtaq with a pietra-dura band, a pointed arch and chhatris on the roof.
+// The doorway is closed by two pierced jaali screens; warm light shows
+// through the lattice. A caparisoned elephant stands guard at each corner, the couple's initials sit in a gold
 // medallion in the arch. The names are set above the gateway like a royal
 // proclamation (Shri Ganesh, a gold rule, the names in gold-foil script, the
 // date between two rules); the button waits on the courtyard floor below.
@@ -12,7 +12,7 @@
 // Loading: every piece is decoded first (the CTA says "Opening your
 // invitation…" until then); then the elephants walk in from the sides.
 // One tap (the gesture that also starts the music and a brass bell):
-//   0.00 s  the toran rings and sways (3 damped swings), the medallion presses
+//   0.00 s  the medallion presses
 //   0.10 s  the screens slide apart into the piers (1.4 s), light spills out,
 //           the rays turn, the illustrated couple appears in the doorway
 //   0.20 s  the elephants bow, trunks low; petals pour through the arch
@@ -236,10 +236,6 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
               <i>&amp;</i>
               <b>{initialOf(second)}</b>
             </span>
-          </span>
-          <span className="rw-toran" style={{ left: `${GATE.toran.x}%`, top: `${GATE.toran.y}%`, width: `${GATE.toran.w}%` }}>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img data-rw-pre {...img(A.toran)} />
           </span>
           {/* The guardians: stage-relative, partly off-stage at the corners. */}
           <span className="rw-ele is-l">

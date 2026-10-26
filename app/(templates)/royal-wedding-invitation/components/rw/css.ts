@@ -44,8 +44,7 @@ export const RW_CSS = `
 .rw-gate-cloud.is-a { top: 4%; left: -12%; width: clamp(200px, 56vw, 520px); animation: rw-drift 46s ease-in-out infinite alternate; }
 .rw-gate-cloud.is-b { top: 12%; right: -14%; width: clamp(220px, 62vw, 600px); opacity: .7; animation: rw-drift 58s ease-in-out -20s infinite alternate-reverse; }
 @keyframes rw-drift { from { transform: translate3d(-4%,0,0); } to { transform: translate3d(8%,0,0); } }
-.rw-gate-floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--foot) + 6px); background: linear-gradient(180deg, #EBD6B0 0%, #F3E4C8 18%, #F7ECD8 100%); box-shadow: 0 -1px 0 rgba(176,128,52,.6); transition: opacity .9s ease .2s; }
-.rw-gate-floor::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 10px; background: radial-gradient(circle, rgba(142,42,60,.55) 2.2px, transparent 2.8px) 0 50% / 18px 10px repeat-x; opacity: .7; }
+.rw-gate-floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--foot) + 6px); background: linear-gradient(180deg, #EBD6B0 0%, #F3E4C8 18%, #F7ECD8 100%);  transition: opacity .9s ease .2s; }
 .rw-gate-cam { position: absolute; left: 0; right: 0; top: var(--head); bottom: var(--foot); display: flex; align-items: flex-end; justify-content: center; transform-origin: 50% calc(100% - var(--sh) * .366); transition: transform 1.25s cubic-bezier(.6,0,.25,1), opacity .9s ease .3s; }
 .rw-stage { position: relative; flex: none; width: var(--sw); height: var(--sh); container-type: size; cursor: pointer; transition: opacity .8s ease, transform 1s var(--rw-ease); -webkit-tap-highlight-color: transparent; }
 .rw-gate.is-loading .rw-stage { opacity: 0; transform: translateY(14px); }
