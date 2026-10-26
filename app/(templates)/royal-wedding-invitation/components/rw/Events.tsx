@@ -8,9 +8,10 @@
 // on a gold calendar leaf and the number in the corner. Below: the name (in
 // Hindi on the Hindi page when it is a known function), time, venue, dress
 // code, note, directions and add-to-calendar (.ics + Google).
-// One horizontal rail on every screen (one card on phones, two on tablets,
-// three on laptops) with scroll-snap, arrows on wide screens and dots, so the
-// whole section always fits one screen. "Save all dates" sits under it.
+// One horizontal rail on every screen, the active card centred with its
+// neighbours peeking in at the sides (smaller, softer); a swipe or a wheel
+// settles the nearest card in the centre (scroll-snap center). Arrows on wide
+// screens, dots everywhere; the whole section fits one screen. "Save all dates" sits under it.
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { DEFAULT_TZ_OFFSET, FN_TINT, Reveal, downloadWeddingIcs, fnTitle, kindOf, formatEventDate, formatEventTime, googleCalendarUrl, hiTime, mapLink, type WeddingEvent } from "../../../_wedding";
@@ -65,13 +66,16 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
       raf = 0;
       const kids = Array.from(el.children) as HTMLElement[];
       if (!kids.length) return;
-      const left = el.scrollLeft;
+      // The active card is the one whose centre is nearest the rail's centre.
+      const mid = el.scrollLeft + el.clientWidth / 2;
       let best = 0;
       kids.forEach((k, i) => {
-        if (Math.abs(k.offsetLeft - el.offsetLeft - left) < Math.abs(kids[best].offsetLeft - el.offsetLeft - left)) best = i;
+        const c = k.offsetLeft - el.offsetLeft + k.offsetWidth / 2;
+        const cb = kids[best].offsetLeft - el.offsetLeft + kids[best].offsetWidth / 2;
+        if (Math.abs(c - mid) < Math.abs(cb - mid)) best = i;
       });
       setAt(best);
-      setEdge({ start: left < 8, end: left + el.clientWidth > el.scrollWidth - 8 });
+      setEdge({ start: best === 0, end: best === kids.length - 1 });
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(measure);
@@ -87,21 +91,18 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
   }, [list.length]);
 
   if (!list.length) return null;
-  const go = (i: number) => {
-    const el = railRef.current;
-    const k = el?.children[Math.max(0, Math.min(list.length - 1, i))] as HTMLElement | undefined;
-    if (el && k) el.scrollTo({ left: k.offsetLeft - el.offsetLeft - parseFloat(getComputedStyle(el).scrollPaddingLeft || "0"), behavior: "smooth" });
-  };
-  const step = (dir: 1 | -1) => {
-    const el = railRef.current;
-    const k = el?.children[0] as HTMLElement | undefined;
-    if (el && k) el.scrollBy({ left: dir * (k.offsetWidth + 20), behavior: "smooth" });
-  };
   const save = (es: readonly WeddingEvent[], key: string, name: string) => {
     const ok = downloadWeddingIcs(es, { couple, url, tz: DEFAULT_TZ_OFFSET }, name);
     setFlash(ok ? key : `${key}:err`);
     window.setTimeout(() => setFlash(null), 2200);
   };
+  /** Centre card i in the rail. */
+  const go = (i: number) => {
+    const el = railRef.current;
+    const k = el?.children[Math.max(0, Math.min(list.length - 1, i))] as HTMLElement | undefined;
+    if (el && k) el.scrollTo({ left: k.offsetLeft - el.offsetLeft - (el.clientWidth - k.offsetWidth) / 2, behavior: "smooth" });
+  };
+  const step = (dir: 1 | -1) => go(at + dir);
   return (
     <div className="rw-evs">
       <div className="rw-ev-wrap">
@@ -127,7 +128,7 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
           const gcal = e.date ? googleCalendarUrl(e, { couple, url, tz: DEFAULT_TZ_OFFSET }) : "";
           return (
             <Reveal as="li" key={key} className={`rw-ev is-${kind}`} delay={(i % 3) * 90} style={{ ["--fn" as string]: FN_TINT[kind] } as CSSProperties}>
-              <article className="rw-ev-card">
+              <article className={`rw-ev-card${i === at ? " is-active" : ""}`}>
                 <div className="rw-ev-alcove" aria-hidden>
                   <span className="rw-ev-arch" />
                   {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

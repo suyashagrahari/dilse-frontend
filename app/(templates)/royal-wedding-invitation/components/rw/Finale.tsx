@@ -1,17 +1,22 @@
 "use client";
 
-// ─── The finale: the gateway closes softly on "Shubh Vivah" ──────────────────
-// The opening's gateway, small, stands open with warm light in the doorway;
-// when it is 55% on screen the jaali screens slide shut (1.4 s), the toran
-// swings once and the seal settles on the screens with the couple's initials.
-// The two elephants stand guard at its foot. Then the closing line, the
-// hashtag, the share bar (children) and "Replay the opening".
-// Reduced motion: the screens are simply closed.
+// ─── The finale: the gateway again, closing softly on "Shubh Vivah" ─────────
+// The same world as the opening, so the invitation ends where it began: the
+// warm sandstone sky and halo, gold lanterns hanging from the top, the white
+// balustrade flush along the bottom, and the drawn palace (./Palace) with its
+// carved doors (./Door) standing open in warm light. When it is half on
+// screen the doors slide shut (1.4 s) and the seal settles on them: शुभ विवाह
+// and the couple's initials. The elephants stand guard at its foot. Beside it
+// on laptops (below it on phones): "Shubh Vivah · With love", the names in
+// maroon-to-gold foil script, the closing line, the hashtag, the share bar
+// (children) and "Replay the opening". Reduced motion: the doors are shut.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Reveal, initialOf, useWeddingReducedMotion } from "../../../_wedding";
 import Petals from "./Petals";
 import { A, GATE, img } from "../assets";
+import Door from "./Door";
+import Palace from "./Palace";
 
 export interface FinaleProps {
   seal: string;
@@ -52,8 +57,19 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
   const ap = GATE.aperture;
   return (
     <section className="rw-finale" aria-label={seal}>
+      <div className="rw-fin-sky" aria-hidden />
+      {(["l", "r"] as const).map((side) => (
+        <span key={side} className={`rw-fin-lamp is-${side}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img className="is-short" {...img(A.lanterns, { lazy: true })} />
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img className="is-long" {...img(A.lanternsLong, { lazy: true })} />
+        </span>
+      ))}
+      <span className="rw-fin-rail" aria-hidden />
       <div className="rw-finale-in">
         <div ref={gateRef} className={`rw-close${shut ? " is-closed" : ""}`}>
+          <span className="rw-fin-halo" aria-hidden />
           <div className="rw-close-stage">
             <div className="rw-ap" style={{ left: `${ap.x}%`, top: `${ap.y}%`, width: `${ap.w}%`, height: `${ap.h}%` }}>
               <span className="rw-ap-glow" />
@@ -61,8 +77,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
                 const box = side === "l" ? GATE.screenL : GATE.screenR;
                 return (
                   <span key={side} className={`rw-screen is-${side}`} style={{ left: `${((box.x - ap.x) / ap.w) * 100}%`, width: `${(box.w / ap.w) * 100}%` }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                    <img {...img(side === "l" ? A.screenL : A.screenR, { lazy: true })} />
+                    <Door side={side} />
                   </span>
                 );
               })}
@@ -73,12 +88,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
                 </small>
               </p>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img className="rw-gateway" {...img(A.gateway, { lazy: true })} />
-            <span className="rw-toran" style={{ left: `${GATE.toran.x}%`, top: `${GATE.toran.y}%`, width: `${GATE.toran.w}%` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...img(A.toran, { lazy: true })} />
-            </span>
+            <Palace className="rw-gateway" />
             <span className="rw-ele is-l">
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img {...img(A.elephantL, { lazy: true })} />
@@ -94,6 +104,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
             </div>
           )}
         </div>
+        <div className="rw-fin-words">
         <Reveal as="p" className="wk-eyebrow rw-finale-k" delay={100}>
           <span lang={lang}>
             {seal} · {closing}
@@ -119,6 +130,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
           </svg>
           {replayLabel}
         </button>
+        </div>
       </div>
     </section>
   );
