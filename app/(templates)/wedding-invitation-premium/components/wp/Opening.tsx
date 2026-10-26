@@ -172,6 +172,14 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
       {/* The doors stand on the lake terrace: the watercolour sky, hills and lake behind them. */}
       <Lake className="wp-open-lake" />
       <div className="wp-open-wash" aria-hidden />
+      {/* The top border: the crown of template15's pink-and-white floral arch, flush with the top edge, cascading down both sides. */}
+      <div className="wp-open-garland" aria-hidden>
+        <picture>
+          <source media="(max-width: 700px)" srcSet={img("floralTopSm").src} />
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <img {...img("floralTop", { high: true })} />
+        </picture>
+      </div>
       <div className="wp-open-world">
         <div className="wp-open-copy">
           {invocation && (
@@ -229,9 +237,6 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...img("frame", { high: true })} className="wp-frame" aria-hidden />
             <span className="wp-floor" aria-hidden />
-            {/* A light spray of blossom over the doorway's crown. */}
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("floralArch", { high: true })} className="wp-arch" aria-hidden />
             <div className="wp-fxbox" ref={fxRef} aria-hidden />
           </div>
         </div>

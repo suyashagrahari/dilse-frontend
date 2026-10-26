@@ -48,7 +48,9 @@ export const A = {
   bananaA: { src: `${P}/banana-a-560.webp`, w: 560, h: 830 },
   palmTall: { src: `${P}/palm-420.webp`, w: 420, h: 671 },
   shrub: { src: `${P}/shrub-520.webp`, w: 520, h: 414 },
-  floralArch: { src: `${P}/floral-arch-1100.webp`, w: 1100, h: 817 },
+  // the crown of template15's floral arch (1600 × 600 of its 1600 × 1188): the opening's top garland
+  floralTop: { src: `${P}/floral-top-1600.webp`, w: 1600, h: 600 },
+  floralTopSm: { src: `${P}/floral-top-800.webp`, w: 800, h: 300 },
   jhumka: { src: `${P}/jhumka-260.webp`, w: 260, h: 521 },
   goldLanterns: { src: `${P}/gold-lanterns-500.webp`, w: 500, h: 500 },
   urn: { src: `${P}/urn-320.webp`, w: 320, h: 452 },

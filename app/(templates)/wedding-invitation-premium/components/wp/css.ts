@@ -125,11 +125,18 @@ export const WP_CSS = `
 .wp-frame { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; }
 .wp-floor { position: absolute; z-index: 5; left: 6%; right: 6%; bottom: 1%; height: 12%; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, rgba(255,240,200,.9), rgba(255,240,200,0) 70%); opacity: 0; scale: .6 1; transition: opacity 1s var(--wp-soft) .6s, scale 1.4s var(--wp-ease) .6s; pointer-events: none; }
 .wp-open.is-opening .wp-floor, .wp-open.is-push .wp-floor { opacity: 1; scale: 1.5 1; }
-/* Only the crown of template15's floral arch: a light spray over the doorway, every cut edge dissolved. */
-.wp-arch { position: absolute; z-index: 5; left: -12%; top: 4%; width: 124%; height: auto; pointer-events: none; opacity: 0; scale: .94; transform-origin: 50% 0; transition: opacity 1.4s var(--wp-soft) .3s, scale 1.8s var(--wp-ease) .3s; -webkit-mask-image: linear-gradient(90deg, transparent 2%, #000 22%, #000 78%, transparent 98%), linear-gradient(180deg, transparent 0%, #000 8%, #000 22%, transparent 42%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 2%, #000 22%, #000 78%, transparent 98%), linear-gradient(180deg, transparent 0%, #000 8%, #000 22%, transparent 42%); mask-composite: intersect; }
-.wp-open.is-ready .wp-arch { opacity: .92; scale: 1; }
-.wp-open.is-opening .wp-arch { scale: 1.03; transition-duration: 2s; }
-.wp-open.is-push .wp-arch { opacity: 0 !important; transition: opacity .45s ease; }
+/* the top garland: flush with the screen's top edge; its sides cascade down and fade (the art is cut flat there) */
+.wp-open-garland { position: absolute; z-index: 2; top: 0; left: 0; right: 0; pointer-events: none; opacity: 0; translate: 0 -12px; transition: opacity 1.2s var(--wp-soft) .2s, translate 1.4s var(--wp-ease) .2s; }
+.wp-open-garland img { display: block; width: 100%; height: var(--og-h, auto); object-fit: cover; object-position: 50% 0; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%); mask-image: linear-gradient(180deg, #000 62%, transparent 100%); }
+.wp-open.is-ready .wp-open-garland { opacity: 1; translate: 0 0; }
+.wp-open.is-push .wp-open-garland { opacity: 0; transition: opacity .45s ease; }
+/* the crown at its natural shape: a light band of hanging blossom across the middle, dense cascades down
+   both sides beside the doors; the words start just under the middle band */
+.wp-open-world { padding-top: max(64px, calc(env(safe-area-inset-top) + 56px), calc(100vw * .375 * .36)); }
+/* a soft ivory halo keeps the words clear of any petal behind them */
+.wp-open-copy::before { content: ""; position: absolute; inset: -18% -14%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(250,253,255,.85), rgba(250,253,255,.5) 60%, transparent); pointer-events: none; }
+/* short screens: the side cascades are trimmed (faded) so they never take more than half the height */
+.wp-open-garland { --og-h: min(37.5vw, 50svh); }
 .wp-fxbox { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .wp-fx { position: absolute; display: block; opacity: 0; will-change: transform, opacity; }
 
