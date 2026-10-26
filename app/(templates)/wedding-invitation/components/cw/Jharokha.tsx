@@ -12,7 +12,7 @@
 //   0.00 s  the jaali glows: pink dawn light blooms through the lattice
 //   0.15 s  the shutters swing OUTWARD on their outer hinges in real 3D
 //           (perspective on the stage only; rotateY ±105°, the right one 80 ms
-//           late), shading as they turn from the light; rays open behind
+//           late), shading softly as they turn from the light; behind
 //   0.30 s  rose petals pour out through the window (WAAPI, transform only)
 //   0.80 s  the couple's names float up behind the window
 //   1.45 s  the camera steps through (stage scale 1 → 1.12) and the gate fades
@@ -182,7 +182,7 @@ export default function Jharokha({ first, second, dateLine, guest, s, lang, invo
       setPhase("push");
       onOpened();
     });
-    later(2150, () => live.current && setPhase("gone"));
+    later(2600, () => live.current && setPhase("gone"));
   };
 
   if (phase === "gone") return null;
@@ -246,6 +246,12 @@ export default function Jharokha({ first, second, dateLine, guest, s, lang, invo
         </span>
       ))}
 
+      {/* The step through: blush light blooms out of the window to fill the screen, a gold mandala opening in it; the invitation appears out of the light. */}
+      <span className="cw-gate-flash" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img(A.mandalaGold)} />
+      </span>
+
       <div className="cw-gate-col">
         <p className="cw-gate-top" lang={lang}>
           {greeting ? (
@@ -264,8 +270,6 @@ export default function Jharokha({ first, second, dateLine, guest, s, lang, invo
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="cw-ap-dawn" data-cw-pre {...img(A.dawn, { high: true })} />
               <span className="cw-ap-bloom" />
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img className="cw-ap-rays" {...img(A.rays)} />
               <span className="cw-ap-names">
                 <b>{first}</b>
                 <i>&amp;</i>

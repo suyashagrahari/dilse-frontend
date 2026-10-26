@@ -92,7 +92,6 @@ export const CW_CSS = `
 .cw-aperture { position: absolute; z-index: 0; overflow: hidden; background: #F9D6D8; }
 .cw-ap-dawn { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; transform: scale(1.35); opacity: .62; transition: opacity .45s ease, transform 2.2s var(--cw-ease); }
 .cw-ap-bloom { position: absolute; left: 50%; top: 46%; width: 190%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%) scale(.55); opacity: .35; background: radial-gradient(closest-side, #FFFFFF 0%, #FFE9EC 28%, rgba(255,217,223,.7) 55%, rgba(255,217,223,0) 100%); transition: transform 1.8s var(--cw-ease), opacity 1s ease; }
-.cw-ap-rays { position: absolute; left: -30%; top: -10%; width: 160%; height: auto; opacity: 0; transform: scale(.9); mix-blend-mode: screen; transition: opacity 1.1s ease .12s, transform 2s var(--cw-ease) .12s; }
 .cw-ap-names { position: absolute; left: 4%; right: 4%; top: 30%; display: flex; flex-direction: column; align-items: center; text-align: center; color: #7A2E44; opacity: 0; transform: translateY(24px); transition: opacity .7s ease .8s, transform 1s var(--cw-ease) .8s; container-type: inline-size; }
 .cw-ap-names b { font: 400 16cqw/1.15 var(--wk-font-script); white-space: nowrap; padding: 0 .3em; text-shadow: 0 2px 14px rgba(255,255,255,.9); }
 .cw-ap-names b:last-child { transition-delay: .09s; }
@@ -151,14 +150,19 @@ export const CW_CSS = `
 .cw-gate.is-open .cw-gate-cta, .cw-gate.is-push .cw-gate-cta { animation: none; }
 .cw-gate.is-open .cw-ap-dawn, .cw-gate.is-push .cw-ap-dawn { opacity: 1; transform: scale(1.2); }
 .cw-gate.is-open .cw-ap-bloom, .cw-gate.is-push .cw-ap-bloom { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
-.cw-gate.is-open .cw-ap-rays, .cw-gate.is-push .cw-ap-rays { opacity: .85; transform: scale(1.08); }
 .cw-gate.is-open .cw-ap-names, .cw-gate.is-push .cw-ap-names { opacity: 1; transform: none; }
 .cw-gate.is-open .cw-shutter.is-l, .cw-gate.is-push .cw-shutter.is-l { transform: rotateY(-105deg); }
 .cw-gate.is-open .cw-shutter.is-r, .cw-gate.is-push .cw-shutter.is-r { transform: rotateY(105deg); }
-.cw-gate.is-open .cw-shutter-shade, .cw-gate.is-push .cw-shutter-shade { opacity: .6; }
+.cw-gate.is-open .cw-shutter-shade, .cw-gate.is-push .cw-shutter-shade { opacity: .22; }
 .cw-gate.is-open .cw-shutter-glow, .cw-gate.is-push .cw-shutter-glow { opacity: 0; }
-.cw-gate.is-push { opacity: 0; pointer-events: none; }
-.cw-gate.is-push .cw-cam { transform: scale(1.12); }
+/* The step through: the camera leans into the window while blush light blooms out of it and covers the screen; only then does the gate fade, so the invitation rises out of solid light (never a ghost of the window over the page). */
+.cw-gate.is-push { opacity: 0; pointer-events: none; transition: opacity .55s ease .62s; }
+.cw-gate.is-push .cw-cam { transform: scale(1.5); transition: transform 1.1s cubic-bezier(.55,0,.25,1), opacity .9s ease; }
+.cw-gate-flash { position: absolute; left: 50%; top: 46%; z-index: 9; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; display: grid; place-items: center; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.06); background: radial-gradient(closest-side, #FFFFFF 0%, #FFF7F4 22%, #FBEDEC 40%, #F8E3E3 60%, #F6DCDD 100%); transition: opacity .35s ease, transform .9s cubic-bezier(.35,0,.2,1); }
+.cw-gate-flash img { width: min(62vmin, 520px); height: auto; opacity: 0; transform: scale(.4) rotate(-40deg); transition: opacity .5s ease .12s, transform 1.2s cubic-bezier(.2,.8,.2,1); }
+.cw-gate.is-push .cw-gate-flash { opacity: 1; transform: scale(1); }
+.cw-gate.is-push .cw-gate-flash img { opacity: .4; transform: scale(1.1) rotate(30deg); }
+.cw-gate.is-reduced .cw-gate-flash { display: none; }
 .cw-gate.is-push .cw-gate-tree.is-l { transform: translate3d(-40%, 10%, 0); }
 .cw-gate.is-push .cw-gate-tree.is-r { transform: translate3d(40%, 10%, 0); }
 .cw-gate.is-reduced, .cw-gate.is-reduced * { animation: none !important; transition: none !important; }
