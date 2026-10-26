@@ -189,7 +189,9 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
       {(["l", "r"] as const).map((side) => (
         <span key={side} className={`rw-gate-lamp is-${side}`} aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...img(A.lanterns)} />
+          <img className="is-short" {...img(A.lanterns)} />
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img className="is-long" {...img(A.lanternsLong)} />
         </span>
       ))}
 

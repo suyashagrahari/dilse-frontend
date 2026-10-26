@@ -53,6 +53,8 @@ export const A = {
   coupleWedding: a("template14-couple-haldi-mehndi/08-couple-wedding-red-lehenga.webp", 446, 800),
   // template15 (the mandap's brass and stone).
   lanterns: a("template15/03-hanging-gold-lanterns-trio.webp", 800, 800),
+  // The same trio with its strings stretched (the lanterns start 79.4% down): portrait screens hang it from above the top edge.
+  lanternsLong: a("royal/lanterns-long.webp", 400, 1008),
   jhumka: a("template15/05-gold-pearl-jhumka-hangings.webp", 399, 800),
   havan: a("template15/06-havan-kund-fire-aag.webp", 791, 800),
   balustrade: a("template15/07-white-stone-railing-balustrade.webp", 1600, 375),

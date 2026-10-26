@@ -83,13 +83,21 @@ export const RW_CSS = `
 .rw-gate.is-push .rw-gate-rail { opacity: 0; transition: opacity .4s ease; }
 .rw-gate-lamp { position: absolute; z-index: 1; top: 0; width: clamp(96px, 16vw, 230px); pointer-events: none; }
 .rw-gate-lamp img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 16px rgba(110,60,20,.22)); }
+.rw-gate-lamp .is-long { display: none; }
 .rw-gate-lamp.is-l { left: clamp(4px, 4vw, 120px); }
 .rw-gate-lamp.is-r { right: clamp(4px, 4vw, 120px); transform: scaleX(-1); }
 .rw-gate.is-loading .rw-gate-lamp, .rw-gate.is-loading .rw-gate-side { opacity: 0; }
 .rw-gate:not(.is-loading) .rw-gate-lamp, .rw-gate:not(.is-loading) .rw-gate-side { animation: rw-up .9s var(--rw-ease) .2s both; }
 .rw-gate.is-push .rw-gate-lamp { opacity: 0; transition: opacity .4s ease; }
-/* lanterns only where the gateway leaves room beside it (landscape screens) */
-@media (max-aspect-ratio: 6/5) { .rw-gate-lamp { display: none; } }
+/* portrait screens (phones, tablets): the lanterns hang lower, at the very edges beside the dome, clear of the names and the top buttons */
+@media (max-aspect-ratio: 6/5) {
+  /* the long-string trio, hung from above the top edge: its lanterns (2W below its top) sit just beside the dome */
+  .rw-gate-lamp { --lw: clamp(64px, 15vw, 118px); z-index: 7; top: calc(var(--head) - 26px - var(--lw) * 2); width: var(--lw); }
+  .rw-gate-lamp .is-short { display: none; }
+  .rw-gate-lamp .is-long { display: block; }
+  .rw-gate-lamp.is-l { left: 2px; }
+  .rw-gate-lamp.is-r { right: 2px; }
+}
 @media (min-width: 760px) and (min-aspect-ratio: 6/5) {
   .rw-gate { --head: clamp(190px, 25svh, 250px); --foot: clamp(92px, 12svh, 116px); }
 }
