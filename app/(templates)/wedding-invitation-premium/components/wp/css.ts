@@ -162,8 +162,23 @@ export const WP_CSS = `
 .wp-scene { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .wp-sc { position: absolute; display: block; height: auto; opacity: 0; transition: opacity 1.2s var(--wp-soft); transition-delay: var(--sd, .3s); }
 .wp-hero.is-on .wp-sc { opacity: 1; }
-.wp-sc-gazebo { right: calc(var(--u) * -4); bottom: calc(var(--u) * 5); height: calc(var(--u) * 62); width: auto; --sd: .35s; filter: drop-shadow(0 18px 22px rgba(31,62,87,.16)); }
+/* back to front; none of it moves — each piece only fades in once */
+.wp-sc-palm { right: calc(var(--gz-r) + var(--gz-h) * .629 * .62); bottom: calc(var(--u) * 7); height: calc(var(--gz-h) * .95); width: auto; --sd: .2s; }
+/* the gazebo is placed by three numbers; its peacock is perched from them (feet on the cornice, ~58% up) */
+.wp-hero { --gz-r: calc(var(--u) * -4); --gz-b: calc(var(--u) * 5); --gz-h: calc(var(--u) * 62); --pk-h: calc(var(--gz-h) * .42); }
+.wp-sc-gazebo { right: var(--gz-r); bottom: var(--gz-b); height: var(--gz-h); width: auto; --sd: .35s; filter: drop-shadow(0 18px 22px rgba(31,62,87,.16)); }
+.wp-sc-peacock-r { right: calc(var(--gz-r) + var(--gz-h) * .629 * .56); bottom: calc(var(--gz-b) + var(--gz-h) * .6 - var(--pk-h) * .76); height: var(--pk-h); width: auto; --sd: .9s; }
+.wp-sc-banana { left: calc(var(--u) * -10); bottom: calc(var(--u) * 6); height: calc(var(--u) * 74); width: auto; --sd: .25s; }
+.wp-sc-peacock-l { left: calc(var(--u) * 2); bottom: calc(var(--u) * 38); height: calc(var(--u) * 26); width: auto; --sd: 1s; }
 .wp-sc-couple { left: calc(var(--u) * -2); bottom: 0; width: calc(var(--u) * 78); --sd: .6s; filter: drop-shadow(0 16px 18px rgba(31,62,87,.22)); }
+.wp-sc-shrub { right: calc(var(--u) * -6); bottom: calc(var(--u) * -3); width: calc(var(--u) * 30); --sd: .7s; }
+.wp-sc-flora { left: calc(var(--u) * -6); bottom: calc(var(--u) * -3); width: calc(var(--u) * 18); --sd: .8s; }
+.wp-sc-leaves { top: calc(var(--u) * -3); width: calc(var(--u) * 62); --sd: .15s; -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent); mask-image: linear-gradient(90deg, #000 55%, transparent); }
+.wp-sc-leaves.is-l { left: calc(var(--u) * -10); }
+.wp-sc-leaves.is-r { right: calc(var(--u) * -10); scale: -1 1; }
+.wp-sc-lantern { top: calc(var(--u) * 4); width: calc(var(--u) * 11); --sd: .5s; filter: drop-shadow(0 10px 14px rgba(31,62,87,.16)); }
+.wp-sc-lantern.is-l { left: calc(var(--u) * 24); }
+.wp-sc-lantern.is-r { right: calc(var(--u) * 24); scale: -1 1; }
 .wp-sc-rail { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--u) * 9); background: ${BALUSTRADE} repeat-x 0 100% / auto 100%; opacity: 0; transition: opacity 1.2s var(--wp-soft) .45s; filter: drop-shadow(0 -4px 10px rgba(31,62,87,.1)); }
 .wp-hero.is-on .wp-sc-rail { opacity: 1; }
 /* the words, in the sky */
@@ -193,13 +208,20 @@ export const WP_CSS = `
   .wp-hero { --u: 1vw; padding: 84px 14px 62vw; }
   .wp-hero-lake { --lv-water: 30vw; --lv-hills: 20vw; }
   .wp-sc-couple { left: -3vw; width: 72vw; }
-  .wp-sc-gazebo { right: -6vw; bottom: 6vw; height: 66vw; }
+  .wp-hero { --gz-r: -6vw; --gz-b: 6vw; --gz-h: 66vw; }
+  .wp-sc-palm, .wp-sc-leaves, .wp-sc-lantern { display: none; }
+  .wp-sc-banana { left: -14vw; height: 66vw; }
+  .wp-sc-peacock-l { left: -2vw; bottom: 34vw; height: 24vw; }
+  .wp-sc-flora { width: 20vw; }
+  .wp-sc-shrub { width: 28vw; }
   .wp-sc-rail { height: 11vw; }
 }
 @media (min-width: 560px) and (max-width: 959px) {
   .wp-hero { --u: min(1.2vw, .6svh); }
   .wp-sc-couple { left: calc(var(--u) * 2); width: calc(var(--u) * 60); }
-  .wp-sc-gazebo { right: calc(var(--u) * 2); height: calc(var(--u) * 62); }
+  .wp-hero { --gz-r: calc(var(--u) * 2); --gz-h: calc(var(--u) * 62); }
+  .wp-sc-lantern { display: none; }
+  .wp-sc-leaves { width: calc(var(--u) * 50); }
 }
 /* laptops and desktops: the names on one line, the scene framing them from below */
 @media (min-width: 960px) {
@@ -209,7 +231,7 @@ export const WP_CSS = `
   .wp-hero-line { max-width: 46ch; }
   .wp-hero-actions .wp-btn { min-height: 46px; padding: 0 20px; font-size: 14.5px; }
   .wp-sc-couple { left: calc(var(--u) * 4); width: calc(var(--u) * 60); }
-  .wp-sc-gazebo { right: calc(var(--u) * 5); height: calc(var(--u) * 70); }
+  .wp-hero { --gz-r: calc(var(--u) * 5); --gz-h: calc(var(--u) * 70); }
   .wp-hero-lake { --lv-water: calc(var(--u) * 26); --lv-hills: calc(var(--u) * 18); }
 }
 @media (min-width: 960px) and (max-height: 820px) {

@@ -1,9 +1,12 @@
 "use client";
 
 // ─── The hero: the Lake Terrace, painted like template6's card, kept quiet ───
-// A still watercolour: the pack's sky over misty hills and a calm lake
-// (./Lake), the couple on their pink sofa at the left, the pink gazebo at the
-// right, the white balustrade along the front. The names sit in rose script
+// A still watercolour composed like the card: the pack's sky over misty
+// hills and a calm lake (./Lake); a banana plant with a peacock perched in it
+// behind the couple on their pink sofa at the left; the pink gazebo at the
+// right with a peacock on its cornice and a palm behind it; anthuriums and a
+// shrub at the front corners; palm and anthurium leaves with blossom lanterns
+// hanging in from the top corners; the white balustrade along the front. The names sit in rose script
 // in the sky above it all. Nothing loops or drifts: each layer fades in once
 // after the doors open (.is-on), then the page is still. Phones: words on
 // top, the terrace below, all on the first screen.
@@ -68,9 +71,19 @@ export default function Hero(p: HeroProps) {
     <header className={`wp-hero${open ? " is-on" : ""}`}>
       <Lake className="wp-hero-lake" lotus={false} />
       <div className="wp-scene" aria-hidden>
+        {art("palmTall", "wp-sc-palm")}
         {art("gazebo", "wp-sc-gazebo")}
+        {art("peacockGreen", "wp-sc-peacock-r")}
+        {art("bananaA", "wp-sc-banana")}
+        {art("peacockGreen", "wp-sc-peacock-l")}
         <span className="wp-sc-rail" />
+        {art("shrub", "wp-sc-shrub")}
         {art("couple", "wp-sc-couple")}
+        {art("anthurium", "wp-sc-flora")}
+        {art("foliage", "wp-sc-leaves is-l")}
+        {art("foliage", "wp-sc-leaves is-r")}
+        {art("lanterns", "wp-sc-lantern is-l", true)}
+        {art("lanterns", "wp-sc-lantern is-r", true)}
       </div>
 
       <div className="wp-hero-words">
