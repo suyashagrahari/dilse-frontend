@@ -10,7 +10,7 @@ export const config: TemplatePageConfig = {
   title: "Royal Wedding Invitation ✦ — The Palace Experience",
   description:
     "A cinematic royal wedding invitation: palace gates open to shehnai, sandstone jaali screens slide apart as elephants bow and the brass toran sways, a gold-foil monogram, your story, up to eight functions with dress-code colours and per-function RSVP, 40 photos, an English and Hindi invitation, a blessings wall and a diya-lantern finale. Ivory sandstone, antique gold and soft maroon; the AI asks a few questions and writes it.",
-  coverImage: "/wedding-v3/royal/cover-phones.webp",
+  coverImage: "/wedding-v3/royal/cover-gate.webp",
   emoji: "👑",
   color: "from-amber-200 to-rose-300",
   previewText: "the palace gates open for you 👑",
