@@ -3,13 +3,11 @@
 // ─── The opening: tall gold French doors swing inward onto the lake terrace ──
 // Poster: the guest's name (?to=), the couple's names and the date over a
 // palace doorway — ivory architrave, fluted pilasters, a gold transom — with
-// two etched-glass doors closed in it, standing on the terrace itself: the
-// watercolour lake and hills behind (./Lake), a pink-and-white floral arch
-// around the doorway with pearl jhumkas swaying inside it (template15), glints
-// on the gold, urns of greenery at the threshold, the white balustrade running
-// out to the screen's edges with a peacock on each side, banana plants,
-// anthuriums and gold lanterns at the edges. Through the glass the sunlit
-// terrace is already faintly visible.
+// two etched-glass doors closed in it. Deliberately quiet: the watercolour
+// sky and lake behind (./Lake) under an ivory wash, a light spray of
+// blossom over the doorway's crown
+// (template15, faded at every cut edge) and a few glints on the gold.
+// Through the glass the sunlit terrace is already faintly visible.
 // One tap (also the gesture that starts the music, via the engine):
 //   0.00 s  a soft crystal chime; a reflection sweeps across both panes
 //   0.30 s  the doors swing inward on their hinges (heavy ease), shading as
@@ -174,22 +172,6 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
       {/* The doors stand on the lake terrace: the watercolour sky, hills and lake behind them. */}
       <Lake className="wp-open-lake" />
       <div className="wp-open-wash" aria-hidden />
-      {/* The terrace around the doors: banana plants and anthuriums at the edges, blossom lanterns overhead, the peacock by the door. */}
-      <div className="wp-open-deco" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("banana")} className="wp-od-banana wp-od-l" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("banana")} className="wp-od-banana wp-od-r" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("anthurium")} className="wp-od-flora wp-od-l" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("anthurium")} className="wp-od-flora wp-od-r" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("goldLanterns")} className="wp-od-lantern wp-od-l" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("goldLanterns")} className="wp-od-lantern wp-od-r" />
-      </div>
-
       <div className="wp-open-world">
         <div className="wp-open-copy">
           {invocation && (
@@ -217,12 +199,6 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
         <div className="wp-stagewrap">
           <div className="wp-stage" onClick={open} role="presentation">
             {/* The terrace inside the door aperture (behind the glass). */}
-            {/* The terrace's balustrade runs out from the threshold to the screen's edges, a peacock on each side. */}
-            <span className="wp-od-rail" aria-hidden />
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("peacockGreen")} className="wp-od-pc wp-od-pc-l" aria-hidden />
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("peacock")} className="wp-od-pc wp-od-pc-r" aria-hidden />
             <div className="wp-aperture" aria-hidden>
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img {...img("terrace", { high: true })} className="wp-terrace" />
@@ -253,29 +229,17 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...img("frame", { high: true })} className="wp-frame" aria-hidden />
             <span className="wp-floor" aria-hidden />
-            {/* A pink-and-white floral arch (template15) around the doorway, pearl jhumkas hanging inside it. */}
+            {/* A light spray of blossom over the doorway's crown and a few glints on the gold. */}
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...img("floralArch", { high: true })} className="wp-arch" aria-hidden />
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("jhumka")} className="wp-jhumka wp-jhumka-l" aria-hidden />
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("jhumka")} className="wp-jhumka wp-jhumka-r" aria-hidden />
-            {/* Glints that catch on the gold. */}
             {[
-              ["24%", "22%", "0s"],
-              ["74%", "30%", "1.3s"],
-              ["50%", "15%", "2.1s"],
-              ["30%", "70%", ".7s"],
-              ["68%", "78%", "1.8s"],
+              ["30%", "24%", "0s"],
+              ["70%", "40%", "1.6s"],
+              ["50%", "66%", "2.8s"],
             ].map(([l, t, dl], i) => (
               // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
               <img key={i} {...img("sparkle")} className="wp-glint" style={{ left: l, top: t, animationDelay: dl }} aria-hidden />
             ))}
-            {/* Urns of greenery at the threshold. */}
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("urn")} className="wp-open-pot wp-open-pot-l" aria-hidden />
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...img("urn")} className="wp-open-pot wp-open-pot-r" aria-hidden />
             <div className="wp-fxbox" ref={fxRef} aria-hidden />
           </div>
         </div>
