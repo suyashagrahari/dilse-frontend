@@ -180,6 +180,12 @@ export const CW_CSS = `
   .cw-gate-tree.is-l { left: -6vw; }
   .cw-gate-tree.is-r { right: -6vw; }
 }
+/* Phones: the lanterns hang from the canopy on either side of the window. */
+@media (max-width: 759px) {
+  .cw-gate .cw-lantern { display: block; top: 58px; width: clamp(54px, 15vw, 70px); }
+  .cw-gate .cw-lantern.is-l { left: 2px; }
+  .cw-gate .cw-lantern.is-r { right: 2px; }
+}
 @media (max-height: 640px) { .cw-gate-col { gap: 6px; padding-top: 52px; } .cw-cam { height: calc(100svh - 268px); } }
 
 /* ══ THE ROSE GARDEN (hero) ═══════════════════════════════════════════════ */
@@ -275,6 +281,17 @@ export const CW_CSS = `
 .cw-hero.is-on .cw-hero-words > :nth-child(6) { transition-delay: 1.05s; }
 .cw-hero.is-on .cw-hero-words > :nth-child(7) { transition-delay: 1.2s; }
 .cw-hero.is-on .cw-hero-words > :nth-child(8) { transition-delay: 1.35s; }
+/* Phones and tablets: the blossom lanterns hang from the lattice crown, just inside the edges and below the language / Create bars. */
+@media (max-width: 1023px) {
+  .cw-hero .cw-lantern { display: block; top: 90px; width: clamp(54px, 15vw, 74px); }
+  .cw-hero .cw-lantern.is-l { left: 2px; }
+  .cw-hero .cw-lantern.is-r { right: 2px; }
+}
+@media (min-width: 560px) and (max-width: 1023px) {
+  .cw-hero .cw-lantern { top: 64px; }
+  .cw-hero .cw-lantern.is-l { left: 4vw; }
+  .cw-hero .cw-lantern.is-r { right: 4vw; }
+}
 /* Phones and tablets: the scroll cue rests on the gazebo's lawn between the pampas, on a blush ground (no bare band under the scene). */
 @media (max-width: 1023px) {
   .cw-hero { padding-bottom: 10px; }
