@@ -527,10 +527,13 @@ export const WP_CSS = `
 /* One full screen on phones: garland on top, words in the middle, the terrace at the foot. */
 .wp-finale { position: relative; overflow: hidden; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(150px, 30vw, 230px) 16px 0; text-align: center; background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--wp-pink) 10%, transparent) 50%, color-mix(in srgb, var(--wp-blue) 18%, transparent)); }
 .wp-finale-garland { opacity: 1; z-index: 1; }
-.wp-finale-lantern { position: absolute; z-index: 1; top: clamp(70px, 14vw, 130px); width: clamp(54px, 9vw, 104px); height: auto; filter: drop-shadow(0 10px 14px rgba(31,62,87,.16)); }
+/* the lanterns hang straight from the leaf garland (their strings start inside the leaves) */
+.wp-finale-lantern { position: absolute; z-index: 1; top: clamp(10px, 5vw, 44px); width: clamp(54px, 9vw, 104px); height: auto; filter: drop-shadow(0 10px 14px rgba(31,62,87,.16)); }
 .wp-finale-lantern-l { left: 3%; }
 .wp-finale-lantern-r { right: 3%; transform: scaleX(-1); }
-@media (max-width: 699px) { .wp-finale-lantern { width: 50px; top: 25vw; } }
+@media (max-width: 699px) { .wp-finale-lantern { width: 46px; top: 62px; } .wp-finale-lantern-l { left: 2%; } .wp-finale-lantern-r { right: 2%; } }
+/* tablets: clear of the top buttons, drawn in under the thick part of the leaves */
+@media (min-width: 700px) and (max-width: 959px) { .wp-finale-lantern { top: 64px; width: clamp(64px, 9vw, 84px); } .wp-finale-lantern-l { left: 12vw; } .wp-finale-lantern-r { right: 12vw; } }
 .wp-finale-in { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; }
 .wp-seal { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0 0 18px; }
 .wp-seal b { font: 500 clamp(40px, 9vw, 64px)/1.2 var(--wk-font-deva); color: var(--wp-gold-d); }
@@ -561,7 +564,7 @@ export const WP_CSS = `
   .wp-finale-garland picture { margin-left: -2vw; }
   .wp-finale-garland .wp-garland-b { margin-right: -2vw; scale: -1 1; }
   .wp-finale-garland .wp-garland-a, .wp-finale-garland .wp-garland-b { -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
-  .wp-finale-lantern { top: 90px; }
+  .wp-finale-lantern { top: clamp(20px, 3.4vw, 56px); }
   .wp-finale-lantern-l { left: 14vw; }
   .wp-finale-lantern-r { right: 14vw; }
 }
