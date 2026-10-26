@@ -172,13 +172,21 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
       {/* The doors stand on the lake terrace: the watercolour sky, hills and lake behind them. */}
       <Lake className="wp-open-lake" />
       <div className="wp-open-wash" aria-hidden />
-      {/* The top border: template15's floral arch split into its two crowns, hung from the top corners at their own resolution (crisp on any screen). */}
-      <div className="wp-open-garland" aria-hidden>
+      {/* Dressed like the finale: the hero's leaf garland flush with the top edge (mirrored into two corner strips on wide screens), blossom lanterns hanging from it, the white balustrade along the foot. */}
+      <div className="wp-garland wp-finale-garland wp-open-leaves" aria-hidden>
+        <picture>
+          <source media="(max-width: 700px)" srcSet={img("garlandSm").src} />
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <img {...img("garland", { high: true })} className="wp-garland-a" />
+        </picture>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("floralCornerL", { high: true })} className="is-l" />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...img("floralCornerR", { high: true })} className="is-r" />
+        <img {...img("garland", { high: true })} className="wp-garland-b" />
       </div>
+      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+      <img {...img("lanterns")} className="wp-finale-lantern wp-finale-lantern-l wp-open-lantern" aria-hidden />
+      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+      <img {...img("lanterns")} className="wp-finale-lantern wp-finale-lantern-r wp-open-lantern" aria-hidden />
+      <span className="wp-balustrade wp-open-rail" aria-hidden />
 
       <div className="wp-open-world">
         <div className="wp-open-copy">

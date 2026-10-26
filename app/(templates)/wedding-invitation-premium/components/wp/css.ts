@@ -68,7 +68,7 @@ export const WP_CSS = `
 .wp-lang button:focus-visible { outline: 2px solid var(--wp-gold); outline-offset: 2px; }
 
 /* ══ The opening: French doors ═══════════════════════════ */
-.wp-open { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: linear-gradient(180deg, #E4EFF8 0%, #F6F9FB 45%, #FBF6EA 100%); }
+.wp-open { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: linear-gradient(180deg, var(--wp-bg1) 0%, color-mix(in srgb, var(--wp-pink) 10%, var(--wp-bg2)) 50%, color-mix(in srgb, var(--wp-blue) 18%, var(--wp-bg1)) 100%); }
 .wp-open.is-push { opacity: 0; pointer-events: none; transition: opacity .55s ease .62s; }
 .wp-open-flash { position: fixed; left: 50%; top: 52%; z-index: 9; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; display: grid; place-items: center; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.06); background: radial-gradient(closest-side, #FFFDF4 0%, #FFF8E8 20%, #F6F6F0 38%, #EEF4F8 60%, #E8F1F8 100%); transition: opacity .35s ease, transform .9s cubic-bezier(.35,0,.2,1); }
 .wp-open-flash img { width: min(62vmin, 520px); height: auto; opacity: 0; transform: scale(.4) rotate(-40deg); transition: opacity .5s ease .12s, transform 1.2s cubic-bezier(.2,.8,.2,1); }
@@ -137,7 +137,18 @@ export const WP_CSS = `
 .wp-open.is-push .wp-open-garland { opacity: 0; transition: opacity .45s ease; }
 /* the crown at its natural shape: a light band of hanging blossom across the middle, dense cascades down
    both sides beside the doors; the words start just under the middle band */
-.wp-open-world { padding-top: max(64px, calc(env(safe-area-inset-top) + 56px), calc(min(50vw, 480px) * .8 * .34)); }
+/* like the finale: no sky painting (the wash shows), the leaf garland and lanterns on top, the balustrade along the foot */
+.wp-open-lake .wp-lv-sky { opacity: 0; }
+.wp-open .wp-open-wash { opacity: .55; }
+.wp-open-leaves, .wp-open-lantern { opacity: 0; transition: opacity 1.1s var(--wp-soft) .2s; }
+.wp-open.is-ready .wp-open-leaves, .wp-open.is-ready .wp-open-lantern { opacity: 1; }
+.wp-open.is-push .wp-open-leaves, .wp-open.is-push .wp-open-lantern, .wp-open.is-push .wp-open-rail { opacity: 0; transition: opacity .45s ease; }
+.wp-open-rail { z-index: 1; height: clamp(46px, 9svh, 84px); }
+.wp-open-world { z-index: 2; padding-top: max(64px, calc(env(safe-area-inset-top) + 56px), calc(112vw * .286 * .88)); padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+@media (min-width: 960px) { .wp-open-world { padding-top: max(70px, calc(min(44vw, 620px) * .286 * .55)); } }
+@media (max-width: 699px) { .wp-open-lantern { display: none; } }
+@media (min-width: 700px) and (max-width: 959px) { .wp-open-world { padding-top: calc(104vw * .286 * .86); } }
+.wp-open-hint { position: relative; z-index: 1; text-shadow: 0 0 6px #fff, 0 0 2px #fff; color: var(--wp-blue-ink); }
 /* a soft ivory halo keeps the words clear of any petal behind them */
 .wp-open-copy::before { content: ""; position: absolute; inset: -18% -14%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(250,253,255,.85), rgba(250,253,255,.5) 60%, transparent); pointer-events: none; }
 
