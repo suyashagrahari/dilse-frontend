@@ -353,14 +353,24 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
 
         {/* ── RSVP ────────────────────────────────────────────────────────── */}
         {m.rsvp && (
-          <Section id="rsvp" eyebrow={<span lang={lang}>{lang === "hi" ? s.rsvpEyebrow : `RSVP · ${s.rsvpEyebrow}`}</span>} ornament={null} width="narrow" className="cw-sec cw-sec-rsvp">
+          <Section id="rsvp" eyebrow={<span lang={lang}>{lang === "hi" ? s.rsvpEyebrow : `RSVP · ${s.rsvpEyebrow}`}</span>} ornament={null} width="wide" className="cw-sec cw-sec-rsvp">
+            {/* Wide screens: the couple on their flowered swing under the floral canopy beside the form; phones: a small vignette above it. */}
             <div className="cw-rsvp">
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img className="cw-rsvp-peony" {...img(A.peonies, { lazy: true })} aria-hidden />
-              <Reveal as="p" className="cw-upasthiti">
-                <span lang={lang}>{s.upasthiti}</span>
+              <Reveal effect="zoom" className="cw-rsvp-art">
+                <span className="cw-rsvp-arch" aria-hidden>
+                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                  <img className="cw-rsvp-canopy" {...img(A.canopy, { lazy: true })} />
+                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                  <img className="cw-rsvp-swing" {...img(A.swing, { lazy: true })} />
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img className="cw-rsvp-peony" {...img(A.peonies, { lazy: true })} aria-hidden />
+                <p className="cw-upasthiti">
+                  <span lang={lang}>{s.upasthiti}</span>
+                </p>
+                <p className="cw-rsvp-couple">{couple}</p>
               </Reveal>
-              <div ref={rsvpRef}>
+              <div ref={rsvpRef} className="cw-rsvp-form">
                 <Reveal>
                   <RSVPBlock mode={mode} couple={couple} events={rsvpEvents} perEvent={m.events.length > 1} meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={m.events.length > 1 ? s.rsvpIntro : undefined} locale={locale} text={lang === "hi" ? RSVP_HI : undefined} />
                 </Reveal>
@@ -371,7 +381,7 @@ export default function WeddingInvitationExperience({ data, mode, react }: Exper
 
         {/* ── Blessings ───────────────────────────────────────────────────── */}
         {m.blessings && (
-          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal" className="cw-sec cw-sec-bless">
+          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="wide" className="cw-sec cw-sec-bless">
             <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} text={lang === "hi" ? BLESSINGS_HI : undefined} />
           </Section>
         )}

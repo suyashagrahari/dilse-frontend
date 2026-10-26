@@ -228,6 +228,23 @@ export default function Jharokha({ first, second, dateLine, guest, s, lang, invo
           <img {...img(A.pampasCorner)} />
         </span>
       ))}
+      {/* A rose bouquet at each tree's foot, a floral canopy overhead, blossom lanterns swaying beside the window. */}
+      {(["l", "r"] as const).map((side) => (
+        <span key={side} className={`cw-bloom is-${side}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.peonies)} />
+        </span>
+      ))}
+      <span className="cw-canopy" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img(A.canopy)} />
+      </span>
+      {(["l", "r"] as const).map((side) => (
+        <span key={side} className={`cw-lantern is-${side}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.lanterns)} />
+        </span>
+      ))}
 
       <div className="cw-gate-col">
         <p className="cw-gate-top" lang={lang}>

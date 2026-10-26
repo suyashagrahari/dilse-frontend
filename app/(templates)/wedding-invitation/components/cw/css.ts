@@ -50,10 +50,34 @@ export const CW_CSS = `
 .cw-gate-tree.is-r { right: -16vw; transform-origin: 100% 100%; }
 .cw-pampas { position: absolute; bottom: -2%; z-index: 1; width: clamp(120px, 34vw, 300px); pointer-events: none; }
 .cw-pampas img { display: block; width: 100%; height: auto; }
-.cw-pampas.is-l { left: -6%; }
-.cw-pampas.is-r { right: -6%; }
-.cw-pampas.is-r img { transform: scaleX(-1); }
-.cw-gate.is-loading .cw-pampas { opacity: 0; }
+/* The pampas art is a bottom-right corner (cut flat on its right and bottom): as drawn on the right, mirrored on the left, so the cut edges always meet the screen's edges. */
+.cw-pampas.is-l img { transform: scaleX(-1); }
+.cw-pampas.is-l { left: -2%; }
+.cw-pampas.is-r { right: -2%; }
+/* a peony bouquet at each tree's foot */
+.cw-bloom { position: absolute; bottom: -3%; z-index: 2; width: clamp(104px, 15vw, 230px); pointer-events: none; opacity: 0; }
+.cw-bloom img { display: block; width: 100%; height: auto; filter: drop-shadow(0 -6px 14px rgba(110,40,58,.14)); }
+.cw-bloom.is-l { left: clamp(-30px, -2vw, -10px); }
+.cw-bloom.is-r { right: clamp(-30px, -2vw, -10px); }
+.cw-bloom.is-r img { transform: scaleX(-1); }
+/* blossom lanterns hanging from above (laptops and up) */
+.cw-lantern { position: absolute; top: 0; z-index: 2; display: none; width: clamp(72px, 6.6vw, 112px); pointer-events: none; transform-origin: 50% 0; opacity: 0; }
+.cw-lantern img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 14px rgba(110,40,58,.18)); }
+.cw-lantern.is-r img { transform: scaleX(-1); }
+@keyframes cw-swing { 0%, 100% { transform: rotate(-2.4deg); } 50% { transform: rotate(2.4deg); } }
+@keyframes cw-drop { from { transform: translateY(-40%); opacity: 0; } to { transform: none; opacity: 1; } }
+/* the floral canopy over the window */
+.cw-canopy { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: clamp(120px, 34svh, 360px); overflow: hidden; pointer-events: none; opacity: 0; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent); mask-image: linear-gradient(180deg, #000 55%, transparent); }
+.cw-canopy img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+.cw-gate:not(.is-loading) .cw-canopy { animation: cw-drop 1.4s var(--cw-ease) .1s both; }
+.cw-gate:not(.is-loading) .cw-bloom { animation: cw-pop 1s cubic-bezier(.34,1.5,.64,1) .8s both; }
+.cw-gate:not(.is-loading) .cw-lantern { animation: cw-drop 1.2s var(--cw-ease) .5s both; }
+.cw-gate:not(.is-loading) .cw-lantern img { animation: cw-swing 5.5s ease-in-out 1.7s infinite; transform-origin: 50% 0; }
+.cw-gate:not(.is-loading) .cw-lantern.is-r img { animation-name: cw-swing-r; animation-delay: 2.1s; }
+@keyframes cw-swing-r { 0%, 100% { transform: scaleX(-1) rotate(-2.4deg); } 50% { transform: scaleX(-1) rotate(2.4deg); } }
+.cw-gate.is-push .cw-canopy, .cw-gate.is-push .cw-lantern, .cw-gate.is-push .cw-bloom { opacity: 0 !important; transition: opacity .5s ease; }
+.cw-gate-top { position: relative; z-index: 2; text-shadow: 0 1px 10px rgba(255,248,246,.95), 0 0 2px #fff; }
+.cw-gate.is-loading .cw-pampas, .cw-gate.is-loading .cw-canopy, .cw-gate.is-loading .cw-bloom, .cw-gate.is-loading .cw-lantern { opacity: 0; }
 .cw-gate:not(.is-loading) .cw-pampas.is-l { animation: cw-grow-l 1.6s var(--cw-ease) .3s both; }
 .cw-gate:not(.is-loading) .cw-pampas.is-r { animation: cw-grow-r 1.6s var(--cw-ease) .4s both; }
 .cw-gate.is-push .cw-pampas { opacity: 0; transition: opacity .6s ease; }
@@ -136,13 +160,17 @@ export const CW_CSS = `
 .cw-gate.is-push .cw-gate-tree.is-r { transform: translate3d(40%, 10%, 0); }
 .cw-gate.is-reduced, .cw-gate.is-reduced * { animation: none !important; transition: none !important; }
 .cw-gate.is-reduced { transition: opacity .4s ease !important; }
+.cw-gate.is-reduced:not(.is-loading) .cw-canopy, .cw-gate.is-reduced:not(.is-loading) .cw-bloom, .cw-gate.is-reduced:not(.is-loading) .cw-lantern { opacity: 1; }
 .cw-gate.is-reduced.is-push .cw-cam { transform: none; }
 
 /* wide screens: the peony trees stand beside the window, the dawn fills the sides */
 @media (min-width: 760px) {
   .cw-gate-tree { height: min(84svh, 860px); }
-  .cw-gate-tree.is-l { left: max(-4vw, calc(50% - 46svh - 300px)); }
-  .cw-gate-tree.is-r { right: max(-4vw, calc(50% - 46svh - 300px)); }
+  .cw-gate-tree.is-l { left: -3vw; }
+  .cw-gate-tree.is-r { right: -3vw; }
+  .cw-gate .cw-lantern { display: block; }
+  .cw-gate .cw-lantern.is-l { left: calc(50% - 0.26 * clamp(280px, calc(100svh - 318px), 760px) - clamp(130px, 13vw, 210px)); }
+  .cw-gate .cw-lantern.is-r { right: calc(50% - 0.26 * clamp(280px, calc(100svh - 318px), 760px) - clamp(130px, 13vw, 210px)); }
 }
 @media (min-width: 760px) and (max-aspect-ratio: 4/5) {
   .cw-gate-tree { height: min(62svh, 760px); }
@@ -173,6 +201,11 @@ export const CW_CSS = `
 @keyframes cw-sway-r { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-1.2deg); } }
 .cw-hero .cw-pampas { z-index: 1; bottom: -1%; width: clamp(110px, 30vw, 320px); opacity: 0; transition: opacity 1.2s ease .6s; }
 .cw-hero.is-on .cw-pampas { opacity: 1; }
+.cw-hero .cw-bloom { transition: opacity 1.2s ease .8s, transform 1.2s cubic-bezier(.34,1.4,.64,1) .8s; transform: translateY(16%) scale(.9); transform-origin: 50% 100%; }
+.cw-hero.is-on .cw-bloom { opacity: 1; transform: none; }
+.cw-hero.is-on .cw-lantern { animation: cw-drop 1.3s var(--cw-ease) .6s both; }
+.cw-hero.is-on .cw-lantern img { animation: cw-swing 5.5s ease-in-out 2s infinite; transform-origin: 50% 0; }
+.cw-hero.is-on .cw-lantern.is-r img { animation: cw-swing-r 6s ease-in-out 2.4s infinite; }
 .cw-hero-mono { display: none; }
 .cw-hero-grid { position: relative; z-index: 2; width: 100%; max-width: 1240px; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; margin-top: calc(-1 * min(17vw, 150px)); }
 .cw-hero-words { display: grid; justify-items: center; gap: 6px; min-width: 0; max-width: 36rem; }
@@ -259,6 +292,9 @@ export const CW_CSS = `
   .cw-hero-tree.is-l { left: calc(-1 * min(4vw, 60px)); }
   .cw-hero-tree.is-r { right: calc(-1 * min(4vw, 60px)); }
   .cw-hero .cw-pampas { width: clamp(200px, 18vw, 300px); }
+  .cw-hero .cw-lantern { display: block; }
+  .cw-hero .cw-lantern.is-l { left: clamp(160px, 13vw, 250px); }
+  .cw-hero .cw-lantern.is-r { right: clamp(160px, 13vw, 250px); }
   .cw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(16px, 3vw, 56px); margin-top: 0; padding: 0 clamp(150px, 14vw, 250px); }
   .cw-hero-words { gap: 4px; }
   .cw-hero-mono { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .06em; width: clamp(70px, 10svh, 92px); aspect-ratio: 1; margin-bottom: 6px; border-radius: 50%; font: 400 clamp(30px, 4.4svh, 40px)/1 var(--wk-font-script); color: var(--wk-accent); background: radial-gradient(circle at 50% 35%, var(--wk-surface-solid), color-mix(in srgb, var(--wk-accent) 10%, var(--wk-surface-solid))); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--wk-gold) 70%, transparent), inset 0 0 0 6px var(--wk-surface-solid), inset 0 0 0 7px color-mix(in srgb, var(--wk-gold) 40%, transparent), 0 16px 28px -18px rgba(110,40,58,.6); }
@@ -310,6 +346,13 @@ export const CW_CSS = `
 .cw-root .cw-letter .wk-msg-heading { font-family: var(--wk-font-script); }
 /* Two columns (English | Hindi): the shorter one sits mid-height beside the longer, not stranded at the top. */
 @media (min-width: 860px) { .cw-root .cw-letter .wk-msg.is-two .wk-msg-text { align-self: center; } .cw-root .cw-letter .wk-msg.is-two .wk-msg-text p:last-child { margin-bottom: 0; } }
+
+@media (min-width: 1024px) {
+  .cw-root .wk-section.cw-sec-invite { max-width: 1120px; }
+  .cw-letter { max-width: 920px; padding-left: 72px; padding-right: 72px; }
+  .cw-day-card { max-width: 860px; padding: 48px 56px; }
+  .cw-day-date { font-size: 44px; }
+}
 
 /* families */
 .cw-fam { display: grid; gap: 22px; }
@@ -454,10 +497,30 @@ export const CW_CSS = `
 .cw-live-soon { margin: 0; display: inline-flex; gap: 8px; align-items: center; padding: 10px 16px; border-radius: 999px; font: 500 14px/1.3 var(--wk-font-sans); color: var(--wk-muted); background: var(--wk-surface-solid); box-shadow: inset 0 0 0 1px var(--cw-line); }
 
 /* rsvp */
-.cw-rsvp { position: relative; }
-.cw-rsvp-peony { position: absolute; z-index: 2; left: clamp(-40px, -6vw, -10px); top: clamp(-80px, -14vw, -54px); width: clamp(96px, 24vw, 150px); height: auto; pointer-events: none; transform: scaleX(-1) rotate(-6deg); filter: drop-shadow(0 10px 12px rgba(110,40,58,.16)); }
-.cw-upasthiti { margin: -4px 0 18px; text-align: center; font: 400 clamp(28px, 7.4vw, 38px)/1.2 var(--wk-font-script); color: var(--wk-accent); }
-.cw-root.is-hi .cw-upasthiti { font: 500 22px/1.4 var(--wk-font-deva); }
+.cw-rsvp { position: relative; display: grid; gap: 22px; max-width: 680px; margin: 0 auto; }
+.cw-rsvp-art { position: relative; display: grid; justify-items: center; text-align: center; gap: 4px; }
+.cw-rsvp-arch { position: relative; display: block; width: min(78%, 300px); aspect-ratio: 4 / 4.4; border-radius: 999px 999px 26px 26px; overflow: hidden; background: radial-gradient(80% 60% at 50% 40%, #fff, color-mix(in srgb, var(--wk-accent) 14%, #fff) 70%, color-mix(in srgb, var(--wk-accent) 24%, #fff)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--wk-gold) 75%, transparent), inset 0 0 0 8px rgba(255,255,255,.6), inset 0 0 0 9px color-mix(in srgb, var(--wk-gold) 40%, transparent), 0 30px 60px -36px rgba(110,40,58,.6); }
+.cw-rsvp-canopy { position: absolute; left: -12%; top: -4%; width: 124%; height: auto; z-index: 2; -webkit-mask-image: linear-gradient(180deg, #000 50%, transparent 92%); mask-image: linear-gradient(180deg, #000 50%, transparent 92%); }
+.cw-rsvp-swing { position: absolute; left: 50%; bottom: 0; width: 96%; height: auto; transform: translateX(-50%); transform-origin: 50% 0; }
+.cw-rsvp-art.is-in .cw-rsvp-swing { animation: cw-swingseat 5s ease-in-out 1s infinite; }
+@keyframes cw-swingseat { 0%, 100% { transform: translateX(-50%) rotate(-1.4deg); } 50% { transform: translateX(-50%) rotate(1.4deg); } }
+.cw-rsvp-peony { position: absolute; z-index: 3; left: calc(50% - min(39%, 150px) - 46px); bottom: 64px; width: clamp(96px, 24vw, 140px); height: auto; pointer-events: none; transform: scaleX(-1) rotate(-6deg); filter: drop-shadow(0 10px 12px rgba(110,40,58,.16)); }
+.cw-upasthiti { margin: 14px 0 0; text-align: center; font: 400 clamp(28px, 7.4vw, 40px)/1.2 var(--wk-font-script); color: var(--wk-accent); text-wrap: balance; }
+.cw-root.is-hi .cw-upasthiti { font: 500 24px/1.4 var(--wk-font-deva); }
+.cw-rsvp-couple { margin: 0; font: 600 12.5px/1.4 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
+.cw-rsvp-form { min-width: 0; }
+@media (min-width: 1024px) {
+  .cw-rsvp { max-width: 1160px; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(36px, 5vw, 72px); }
+  .cw-rsvp-art { position: sticky; top: 90px; }
+  .cw-rsvp-arch { width: min(100%, 420px); }
+  .cw-rsvp-peony { width: 170px; left: -24px; bottom: 90px; }
+  .cw-root .cw-rsvp-form .wk-rsvp { padding: clamp(30px, 3vw, 44px) clamp(28px, 3.4vw, 52px); }
+}
+/* the blessings: the form beside the wall on wide screens */
+@media (min-width: 1024px) {
+  .cw-root .cw-sec-bless .wk-bless { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; gap: clamp(30px, 4vw, 60px); }
+  .cw-root .cw-sec-bless .wk-bless-form { max-width: none; position: sticky; top: 90px; }
+}
 .cw-root .wk-rsvp { border-radius: 24px; }
 /* Devanagari never takes the caps letter-spacing (it breaks the shirorekha). */
 .cw-root.is-hi .wk-rsvp-by, .cw-root.is-hi .wk-eyebrow, .cw-root.is-hi .wk-rsvp .wk-field-l, .cw-root.is-hi .wk-bless .wk-field-l, .cw-root.is-hi .cw-hero-time, .cw-root.is-hi .cw-day-time { letter-spacing: .01em; text-transform: none; font-family: var(--wk-font-deva), var(--wk-font-sans); }
@@ -489,10 +552,11 @@ export const CW_CSS = `
 .cw-personal-row .wk-input { flex: 1 1 170px; min-width: 0; min-height: 46px; font-size: 16px; }
 .cw-share-note { min-height: 18px; margin: 0; font: 500 13.5px/1.3 var(--wk-font-sans); color: var(--wk-accent); word-break: break-all; }
 .cw-replay { margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--wk-font-sans); color: var(--wk-gold-ink); cursor: pointer; }
-.cw-finale-floor { position: relative; width: calc(100% + 32px); max-width: 1100px; height: clamp(150px, 34vw, 260px); margin: 22px -16px 0; pointer-events: none; }
+.cw-finale-floor { position: relative; width: 100vw; height: clamp(150px, 34vw, 280px); margin: 22px calc(50% - 50vw) 0; pointer-events: none; }
 .cw-finale-floor img { position: absolute; bottom: -6px; height: 100%; width: auto; }
-.cw-finale-pampas.is-l { left: -4%; }
-.cw-finale-pampas.is-r { right: -4%; transform: scaleX(-1); }
+/* the pampas meet the screen's edges and fade out toward the middle (their art is cut flat on one side) */
+.cw-finale-pampas.is-l { left: -3%; -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
+.cw-finale-pampas.is-r { right: -3%; transform: scaleX(-1); -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
 .cw-finale-peony { left: 50%; height: 80% !important; transform: translateX(-50%); bottom: -10px !important; filter: drop-shadow(0 -4px 12px rgba(110,40,58,.12)); }
 
 /* the QR dialog (portalled to <body>, so no theme tokens here) */
@@ -507,6 +571,7 @@ export const CW_CSS = `
   .cw-root *, .cw-root *::before, .cw-root *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; transition-delay: 0s !important; }
   .cw-hero-crown, .cw-hero-words > *, .cw-hero-scene, .cw-hero-tree, .cw-hero-down { opacity: 1 !important; transform: none !important; }
   .cw-hero-petals, .cw-hero-twinkle { display: none !important; }
+  .cw-bloom, .cw-lantern, .cw-canopy { opacity: 1 !important; transform: none !important; }
   .cw-hero-arch-line { stroke-dashoffset: 0 !important; }
 }
 `;

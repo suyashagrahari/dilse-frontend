@@ -16,6 +16,8 @@
 //   template3         pink peony bouquet, pampas border (the closing)
 //   template14        the couple dressed for each function (haldi, mehndi,
 //                     sangeet, engagement, wedding, reception) on its card
+//   classic/floral-canopy  template15's floral arch, top band; template11's
+//                     blossom lanterns; template3's couple on the swing (RSVP)
 //   classic/gold-mandala  template16's gold mandala (480px), the slow halo
 //                     turning behind the couple in the hero
 
@@ -56,6 +58,12 @@ export const A = {
   pampas: a("template3/13-pampas-grass-border.webp", 800, 553),
   pampasCorner: a("template3/09-pampas-grass-corner.webp", 595, 800),
   mandalaGold: a("classic/gold-mandala.webp", 480, 480),
+  // template15's pink-and-white floral arch, its top band only (1200 × 450): the canopy over the window and the hero
+  canopy: a("classic/floral-canopy.webp", 1200, 450),
+  // template11: two lanterns hanging on cherry-blossom strings
+  lanterns: a("template11/08-hanging-lanterns-blossoms.webp", 468, 800),
+  // template3: the couple on a flowered swing (the RSVP panel)
+  swing: a("template3/05-couple-on-swing.webp", 800, 789),
 } as const;
 
 /** The couple dressed for each kind of function (template14), for the function cards. */

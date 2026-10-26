@@ -103,6 +103,19 @@ export default function Hero({ on, s, lang, first, second, guest, date, time, ve
         </span>
       ))}
 
+      {(["l", "r"] as const).map((side) => (
+        <span key={side} className={`cw-bloom is-${side}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.peonies, { lazy: true })} />
+        </span>
+      ))}
+      {(["l", "r"] as const).map((side) => (
+        <span key={side} className={`cw-lantern is-${side}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.lanterns, { lazy: true })} />
+        </span>
+      ))}
+
       <div className="cw-hero-grid">
         <div className="cw-hero-words">
           {/* Wide screens: the couple's initials in a gold-ringed seal above the names. */}
