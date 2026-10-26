@@ -91,12 +91,14 @@ export const RW_CSS = `
 /* portrait screens (phones, tablets): the lanterns hang lower, at the very edges beside the dome, clear of the names and the top buttons */
 @media (max-aspect-ratio: 6/5) {
   /* the long-string trio, hung from above the top edge: its lanterns (2W below its top) sit just beside the dome */
-  .rw-gate-lamp { --lw: clamp(120px, 30vw, 230px); z-index: 7; top: calc(var(--head) - 34px - var(--lw) * 2); width: var(--lw); }
+  .rw-gate-lamp { --lw: clamp(150px, 38vw, 290px); z-index: 7; top: calc(var(--head) - 30px - var(--lw) * 2); width: var(--lw); }
+  /* a warm glow behind each trio so the gold reads against the ivory */
+  .rw-gate-lamp::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: -4%; height: 26%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,140,.55), rgba(255,214,140,0)); pointer-events: none; }
   .rw-gate-lamp .is-short { display: none; }
   .rw-gate-lamp .is-long { display: block; }
   /* the art has wide transparent margins: pull it out so the lanterns sit right at the edge */
-  .rw-gate-lamp.is-l { left: calc(var(--lw) * -.24); }
-  .rw-gate-lamp.is-r { right: calc(var(--lw) * -.24); }
+  .rw-gate-lamp.is-l { left: calc(var(--lw) * -.27); }
+  .rw-gate-lamp.is-r { right: calc(var(--lw) * -.27); }
 }
 @media (min-width: 760px) and (min-aspect-ratio: 6/5) {
   .rw-gate { --head: clamp(190px, 25svh, 250px); --foot: clamp(92px, 12svh, 116px); }
