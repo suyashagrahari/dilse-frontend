@@ -20,7 +20,6 @@ export const A = {
   doorR: { src: `${O}/premium/right-door.webp`, w: 568, h: 1800 },
   terrace: { src: `${O}/premium/terrace-bg.webp`, w: 1080, h: 1800 },
   glare: { src: `${O}/premium/glare-sweep.webp`, w: 500, h: 1800 },
-  rays: { src: `${O}/_shared/light-rays.webp`, w: 900, h: 1200 },
   sparkle: { src: `${O}/_shared/sparkle.webp`, w: 128, h: 128 },
   petal: { src: `${O}/_shared/petal-rose.webp`, w: 128, h: 128 },
   // template6: sky, flamingos, lake, balustrade, couple, florals.

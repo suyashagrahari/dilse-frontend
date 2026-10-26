@@ -14,9 +14,9 @@
 // Phones: a swipe carousel (snap, dots); tablets two across; desktops three.
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, formatEventTime, googleCalendarUrl, mapLink, type WeddingEvent } from "../../../_wedding";
+import { DEFAULT_TZ_OFFSET, FN_TINT, Reveal, downloadWeddingIcs, formatEventTime, googleCalendarUrl, mapLink, type WeddingEvent } from "../../../_wedding";
 import { A, FN_COUPLE, img } from "./assets";
-import { DATE_RE, MAIN_RE, fnTitle, hiTime, kindOf, type FnKind, type Lang } from "./model";
+import { DATE_RE, MAIN_RE, fnTitle, hiTime, kindOf, type Lang } from "./model";
 
 function Icon({ d }: { d: string }) {
   return (
@@ -29,15 +29,6 @@ export const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM1
 export const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
 const CLOCK = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2";
 
-/** Each function's glow: the colour the family dresses in for it, softened to sit on blush paper. */
-const TINT: Record<FnKind, string> = {
-  haldi: "#F2C14E",
-  mehndi: "#8DBB6A",
-  sangeet: "#F09A72",
-  reception: "#A9B5E4",
-  engagement: "#E7C9B5",
-  wedding: "#D9506A",
-};
 
 function leaf(date: string, locale: string) {
   if (!DATE_RE.test(date)) return null;
@@ -118,7 +109,7 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
           const art = FN_COUPLE[kind];
           const title = fnTitle(e.title, lang);
           return (
-            <Reveal as="li" key={key} className={`cw-ev is-${kind}${isMain ? " is-main" : ""}`} delay={(i % 3) * 110} style={{ ["--fn" as string]: TINT[kind] } as CSSProperties}>
+            <Reveal as="li" key={key} className={`cw-ev is-${kind}${isMain ? " is-main" : ""}`} delay={(i % 3) * 110} style={{ ["--fn" as string]: FN_TINT[kind] } as CSSProperties}>
               <article className="cw-ev-card">
                 <div className="cw-ev-stage" aria-hidden>
                   <span className="cw-ev-window" />

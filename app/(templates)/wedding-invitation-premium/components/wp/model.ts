@@ -7,7 +7,7 @@
 // faqs [{title,text}], and possibly a dark theme id. All of it still renders.
 
 import type { LovePhoto } from "../../../_love/types";
-import { LIGHT_THEMES, isWeddingThemeId, type WeddingThemeId } from "../../../_wedding/themes";
+import type { WeddingThemeId } from "../../../_wedding/themes";
 import type { WeddingEvent } from "../../../_wedding/types";
 import type { ValentineDayData } from "../../../_valentine/types";
 import { WP_LIMITS, wpLocalUrl } from "../../../_valentine/days/wedding-invitation-premium";
@@ -124,13 +124,16 @@ export function swatchFor(e: { dressCode?: string; dressColor?: string }): strin
 
 export const MAIN_RE = /wedding|vivah|शादी|विवाह|phera|shaadi|nikah|ceremony|muhurtham|muhurtam|kalyanam|anand karaj|marriage|lagna|matrimony/i;
 
-/** A stored theme id → the light palette it renders in (old dark pages included). */
+/**
+ * One palette for the whole invitation: the powder-blue Lake Terrace (sky,
+ * ivory, champagne gold, flamingo pink). The art is painted for it, so every
+ * page — including ones saved with blush, champagne or an old dark theme —
+ * renders in powder.
+ */
+export const WP_THEME: WeddingThemeId = "powder";
 export function lightTheme(v: unknown): WeddingThemeId {
-  if (isWeddingThemeId(v) && (LIGHT_THEMES as readonly string[]).includes(v)) return v;
-  if (v === "maroon") return "blush";
-  if (v === "noir") return "champagne";
-  if (v === "emerald") return "powder";
-  return "powder";
+  void v;
+  return WP_THEME;
 }
 
 export function readPremium(data: ValentineDayData): WpModel {
@@ -303,6 +306,9 @@ export const T = {
     cardBusy: "Drawing your card…",
     saveDate: "Save the date",
     saveAll: "Save all dates",
+    swipe: "Swipe to see every function",
+    lang: "Language",
+    saved: "Saved ✓",
     calendar: "Add to calendar",
     calShort: "Calendar",
     gcal: "Google Cal",
@@ -370,6 +376,9 @@ export const T = {
     cardBusy: "कार्ड बन रहा है…",
     saveDate: "तिथि सहेजें",
     saveAll: "सभी तिथियाँ सहेजें",
+    swipe: "सभी कार्यक्रम देखने के लिए स्वाइप करें",
+    lang: "भाषा",
+    saved: "सहेजा गया ✓",
     calendar: "कैलेंडर में जोड़ें",
     calShort: "कैलेंडर",
     gcal: "Google Cal",

@@ -43,3 +43,6 @@ export * from "./types";
 export * from "./ics";
 export * from "./api";
 export * from "./art";
+
+export { BLESSINGS_TEXT_HI, FN_COUPLE, FN_TINT, RSVP_TEXT_HI, fnTitle, hiTime, kindOf } from "./i18n";
+export type { FnKind } from "./i18n";

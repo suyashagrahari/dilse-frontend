@@ -9,7 +9,7 @@
 // id="vs-sec-<id>"> so the sheet's chip rail (phones) / side nav (desktop) and
 // Save's "jump to the gap" work:
 //   The couple · Functions · Photos · Invitation · Story & families ·
-//   Guest info · Look & music · RSVP & send.
+//   Guest info · Music · RSVP & send.
 //
 // Every stored key of pages published before the rebuild is edited in place
 // (order, motif, hindi, date, time, city, brideParents, groomParents, faqs,
@@ -17,15 +17,14 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { MasonryEditor, RsvpDashboard } from "../../../_wedding";
-import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
 import PhotoCropper, { clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
 import { API_URL } from "@/lib/config";
 import type { StudioProps } from "../../../_valentine/editor/studios";
 import type { LovePhoto } from "../../../_valentine/types";
-import { DEMO_EVENTS, DEMO_FAQS, DEMO_STORY, WP_LIMITS, WP_THEME_LABELS, newEventId, presetFor, weddingPremiumDay, wpLocalUrl, wpStoredUrl } from "../../../_valentine/days/wedding-invitation-premium";
-import { MAIN_RE, isUpiId, lightTheme, normalisePhone, swatchFor } from "../wp/model";
+import { DEMO_EVENTS, DEMO_FAQS, DEMO_STORY, WP_LIMITS, newEventId, presetFor, weddingPremiumDay, wpLocalUrl, wpStoredUrl } from "../../../_valentine/days/wedding-invitation-premium";
+import { MAIN_RE, isUpiId, normalisePhone, swatchFor } from "../wp/model";
 import { personalLink } from "../wp/guest";
 import GuidedWedding, { type WeddingAnswers } from "./GuidedWedding";
 
@@ -170,37 +169,6 @@ function PhotoPick({ value, photos, onPick, onUpload, onFrame, label }: { value:
           />
         </div>
       )}
-    </div>
-  );
-}
-
-/** The three terrace palettes as the guest page paints them. */
-const SW: Record<string, { bg: string; ink: string; accent: string; blurb: string }> = {
-  powder: { bg: "linear-gradient(170deg, #DCEBF6, #FFFEFA 70%)", ink: "#284D69", accent: "#3E6A8A", blurb: "Powder-blue sky, ivory and champagne gold" },
-  champagne: { bg: "linear-gradient(170deg, #F6EEDC, #FFFEFA 70%)", ink: "#5E4517", accent: "#8A6A2A", blurb: "Ivory paper and warm gold" },
-  blush: { bg: "linear-gradient(170deg, #FBE3EA, #FFFEFA 70%)", ink: "#8C3550", accent: "#A84E69", blurb: "Flamingo blush with gold" },
-};
-function ThemeCards({ value, onChange, sample }: { value: string; onChange: (id: string) => void; sample: string }) {
-  return (
-    <div className="wps-themes" role="radiogroup" aria-label="Theme">
-      {LIGHT_THEMES.map((id) => {
-        const sw = SW[id];
-        if (!sw) return null;
-        const on = value === id;
-        return (
-          <button key={id} type="button" role="radio" aria-checked={on} className={`wps-theme${on ? " is-on" : ""}`} onClick={() => onChange(id)}>
-            <span className="wps-theme-card" style={{ background: sw.bg }}>
-              <span className="wps-theme-door" aria-hidden />
-              <span className="wps-theme-names" style={{ color: sw.ink }}>
-                {sample}
-              </span>
-              <span className="wps-theme-bar" style={{ background: sw.accent }} />
-            </span>
-            <b>{WP_THEME_LABELS[id] ?? id}</b>
-            <small>{sw.blurb}</small>
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -486,7 +454,6 @@ export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, ai, pa
   const token = owner?.token ?? null;
   const letter = mf.letter;
   const hindi = s(x.hindiMessage);
-  const theme = lightTheme(x.theme);
   const bilingual = x.hindi !== false;
   const mapBad = (u: string) => !!u && !/^https:\/\/((www\.)?google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google\.[a-z.]+)/i.test(u);
 
@@ -756,9 +723,19 @@ export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, ai, pa
           <input type="checkbox" checked={bilingual} onChange={(e) => set("hindi", e.target.checked)} /> Offer a Hindi version (EN / हिं switch for guests)
         </label>
         {bilingual && (
-          <label className="wps-tog">
-            <input type="checkbox" checked={x.lang === "hi"} onChange={(e) => set("lang", e.target.checked ? "hi" : "en")} /> Open the invitation in Hindi
-          </label>
+          <>
+            <p className="wps-sub" id="wps-lang-l">
+              Invitation language · every heading, button, date, time and the RSVP form follow it; guests can still switch
+            </p>
+            <div className="wps-seg" role="radiogroup" aria-labelledby="wps-lang-l">
+              <button type="button" role="radio" aria-checked={x.lang !== "hi"} onClick={() => set("lang", "en")}>
+                English
+              </button>
+              <button type="button" role="radio" aria-checked={x.lang === "hi"} onClick={() => set("lang", "hi")} lang="hi">
+                हिंदी
+              </button>
+            </div>
+          </>
         )}
       </section>
 
@@ -916,11 +893,10 @@ export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, ai, pa
         </div>
       </section>
 
-      {/* ── 7 Look & music ─────────────────────────────────────────────── */}
-      <section className="vs-sec" id="vs-sec-music" aria-label="Look and music">
-        <Head n={7} title="Look & music" sub="Three light palettes. The song starts the moment the doors open, with a mute button always in reach." />
-        <ThemeCards value={theme} onChange={(id) => set("theme", id)} sample={`${(mf.recipientName || "I").slice(0, 1)} & ${(mf.senderName || "A").slice(0, 1)}`} />
-        <div style={{ marginTop: 18 }}>
+      {/* ── 7 Music ────────────────────────────────────────────────────── */}
+      <section className="vs-sec" id="vs-sec-music" aria-label="Music">
+        <Head n={7} title="Music" sub="The song starts the moment the doors open, with a mute button always in reach. The look is one hand-painted Lake Terrace palette — powder-blue sky, ivory and champagne gold — made for this art." />
+        <div>
           <MusicPicker
             value={mf}
             suggestions={weddingPremiumDay.music?.suggestions}

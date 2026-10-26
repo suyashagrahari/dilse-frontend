@@ -12,7 +12,9 @@
 //   0.45 s  sunlight spills through and blooms on the floor
 //   0.50 s  gold dust and rose petals drift out of the doorway
 //   1.05 s  the camera walks through the doorway (dolly)
-//   1.70 s  the poster fades into the hero, already decoded underneath
+//   1.70 s  sunlight blooms out of the doorway and fills the screen (a gold
+//           mandala turning open in it), then fades into the hero, already
+//           decoded underneath — never a ghost of the doors over the page
 // Transform/opacity only, decoded before it plays; reduced motion = a 400 ms
 // crossfade. A real <button>, Enter/Space, and a tap anywhere on the doors.
 
@@ -155,7 +157,7 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
       if (!live.current) return;
       setPhase("push");
       onOpened();
-      later(700, () => setPhase("gone"));
+      later(1300, () => setPhase("gone"));
     });
   };
 
@@ -169,6 +171,23 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
         <img {...img("terrace")} fetchPriority="low" />
       </div>
       <div className="wp-open-wash" aria-hidden />
+      {/* The terrace around the doors: banana plants and anthuriums at the edges, blossom lanterns overhead, the peacock by the door. */}
+      <div className="wp-open-deco" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("banana")} className="wp-od-banana wp-od-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("banana")} className="wp-od-banana wp-od-r" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("anthurium")} className="wp-od-flora wp-od-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("anthurium")} className="wp-od-flora wp-od-r" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lanterns")} className="wp-od-lantern wp-od-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lanterns")} className="wp-od-lantern wp-od-r" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("peacock")} className="wp-od-peacock" />
+      </div>
 
       <div className="wp-open-world">
         <div className="wp-open-copy">
@@ -201,8 +220,6 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img {...img("terrace", { high: true })} className="wp-terrace" />
               <span className="wp-sun" />
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...img("rays")} className="wp-rays" />
             </div>
             <div className="wp-doors" aria-hidden>
               <div className="wp-door wp-door-l">
@@ -237,6 +254,12 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
             <div className="wp-fxbox" ref={fxRef} aria-hidden />
           </div>
         </div>
+
+        {/* The step through: sunlight blooms out of the doorway to fill the screen; the terrace appears out of it. */}
+        <span className="wp-open-flash" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/wedding-v3/classic/gold-mandala.webp" width={480} height={480} alt="" decoding="async" />
+        </span>
 
         <div className="wp-open-cta">
           <button type="button" className="wp-open-btn" onClick={open} disabled={!ready} aria-label={label} lang={lang}>

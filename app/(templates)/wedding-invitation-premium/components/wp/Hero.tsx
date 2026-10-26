@@ -109,6 +109,11 @@ export default function Hero(p: HeroProps) {
         </picture>
       </div>
 
+      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+      <img {...img("lanterns", { lazy: true })} className="wp-hero-lantern wp-hero-lantern-l" aria-hidden />
+      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+      <img {...img("lanterns", { lazy: true })} className="wp-hero-lantern wp-hero-lantern-r" aria-hidden />
+
       <div className="wp-hero-grid">
         <div className="wp-hero-words">
           <MotifMark motif={p.motif} className="wp-in" />

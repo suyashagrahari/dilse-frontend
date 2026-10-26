@@ -19,7 +19,7 @@
 // ?to=<name> greets the guest by name and signs their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BlessingsWall, Countdown, MessageBlock, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
+import { BLESSINGS_TEXT_HI, BlessingsWall, Countdown, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { Contacts, Icon, LiveStream, PLAY, ShareBar, Shagun, pageUrl } from "./wp/Actions";
 import Events from "./wp/Events";
@@ -111,7 +111,9 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
   const main = m.main;
   const dateLine = m.date ? formatEventDate(m.date, locale) : "";
   const shortDate = m.date ? formatEventDate(m.date, "en-IN") : "";
-  const mainTime = m.time ? formatEventTime(m.time, locale) : "";
+  const mainTime = m.time ? (lang === "hi" ? hiTime(m.time) : formatEventTime(m.time, locale)) : "";
+  // The RSVP's function chips read in the page's language too (their ids, which the dashboard keys on, stay).
+  const rsvpEvents = useMemo(() => (lang === "hi" ? m.events.map((e) => ({ ...e, title: fnTitle(e.title, "hi") })) : m.events), [lang, m.events]);
   const place = [main?.venue, m.city].filter(Boolean).join(" · ");
 
   const completed = useRef(false);
@@ -170,12 +172,13 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
       <Opening key={openKey} first={m.first} second={m.second} dateLine={shortDate} city={m.city} guest={guest} s={s} lang={lang} invocation={m.motif === "ganesha"} onOpened={onOpened} />
 
       {m.bilingual && (
-        <div className="wp-lang" role="group" aria-label="Language">
+        <div className={`wp-lang${lang === "hi" ? " is-hi" : ""}`} role="group" aria-label={s.lang}>
+          <span className="wp-lang-pill" aria-hidden />
           <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
             EN
           </button>
           <button type="button" aria-pressed={lang === "hi"} onClick={() => setLang("hi")} lang="hi">
-            हिं
+            हिंदी
           </button>
         </div>
       )}
@@ -209,7 +212,8 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
           <p className="wp-eyebrow" lang={lang}>
             {s.invitation}
           </p>
-          <MessageBlock text={m.letter} hindi={m.hindiMessage || undefined} ornament={null} heading={m.bilingual ? <span lang={lang}>{s.shubh}</span> : undefined} signature={m.endLine ? undefined : couple} />
+          {/* The Hindi page reads the Hindi letter alone; the English page keeps both side by side. */}
+          <MessageBlock text={lang === "hi" && m.hindiMessage ? m.hindiMessage : m.letter} hindi={lang === "hi" ? undefined : m.hindiMessage || undefined} ornament={null} heading={m.bilingual ? <span lang={lang}>{s.shubh}</span> : undefined} signature={m.endLine ? undefined : couple} />
         </Reveal>
       </Section>
 
@@ -251,7 +255,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
       {m.events.length > 0 && (
         <Section id="events" ornament={null} width="wide" className="wp-sec wp-sec-events">
           <Head eyebrow={s.eventsEyebrow} title={s.events} lang={lang} />
-          <Events events={m.events} couple={couple} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, calShort: s.calShort, gcal: s.gcal, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp }} />
+          <Events events={m.events} couple={couple} locale={locale} lang={lang} labels={{ directions: s.directions, calendar: s.calendar, calShort: s.calShort, gcal: s.gcal, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp, swipe: s.swipe, saved: s.saved }} />
         </Section>
       )}
 
@@ -326,25 +330,43 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
       )}
 
       {/* ── RSVP ────────────────────────────────────────────────────────── */}
-      <Section id="rsvp" ornament={null} width="narrow" className="wp-sec wp-sec-rsvp">
-        <Head eyebrow={`RSVP · ${s.rsvpEyebrow}`} title={s.rsvp} lang={lang} />
-        {m.bilingual && (
-          <Reveal as="p" className="wp-upasthiti">
-            <span lang={lang}>{s.upasthiti}</span>
+      <Section id="rsvp" ornament={null} width="wide" className="wp-sec wp-sec-rsvp">
+        <Head eyebrow={lang === "hi" ? s.rsvpEyebrow : `RSVP · ${s.rsvpEyebrow}`} title={s.rsvp} lang={lang} />
+        {/* Wide screens: the couple on the terrace sofa under the gazebo arch, with blossom lanterns, beside the form; phones: a vignette above it. */}
+        <div className="wp-rsvp-wrap">
+          <Reveal effect="zoom" className="wp-rsvp-art">
+            <span className="wp-rsvp-arch" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...img("sky", { lazy: true })} className="wp-rsvp-sky" />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...img("lake", { lazy: true })} className="wp-rsvp-lake" />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img {...img("couple", { lazy: true })} className="wp-rsvp-couple" />
+            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...img("lanterns", { lazy: true })} className="wp-rsvp-lantern" aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...img("anthurium", { lazy: true })} className="wp-rsvp-flora" aria-hidden />
+            {m.bilingual && (
+              <p className="wp-upasthiti">
+                <span lang={lang}>{s.upasthiti}</span>
+              </p>
+            )}
+            <p className="wp-rsvp-couple-names">{couple}</p>
           </Reveal>
-        )}
-        <Reveal>
-          <div ref={rsvpRef} className="wp-rsvp">
-            <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title="" intro={s.rsvpIntro} locale={locale} />
-          </div>
-        </Reveal>
+          <Reveal className="wp-rsvp-form">
+            <div ref={rsvpRef} className="wp-rsvp">
+              <RSVPBlock mode={mode} couple={couple} events={rsvpEvents} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title="" intro={s.rsvpIntro} locale={locale} text={lang === "hi" ? RSVP_TEXT_HI : undefined} />
+            </div>
+          </Reveal>
+        </div>
       </Section>
 
       {/* ── Blessings ───────────────────────────────────────────────────── */}
       {m.blessings && (
-        <Section id="blessings" ornament={null} width="normal" className="wp-sec">
+        <Section id="blessings" ornament={null} width="wide" className="wp-sec wp-sec-bless">
           <Head eyebrow={s.blessingsEyebrow} title={s.blessings} lang={lang} />
-          <BlessingsWall mode={mode} title="" intro={s.blessingsIntro} />
+          <BlessingsWall mode={mode} title="" intro={s.blessingsIntro} text={lang === "hi" ? BLESSINGS_TEXT_HI : undefined} />
         </Section>
       )}
 
