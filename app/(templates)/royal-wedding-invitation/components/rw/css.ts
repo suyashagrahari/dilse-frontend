@@ -91,11 +91,12 @@ export const RW_CSS = `
 /* portrait screens (phones, tablets): the lanterns hang lower, at the very edges beside the dome, clear of the names and the top buttons */
 @media (max-aspect-ratio: 6/5) {
   /* the long-string trio, hung from above the top edge: its lanterns (2W below its top) sit just beside the dome */
-  .rw-gate-lamp { --lw: clamp(64px, 15vw, 118px); z-index: 7; top: calc(var(--head) - 26px - var(--lw) * 2); width: var(--lw); }
+  .rw-gate-lamp { --lw: clamp(120px, 30vw, 230px); z-index: 7; top: calc(var(--head) - 34px - var(--lw) * 2); width: var(--lw); }
   .rw-gate-lamp .is-short { display: none; }
   .rw-gate-lamp .is-long { display: block; }
-  .rw-gate-lamp.is-l { left: 2px; }
-  .rw-gate-lamp.is-r { right: 2px; }
+  /* the art has wide transparent margins: pull it out so the lanterns sit right at the edge */
+  .rw-gate-lamp.is-l { left: calc(var(--lw) * -.24); }
+  .rw-gate-lamp.is-r { right: calc(var(--lw) * -.24); }
 }
 @media (min-width: 760px) and (min-aspect-ratio: 6/5) {
   .rw-gate { --head: clamp(190px, 25svh, 250px); --foot: clamp(92px, 12svh, 116px); }
