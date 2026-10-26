@@ -1,12 +1,14 @@
 import { Mail, CalendarHeart, MapPin, Image as ImageIcon, Heart } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is the wedding asset pack's Classic poster
-// (media-src/templates/wedding/covers/wedding-invitation/cover-classic.webp,
-// on the CDN with its @360w/@540w/@720w sizes). The first render
-// (cover-poster.webp) carried a "PREMIUM" badge; CDN files are immutable, so
-// the "CLASSIC" re-render has its own name.
+// Gallery card. The cover is three phones showing the real page (the jharokha
+// opening, the names under the palace arch, the haldi card with its couple)
+// under template15's floral canopy: rendered from headless captures, master at
+// media-src/templates/wedding/covers/wedding-invitation/cover-phones.webp
+// (1080 × 1350, with @360w/@540w/@720w). It is served from the repo like the
+// rest of this template's art (the 720px variant, 82 KB); to move it to the
+// CDN, upload the four files next to cover-classic.webp and point this at
+// templateMedia("wedding", "covers/wedding-invitation/cover-phones.webp").
 export const config: TemplatePageConfig = {
   slug: "wedding-invitation",
   type: "wedding-invitation",
@@ -14,7 +16,7 @@ export const config: TemplatePageConfig = {
   title: "Wedding Invitation — Elegant Invite with RSVP",
   description:
     "An elegant wedding invitation website: a wax-seal envelope opens to your names, date and live countdown, the wedding and reception with maps and calendar, your photos in a magazine gallery, your song and one-tap RSVP, in English or Hindi. One hand-painted blush and rose-gold look; the AI writes it from a few lines.",
-  coverImage: templateMedia("wedding", "covers/wedding-invitation/cover-classic.webp"),
+  coverImage: "/wedding-v3/classic/cover-phones.webp",
   emoji: "💌",
   color: "from-amber-100 to-yellow-200",
   previewText: "an invitation, sealed with love 💌",
