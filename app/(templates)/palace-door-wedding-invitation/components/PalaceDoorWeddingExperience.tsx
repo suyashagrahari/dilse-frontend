@@ -22,9 +22,10 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
-import { A, PD_KIT, img } from "./assets";
+import { A, PD_KIT, img, seeded } from "./assets";
 import Courtyard from "./pd/Courtyard";
 import DateScroll from "./pd/DateScroll";
+import Diya from "./pd/Diya";
 import Doors from "./pd/Doors";
 import Events from "./pd/Events";
 import Finale from "./pd/Finale";
@@ -36,6 +37,18 @@ import { T, readPalaceDoor, type Lang } from "./pd/model";
 import { prefillRsvpName, useGuestName } from "./pd/share";
 
 /** Two across on a phone, three from a tablet up (the gallery block is capped at 1080px, so tiles stay large). */
+/** Gold dust drifting up the whole page behind the sections (seeded, so it renders the same every time). */
+const DUST = (() => {
+  const r = seeded(57);
+  return Array.from({ length: 16 }, () => ({
+    left: r() * 100,
+    delay: -r() * 22,
+    dur: 16 + r() * 12,
+    dx: (r() - 0.5) * 80,
+    size: 2 + r() * 3.5,
+  }));
+})();
+
 const GALLERY_COLUMNS = [
   { min: 0, columns: 2 },
   { min: 600, columns: 3 },
@@ -54,13 +67,7 @@ function Film({ id, label }: { id: string; label: string }) {
   return (
     <div className="pd-film">
       {on ? (
-        <iframe
-          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
-          title={label}
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
-          loading="lazy"
-        />
+        <iframe src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`} title={label} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen loading="lazy" />
       ) : (
         <button type="button" className="pd-film-poster" onClick={() => setOn(true)} aria-label={label}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -74,20 +81,6 @@ function Film({ id, label }: { id: string; label: string }) {
         </button>
       )}
     </div>
-  );
-}
-
-/** Hanging jhumkas on a section's top corners (they sway while on screen). */
-function Jhumkas({ lazy = true }: { lazy?: boolean }) {
-  return (
-    <>
-      {[0, 1].map((i) => (
-        <span key={i} className={`pd-hang is-${i ? "r" : "l"}`} aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...img(A.jhumka, { lazy })} />
-        </span>
-      ))}
-    </>
   );
 }
 
@@ -112,8 +105,17 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
   const dateLine = m.main?.date ? formatEventDate(m.main.date, locale) : "";
   const shortDate = m.main?.date ? formatEventDate(m.main.date, "en-IN").replace(/^[^,]+,\s*/, "") : "";
   const mainTime = m.main?.time ? formatEventTime(m.main.time, locale) : "";
-  const [url] = useState(() => (typeof window === "undefined" ? "" : window.location.href.split("#")[0]));
   const venueLine = [m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ");
+
+  // Smooth scrolling: every section's ambient loops (swaying lanterns, the turning mandala,
+  // flickering diyas) pause while it is off screen, so a long fling only animates what shows.
+  useEffect(() => {
+    const root = rootRef.current?.closest<HTMLElement>(".pd-root");
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("pd-off", !e.isIntersecting)), { rootMargin: "120px 0px" });
+    root.querySelectorAll(".pd-court, .wk-section, .pd-finale").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [open]);
 
   const completed = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -141,7 +143,21 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
     return () => io.disconnect();
   }, [guest]);
 
+  // The invitation always begins at the courtyard: the browser must not restore an old scroll
+  // position behind the closed door (a reload would otherwise open onto the middle of the page).
+  useEffect(() => {
+    const h = window.history;
+    const prev = h.scrollRestoration;
+    h.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+    return () => {
+      h.scrollRestoration = prev;
+    };
+  }, []);
+
   const onOpened = () => {
+    // Behind the light of the step-through, so the jump to the top is never seen.
+    window.scrollTo({ top: 0, behavior: "instant" });
     setOpen(true);
     react("opened");
   };
@@ -173,23 +189,35 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
           </button>
         )}
 
+        {/* The whole page's ambience: a faint gold lattice and gold dust rising behind the sections. */}
+        <div className="pd-ambient" aria-hidden>
+          {DUST.map((d, i) => (
+            <i
+              key={i}
+              style={{
+                left: `${d.left}%`,
+                width: d.size,
+                height: d.size,
+                animationDelay: `${d.delay}s`,
+                animationDuration: `${d.dur}s`,
+                ["--dx" as string]: `${d.dx}px`,
+              }}
+            />
+          ))}
+        </div>
+
         <Courtyard open={open} s={s} lang={lang} first={m.first} second={m.second} photo={m.hero} dateLine={dateLine} time={mainTime} venue={venueLine} guest={guest} />
 
         {/* ── The invitation ──────────────────────────────────────────────── */}
         <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal" className="pd-sec pd-sec-invite">
           <div className="pd-invite-wrap">
-            <Jhumkas />
             <Reveal effect="zoom" className="pd-invite">
+              {(["l", "r"] as const).map((sd) => (
+                // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+                <img key={sd} className={`pd-invite-lotus is-${sd}`} {...img(A.lotus, { lazy: true })} aria-hidden />
+              ))}
               <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament="kalash" heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
             </Reveal>
-            <span className="pd-invite-urn is-l" aria-hidden>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...img(A.urn, { lazy: true })} />
-            </span>
-            <span className="pd-invite-urn is-r" aria-hidden>
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...img(A.urn, { lazy: true })} />
-            </span>
           </div>
         </Section>
 
@@ -219,7 +247,7 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
 
         {/* ── Our story ───────────────────────────────────────────────────── */}
         {m.story.length > 0 && (
-          <Section id="story" eyebrow={<span lang={lang}>{s.storyEyebrow}</span>} title={<span lang={lang}>{s.story}</span>} ornament="divider-mandala" width="normal" className="pd-sec pd-sec-story">
+          <Section id="story" eyebrow={<span lang={lang}>{s.storyEyebrow}</span>} title={<span lang={lang}>{s.story}</span>} ornament="divider-lotus" width="normal" className="pd-sec pd-sec-story">
             <Story chapters={m.story} />
           </Section>
         )}
@@ -227,7 +255,7 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
         {/* ── Functions ───────────────────────────────────────────────────── */}
         {m.events.length > 0 && (
           <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="pd-sec pd-sec-events">
-            <Events events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, saved: s.saved }} />
+            <Events events={m.events} locale={locale} labels={{ directions: s.directions, dress: s.dress, tba: s.tba, nav: s.events }} />
           </Section>
         )}
 
@@ -242,6 +270,12 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
               </Reveal>
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="pd-venue-pillar is-r" {...img(A.pillar, { lazy: true })} aria-hidden />
+              {(["l", "r"] as const).map((sd) => (
+                <span key={sd} className={`pd-venue-lan is-${sd}`} aria-hidden>
+                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                  <img {...img(A.lanternsGlow, { lazy: true })} />
+                </span>
+              ))}
             </div>
           </Section>
         )}
@@ -290,20 +324,48 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
 
         {/* ── RSVP ────────────────────────────────────────────────────────── */}
         {/* The kit's form labels are English only, so its "Kindly reply by <date>" stays English too (no mixed-script line). */}
-        <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="narrow" className="pd-sec pd-sec-rsvp">
+        <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament="divider-dots" width="wide" className="pd-sec pd-sec-rsvp">
           <Reveal as="p" className="pd-upasthiti">
             <span lang={lang}>{s.upasthiti}</span>
           </Reveal>
-          <div ref={rsvpRef}>
-            <Reveal>
-              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale="en-IN" />
+          <div className="pd-rsvp">
+            {/* The sacred fire: a havan in a glowing arch, sparks rising, diyas on the sill. */}
+            <Reveal effect="zoom" className="pd-rsvp-art">
+              <span className="pd-agni" aria-hidden>
+                <span className="pd-agni-glow" />
+                <span className="pd-agni-sparks">
+                  {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <i
+                      key={i}
+                      style={{
+                        left: `${30 + ((i * 37) % 40)}%`,
+                        animationDelay: `${-i * 0.55}s`,
+                        ["--dx" as string]: `${((i % 3) - 1) * 18}px`,
+                      }}
+                    />
+                  ))}
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                <img className="pd-agni-havan" {...img(A.havan, { lazy: true })} />
+                <span className="pd-agni-sill">
+                  {[0, 1, 2].map((i) => (
+                    <Diya key={i} className="pd-agni-diya" />
+                  ))}
+                </span>
+              </span>
+              <p className="pd-rsvp-names">{couple}</p>
             </Reveal>
+            <div ref={rsvpRef} className="pd-rsvp-form">
+              <Reveal>
+                <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale="en-IN" />
+              </Reveal>
+            </div>
           </div>
         </Section>
 
         {/* ── Blessings ───────────────────────────────────────────────────── */}
         {m.blessings && (
-          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="normal" className="pd-sec">
+          <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament="divider-paisley" width="wide" className="pd-sec pd-sec-bless">
             <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
           </Section>
         )}
@@ -324,7 +386,16 @@ export default function PalaceDoorWeddingExperience({ data, mode, react }: Exper
               dateLine: m.main?.date ? formatEventDate(m.main.date, "en-IN") : "",
               time: m.main?.time ? formatEventTime(m.main.time, "en-IN") : "",
               venue: venueLine,
-              functions: m.events.map((e) => ({ title: e.title, when: e.date ? new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${e.date}T00:00:00Z`)) : "" })),
+              functions: m.events.map((e) => ({
+                title: e.title,
+                when: e.date
+                  ? new Intl.DateTimeFormat("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      timeZone: "UTC",
+                    }).format(new Date(`${e.date}T00:00:00Z`))
+                  : "",
+              })),
               guest,
               dear: T.en.dear,
             }}

@@ -47,6 +47,27 @@ export const PD_ASSETS = {
     "door-wall": { src: "/wedding-v3/palace-door/door-wall.webp", w: 1013, h: 1800 },
     "door-leaf-left": { src: "/wedding-v3/palace-door/door-leaf-left.webp", w: 420, h: 1624 },
     "door-leaf-right": { src: "/wedding-v3/palace-door/door-leaf-right.webp", w: 421, h: 1624 },
+    // The gate's decor, from the owner's wedding-assets pack (template22 toran,
+    // template16 lanterns and bidri lattice), trimmed and converted to webp.
+    "toran": { src: "/wedding-v3/palace-door/toran.webp", w: 678, h: 147 },
+    "lanterns": { src: "/wedding-v3/palace-door/lanterns.webp", w: 300, h: 885 },
+    "lattice-tile": { src: "/wedding-v3/palace-door/lattice-tile.webp", w: 240, h: 240 },
+    // template15 balustrade cut post-centre to post-centre, so it repeats seamlessly.
+    "rail-tile": { src: "/wedding-v3/palace-door/rail-tile.webp", w: 738, h: 375 },
+    // template15 floral arch split down the middle: its two halves dress the hero's top corners.
+    "floral-corner-l": { src: "/wedding-v3/palace-door/floral-corner-l.webp", w: 640, h: 950 },
+    "floral-corner-r": { src: "/wedding-v3/palace-door/floral-corner-r.webp", w: 640, h: 950 },
+  },
+  "classic": {
+    "gold-mandala": { src: "/wedding-v3/classic/gold-mandala.webp", w: 480, h: 480 },
+  },
+  "template12": {
+    "01-gold-string-lights": { src: "/wedding-v3/template12/01-gold-string-lights.webp", w: 1600, h: 922 },
+    "05-white-gold-lotus-open": { src: "/wedding-v3/template12/05-white-gold-lotus-open.webp", w: 800, h: 517 },
+  },
+  "template2": {
+    "01-garland-strand": { src: "/wedding-v3/template2/01-garland-strand.webp", w: 134, h: 800 },
+    "02-marigold-pots": { src: "/wedding-v3/template2/02-marigold-pots.webp", w: 444, h: 800 },
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
@@ -65,8 +86,8 @@ export const PD_KIT = {
 } as const;
 export type PdPetal = keyof typeof PD_KIT.petals;
 
-/** The gallery card (also the template's coverImage). */
-export const PD_CARD = "/wedding-v3/template13/card.webp";
+/** The gallery card (also the template's coverImage): three phones (the courtyard, the door, the functions) on the maroon palace wall. */
+export const PD_CARD = "/wedding-v3/palace-door/cover-haveli.webp";
 
 /** Where each door leaf sits inside the 1013×1800 door, in % (left, top, width, height). */
 export const LEAF_BOX = {
@@ -79,6 +100,17 @@ export const A = {
   wall: PD_ASSETS["palace-door"]["door-wall"],
   leafL: PD_ASSETS["palace-door"]["door-leaf-left"],
   leafR: PD_ASSETS["palace-door"]["door-leaf-right"],
+  toran: PD_ASSETS["palace-door"].toran,
+  lanternsGlow: PD_ASSETS["palace-door"].lanterns,
+  lattice: PD_ASSETS["palace-door"]["lattice-tile"],
+  lights: PD_ASSETS.template12["01-gold-string-lights"],
+  lotus: PD_ASSETS.template12["05-white-gold-lotus-open"],
+  mandala: PD_ASSETS.classic["gold-mandala"],
+  railTile: PD_ASSETS["palace-door"]["rail-tile"],
+  floralL: PD_ASSETS["palace-door"]["floral-corner-l"],
+  floralR: PD_ASSETS["palace-door"]["floral-corner-r"],
+  garland: PD_ASSETS.template2["01-garland-strand"],
+  pots: PD_ASSETS.template2["02-marigold-pots"],
   door: PD_ASSETS.template13["01-door-full-rajasthani-arch"],
   frame: PD_ASSETS.template13["05-golden-border-frame"],
   banana: PD_ASSETS.template13["06-banana-leaves"],
