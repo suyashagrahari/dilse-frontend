@@ -236,7 +236,8 @@ export const RW_CSS = `
 .rw-court-names { margin: 16px 0 0; display: flex; flex-direction: column; align-items: center; font-weight: 400; line-height: .98; }
 /* the foil gradient is clipped to the text box, so it carries room for the swashes (A, V, the n tail) and gives it back with negative margins */
 .rw-court-n { font: 400 clamp(50px, 14.5vw, 104px)/1.14 var(--wk-font-script); padding: .12em .45em .2em; margin: -.12em -.4em -.2em; white-space: nowrap; max-width: calc(100% + .8em); }
-.rw-court-amp { font: 400 clamp(26px, 7vw, 40px)/1 var(--wk-font-script); color: var(--rw-maroon); margin: -.08em 0 -.1em; }
+/* the ampersand gets its own line with clear space above and below, so it never sits on a swash */
+.rw-court-amp { position: relative; z-index: 1; font: 400 clamp(26px, 7vw, 40px)/1 var(--wk-font-script); color: var(--rw-maroon); margin: .18em 0 .12em; }
 .rw-court-getting { margin: 14px 0 0; font: italic 400 clamp(18px, 4.8vw, 24px)/1.3 var(--wk-font-display); color: var(--wk-muted); }
 .rw-cartouche { position: relative; margin-top: 16px; padding: 16px 24px 15px; display: grid; gap: 5px; border-radius: 18px; background: linear-gradient(180deg, #FFFBF2, color-mix(in srgb, var(--wk-surface-solid) 70%, var(--rw-sand))); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 60%, transparent), inset 0 0 0 5px color-mix(in srgb, var(--wk-surface-solid) 90%, transparent), inset 0 0 0 6px color-mix(in srgb, var(--rw-maroon) 22%, transparent), 0 16px 32px -24px rgba(90,40,20,.6); }
 .rw-cartouche p { margin: 0; }
@@ -260,7 +261,7 @@ export const RW_CSS = `
   .rw-court-n { font-size: clamp(80px, 7.4vw, 128px); }
   .rw-court-names { margin-top: 26px; }
   .rw-court-getting { margin-top: 22px; }
-  .rw-court-amp { margin: -.1em 0 -.2em 1.1em; font-size: clamp(40px, 3.6vw, 56px); }
+  .rw-court-amp { margin: .2em 0 .55em 2.2em; font-size: clamp(36px, 3.2vw, 50px); }
   .rw-court-scene { width: 100%; max-width: 640px; justify-self: end; }
   .rw-court-lamp { width: clamp(220px, 19vw, 340px); }
   .rw-court-lamp.is-l { left: 40%; }
