@@ -57,7 +57,8 @@ export const RW_CSS = `
 .rw-ap-motes i { position: absolute; bottom: -8px; border-radius: 50%; background: #FFF6D6; box-shadow: 0 0 8px 2px rgba(255,236,170,.9); opacity: 0; animation: rw-mote linear infinite; }
 @keyframes rw-mote { 0% { transform: translate3d(0,0,0); opacity: 0; } 15% { opacity: .9; } 85% { opacity: .6; } 100% { transform: translate3d(var(--dx), -60cqh, 0); opacity: 0; } }
 .rw-screen { position: absolute; top: 0; height: 100%; z-index: 2; transition: transform 1.4s cubic-bezier(.7,0,.2,1), opacity .35s ease 1.1s; }
-.rw-screen img { display: block; width: 100%; height: 100%; filter: sepia(.12) saturate(1.12) brightness(1.05); }
+.rw-screen img, .rw-door { display: block; width: 100%; height: 100%; }
+.rw-door { filter: drop-shadow(0 6px 10px rgba(110,70,20,.18)); }
 .rw-gateway { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .rw-invoke { margin: 0 0 4px; font: 600 clamp(13px, 3.6vw, 16px)/1.2 var(--wk-font-deva); color: var(--rw-maroon); white-space: nowrap; letter-spacing: .02em; }
 .rw-medal { position: absolute; z-index: 4; left: 50%; top: 32.6%; width: 15.5%; aspect-ratio: 1; transform: translate(-50%,-50%); border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 38%, #FFFDF6 0%, #FBEFD6 62%, #F0DBAE 100%); box-shadow: 0 0 0 .5cqw #FFF9EC, 0 0 0 1cqw #C9A24A, 0 0 0 1.25cqw #FFF4D8, 0 6px 14px -4px rgba(110,60,20,.45); container-type: inline-size; }

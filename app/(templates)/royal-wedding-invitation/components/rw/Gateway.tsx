@@ -3,8 +3,9 @@
 // ─── The palace gateway (the opening) ────────────────────────────────────────
 // A daylight Mughal gateway in ivory sandstone, drawn in SVG (./Palace): a
 // pishtaq with a pietra-dura band, a pointed arch and chhatris on the roof.
-// The doorway is closed by two pierced jaali screens; warm light shows
-// through the lattice. A caparisoned elephant stands guard at each corner, the couple's initials sit in a gold
+// The doorway is closed by two carved ivory-and-gold doors drawn in SVG
+// (./Door), each with a pierced jaali arch window that the warm light shows
+// through. A caparisoned elephant stands guard at each corner, the couple's initials sit in a gold
 // medallion in the arch. The names are set above the gateway like a royal
 // proclamation (Shri Ganesh, a gold rule, the names in gold-foil script, the
 // date between two rules); the button waits on the courtyard floor below.
@@ -24,6 +25,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
 import { useDayMusic } from "../../../_valentine/music/context";
+import Door from "./Door";
 import Palace from "./Palace";
 import Petals from "./Petals";
 import { A, GATE, decodeAll, img, seeded } from "../assets";
@@ -216,14 +218,12 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
             </span>
             {(["l", "r"] as const).map((side) => {
               const box = side === "l" ? GATE.screenL : GATE.screenR;
-              const art = side === "l" ? A.screenL : A.screenR;
               // Screen box relative to the aperture.
               const left = ((box.x - ap.x) / ap.w) * 100;
               const width = (box.w / ap.w) * 100;
               return (
                 <span key={side} className={`rw-screen is-${side}`} style={{ left: `${left}%`, width: `${width}%` }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                  <img data-rw-pre {...img(art, { high: true })} />
+                  <Door side={side} />
                 </span>
               );
             })}
