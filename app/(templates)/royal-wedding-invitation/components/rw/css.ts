@@ -311,7 +311,7 @@ export const RW_CSS = `
 .rw-invite::after { content: ""; position: absolute; left: 50%; top: -14px; width: 26px; height: 26px; margin-left: -13px; transform: rotate(45deg); border-radius: 4px; background: linear-gradient(135deg, #F3DDA8, #C9974F 50%, #A9743F); box-shadow: 0 0 0 4px #FBF3E2; }
 @media (min-width: 700px) and (max-height: 820px) { .rw-sec-invite .rw-invite { padding-top: 64px; padding-bottom: 24px; } .rw-sec-invite .wk-msg-orn { width: 46px !important; } .rw-root .wk-section.rw-sec-invite .wk-section-head { margin-bottom: 18px; } }
 @media (min-width: 1024px) {
-  .rw-hang { width: 170px; top: -40px; } .rw-hang.is-l { left: calc(50% - 520px - 150px); } .rw-hang.is-r { right: calc(50% - 520px - 150px); }
+  .rw-hang { width: 240px; top: -70px; } .rw-hang.is-l { left: calc(50% - 520px - 200px); } .rw-hang.is-r { right: calc(50% - 520px - 200px); }
   /* compact and wide: the two columns sit side by side so the card is about half as tall */
   .rw-sec-invite .rw-invite { max-width: 1040px; padding: 44px 56px 36px; }
   .rw-sec-invite .wk-msg-text p { font-size: 19px; line-height: 1.6; margin-bottom: .8em; }
@@ -327,9 +327,9 @@ export const RW_CSS = `
   .rw-sec-invite .wk-msg-text p { font-size: 15px; line-height: 1.5; margin-bottom: .55em; }
   .rw-sec-invite .wk-msg-text.is-deva p { font-size: 14.5px; line-height: 1.7; }
   .rw-sec-invite .wk-msg-cols { gap: 10px; }
-  .rw-sec-invite .rw-hang { width: 96px; top: -30px; }
-  .rw-sec-invite .rw-hang.is-l { left: -24px; }
-  .rw-sec-invite .rw-hang.is-r { right: -24px; }
+  .rw-sec-invite .rw-hang { width: 150px; top: -52px; }
+  .rw-sec-invite .rw-hang.is-l { left: -50px; }
+  .rw-sec-invite .rw-hang.is-r { right: -50px; }
   .rw-sec-invite .rw-invite { padding-top: 70px; }
   .rw-scene-hedge { display: none; }
 }
@@ -351,18 +351,56 @@ export const RW_CSS = `
 .rw-fam-note { margin: 8px 0 0; font: 600 12px/1.4 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: #8A6A44; }
 .rw-fam-photo { display: block; width: 96px; height: 96px; margin: 0 auto 12px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #FFFBF2, 0 0 0 4.5px #C9A063; }
 /* the knot between the two families */
-.rw-fam-knot { position: relative; z-index: 2; display: grid; place-items: center; width: 74px; height: 74px; margin: -14px 0; }
-.rw-fam-knot img { position: absolute; inset: -10px; width: calc(100% + 20px); height: auto; opacity: .7; }
-.rw-fam-knot b { position: relative; display: grid; place-items: center; width: 50px; height: 50px; border-radius: 50%; font: 400 30px/1 var(--wk-font-script); color: var(--rw-maroon); background: radial-gradient(circle at 50% 38%, #FFFDF6, #FBEFD6); box-shadow: inset 0 0 0 1.5px #C9A063, 0 0 0 4px #FBF3E2; }
+/* the knot sits exactly centred in the gap between the two windows (above the second window's finial) */
+.rw-fam-knot { position: relative; z-index: 3; display: grid; place-items: center; width: 64px; height: 64px; margin: 6px auto 22px; }
+.rw-fam-knot img { position: absolute; left: 50%; top: 50%; width: 112px; height: 112px; transform: translate(-50%, -50%); opacity: .55; }
+.rw-fam-knot b { position: relative; display: grid; place-items: center; width: 52px; height: 52px; padding-top: 4px; line-height: 1; border-radius: 50%; font: 400 30px/1 var(--wk-font-script); color: var(--rw-maroon); background: radial-gradient(circle at 50% 38%, #FFFDF6, #FBEFD6); box-shadow: inset 0 0 0 1.5px #C9A063, 0 0 0 4px #FBF3E2; }
 .rw-fam-ele { display: none; }
 @media (min-width: 900px) {
   .rw-fam-row { grid-template-columns: minmax(0, 360px) auto minmax(0, 360px); justify-content: center; align-items: center; gap: 0 18px; padding: 0 140px; }
   .rw-fam-row.is-one { grid-template-columns: minmax(0, 360px); }
-  .rw-fam-knot { margin: 0; }
+  .rw-fam-knot { margin: 0; align-self: center; }
   .rw-fam-ele { display: block; position: absolute; bottom: -6px; width: 150px; height: auto; filter: drop-shadow(0 12px 10px rgba(90,60,30,.22)); }
   .rw-fam-ele.is-l { left: 0; }
   .rw-fam-ele.is-r { right: 0; }
 }
+/* laptops and desktops: a grander composition — larger windows and type, a bigger knot and elephants */
+@media (min-width: 1100px) {
+  .rw-fam { gap: clamp(22px, 3.4svh, 40px); }
+  .rw-fam-ribbon { font-size: 13px; padding: 9px 34px; }
+  .rw-fam-elders { font-size: 26px; max-width: 44rem; }
+  .rw-fam-row { grid-template-columns: minmax(0, 440px) auto minmax(0, 440px); gap: 0 26px; padding: 0 200px; }
+  .rw-fam-win { width: 100%; padding: 12px; border-radius: 50% 50% 22px 22px / 96px 96px 22px 22px; }
+  .rw-fam-in { padding: 64px 34px 34px; border-radius: 50% 50% 16px 16px / 86px 86px 16px 16px; }
+  .rw-fam-t { font-size: 13px; margin-bottom: 12px; }
+  .rw-fam-names { font-size: clamp(26px, 2vw, 32px); }
+  .rw-fam-note { font-size: 13px; margin-top: 12px; }
+  .rw-fam-finial { width: 28px; height: 28px; margin-left: -14px; top: -20px; }
+  .rw-fam-knot { width: 84px; height: 84px; }
+  .rw-fam-knot img { width: 150px; height: 150px; opacity: .6; }
+  .rw-fam-knot b { width: 66px; height: 66px; font-size: 38px; }
+  .rw-fam-ele { width: 200px; bottom: -10px; }
+}
+/* the palace ceiling (tablets and up): a jhoomar on its chain from the top edge, a lantern trio on long strings either side */
+.rw-ceil { display: none; }
+@media (min-width: 700px) {
+  .rw-full { --jh-h: clamp(140px, min(24svh, 30vw), 300px); }
+  .rw-ceil { display: block; position: absolute; top: 0; left: calc(50% - 50vw); width: 100vw; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
+  .rw-jh { position: absolute; top: 0; left: 50%; width: calc(var(--jh-h) * .8); height: var(--jh-h); margin-left: calc(var(--jh-h) * -.4); transform-origin: 50% 0; animation: rw-sway 7s ease-in-out infinite; filter: drop-shadow(0 10px 14px rgba(110,60,20,.28)) saturate(1.15); }
+  .rw-jh svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .rw-jh-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: rw-jh-flicker 1.6s ease-in-out infinite; }
+  /* the art: 400 × 1008, its lanterns start 79.4% down; hung from the top edge beside the card's shoulders */
+  .rw-ceil-lamp { position: absolute; top: calc(var(--jh-h) * -.55); width: clamp(120px, 11vw, 190px); transform-origin: 50% 0; animation: rw-sway 6s ease-in-out infinite; }
+  .rw-ceil-lamp img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 16px rgba(110,60,20,.22)); }
+  .rw-ceil-lamp.is-l { left: max(-10px, calc(50% - 520px - clamp(120px, 11vw, 190px) * .9)); }
+  .rw-ceil-lamp.is-r { right: max(-10px, calc(50% - 520px - clamp(120px, 11vw, 190px) * .9)); animation-delay: -2.6s; }
+  .rw-ceil-lamp.is-r img { transform: scaleX(-1); }
+  .rw-sec-invite .rw-hang { display: none; }
+  /* room under the jhoomar: the content starts just below its pendant */
+  .rw-root .wk-section.rw-full.rw-sec-invite, .rw-root .wk-section.rw-full.rw-sec-fam { padding-top: calc(var(--jh-h) * .96); padding-bottom: 16px; }
+}
+@keyframes rw-jh-flicker { 0%, 100% { transform: scale(1, 1); opacity: 1; } 40% { transform: scale(.92, 1.08); opacity: .9; } 70% { transform: scale(1.05, .95); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rw-jh, .rw-ceil-lamp, .rw-jh-flame { animation: none !important; } }
 .rw-root .wk-family-photo { width: clamp(112px, 26vw, 140px); height: auto; aspect-ratio: 4 / 5; border-radius: 16px; box-shadow: 0 0 0 4px var(--wk-surface-solid), 0 0 0 5px color-mix(in srgb, var(--wk-gold) 60%, transparent), 0 18px 34px -24px rgba(80,40,10,.55); }
 
 /* the farmaan + countdown */
@@ -442,6 +480,15 @@ export const RW_CSS = `
   .rw-ev-arrow.is-prev { left: calc(50% - var(--cw-a, min(46vw, 400px)) / 2 - 70px); }
   .rw-ev-arrow.is-next { right: calc(50% - var(--cw-a, min(46vw, 400px)) / 2 - 70px); }
 }
+/* tablets and up: every function laid out at once, like the premium template: 2 across, 3 across from 1100px */
+@media (min-width: 700px) {
+  .rw-ev-grid { margin: 0; padding: 10px 0 16px; flex-wrap: wrap; justify-content: center; gap: 26px; overflow: visible; scroll-snap-type: none; scroll-behavior: auto; }
+  .rw-ev-grid > .rw-ev { flex: 0 0 calc((100% - 26px) / 2); }
+  .rw-ev .rw-ev-card, .rw-ev .rw-ev-card.is-active { transform: none; opacity: 1; }
+  .rw-ev-arrow, .rw-ev-dots { display: none !important; }
+}
+@media (min-width: 700px) and (hover: hover) { .rw-ev-card { transition: transform .45s var(--rw-ease), box-shadow .45s; } .rw-ev-card:hover { transform: translateY(-6px) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 55%, transparent), inset 0 0 0 6px var(--wk-surface-solid), inset 0 0 0 7px color-mix(in srgb, var(--wk-gold) 26%, transparent), 0 34px 50px -36px rgba(110,40,50,.45); } }
+@media (min-width: 1100px) { .rw-ev-grid { gap: 30px; } .rw-ev-grid > .rw-ev { flex-basis: calc((100% - 60px) / 3); max-width: 420px; } }
 .rw-ev-dots { display: flex; justify-content: center; margin-top: 4px; }
 .rw-ev-dots button { display: grid; place-items: center; min-width: 24px; height: 28px; padding: 0 2px; border: 0; background: none; cursor: pointer; }
 .rw-ev-dots button::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--rw-maroon) 28%, transparent); transition: width .3s var(--rw-ease), background-color .3s ease; }
@@ -486,19 +533,6 @@ export const RW_CSS = `
 .rw-root .wk-section.rw-sec-events .wk-section-head { margin-bottom: clamp(10px, 2svh, 24px); }
 .rw-root .wk-section.rw-sec-events { padding-bottom: 20px; }
 .rw-ev-date { font-size: 11px; letter-spacing: .22em; }
-/* short laptop screens: a smaller heading, a shorter stage and lighter body so the carousel still fits one screen */
-@media (min-width: 700px) and (max-height: 960px) {
-  .rw-root .wk-section.rw-sec-events { padding-top: 64px; padding-bottom: 12px; }
-  .rw-root .wk-section.rw-sec-events .wk-section-head { margin-bottom: 8px; }
-  .rw-root .rw-sec-events .wk-section-title { font-size: clamp(30px, 5svh, 40px); }
-  .rw-root .rw-sec-events .wk-ornament, .rw-root .rw-sec-events .wk-section-head svg { display: none; }
-  .rw-ev-alcove { height: clamp(150px, 24svh, 200px); }
-  .rw-ev-addr, .rw-ev-note { display: none; }
-  .rw-ev-body { gap: 4px; padding: 10px 16px 12px; }
-  .rw-ev-title { font-size: 28px; }
-  .rw-ev-all { margin-top: 4px; }
-  .rw-ev-dots button { height: 22px; }
-}
 
 /* venue */
 .rw-venue { position: relative; display: grid; justify-items: center; }
@@ -627,7 +661,7 @@ export const RW_CSS = `
 .rw-replay { margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--wk-font-sans); color: var(--wk-gold-ink); cursor: pointer; }
 
 /* ── low-end phones: no ambient loops ─────────────────────────────────── */
-.rw-root.is-lite .rw-ev-couple, .rw-root.is-lite .rw-hang, .rw-root.is-lite .rw-ap-motes, .rw-root.is-lite .rw-court-lamp img, .rw-root.is-lite .rw-court-cloud, .rw-root.is-lite .rw-gate-cloud, .rw-root.is-lite .rw-court-sunburst { animation: none !important; }
+.rw-root.is-lite .rw-ev-couple, .rw-root.is-lite .rw-hang, .rw-root.is-lite .rw-jh, .rw-root.is-lite .rw-ceil-lamp, .rw-root.is-lite .rw-jh-flame, .rw-root.is-lite .rw-ap-motes, .rw-root.is-lite .rw-court-lamp img, .rw-root.is-lite .rw-court-cloud, .rw-root.is-lite .rw-gate-cloud, .rw-root.is-lite .rw-court-sunburst { animation: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .rw-root *, .rw-root *::before, .rw-root *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; transition-delay: 0s !important; }

@@ -28,6 +28,7 @@ import { A, RW_KIT, img } from "./assets";
 import Courtyard from "./rw/Courtyard";
 import Events from "./rw/Events";
 import Farmaan from "./rw/Farmaan";
+import Jhoomar from "./rw/Jhoomar";
 import Families from "./rw/Families";
 import Finale from "./rw/Finale";
 import Gateway, { gatewayOpenedBefore } from "./rw/Gateway";
@@ -104,6 +105,23 @@ function Lanterns() {
         </span>
       ))}
     </>
+  );
+}
+
+/** The palace ceiling over a full-screen section: a gold jhoomar at the centre on its chain, a lantern trio on long strings either side (tablets and up). */
+function Ceiling() {
+  return (
+    <div className="rw-ceil" aria-hidden>
+      {[0, 1].map((i) => (
+        <span key={i} className={`rw-ceil-lamp is-${i ? "r" : "l"}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...img(A.lanternsLong, { lazy: true })} />
+        </span>
+      ))}
+      <span className="rw-jh">
+        <Jhoomar />
+      </span>
+    </div>
   );
 }
 
@@ -220,6 +238,7 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img className="rw-scene-chhatri is-r" {...img(A.chhatri, { lazy: true })} />
           </div>
+          <Ceiling />
           <div className="rw-invite-wrap">
             <Lanterns />
             <Reveal effect="zoom" className="rw-invite">
@@ -232,6 +251,18 @@ export default function RoyalWeddingExperience({ data, mode, react }: Experience
         {/* ── Families, inside a pietra-dura border ───────────────────────── */}
         {(hasFamilies || m.blessingsOf) && (
           <Section id="families" eyebrow={<span lang={lang}>{s.families}</span>} title={<span lang={lang}>{couple}</span>} ornament="divider-paisley" width="wide" className="rw-sec rw-full rw-sec-fam">
+            {/* The same palace scene as the invitation: soft sky, clouds, chhatris at the feet, the jhoomar and lanterns above. */}
+            <div className="rw-scene rw-scene-fam" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="rw-scene-cloud is-a" {...img(A.cloud, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="rw-scene-cloud is-b" {...img(A.cloud2, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="rw-scene-chhatri is-l" {...img(A.chhatri, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="rw-scene-chhatri is-r" {...img(A.chhatri, { lazy: true })} />
+            </div>
+            <Ceiling />
             <Families bride={bride} groom={groom} first={m.familyFirst} blessingsOf={m.blessingsOf} blessingsLabel={s.blessingsOf} lang={lang} />
           </Section>
         )}
