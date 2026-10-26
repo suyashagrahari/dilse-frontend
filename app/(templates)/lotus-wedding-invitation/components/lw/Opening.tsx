@@ -8,8 +8,9 @@
 // One tap (also the gesture that starts the music, via the engine):
 //   0.0 s  the lamps light one by one, a ripple runs out over the pond
 //   0.3 s  the petals unfold ring by ring, petals drift up
-//   2.5 s  the camera sinks into the bloom and the poster fades away,
-//          revealing the hero (already decoded underneath).
+//   2.5 s  warm light blooms out of the lotus to fill the screen as the
+//          camera sinks into it (as the royal and palace-door openings), then
+//          gives way to the hero (already decoded underneath, at the top).
 // Transform/opacity only. Reduced motion: a plain 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -94,7 +95,7 @@ export default function Opening({ first, second, dateLine, guest, s, lang, invoc
       if (!live.current) return;
       setPhase("push");
       onOpened();
-      later(1300, () => setPhase("gone"));
+      later(2000, () => setPhase("gone"));
     });
   };
 
@@ -207,6 +208,8 @@ export default function Opening({ first, second, dateLine, guest, s, lang, invoc
           </p>
         </div>
       </div>
+      {/* The step-through: a circle of warm light grows out of the lotus and fills the screen. */}
+      <span className="lw-open-bloom" aria-hidden />
     </div>
   );
 }

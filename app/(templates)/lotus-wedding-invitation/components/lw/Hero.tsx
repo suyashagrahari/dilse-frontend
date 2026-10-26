@@ -4,12 +4,11 @@
 // A marigold garland swings in along the top, gold string lights hang beneath
 // it, the sage arch badge drops on its cord with the date, and the couple (the
 // owner's illustration) stand before a faded gopuram with lotus stems at their
-// feet. Phones stack it; at ≥960px it is a two-column spread (art left, words
-// right). One rAF-throttled scroll listener writes --lw-sy for a gentle
-// three-layer parallax (off for reduced motion and low-end phones).
+// feet, white-gold lotus stems rising at the screen's corners. Phones stack it;
+// at ≥960px it is a two-column spread (art left, words right) one screen tall.
+// No scroll parallax: a fast scroll never drags the art around.
 
-import { useEffect, useRef } from "react";
-import { useWeddingReducedMotion, type WeddingEvent } from "../../../_wedding";
+import type { WeddingEvent } from "../../../_wedding";
 import DateBadge from "./DateBadge";
 import { HeroActions } from "./Actions";
 import { img } from "./art";
@@ -36,42 +35,31 @@ export interface HeroProps {
 }
 
 export default function Hero(p: HeroProps) {
-  const { open, lite, s, lang } = p;
-  const ref = useRef<HTMLElement>(null);
-  const reduce = useWeddingReducedMotion();
+  const { open, s, lang } = p;
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || reduce || lite) return;
-    let raf = 0;
-    let on = true;
-    const tick = () => {
-      raf = 0;
-      el.style.setProperty("--lw-sy", String(Math.min(900, Math.max(0, window.scrollY))));
-    };
-    const onScroll = () => {
-      if (on && !raf) raf = requestAnimationFrame(tick);
-    };
-    const io = new IntersectionObserver(([en]) => {
-      on = en.isIntersecting;
-    });
-    io.observe(el);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [reduce, lite]);
 
   return (
-    <header ref={ref} className={`lw-hero${open ? " is-on" : ""}`}>
+    <header className={`lw-hero${open ? " is-on" : ""}`}>
       <div className="lw-hero-garland" aria-hidden />
       <div className="lw-hero-lights" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...img("lights", { high: true })} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...img("lights", { high: true })} className="lw-lights-b" />
+      </div>
+
+      {/* The white-gold lotus pond rising at the screen's two bottom corners (tablets and up). */}
+      <div className="lw-hero-gold" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("leafStem")} className="lw-hg lw-hg-leaf" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("budA")} className="lw-hg lw-hg-bud" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("podA")} className="lw-hg lw-hg-pod" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("leafTilt")} className="lw-hg lw-hg-tilt" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("budB")} className="lw-hg lw-hg-budb" />
       </div>
 
       <div className="lw-hero-grid">
@@ -139,7 +127,7 @@ export default function Hero(p: HeroProps) {
             </p>
           )}
           <div className="lw-in" style={{ ["--d" as string]: "880ms" }}>
-            <HeroActions main={p.main} all={p.events} couple={p.couple} s={s} shareText={p.shareText} />
+            <HeroActions s={s} shareText={p.shareText} />
           </div>
         </div>
       </div>

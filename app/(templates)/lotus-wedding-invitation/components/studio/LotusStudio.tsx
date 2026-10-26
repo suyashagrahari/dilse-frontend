@@ -512,7 +512,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
         </div>
         {main && (
           <>
-            <p className="lws-sub">The big day · used for the countdown and the calendar invites ({s(main.title) || "the wedding"})</p>
+            <p className="lws-sub">The big day · used for the countdown ({s(main.title) || "the wedding"})</p>
             <div className="lws-row3">
               <Field label="Date" htmlFor="lws-date">
                 <input id="lws-date" type="date" className="vs-input" value={s(main.date)} onChange={(e) => setEvent(mainIdx, "date", e.target.value)} />
@@ -530,7 +530,7 @@ export default function LotusStudio({ mf, updateMf, updateExtra, ai, password, o
 
       {/* ── Functions ──────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-details" aria-label="Functions">
-        <Head n={2} title="Functions" sub={`Add, remove or reorder (up to ${LW_LIMITS.events}). Each one gets its own map, timings, dress code and calendar button.`} />
+        <Head n={2} title="Functions" sub={`Add, remove or reorder (up to ${LW_LIMITS.events}). Each one gets its own map, timings and dress code.`} />
         <ol className="lws-evs">
           {events.map((e, i) => {
             const isOpen = openEv === i;

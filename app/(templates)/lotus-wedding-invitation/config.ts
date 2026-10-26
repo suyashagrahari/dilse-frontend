@@ -10,7 +10,7 @@ export const config: TemplatePageConfig = {
   title: "Lotus Temple Wedding Invitation ✦ — Lotus Pond, Gopuram & Brass Lamps",
   description:
     "A South Indian temple wedding invitation in white, gold and lotus pink: brass lamps glow, lotuses bloom from a temple pond, gold string lights frame a Shri Ganeshay Namah opening and the gopuram rises over your muhurtham, then every function with maps, 40 photos, RSVP per function and a blessings wall. The AI writes it.",
-  coverImage: "/wedding-v3/lotus/cover.webp",
+  coverImage: "/wedding-v3/lotus/cover-bloom.webp",
   emoji: "🪷",
   color: "from-amber-100 to-pink-200",
   previewText: "the temple lamps are lit for you 🪷",
@@ -33,7 +33,7 @@ export const config: TemplatePageConfig = {
       headerEmoji: "🪷",
       title: "Shubh Vivah",
       subtitle: "With love, the families",
-      wishes: ["RSVP for every function", "Every date on your calendar", "Leave your blessings"],
+      wishes: ["RSVP for every function", "A card for every function", "Leave your blessings"],
       closingEmoji: "🪔",
       closingSubtext: "SubhSandesh",
     },

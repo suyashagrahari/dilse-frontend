@@ -143,7 +143,32 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
     return () => ts.forEach((t) => window.clearTimeout(t));
   }, [guest]);
 
+  // The invitation always begins at the courtyard: the browser must not restore an old scroll
+  // position behind the closed lotus (a reload would otherwise open onto the middle of the page).
+  useEffect(() => {
+    const h = window.history;
+    const prev = h.scrollRestoration;
+    h.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+    return () => {
+      h.scrollRestoration = prev;
+    };
+  }, []);
+
+  // Smooth scrolling: every section's ambient loops (swaying lamps and umbrellas, the swing,
+  // flickering flames) pause while it is off screen, so a long fling only animates what shows.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = rootRef.current?.closest<HTMLElement>(".lw-root");
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("lw-off", !e.isIntersecting)), { rootMargin: "120px 0px" });
+    root.querySelectorAll(".lw-hero, .wk-section, .lw-finale").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [open]);
+
   const onOpened = () => {
+    // Behind the light of the bloom, so the jump to the top is never seen.
+    window.scrollTo({ top: 0, behavior: "instant" });
     setOpen(true);
     react("opened");
   };
@@ -171,7 +196,7 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
   return (
     <WeddingRoot theme={m.theme} className={`lw-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}`} style={{ minHeight: "100dvh" }}>
       <style>{LW_CSS}</style>
-      <div className="lw-backdrop" aria-hidden />
+      <div ref={rootRef} className="lw-backdrop" aria-hidden />
       <Opening first={m.first} second={m.second} dateLine={shortDate} guest={guest} s={s} lang={lang} invocation={m.invocation} onOpened={onOpened} />
 
       <div className="lw-lang" role="group" aria-label="Language">
@@ -270,7 +295,7 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
             <img {...img("umbrella", { lazy: true })} className="lw-umbrella lw-umbrella-r" />
           </div>
           <Head eyebrow={s.eventsEyebrow} title={s.events} lang={lang} />
-          <LotusEvents events={m.events} couple={couple} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, calShort: s.calShort, gcal: s.gcal, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp }} />
+          <LotusEvents events={m.events} couple={couple} locale={locale} labels={{ directions: s.directions, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp, nav: s.nav }} />
         </Section>
       )}
 
@@ -339,21 +364,36 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
       )}
 
       {/* ── RSVP ────────────────────────────────────────────────────────── */}
-      <Section id="rsvp" ornament={null} width="narrow" className="lw-sec lw-sec-rsvp">
+      <Section id="rsvp" ornament={null} width="wide" className="lw-sec lw-sec-rsvp">
         <Head eyebrow={`RSVP · ${s.rsvpEyebrow}`} title={s.rsvp} lang={lang} />
         <Reveal as="p" className="lw-upasthiti">
           <span lang={lang}>{s.upasthiti}</span>
         </Reveal>
-        <Reveal>
-          <div ref={rsvpRef} className="lw-rsvp">
-            <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title="" intro={s.rsvpIntro} locale={locale} />
-          </div>
-        </Reveal>
+        <div className="lw-rsvp-wrap">
+          {/* A white-gold lotus rising from the pond beside the reply, lamps glowing over it. */}
+          <Reveal effect="zoom" className="lw-rsvp-art">
+            <span className="lw-rsvp-glow" aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...img("leafStem", { lazy: true })} className="lw-rsvp-leaf" aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...img("bloomStem", { lazy: true })} className="lw-rsvp-bloom" aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...img("budB", { lazy: true })} className="lw-rsvp-bud" aria-hidden />
+            <span className="lw-rsvp-water" aria-hidden />
+            <p className="lw-rsvp-names">{couple}</p>
+          </Reveal>
+          {/* The kit's form labels are English only, so its "Kindly reply by <date>" stays English too (no mixed-script line). */}
+          <Reveal>
+            <div ref={rsvpRef} className="lw-rsvp">
+              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title="" intro={s.rsvpIntro} locale="en-IN" />
+            </div>
+          </Reveal>
+        </div>
       </Section>
 
       {/* ── Blessings ───────────────────────────────────────────────────── */}
       {m.blessings && (
-        <Section id="blessings" ornament={null} width="normal" className="lw-sec">
+        <Section id="blessings" ornament={null} width="wide" className="lw-sec lw-sec-bless">
           <Head eyebrow={s.blessingsEyebrow} title={s.blessings} lang={lang} />
           <BlessingsWall mode={mode} title="" intro={s.blessingsIntro} />
         </Section>
