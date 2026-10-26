@@ -46,12 +46,12 @@ export default function Lake({ lotus = true, className }: { lotus?: boolean; cla
       <div className="wp-lv-water">
         {lotus &&
           [
-            ["30%", "30%", 34, "0s"],
-            ["40%", "50%", 26, "0s"],
-            ["58%", "24%", 30, "0s"],
-          ].map(([l, t, w], i) => (
+            ["18%", "34%", 54, "0s"],
+            ["63%", "22%", 40, "1.4s"],
+            ["44%", "58%", 46, ".7s"],
+          ].map(([l, t, w, d], i) => (
             // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-            <img key={i} {...img("lotus", { lazy: true })} className="wp-lv-lotus" style={{ left: l as string, top: t as string, width: w as number }} />
+            <img key={i} {...img("lotus", { lazy: true })} className="wp-lv-lotus" style={{ left: l as string, top: t as string, width: w as number, animationDelay: d as string }} />
           ))}
       </div>
     </div>

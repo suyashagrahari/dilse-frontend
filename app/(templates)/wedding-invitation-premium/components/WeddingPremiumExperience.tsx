@@ -190,8 +190,6 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         lang={lang}
         first={m.first}
         second={m.second}
-        firstFamily={m.familyFirst === "bride" ? m.brideFam.names : m.groomFam.names}
-        secondFamily={m.familyFirst === "bride" ? m.groomFam.names : m.brideFam.names}
         guest={guest}
         motif={m.motif}
         dateLine={dateLine}

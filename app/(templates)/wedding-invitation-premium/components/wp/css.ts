@@ -154,93 +154,89 @@ export const WP_CSS = `
 .wp-lv-water::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 26%; background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); }
 .wp-lv-lotus { position: absolute; height: auto; filter: drop-shadow(0 6px 6px rgba(31,62,87,.18)); }
 
-/* ══ The hero: template6's card, ditto ═══════════════════ */
-/* One size unit (--u) per breakpoint; the gazebo is placed by three numbers and its peacock is perched from them. */
-.wp-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 100svh; display: flex; flex-direction: column; align-items: center;
-  --u: 1vw; --gz-r: calc(var(--u) * -6); --gz-b: calc(var(--u) * 7); --gz-h: calc(var(--u) * 64); --pk-h: calc(var(--gz-h) * .42); --top: calc(100vw * .3692);
-  padding: calc(var(--top) * .86) 16px 66vw; }
-.wp-hero-lake { z-index: -2; --lv-water: 34vw; --lv-hills: 20vw; }
-.wp-hero-lake::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 64%; background: radial-gradient(56% 64% at 50% 42%, rgba(255,255,255,.6), rgba(255,255,255,0) 72%); }
+/* ══ The hero: template6's card, kept quiet ══════════════ */
+/* Every measure comes from one unit (--u) so the scene keeps its proportions on any screen. */
+.wp-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 100svh; display: flex; flex-direction: column; align-items: center; padding: 92px 18px calc(var(--u) * 46); --u: min(1vw, .62svh); }
+.wp-hero-lake { z-index: -2; --lv-water: calc(var(--u) * 24); --lv-hills: calc(var(--u) * 15); }
+.wp-hero-lake::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 62%; background: radial-gradient(60% 70% at 50% 40%, rgba(255,255,255,.62), rgba(255,255,255,0) 72%); }
 .wp-scene { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .wp-sc { position: absolute; display: block; height: auto; opacity: 0; transition: opacity 1.2s var(--wp-soft); transition-delay: var(--sd, .3s); }
 .wp-hero.is-on .wp-sc { opacity: 1; }
-/* the card's border: palm and anthurium leaves hanging along the top */
-.wp-sc-leaves { top: 0; width: 100%; --sd: .1s; }
-.wp-sc-leaves.is-r { display: none; }
-/* left: palm frond, the banana plant with its peacock, an anthurium bunch */
-.wp-sc-palm { display: none; }
-.wp-sc-banana { left: calc(var(--u) * -14); bottom: calc(var(--u) * 26); height: calc(var(--u) * 70); width: auto; --sd: .25s; }
-.wp-sc-peacock-l { left: calc(var(--u) * -1); bottom: calc(var(--u) * 46); height: calc(var(--u) * 27); width: auto; --sd: .95s; }
-.wp-sc-flora { left: calc(var(--u) * -5); bottom: calc(var(--u) * 30); width: calc(var(--u) * 22); --sd: .75s; }
-/* right: a banana plant leaning in from the edge, the gazebo, its peacock, the shrub */
-.wp-sc-banana-r { display: none; }
-.wp-sc-gazebo { right: var(--gz-r); bottom: var(--gz-b); height: var(--gz-h); width: auto; --sd: .35s; filter: drop-shadow(0 18px 22px rgba(31,62,87,.14)); }
+/* back to front; none of it moves — each piece only fades in once */
+.wp-sc-palm { right: calc(var(--gz-r) + var(--gz-h) * .629 * .62); bottom: calc(var(--u) * 7); height: calc(var(--gz-h) * .95); width: auto; --sd: .2s; }
+/* the gazebo is placed by three numbers; its peacock is perched from them (feet on the cornice, ~58% up) */
+.wp-hero { --gz-r: calc(var(--u) * -4); --gz-b: calc(var(--u) * 5); --gz-h: calc(var(--u) * 62); --pk-h: calc(var(--gz-h) * .42); }
+.wp-sc-gazebo { right: var(--gz-r); bottom: var(--gz-b); height: var(--gz-h); width: auto; --sd: .35s; filter: drop-shadow(0 18px 22px rgba(31,62,87,.16)); }
 .wp-sc-peacock-r { right: calc(var(--gz-r) + var(--gz-h) * .629 * .56); bottom: calc(var(--gz-b) + var(--gz-h) * .6 - var(--pk-h) * .76); height: var(--pk-h); width: auto; --sd: .9s; }
-.wp-sc-shrub { right: calc(var(--u) * -6); bottom: calc(var(--u) * -3); width: calc(var(--u) * 34); --sd: .7s; }
-.wp-sc-couple { left: calc(var(--u) * -4); bottom: 0; width: calc(var(--u) * 74); --sd: .6s; filter: drop-shadow(0 16px 18px rgba(31,62,87,.2)); }
-/* the words, as printed on the card */
+.wp-sc-banana { left: calc(var(--u) * -10); bottom: calc(var(--u) * 6); height: calc(var(--u) * 74); width: auto; --sd: .25s; }
+.wp-sc-peacock-l { left: calc(var(--u) * 2); bottom: calc(var(--u) * 38); height: calc(var(--u) * 26); width: auto; --sd: 1s; }
+.wp-sc-couple { left: calc(var(--u) * -2); bottom: 0; width: calc(var(--u) * 78); --sd: .6s; filter: drop-shadow(0 16px 18px rgba(31,62,87,.22)); }
+.wp-sc-shrub { right: calc(var(--u) * -6); bottom: calc(var(--u) * -3); width: calc(var(--u) * 30); --sd: .7s; }
+.wp-sc-flora { left: calc(var(--u) * -6); bottom: calc(var(--u) * -3); width: calc(var(--u) * 18); --sd: .8s; }
+.wp-sc-leaves { top: calc(var(--u) * -3); width: calc(var(--u) * 62); --sd: .15s; -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent); mask-image: linear-gradient(90deg, #000 55%, transparent); }
+.wp-sc-leaves.is-l { left: calc(var(--u) * -10); }
+.wp-sc-leaves.is-r { right: calc(var(--u) * -10); scale: -1 1; }
+.wp-sc-lantern { top: calc(var(--u) * 4); width: calc(var(--u) * 11); --sd: .5s; filter: drop-shadow(0 10px 14px rgba(31,62,87,.16)); }
+.wp-sc-lantern.is-l { left: calc(var(--u) * 24); }
+.wp-sc-lantern.is-r { right: calc(var(--u) * 24); scale: -1 1; }
+.wp-sc-rail { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--u) * 9); background: ${BALUSTRADE} repeat-x 0 100% / auto 100%; opacity: 0; transition: opacity 1.2s var(--wp-soft) .45s; filter: drop-shadow(0 -4px 10px rgba(31,62,87,.1)); }
+.wp-hero.is-on .wp-sc-rail { opacity: 1; }
+/* the words, in the sky */
 .wp-hero-words { position: relative; z-index: 2; text-align: center; max-width: 680px; }
 .wp-in { opacity: 0; transition: opacity 1.1s var(--wp-soft); transition-delay: calc(var(--d, 0ms) + .2s); }
 .wp-hero.is-on .wp-in { opacity: 1; }
-.wp-motif { display: block; width: max-content; margin: 0 auto 6px; color: var(--wp-gold-d); }
-.wp-motif-text { font: 500 15px/1.5 var(--wk-font-deva); }
+.wp-motif { display: block; width: max-content; margin: 0 auto 8px; color: var(--wp-gold-d); }
+.wp-motif-text { font: 500 16px/1.5 var(--wk-font-deva); }
 .wp-motif-lotus { display: block; width: 64px; height: auto; }
 .wp-hero-dear { margin: 0 0 6px; font: italic 500 clamp(18px, 3.6vw, 22px)/1.35 var(--wk-font-display); color: var(--wp-pink-d); }
-.wp-hero-family { margin: 0; font: 700 clamp(15px, 3.9vw, 19px)/1.35 var(--wk-font-display); color: #8A2E3B; letter-spacing: .01em; }
 .wp-hero-kicker { margin: 0; font: 600 12.5px/1.5 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wp-blue-ink); }
 .wp-root.is-hi .wp-hero-kicker { font-family: var(--wk-font-deva); letter-spacing: .02em; font-size: 16px; }
-.wp-hero-names { margin: 4px 0 6px; font: 400 clamp(48px, 13.5vw, 62px)/1 var(--wk-font-script); color: #C02A45; }
+.wp-hero-names { margin: 6px 0 4px; font: 400 clamp(50px, 14vw, 64px)/1 var(--wk-font-script); color: #B4385A; }
 .wp-hero-names > span { display: block; white-space: nowrap; padding: .1em .4em .14em; margin: -.1em -.4em -.14em; }
-.wp-hero-names > i { display: block; margin: .02em 0; font: italic 400 .4em/1.2 var(--wk-font-display); color: #C02A45; }
-.wp-hero-line { margin: 4px auto 0; max-width: 34ch; font: 500 clamp(16px, 3.6vw, 19px)/1.45 var(--wk-font-display); color: #24333F; }
-.wp-root.is-hi .wp-hero-line { font-family: var(--wk-font-deva); font-size: 17px; line-height: 1.8; }
-.wp-hero .wp-rule { margin: 10px auto; }
-.wp-hero-when { margin: 0; font: 700 clamp(19px, 4.6vw, 24px)/1.3 var(--wk-font-display); color: #1E2A33; }
-.wp-hero-muhurat { margin: 3px 0 0; font: italic 600 16px/1.4 var(--wk-font-display); color: var(--wp-pink-d); }
-.wp-hero-place { margin: 4px 0 0; font: 500 13px/1.5 var(--wk-font-sans); letter-spacing: .08em; text-transform: uppercase; color: #24333F; }
-.wp-root.is-hi .wp-hero-place { text-transform: none; letter-spacing: .02em; }
-.wp-hero-actions { display: flex; flex-wrap: nowrap; gap: 8px; justify-content: center; margin-top: 14px; }
-.wp-hero-actions .wp-btn { min-height: 44px; padding: 0 15px; font-size: 13.5px; }
+.wp-hero-names > i { display: block; margin: -.04em 0 0; font: italic 400 .36em/1.2 var(--wk-font-display); color: var(--wp-gold-d); }
+.wp-hero-line { margin: 0 auto; max-width: 34ch; font: italic 500 clamp(17px, 3.4vw, 21px)/1.45 var(--wk-font-display); color: var(--wp-blue-ink); }
+.wp-root.is-hi .wp-hero-line { font-family: var(--wk-font-deva); font-style: normal; font-size: 17px; line-height: 1.8; }
+.wp-hero .wp-rule { margin: 12px auto; }
+.wp-hero-when { margin: 0; font: 600 clamp(18px, 3.6vw, 22px)/1.3 var(--wk-font-display); color: var(--wp-blue-ink); }
+.wp-hero-muhurat { margin: 4px 0 0; font: italic 600 16.5px/1.4 var(--wk-font-display); color: var(--wp-pink-d); }
+.wp-hero-place { margin: 5px 0 0; font: 500 14px/1.5 var(--wk-font-sans); letter-spacing: .03em; color: var(--wp-blue-ink); }
+.wp-hero-actions { display: flex; flex-wrap: nowrap; gap: 8px; justify-content: center; margin-top: 16px; }
+.wp-hero-actions .wp-btn { min-height: 44px; padding: 0 16px; font-size: 13.5px; }
 .wp-hero-scroll { display: none; }
-@media (max-width: 380px) { .wp-hero-actions .wp-btn { padding: 0 11px; font-size: 12.5px; } }
-
-/* tablets: the card a little wider — the palm and the right banana join, the border doubles */
-@media (min-width: 560px) {
-  .wp-hero { --u: min(1vw, .62svh); --top: calc(50vw * .3692); --gz-r: calc(var(--u) * 0); --gz-h: calc(var(--u) * 64); padding: calc(var(--top) * .8) 24px calc(var(--u) * 58); }
-  .wp-hero-lake { --lv-water: calc(var(--u) * 28); --lv-hills: calc(var(--u) * 18); }
-  .wp-sc-leaves { width: 50%; }
-  .wp-sc-leaves.is-l { left: 0; }
-  .wp-sc-leaves.is-r { display: block; right: 0; scale: -1 1; }
-  .wp-sc-banana { left: calc(var(--u) * -10); bottom: calc(var(--u) * 22); height: calc(var(--u) * 76); }
-  .wp-sc-peacock-l { left: calc(var(--u) * 3); bottom: calc(var(--u) * 44); height: calc(var(--u) * 28); }
-  .wp-sc-flora { left: calc(var(--u) * -3); bottom: calc(var(--u) * 26); width: calc(var(--u) * 18); }
-  .wp-sc-couple { left: calc(var(--u) * 2); width: calc(var(--u) * 58); }
-  .wp-sc-shrub { right: calc(var(--u) * -4); width: calc(var(--u) * 30); }
-  .wp-hero-names { font-size: clamp(56px, 8vw, 76px); }
+/* phones: a taller scene unit so the terrace reads at full width */
+@media (max-width: 559px) {
+  .wp-hero { --u: 1vw; padding: 84px 14px 62vw; }
+  .wp-hero-lake { --lv-water: 30vw; --lv-hills: 20vw; }
+  .wp-sc-couple { left: -3vw; width: 72vw; }
+  .wp-hero { --gz-r: -6vw; --gz-b: 6vw; --gz-h: 66vw; }
+  .wp-sc-palm, .wp-sc-leaves, .wp-sc-lantern { display: none; }
+  .wp-sc-banana { left: -14vw; height: 66vw; }
+  .wp-sc-peacock-l { left: -2vw; bottom: 34vw; height: 24vw; }
+  .wp-sc-flora { width: 20vw; }
+  .wp-sc-shrub { width: 28vw; }
+  .wp-sc-rail { height: 11vw; }
 }
-/* laptops and desktops: the card opened into a landscape — every piece of template6 in its place */
+@media (min-width: 560px) and (max-width: 959px) {
+  .wp-hero { --u: min(1.2vw, .6svh); }
+  .wp-sc-couple { left: calc(var(--u) * 2); width: calc(var(--u) * 60); }
+  .wp-hero { --gz-r: calc(var(--u) * 2); --gz-h: calc(var(--u) * 62); }
+  .wp-sc-lantern { display: none; }
+  .wp-sc-leaves { width: calc(var(--u) * 50); }
+}
+/* laptops and desktops: the names on one line, the scene framing them from below */
 @media (min-width: 960px) {
-  .wp-hero { --u: min(.95vw, .8svh); --top: min(50vw * .3692, 30svh); --gz-r: calc(var(--u) * 6); --gz-b: calc(var(--u) * 6); --gz-h: calc(var(--u) * 70); padding: calc(var(--top) * .72) 40px calc(var(--u) * 36); }
-  .wp-hero-lake { --lv-water: calc(var(--u) * 27); --lv-hills: calc(var(--u) * 20); }
-  .wp-sc-leaves { height: var(--top); object-fit: cover; object-position: 0 0; }
-  .wp-sc-palm { display: block; left: calc(var(--u) * -3); bottom: calc(var(--u) * 50); height: calc(var(--u) * 54); width: auto; rotate: -8deg; transform-origin: 30% 100%; --sd: .2s; }
-  .wp-sc-banana { left: calc(var(--u) * -8); bottom: calc(var(--u) * 14); height: calc(var(--u) * 80); }
-  .wp-sc-peacock-l { left: calc(var(--u) * 6); bottom: calc(var(--u) * 40); height: calc(var(--u) * 30); }
-  .wp-sc-flora { left: calc(var(--u) * -2); bottom: calc(var(--u) * 20); width: calc(var(--u) * 19); }
-  .wp-sc-banana-r { display: block; right: calc(var(--u) * -9); bottom: calc(var(--u) * 46); height: calc(var(--u) * 56); width: auto; scale: -1 1; rotate: 6deg; --sd: .3s; }
-  .wp-sc-couple { left: calc(var(--u) * 7); width: calc(var(--u) * 58); }
-  .wp-sc-shrub { right: calc(var(--u) * -3); width: calc(var(--u) * 32); }
-  .wp-hero-words { max-width: 760px; }
-  .wp-hero-family { font-size: 19px; }
-  .wp-hero-names { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .2em; font-size: clamp(60px, min(6vw, 10svh), 112px); margin: 2px 0 4px; }
-  .wp-hero-names > i { margin: 0; }
-  .wp-hero-line { max-width: 48ch; }
+  .wp-hero { padding: clamp(80px, 12svh, 120px) 40px calc(var(--u) * 40); --u: min(.95vw, .78svh); }
+  .wp-hero-names { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .18em; font-size: clamp(60px, min(6.2vw, 10.5svh), 116px); }
+  .wp-hero-names > i { margin: 0; font-size: .4em; }
+  .wp-hero-line { max-width: 46ch; }
   .wp-hero-actions .wp-btn { min-height: 46px; padding: 0 20px; font-size: 14.5px; }
+  .wp-sc-couple { left: calc(var(--u) * 4); width: calc(var(--u) * 60); }
+  .wp-hero { --gz-r: calc(var(--u) * 5); --gz-h: calc(var(--u) * 70); }
+  .wp-hero-lake { --lv-water: calc(var(--u) * 26); --lv-hills: calc(var(--u) * 18); }
 }
 @media (min-width: 960px) and (max-height: 820px) {
-  .wp-hero .wp-rule { margin: 6px auto; }
-  .wp-hero-actions { margin-top: 10px; }
-  .wp-hero-names { font-size: clamp(54px, min(5.6vw, 9svh), 96px); }
+  .wp-hero .wp-rule { margin: 8px auto; }
+  .wp-hero-actions { margin-top: 12px; }
 }
 
 /* ══ The invitation ══════════════════════════════════════ */

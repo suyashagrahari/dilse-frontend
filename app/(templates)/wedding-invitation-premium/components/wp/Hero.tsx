@@ -1,17 +1,15 @@
 "use client";
 
-// ─── The hero: template6's card, ditto, opened up into a screen ─────────────
-// Composed like the card (wedding-assets/template6/00-template-card.png):
-// the pack's watercolour sky; its palm-and-anthurium border hanging along the
-// top; misty hills over a calm lake with a few lotuses (./Lake); on the left
-// a palm frond, the banana plant with a peacock perched in it and an
-// anthurium bunch; on the right a second banana plant leaning in from the
-// edge; the pink gazebo with a peacock on its cornice; the shrub in the
-// corner; the couple on their pink sofa in front. The words sit in the sky as
-// on the card: the first family's parents, the names in rose-red script, the
-// second family's parents, the line, the date and the place. Nothing moves:
-// each piece fades in once after the doors open. Phones show the card's
-// portrait; tablets, laptops and desktops widen it with the same pieces.
+// ─── The hero: the Lake Terrace, painted like template6's card, kept quiet ───
+// A still watercolour composed like the card: the pack's sky over misty
+// hills and a calm lake (./Lake); a banana plant with a peacock perched in it
+// behind the couple on their pink sofa at the left; the pink gazebo at the
+// right with a peacock on its cornice and a palm behind it; anthuriums and a
+// shrub at the front corners; palm and anthurium leaves with blossom lanterns
+// hanging in from the top corners; the white balustrade along the front. The names sit in rose script
+// in the sky above it all. Nothing loops or drifts: each layer fades in once
+// after the doors open (.is-on), then the page is still. Phones: words on
+// top, the terrace below, all on the first screen.
 
 import type { WeddingEvent } from "../../../_wedding";
 import { HeroActions } from "./Actions";
@@ -26,9 +24,6 @@ export interface HeroProps {
   lang: "en" | "hi";
   first: string;
   second: string;
-  /** Each side's parents, printed above and below the names as on the card ("Mrs. & Mr. Rahil Patel"). */
-  firstFamily?: string;
-  secondFamily?: string;
   guest: string;
   motif: Motif;
   dateLine: string;
@@ -74,19 +69,21 @@ export default function Hero(p: HeroProps) {
   const art = (k: Parameters<typeof img>[0], c: string, lazy = false) => <img key={c} {...img(k, { lazy, high: !lazy })} className={`wp-sc ${c}`} />;
   return (
     <header className={`wp-hero${open ? " is-on" : ""}`}>
-      <Lake className="wp-hero-lake" />
+      <Lake className="wp-hero-lake" lotus={false} />
       <div className="wp-scene" aria-hidden>
-        {art("foliage", "wp-sc-leaves is-l")}
-        {art("foliage", "wp-sc-leaves is-r")}
         {art("palmTall", "wp-sc-palm")}
-        {art("banana", "wp-sc-banana-r")}
         {art("gazebo", "wp-sc-gazebo")}
         {art("peacockGreen", "wp-sc-peacock-r")}
         {art("bananaA", "wp-sc-banana")}
         {art("peacockGreen", "wp-sc-peacock-l")}
-        {art("anthurium", "wp-sc-flora")}
+        <span className="wp-sc-rail" />
         {art("shrub", "wp-sc-shrub")}
         {art("couple", "wp-sc-couple")}
+        {art("anthurium", "wp-sc-flora")}
+        {art("foliage", "wp-sc-leaves is-l")}
+        {art("foliage", "wp-sc-leaves is-r")}
+        {art("lanterns", "wp-sc-lantern is-l", true)}
+        {art("lanterns", "wp-sc-lantern is-r", true)}
       </div>
 
       <div className="wp-hero-words">
@@ -96,15 +93,9 @@ export default function Hero(p: HeroProps) {
             {s.dear} {p.guest},
           </p>
         )}
-        {p.firstFamily ? (
-          <p className="wp-hero-family wp-in" style={d(120)}>
-            {p.firstFamily}
-          </p>
-        ) : (
-          <p className="wp-hero-kicker wp-in" style={d(120)} lang={lang}>
-            {s.together}
-          </p>
-        )}
+        <p className="wp-hero-kicker wp-in" style={d(120)} lang={lang}>
+          {s.together}
+        </p>
         <h1 className="wp-hero-names">
           <span className="wp-in" style={d(220)}>
             {p.first}
@@ -116,11 +107,6 @@ export default function Hero(p: HeroProps) {
             {p.second}
           </span>
         </h1>
-        {p.secondFamily && (
-          <p className="wp-hero-family wp-in" style={d(500)}>
-            {p.secondFamily}
-          </p>
-        )}
         <p className="wp-hero-line wp-in" style={d(540)} lang={lang}>
           {s.inviteLine}
         </p>
