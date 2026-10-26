@@ -66,5 +66,5 @@ export const LW_ASSETS = {
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
-/** The gallery card (also the template's coverImage). */
-export const LW_CARD = "/wedding-v3/lotus/cover.webp";
+/** The gallery card (also the template's coverImage): three phones (the courtyard, the lotus, the countdown) under the lamps. */
+export const LW_CARD = "/wedding-v3/lotus/cover-bloom.webp";

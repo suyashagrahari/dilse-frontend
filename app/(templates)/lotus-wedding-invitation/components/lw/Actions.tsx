@@ -1,12 +1,12 @@
 "use client";
 
-// ─── Sharing, calendar, contacts, shagun, live: the guest's practical bits ───
+// ─── Sharing, contacts, shagun, live: the guest's practical bits ───────────
 // WhatsApp goes straight to wa.me (that is the button guests look for); the
 // general "Share" uses the phone's own sheet when there is one. Every link the
 // guest sees carries their ?to= name, so a forwarded copy greets the same family.
 
 import { useEffect, useState, type ReactNode } from "react";
-import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, eventEnd, eventStart, type WeddingEvent } from "../../../_wedding";
+import { Reveal, eventEnd, eventStart, type WeddingEvent } from "../../../_wedding";
 import { drawInviteCard, type InviteCardInput } from "./inviteCard";
 import type { LwContact, Strings } from "./model";
 
@@ -18,7 +18,6 @@ export function Icon({ d, size = 16, fill = false }: { d: string; size?: number;
   );
 }
 export const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
-export const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
 export const CLOCK = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2";
 export const PHONE = "M5 4h3.5l1.6 4-2.2 1.4a11 11 0 0 0 6.7 6.7l1.4-2.2 4 1.6V19a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4z";
 export const LINK = "M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1";
@@ -86,17 +85,10 @@ export function Btn({ onClick, href, icon, fill, children, ghost, label, classNa
 
 // ── Save the date + WhatsApp (the hero's pair) ──────────────────────────────
 
-export function HeroActions({ main, all, couple, s, shareText }: { main?: WeddingEvent; all: WeddingEvent[]; couple: string; s: Strings; shareText: string }) {
-  const [flash, setFlash] = useFlash();
-  const dated = all.filter((e) => e.date);
+export function HeroActions({ s, shareText }: { s: Strings; shareText: string }) {
   return (
     <div className="lw-hero-actions">
-      {main?.date && (
-        <Btn icon={CAL} onClick={() => setFlash(downloadWeddingIcs(dated.length > 1 ? dated : [main], { couple, url: pageUrl(), tz: DEFAULT_TZ_OFFSET }, `wedding-${couple}`) ? "ok" : "err")}>
-          {flash === "ok" ? "Saved ✓" : dated.length > 1 ? s.saveAll : s.saveDate}
-        </Btn>
-      )}
-      <Btn icon={WA} fill ghost onClick={() => openWhatsApp(shareText)}>
+      <Btn icon={WA} fill onClick={() => openWhatsApp(shareText)}>
         {s.whatsapp}
       </Btn>
     </div>

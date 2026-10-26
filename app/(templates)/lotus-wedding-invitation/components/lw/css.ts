@@ -69,11 +69,17 @@ export const LW_CSS = `
 
 /* ══ The opening ═════════════════════════════════════════ */
 .lw-open { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: #FBF6EA; }
-.lw-open.is-push { opacity: 0; pointer-events: none; transition: opacity 1s var(--lw-soft) .3s; }
-.lw-open.is-reduced.is-push { transition: opacity .4s linear; }
+/* The step-through: the poster eases away behind a bloom of warm light that then clears to the hero. */
+.lw-open.is-push { pointer-events: none; background: transparent; transition: background-color .9s ease .6s; }
+.lw-open.is-push .lw-open-world { opacity: 0; transition: transform 1.75s cubic-bezier(.45,0,.15,1), opacity .9s ease .55s; }
+.lw-open-bloom { position: absolute; z-index: 8; left: 50%; top: 64%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.04); background: radial-gradient(closest-side, #FFFDF6 0%, #FFF6EE 30%, #FBEDE9 62%, #F4E6DC 100%); }
+.lw-open.is-push .lw-open-bloom { animation: lw-bloom-out 1.9s cubic-bezier(.4,0,.2,1) both; }
+@keyframes lw-bloom-out { 0% { opacity: 0; transform: scale(.04); } 18% { opacity: 1; } 55% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05); } }
+.lw-open.is-reduced .lw-open-bloom { display: none; }
+.lw-open.is-reduced.is-push { opacity: 0; transition: opacity .4s linear; }
 .lw-open-world { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
   padding: clamp(78px, 15vh, 150px) 16px max(16px, env(safe-area-inset-bottom)); transform-origin: 50% 66%; }
-.lw-open.is-push:not(.is-reduced) .lw-open-world { transform: scale(1.7) translateY(4%); transition: transform 1.4s var(--lw-expo); }
+.lw-open.is-push:not(.is-reduced) .lw-open-world { transform: scale(1.7) translateY(4%); }
 .lw-open-tile { position: absolute; inset: 0; background: radial-gradient(70% 55% at 50% 62%, rgba(255,250,236,.95), rgba(255,250,236,0) 70%), ${TILE} repeat 50% 0 / 290px auto; opacity: .95; }
 .lw-open-garland { position: absolute; z-index: 4; top: 0; left: 0; right: 0; height: clamp(26px, 4.6vw, 44px); background: ${GARLAND} repeat-x 0 0 / auto 100%; translate: 0 -110%; transition: translate 1s var(--lw-spring) .1s; }
 .lw-open.is-ready .lw-open-garland { translate: 0 0; }
@@ -185,7 +191,7 @@ export const LW_CSS = `
 @media (max-height: 640px) { .lw-open-ganesh { width: 130px; } .lw-open-names { font-size: clamp(38px, 10vw, 64px); } .lw-open-stage { width: min(90vw, 52vh * 1.3); } }
 
 /* ══ The hero ════════════════════════════════════════════ */
-.lw-hero { position: relative; overflow: hidden; padding: clamp(150px, 34vw, 230px) 16px 44px; --lw-sy: 0; }
+.lw-hero { position: relative; overflow: hidden; padding: clamp(150px, 34vw, 230px) 16px 44px; }
 .lw-hero-garland { position: absolute; z-index: 3; top: 0; left: 0; right: 0; height: clamp(26px, 4.4vw, 42px); background: ${GARLAND} repeat-x 0 0 / auto 100%; translate: 0 -110%; }
 .lw-hero.is-on .lw-hero-garland { animation: lw-garland 1.6s var(--lw-ease) .15s both; }
 @keyframes lw-garland { 0% { translate: 0 -110%; } 55% { translate: 0 14%; } 75% { translate: 0 -5%; } 100% { translate: 0 0; } }
@@ -244,16 +250,16 @@ export const LW_CSS = `
 
 .lw-hero-sun { position: absolute; left: 50%; top: 40%; width: 92%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: radial-gradient(circle, rgba(255,240,205,.95), rgba(251,220,228,.5) 46%, rgba(251,220,228,0) 70%); opacity: 0; transition: opacity 1.6s var(--lw-soft) .2s; }
 .lw-hero.is-on .lw-hero-sun { opacity: 1; }
-.lw-hero-gopuram { position: absolute; left: 4%; top: 0; width: 78%; height: auto; opacity: 0; translate: 0 calc(var(--lw-sy) * .08px); transition: opacity 1.8s var(--lw-soft) .2s; }
+.lw-hero-gopuram { position: absolute; left: 4%; top: 0; width: 78%; height: auto; opacity: 0; translate: 0 0; transition: opacity 1.8s var(--lw-soft) .2s; }
 .lw-hero.is-on .lw-hero-gopuram { opacity: .95; }
-.lw-hero-couple { position: absolute; left: 10%; bottom: 7%; width: 80%; height: auto; opacity: 0; translate: 0 calc(30px + var(--lw-sy) * .03px); scale: .96; transform-origin: 50% 100%; transition: opacity 1.2s var(--lw-soft) .45s, translate 1.5s var(--lw-ease) .45s, scale 1.6s var(--lw-ease) .45s; }
-.lw-hero.is-on .lw-hero-couple { opacity: 1; translate: 0 calc(var(--lw-sy) * .03px); scale: 1; }
+.lw-hero-couple { position: absolute; left: 10%; bottom: 7%; width: 80%; height: auto; opacity: 0; translate: 0 30px; scale: .96; transform-origin: 50% 100%; transition: opacity 1.2s var(--lw-soft) .45s, translate 1.5s var(--lw-ease) .45s, scale 1.6s var(--lw-ease) .45s; }
+.lw-hero.is-on .lw-hero-couple { opacity: 1; translate: 0 0; scale: 1; }
 .lw-hero-pond { position: absolute; bottom: -3%; height: auto; opacity: 0; translate: 0 50px; transition: opacity 1.2s var(--lw-soft), translate 1.6s var(--lw-ease); }
 .lw-hero-pond-l { left: -12%; width: 46%; transition-delay: .75s; }
 .lw-hero-pond-r { right: -12%; width: 46%; transform: scaleX(-1); transition-delay: .9s; }
 /* Two columns: keep the right-hand lotus inside the art column, clear of the names and the date line. */
 @media (min-width: 960px) { .lw-hero-pond-r { right: 4%; width: 34%; } }
-.lw-hero.is-on .lw-hero-pond { opacity: 1; translate: 0 calc(var(--lw-sy) * -.04px); }
+.lw-hero.is-on .lw-hero-pond { opacity: 1; translate: 0 0; }
 .lw-hero-water { position: absolute; left: -14%; right: -14%; bottom: -2%; height: 16%; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, rgba(196,222,211,.85), rgba(196,222,211,0) 72%); }
 .lw-hero-scroll { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: max-content; margin: 34px auto 0; font: 600 11px/1 var(--wk-font-sans); letter-spacing: .3em; text-transform: uppercase; color: var(--lw-sage-d); text-decoration: none; opacity: 0; transition: opacity 1s 1.8s; }
 .lw-hero.is-on .lw-hero-scroll { opacity: .85; }
@@ -465,10 +471,136 @@ export const LW_CSS = `
 @keyframes lw-drift { 0% { opacity: 0; transform: translate(0, 0) rotate(0); } 10% { opacity: .8; } 85% { opacity: .6; } 100% { opacity: 0; transform: translate(var(--dx), -105vh) rotate(260deg); } }
 .lw-root.is-lite .lw-drift, .lw-root.is-lite .lw-twinkle { display: none; }
 
+/* ══ THE DRESSING: hero corners, wide palace-style sections, smooth scrolling ══ */
+/* The hero's white-gold lotus pond at the screen's bottom corners (tablets and up). */
+.lw-hero-gold { display: none; }
+@media (min-width: 700px) {
+  .lw-hero-gold { display: block; position: absolute; inset: auto 0 0 0; height: 0; z-index: 1; pointer-events: none; }
+  .lw-hg { position: absolute; bottom: 0; height: auto; opacity: 0; translate: 0 40px; transform-origin: 50% 100%; transition: opacity 1.2s var(--lw-soft), translate 1.5s var(--lw-ease); }
+  .lw-hero.is-on .lw-hg { opacity: 1; translate: 0 0; animation: lw-stem 7s ease-in-out 1.6s infinite alternate; }
+  .lw-hg-leaf { left: -1.5%; width: clamp(120px, 11vw, 190px); transition-delay: .6s; }
+  .lw-hg-bud { left: clamp(70px, 7vw, 120px); width: clamp(54px, 4.6vw, 80px); transition-delay: .75s; animation-delay: -2s !important; }
+  .lw-hg-tilt { right: -1.5%; width: clamp(110px, 10vw, 175px); transition-delay: .65s; }
+  .lw-hg-pod { right: clamp(80px, 8vw, 140px); width: clamp(36px, 3vw, 54px); transition-delay: .8s; animation-delay: -3s !important; }
+  .lw-hg-budb { right: clamp(125px, 12vw, 205px); width: clamp(32px, 2.6vw, 46px); transition-delay: .9s; animation-delay: -1s !important; }
+}
+/* One screen on tablets and laptops too: the art and the words fit the viewport. */
+@media (min-width: 960px) {
+  .lw-hero { min-height: 100svh; padding-top: clamp(112px, 15.5svh, 210px); padding-bottom: clamp(18px, 3svh, 44px); }
+  .lw-hero-art { max-width: min(620px, calc((100svh - 230px) * .92)); }
+  .lw-hero-names { margin: 4px 0 2px; font-size: clamp(54px, min(7vw, 9.4svh), 108px); }
+  .lw-hero-ganesha { width: clamp(36px, 5svh, 52px); margin-bottom: 6px; }
+  .lw-hero-line { font-size: clamp(16px, 2.3svh, 22px); }
+  .lw-hero-div { margin: clamp(8px, 1.4svh, 18px) 0; width: 170px; }
+  .lw-hero-when { font-size: clamp(17px, 2.5svh, 23px); }
+  .lw-hero-actions { margin-top: clamp(12px, 2svh, 24px); }
+  .lw-hero-scroll { margin-top: clamp(10px, 2svh, 34px); }
+}
+
+/* The invitation: wide, with an arched top (as the royal and palace-door invitations). */
+@media (min-width: 860px) {
+  .lw-sec-invite.wk-w-normal { max-width: 1240px; }
+  .lw-invite { max-width: 1080px; border-radius: 50% 50% 28px 28px / 120px 120px 28px 28px; padding-top: clamp(84px, 8vw, 110px); }
+  .lw-invite::before { border-radius: 50% 50% 20px 20px / 110px 110px 20px 20px; }
+  .lw-invite .wk-msg { max-width: none; }
+  .lw-invite .wk-msg-text p { font-size: 19px; line-height: 1.6; }
+  .lw-hands { margin-bottom: -5%; }
+}
+
+/* Families: two arched temple windows with a white-gold lotus between them. */
+.lw-fam { border-radius: 999px 999px 24px 24px / 150px 150px 24px 24px; padding-top: clamp(34px, 5vw, 46px); background: radial-gradient(90% 55% at 50% 0%, rgba(251,226,233,.55), rgba(251,226,233,0) 70%), var(--lw-card); box-shadow: inset 0 0 0 7px var(--lw-card), inset 0 0 0 8px rgba(201,162,74,.3); }
+.lw-fam::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, transparent, var(--lw-gold), var(--lw-pink), var(--lw-gold), transparent); }
+@media (min-width: 700px) { .lw-fam-grid { max-width: 940px; } }
+
+/* The auspicious day: a sage band across the whole screen, the gold geometric tile over it. */
+.lw-root .wk-section.lw-sec-date { isolation: isolate; }
+.lw-root .wk-section.lw-sec-date::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100vw; translate: -50% 0; z-index: -1; pointer-events: none; background: radial-gradient(70% 60% at 50% 45%, #7E9F8C 0%, #5F806E 50%, #3F5E4F 100%); box-shadow: inset 0 4px 0 var(--lw-gold), inset 0 7px 0 #3F5E4F, inset 0 8px 0 rgba(246,231,188,.6), inset 0 -4px 0 var(--lw-gold), inset 0 -7px 0 #3F5E4F, inset 0 -8px 0 rgba(246,231,188,.6); }
+.lw-root .wk-section.lw-sec-date::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100vw; translate: -50% 0; z-index: -1; pointer-events: none; background: ${TILE} repeat 50% 0 / 290px auto; opacity: .1; mix-blend-mode: screen; }
+.lw-sec-date .lw-eyebrow { color: #F6E7BC; }
+.lw-sec-date .lw-h2 { color: #FFF6DE; }
+.lw-sec-date .lw-head-div { filter: brightness(1.8) saturate(.4); }
+.lw-sec-date .wk-flip-half { background: linear-gradient(180deg, #557564, #3B5A4B); border-color: rgba(246,231,188,.5); color: #F6E7BC; }
+.lw-sec-date .wk-flip, .lw-sec-date .wk-roll { color: #F6E7BC; }
+.lw-sec-date .wk-cd-label { color: #E8F0EA; }
+.lw-sec-date .wk-cd-sep { color: #E9D08C; }
+.lw-sec-date .wk-countdown-done { color: #F6E7BC; }
+.lw-sec-date .lw-date-line { color: #FFF6DE; }
+.lw-sec-date .lw-date-muh { color: #FBD3DF; }
+/* The sage badge on the sage band: a gold edge and a soft halo so it reads as a hanging plaque. */
+.lw-sec-date .lw-badge { filter: drop-shadow(0 0 1.5px #F6E7BC) drop-shadow(0 0 1.5px #E9D08C) drop-shadow(0 18px 22px rgba(20,40,30,.45)); }
+.lw-sec-date .lw-date-lamp { filter: drop-shadow(0 0 14px rgba(255,214,120,.55)); }
+
+/* Our story: every chapter on a card of warm paper, the year on a sage ribbon. */
+.lw-ch-text { position: relative; padding: clamp(16px, 2.6vw, 22px) clamp(18px, 3vw, 26px); border-radius: 20px; background: var(--lw-card); box-shadow: inset 0 0 0 1px var(--lw-line); }
+.lw-ch-when { display: inline-block; margin-bottom: 10px; padding: 6px 12px 5px; border-radius: 999px; color: #F6E7BC; background: linear-gradient(110deg, var(--lw-sage), var(--lw-sage-d)); letter-spacing: .2em; }
+.lw-ch-photo { rotate: -1.6deg; transition: rotate .6s var(--lw-ease); }
+.lw-ch:nth-child(even) .lw-ch-photo { rotate: 1.6deg; }
+@media (hover: hover) { .lw-ch-photo:hover { rotate: 0deg; } }
+
+/* Functions: a rail on phones (one card snaps to the centre, dots underneath); a grid from tablets up. */
+.lw-ev-card, .lw-ev-card:hover { box-shadow: none !important; }
+.lw-ev-card { background: var(--lw-card); }
+.lw-ev-dots { display: flex; justify-content: center; margin-top: 4px; }
+.lw-ev-dots button { display: grid; place-items: center; min-width: 24px; height: 28px; padding: 0 2px; border: 0; background: none; cursor: pointer; }
+.lw-ev-dots button::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--lw-sage-d) 30%, transparent); transition: width .3s var(--lw-ease), background-color .3s ease; }
+.lw-ev-dots button.is-on::after { width: 24px; background: var(--lw-sage-d); }
+.lw-ev-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 699px) {
+  .lw-ev-list { --cw: min(82vw, 330px); flex-wrap: nowrap; justify-content: flex-start; gap: 14px; margin: 0 calc(50% - 50vw); padding: 34px calc((100vw - var(--cw)) / 2) 16px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .lw-ev-list::-webkit-scrollbar { display: none; }
+  .lw-ev-list > * { flex: 0 0 var(--cw); scroll-snap-align: center; scroll-snap-stop: always; transition: transform .45s var(--lw-ease), opacity .45s ease; }
+  .lw-ev-list > :not(.is-at) { transform: scale(.94); opacity: .7; }
+  .lw-ev-sprig { top: -22px; height: 84px; }
+}
+@media (min-width: 700px) { .lw-ev-dots { display: none; } }
+
+/* The venue: the map on a gold-tile panel with a bouncing lotus-pink pin. */
+.lw-venue-card .wk-venue-map { position: relative; background: ${TILE} repeat 50% 0 / 200px auto, linear-gradient(135deg, #F4EFE2, #E8EDE6); border-color: var(--lw-line); }
+.lw-venue-card .wk-venue-mapBtn { display: grid; place-items: center; align-content: center; gap: 14px; background: radial-gradient(closest-side, rgba(255,253,246,.94), rgba(255,253,246,.55) 60%, rgba(255,253,246,0)); color: var(--lw-pink-ink); font-size: 15px; }
+.lw-venue-card .wk-venue-mapBtn::before { content: ""; width: 34px; height: 34px; border-radius: 50% 50% 50% 0; rotate: -45deg; background: radial-gradient(circle at 50% 50%, #FFF6F2 0 28%, var(--lw-pink-d) 30%); box-shadow: 0 10px 14px -6px rgba(126,41,67,.5); animation: lw-pin 1.8s ease-in-out infinite; }
+@keyframes lw-pin { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
+
+/* Gallery: compact on every screen. */
+.lw-sec-gallery .wk-masonry { max-width: 1000px; }
+@media (max-width: 699px) { .lw-sec-gallery .wk-masonry { max-width: 440px; } }
+
+/* Good to know: cards with a white-gold lotus seal and a sage-to-pink edge. */
+.lw-know { max-width: 1000px; }
+.lw-know-i { position: relative; overflow: hidden; padding: 20px 20px 20px 72px; background: var(--lw-card); transition: transform .4s var(--lw-ease); }
+.lw-know-i::before { content: ""; position: absolute; left: 16px; top: 16px; width: 40px; aspect-ratio: 1; border-radius: 50%; background: url("${A.bloomOpen.src}") center 60% / 86% auto no-repeat, radial-gradient(circle, #FFFDF8, var(--lw-pink-soft)); box-shadow: inset 0 0 0 1px var(--lw-line); }
+.lw-know-i::after { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(180deg, var(--lw-sage), var(--lw-pink)); }
+@media (hover: hover) { .lw-know-i:hover { transform: translateY(-3px); } }
+.lw-contacts-wrap { max-width: 1000px; }
+
+/* RSVP: a white-gold lotus rising from the pond beside the reply. */
+.lw-rsvp-wrap { display: grid; gap: 20px; max-width: 640px; margin: 0 auto; }
+.lw-rsvp-art { position: relative; display: block; width: min(70%, 260px); aspect-ratio: .8; margin: 0 auto; }
+.lw-rsvp-glow { position: absolute; left: 50%; top: 44%; width: 110%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,240,205,.95), rgba(251,220,228,.5) 50%, rgba(251,220,228,0)); }
+.lw-rsvp-bloom { position: absolute; left: 50%; bottom: 10%; width: 62%; height: auto; translate: -50% 0; transform-origin: 50% 100%; animation: lw-stem 6s ease-in-out infinite alternate; }
+.lw-rsvp-leaf { position: absolute; left: -4%; bottom: 8%; width: 46%; height: auto; transform-origin: 50% 100%; animation: lw-stem 7s ease-in-out -2s infinite alternate; }
+.lw-rsvp-bud { position: absolute; right: 4%; bottom: 10%; width: 18%; height: auto; transform-origin: 50% 100%; animation: lw-stem 5s ease-in-out -1s infinite alternate; }
+.lw-rsvp-water { position: absolute; left: -10%; right: -10%; bottom: 2%; height: 18%; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, rgba(196,222,211,.9), rgba(196,222,211,0) 72%); }
+.lw-rsvp-names { position: absolute; left: 0; right: 0; bottom: -18px; margin: 0; text-align: center; font: 600 12.5px/1.4 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--lw-sage-d); }
+@media (min-width: 960px) {
+  .lw-rsvp-wrap { max-width: 1120px; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: center; gap: clamp(36px, 5vw, 72px); }
+  .lw-rsvp-art { position: sticky; top: 90px; width: min(100%, 380px); }
+  .lw-rsvp .wk-rsvp { max-width: none; }
+}
+
+/* Blessings: the form beside the wall of notes on wide screens. */
+@media (min-width: 1024px) {
+  .lw-sec-bless .wk-bless { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; gap: clamp(32px, 4vw, 56px); }
+  .lw-sec-bless .wk-bless-form { max-width: none; position: sticky; top: 90px; }
+  .lw-sec-bless .wk-notes { columns: 2 220px; }
+}
+
+/* Off screen (.lw-off, set by an IntersectionObserver): every loop pauses, so scrolling stays smooth. */
+.lw-off, .lw-off *, .lw-off::before, .lw-off::after, .lw-off *::before, .lw-off *::after { animation-play-state: paused !important; }
+
 /* ── Reduced motion: everything rests in its final place. ── */
 @media (prefers-reduced-motion: reduce) {
   .lw-root *, .lw-root *::before, .lw-root *::after { animation: none !important; }
-  .lw-in, .lw-open-copy > *, .lw-open-stage, .lw-open-cta, .lw-open-lights, .lw-open-side img, .lw-hero-lights, .lw-hero-gopuram, .lw-hero-couple, .lw-hero-pond, .lw-hero-sun, .lw-hero-badge, .lw-hero-scroll { transition: none !important; opacity: 1 !important; translate: none !important; scale: none !important; }
+  .lw-hg, .lw-in, .lw-open-copy > *, .lw-open-stage, .lw-open-cta, .lw-open-lights, .lw-open-side img, .lw-hero-lights, .lw-hero-gopuram, .lw-hero-couple, .lw-hero-pond, .lw-hero-sun, .lw-hero-badge, .lw-hero-scroll { transition: none !important; opacity: 1 !important; translate: none !important; scale: none !important; }
   .lw-hero-garland, .lw-open-garland { translate: none !important; }
   .lw-lamp { translate: 0 var(--lw-lamp-y, -18%) !important; transition: none !important; }
   .lw-petal { transition: none !important; }

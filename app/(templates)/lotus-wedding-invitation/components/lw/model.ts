@@ -264,9 +264,6 @@ type Key =
   | "copied"
   | "card"
   | "cardBusy"
-  | "saveDate"
-  | "saveAll"
-  | "calendar"
   | "directions"
   | "dress"
   | "tba"
@@ -289,8 +286,7 @@ type Key =
   | "scroll"
   | "replyBy"
   | "muhurat"
-  | "calShort"
-  | "gcal";
+  | "nav";
 type StringsShape = { [K in Key]: string } & { units: { d: string; h: string; m: string; s: string } };
 
 export const T: Record<Lang, StringsShape> = {
@@ -332,11 +328,6 @@ export const T: Record<Lang, StringsShape> = {
     copied: "Link copied",
     card: "Download invite card",
     cardBusy: "Drawing your card…",
-    saveDate: "Save the date",
-    saveAll: "Save all dates",
-    calendar: "Add to calendar",
-    calShort: "Calendar",
-    gcal: "Google Cal",
     directions: "Directions",
     dress: "Dress code",
     tba: "Time to be announced",
@@ -359,6 +350,7 @@ export const T: Record<Lang, StringsShape> = {
     scroll: "Scroll",
     replyBy: "Kindly reply by",
     muhurat: "Muhurat",
+    nav: "The functions",
     units: { d: "Days", h: "Hours", m: "Minutes", s: "Seconds" },
   },
   hi: {
@@ -399,11 +391,6 @@ export const T: Record<Lang, StringsShape> = {
     copied: "लिंक कॉपी हो गया",
     card: "निमंत्रण कार्ड डाउनलोड करें",
     cardBusy: "कार्ड बन रहा है…",
-    saveDate: "तिथि सहेजें",
-    saveAll: "सभी तिथियाँ सहेजें",
-    calendar: "कैलेंडर में जोड़ें",
-    calShort: "कैलेंडर",
-    gcal: "Google Cal",
     directions: "रास्ता देखें",
     dress: "पोशाक",
     tba: "समय की सूचना जल्द",
@@ -426,6 +413,7 @@ export const T: Record<Lang, StringsShape> = {
     scroll: "नीचे देखें",
     replyBy: "कृपया जवाब दें",
     muhurat: "मुहूर्त",
+    nav: "समारोह",
     units: { d: "दिन", h: "घंटे", m: "मिनट", s: "सेकंड" },
   },
 };

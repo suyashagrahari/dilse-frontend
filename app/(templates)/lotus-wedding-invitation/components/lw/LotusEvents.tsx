@@ -4,12 +4,12 @@
 // Each function is an ivory card under a rounded sage plate with its date (day,
 // month, weekday), with a white-gold lotus piece growing from the corner (bud,
 // pod, bloom or leaf in turn), then time, venue, a dress-code swatch, a note,
-// and three actions: directions, add to calendar, WhatsApp. "Save all dates"
-// sits underneath. 1 column on phones, 2 at ≥700px, 3 at ≥1100px.
+// and two actions: directions and WhatsApp. Phones: a rail that snaps one card
+// to the centre with dots underneath; 2 columns at ≥700px, 3 at ≥1100px.
 
-import { useState } from "react";
-import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, formatEventTime, googleCalendarUrl, mapLink, type WeddingEvent } from "../../../_wedding";
-import { Btn, CAL, CLOCK, Icon, PIN, WA, openWhatsApp, pageUrl } from "./Actions";
+import { useEffect, useRef, useState } from "react";
+import { Reveal, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
+import { Btn, CLOCK, Icon, PIN, WA, openWhatsApp } from "./Actions";
 import { img, type ArtKey } from "./art";
 import { MAIN_RE } from "./model";
 
@@ -19,7 +19,7 @@ export interface LotusEventsProps {
   events: readonly WeddingEvent[];
   couple: string;
   locale: string;
-  labels: { directions: string; calendar: string; calShort: string; gcal: string; saveAll: string; dress: string; tba: string; whatsapp: string };
+  labels: { directions: string; dress: string; tba: string; whatsapp: string; nav: string };
 }
 
 function parts(date: string, locale: string) {
@@ -34,17 +34,53 @@ function parts(date: string, locale: string) {
 }
 
 export default function LotusEvents({ events, couple, locale, labels: l }: LotusEventsProps) {
-  const [flash, setFlash] = useState<string | null>(null);
+  const [at, setAt] = useState(0);
+  const railRef = useRef<HTMLOListElement>(null);
   const list = events.filter((e) => e.title || e.venue || e.date);
+
+  // Phones: which card the rail rests on (the dots): the one whose centre is nearest the rail's.
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const kids = Array.from(el.children) as HTMLElement[];
+      const mid = el.scrollLeft + el.clientWidth / 2;
+      let best = 0;
+      let bestD = Infinity;
+      kids.forEach((k, i) => {
+        const d = Math.abs(k.offsetLeft - el.offsetLeft + k.offsetWidth / 2 - mid);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      });
+      setAt(best);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    measure();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [list.length]);
+
   if (!list.length) return null;
-  const save = (es: readonly WeddingEvent[], key: string, name: string) => {
-    const ok = downloadWeddingIcs(es, { couple, url: pageUrl(), tz: DEFAULT_TZ_OFFSET }, name);
-    setFlash(ok ? key : `${key}:err`);
-    window.setTimeout(() => setFlash(null), 2200);
+  const go = (i: number) => {
+    const el = railRef.current;
+    const k = el?.children[i] as HTMLElement | undefined;
+    if (el && k) el.scrollTo({ left: k.offsetLeft - el.offsetLeft - (el.clientWidth - k.offsetWidth) / 2, behavior: "smooth" });
   };
   return (
-    <div className="lw-evs">
-      <ol className="lw-ev-list">
+    // One reveal for the whole rail: per-card reveals never fire for cards parked off-screen in it.
+    <Reveal className="lw-evs">
+      <ol ref={railRef} className="lw-ev-list">
         {list.map((e, i) => {
           const d = e.date ? parts(e.date, locale) : null;
           const time = formatEventTime(e.time, locale);
@@ -55,7 +91,7 @@ export default function LotusEvents({ events, couple, locale, labels: l }: Lotus
           const isMain = MAIN_RE.test(e.title);
           const shareLine = `${e.title} · ${couple}${d ? ` · ${d.full}` : ""}${time ? `, ${time}` : ""}${e.venue ? ` · ${e.venue}` : ""}`;
           return (
-            <Reveal as="li" key={key} effect="rise" delay={(i % 3) * 90} className={`lw-ev${isMain ? " is-main" : ""}`}>
+            <li key={key} className={`lw-ev${isMain ? " is-main" : ""}${i === at ? " is-at" : ""}`}>
               <article className="lw-ev-card">
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                 <img {...img(SPRIGS[i % SPRIGS.length], { lazy: true })} className="lw-ev-sprig" aria-hidden />
@@ -100,33 +136,23 @@ export default function LotusEvents({ events, couple, locale, labels: l }: Lotus
                         {l.directions}
                       </Btn>
                     )}
-                    {e.date && (
-                      <Btn icon={CAL} ghost className="is-sm" label={`${l.calendar}: ${e.title}`} onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                        {flash === key ? "Saved ✓" : l.calShort}
-                      </Btn>
-                    )}
-                    {e.date && (
-                      <a className="lw-ev-g" href={googleCalendarUrl(e, { couple, url: pageUrl(), tz: DEFAULT_TZ_OFFSET })} target="_blank" rel="noopener noreferrer" aria-label={`${e.title}: Google Calendar`}>
-                        <Icon d={CAL} size={15} /> <span>{l.gcal}</span>
-                      </a>
-                    )}
                     <button type="button" className="lw-ev-wa" onClick={() => openWhatsApp(shareLine)} aria-label={`${l.whatsapp}: ${e.title}`}>
                       <Icon d={WA} fill size={16} /> <span>WhatsApp</span>
                     </button>
                   </div>
                 </div>
               </article>
-            </Reveal>
+            </li>
           );
         })}
       </ol>
-      {list.filter((e) => e.date).length > 1 && (
-        <Reveal className="lw-ev-all">
-          <Btn icon={CAL} onClick={() => save(list.filter((e) => e.date), "all", `wedding-${couple}`)}>
-            {flash === "all" ? "Saved ✓" : l.saveAll}
-          </Btn>
-        </Reveal>
+      {list.length > 1 && (
+        <div className="lw-ev-dots" role="group" aria-label={l.nav}>
+          {list.map((e, i) => (
+            <button key={e.id || i} type="button" className={i === at ? "is-on" : undefined} aria-label={e.title || String(i + 1)} aria-current={i === at || undefined} onClick={() => go(i)} />
+          ))}
+        </div>
       )}
-    </div>
+    </Reveal>
   );
 }
