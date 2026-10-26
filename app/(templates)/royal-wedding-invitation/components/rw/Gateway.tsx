@@ -17,8 +17,10 @@
 //   0.10 s  the screens slide apart into the piers (1.4 s), light spills out,
 //           the rays turn, the illustrated couple appears in the doorway
 //   0.20 s  the elephants bow, trunks low; petals pour through the arch
-//   1.55 s  the camera walks through the doorway (scale up, centred on it)
-//   2.15 s  the courtyard below is revealed, the gateway layer is removed.
+//   1.50 s  warm light blooms out of the doorway to fill the screen as the
+//           camera eases through it (scale up, centred on the door)
+//   1.95 s  the courtyard starts revealing under the light
+//   3.20 s  the light has faded; the gateway layer is removed.
 // Transform/opacity only; no blur or filter animates. Reduced motion: a
 // 400 ms cross-fade. sessionStorage remembers an opened gateway for a reload.
 
@@ -162,9 +164,11 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
     setPhase("open");
     // The courtyard is already in the DOM under the gateway: decode its art while the screens slide.
     void decodeAll(Array.from(document.querySelectorAll<HTMLImageElement>(".rw-court img")), 1500);
-    later(1550, () => live.current && setPhase("push"));
-    later(2150, () => live.current && onOpened());
-    later(2900, () => live.current && setPhase("gone"));
+    // The step through: warm light blooms out of the doorway and fills the screen while the
+    // camera eases in; the courtyard starts revealing under the light, then the light fades away.
+    later(1500, () => live.current && setPhase("push"));
+    later(1950, () => live.current && onOpened());
+    later(3200, () => live.current && setPhase("gone"));
   };
 
   if (phase === "gone") return null;
@@ -186,6 +190,8 @@ export default function Gateway({ first, second, dateLine, guest, s, lang, invoc
         <img className="rw-gate-cloud is-b" {...img(A.cloud2)} />
       </div>
       <div className="rw-gate-floor" aria-hidden />
+      {/* The light that pours out of the open doorway and carries the guest into the courtyard. */}
+      <span className="rw-gate-bloom" aria-hidden />
       {/* The white palace balustrade, flush with the very bottom of the screen. */}
       <span className="rw-gate-rail" aria-hidden />
       {(["l", "r"] as const).map((side) => (

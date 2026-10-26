@@ -45,7 +45,7 @@ export const RW_CSS = `
 .rw-gate-cloud.is-b { top: 12%; right: -14%; width: clamp(220px, 62vw, 600px); opacity: .7; animation: rw-drift 58s ease-in-out -20s infinite alternate-reverse; }
 @keyframes rw-drift { from { transform: translate3d(-4%,0,0); } to { transform: translate3d(8%,0,0); } }
 .rw-gate-floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--foot) + 6px); background: linear-gradient(180deg, #EBD6B0 0%, #F3E4C8 18%, #F7ECD8 100%);  transition: opacity .9s ease .2s; }
-.rw-gate-cam { position: absolute; left: 0; right: 0; top: var(--head); bottom: var(--foot); display: flex; align-items: flex-end; justify-content: center; transform-origin: 50% calc(100% - var(--sh) * .366); transition: transform 1.25s cubic-bezier(.6,0,.25,1), opacity .9s ease .3s; }
+.rw-gate-cam { position: absolute; left: 0; right: 0; top: var(--head); bottom: var(--foot); display: flex; align-items: flex-end; justify-content: center; transform-origin: 50% calc(100% - var(--sh) * .366); transition: transform 1.7s cubic-bezier(.45,0,.15,1), opacity 1s ease .45s; }
 .rw-stage { position: relative; flex: none; width: var(--sw); height: var(--sh); container-type: size; cursor: pointer; transition: opacity .8s ease, transform 1s var(--rw-ease); -webkit-tap-highlight-color: transparent; }
 .rw-gate.is-loading .rw-stage { opacity: 0; transform: translateY(14px); }
 
@@ -168,9 +168,14 @@ export const RW_CSS = `
 .rw-gate.is-open .rw-ele.is-r img { animation: rw-bow-r 1.3s ease-in-out .28s both; }
 .rw-gate.is-open .rw-gate-cta, .rw-gate.is-push .rw-gate-cta { opacity: 0; transform: translateY(10px); pointer-events: none; }
 .rw-gate.is-push { pointer-events: none; }
-.rw-gate.is-push .rw-gate-cam { transform: scale(2.7); opacity: 0; }
-.rw-gate.is-push .rw-gate-copy { opacity: 0; transform: translateY(-20px); }
-.rw-gate.is-push .rw-gate-sky, .rw-gate.is-push .rw-gate-floor { opacity: 0; }
+.rw-gate.is-push .rw-gate-cam { transform: scale(1.9); opacity: 0; }
+/* the light: an ivory-gold bloom from the doorway that covers the screen, then dissolves as the courtyard appears beneath */
+.rw-gate-bloom { position: absolute; z-index: 8; left: 50%; top: calc(100% - var(--foot) - var(--sh) * .366); width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.04); background: radial-gradient(closest-side, #FFFDF6 0%, #FFF6E2 30%, #FBEBCB 62%, #F6E2BC 100%); }
+.rw-gate.is-push .rw-gate-bloom { animation: rw-bloom 1.7s cubic-bezier(.4,0,.2,1) both; }
+@keyframes rw-bloom { 0% { opacity: 0; transform: scale(.04); } 18% { opacity: 1; } 55% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05); } }
+.rw-gate.is-reduced .rw-gate-bloom { display: none; }
+.rw-gate.is-push .rw-gate-copy { opacity: 0; transform: translateY(-24px); transition: opacity .6s ease, transform .9s var(--rw-ease); }
+.rw-gate.is-push .rw-gate-sky, .rw-gate.is-push .rw-gate-floor { opacity: 0; transition: opacity .9s ease .5s; }
 .rw-gate.is-reduced, .rw-gate.is-reduced * { animation: none !important; transition: none !important; }
 .rw-gate.is-reduced { transition: opacity .4s ease !important; }
 .rw-gate.is-reduced.is-push { opacity: 0; }
@@ -229,7 +234,8 @@ export const RW_CSS = `
 .rw-court-k { margin: 0; text-wrap: balance; }
 @media (max-width: 420px) { .rw-court-k { letter-spacing: .2em; font-size: 11px; } }
 .rw-court-names { margin: 16px 0 0; display: flex; flex-direction: column; align-items: center; font-weight: 400; line-height: .98; }
-.rw-court-n { font: 400 clamp(50px, 14.5vw, 104px)/1.14 var(--wk-font-script); padding: 0 .14em; white-space: nowrap; max-width: 100%; }
+/* the foil gradient is clipped to the text box, so it carries room for the swashes (A, V, the n tail) and gives it back with negative margins */
+.rw-court-n { font: 400 clamp(50px, 14.5vw, 104px)/1.14 var(--wk-font-script); padding: .12em .45em .2em; margin: -.12em -.4em -.2em; white-space: nowrap; max-width: calc(100% + .8em); }
 .rw-court-amp { font: 400 clamp(26px, 7vw, 40px)/1 var(--wk-font-script); color: var(--rw-maroon); margin: -.08em 0 -.1em; }
 .rw-court-getting { margin: 14px 0 0; font: italic 400 clamp(18px, 4.8vw, 24px)/1.3 var(--wk-font-display); color: var(--wk-muted); }
 .rw-cartouche { position: relative; margin-top: 16px; padding: 16px 24px 15px; display: grid; gap: 5px; border-radius: 18px; background: linear-gradient(180deg, #FFFBF2, color-mix(in srgb, var(--wk-surface-solid) 70%, var(--rw-sand))); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wk-gold) 60%, transparent), inset 0 0 0 5px color-mix(in srgb, var(--wk-surface-solid) 90%, transparent), inset 0 0 0 6px color-mix(in srgb, var(--rw-maroon) 22%, transparent), 0 16px 32px -24px rgba(90,40,20,.6); }
