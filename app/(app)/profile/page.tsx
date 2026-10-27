@@ -26,6 +26,7 @@ import ProfileWishlist from "@/components/wishlist/ProfileWishlist";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { ProfileSkeleton } from "@/components/skeleton/Skeletons";
 import ProfileInfluencerStrip from "@/components/influencer/ProfileInfluencerStrip";
+import WeddingGuestsSection, { RSVP_TEMPLATES, type GuestPage } from "@/components/profile/WeddingGuestsSection";
 import { answerChip } from "@/app/(templates)/_valentine/kit/answer";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
@@ -1313,6 +1314,20 @@ export default function ProfilePage() {
     </div>
   );
 
+  // Published invitations that take RSVPs: their guest numbers sit right under
+  // the hero, so a couple sees who is coming without opening the editor.
+  const guestPages: GuestPage[] = myCreations
+    .filter((p) => p.isPublished && p.shareId && RSVP_TEMPLATES.has(p.templateType))
+    .map((p) => ({
+      _id: p._id,
+      shareId: p.shareId,
+      templateType: p.templateType,
+      label: templateLabel(p.templateType),
+      emoji: templateEmoji(p.templateType),
+      title: p.recipientName || p.senderName || templateLabel(p.templateType),
+      shareLink: getShareLink(p.shareId),
+    }));
+
   const tabs: { id: ProfilePanel; icon: React.ReactNode; label: string; count?: number }[] = [
     { id: "creations", icon: <Sparkles size={15} />, label: "My Pages", count: myCreations.length },
     { id: "received", icon: <Users size={15} />, label: "Shared", count: receivedPages.length },
@@ -1334,6 +1349,8 @@ export default function ProfilePage() {
     <ProfileShell>
       <div className="pfWrap">
         {HeroBlock}
+
+        <WeddingGuestsSection pages={guestPages} token={accessToken} />
 
         <ProfileInfluencerStrip />
 
