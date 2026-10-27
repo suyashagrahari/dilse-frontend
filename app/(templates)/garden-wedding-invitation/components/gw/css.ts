@@ -183,10 +183,13 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-rocks-f { right: -10%; bottom: -1%; width: min(46vw, 380px); transform: translateY(50px); transition-delay: .6s; }
 /* hanging: cherry branch, lanterns */
 .gw-blossom { top: -3%; width: min(62vw, 520px); opacity: 0; transform: translate(-30px, -30px); transition: opacity 1.2s var(--gw-ease) .4s, transform 1.6s var(--gw-ease) .4s; }
+/* The branch art's cut end is at its lower right: turn it so that end tucks into the top corner and the
+   blossoms hang inward (left: turned 180°, right: its mirror). */
 .gw-blossom-l { left: -14%; }
-/* The right branch is the left one mirrored (its entrance mirrors with it). */
-.gw-blossom-r { right: -14%; scale: -1 1; transition-delay: .5s; }
-.gw-blossom img { transform-origin: 0 0; }
+.gw-blossom-r { right: -14%; transform: translate(30px, -30px); transition-delay: .5s; }
+.gw-blossom-l img { transform: rotate(180deg); }
+.gw-blossom-r img { transform: scaleY(-1); }
+.gw-blossom img { transform-origin: 50% 50%; }
 .gw-hero.is-open .gw-blossom { opacity: 1; transform: none; }
 .gw-hero.is-idle *, .gw-hero.is-idle .gw-petals i { animation-play-state: paused !important; }
 /* the words in the sky */
@@ -537,15 +540,16 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-hero-text { top: max(48px, 5.5svh); }
   .gw-hero-text .wk-eyebrow { max-width: none; }
   .gw-names { font-size: clamp(64px, 11svh, 100px); }
-  .gw-peacock { right: 22%; bottom: 8%; height: min(30svh, 330px); }
+  .gw-peacock { right: 6%; bottom: 9%; height: min(30svh, 330px); }
   .gw-banana-l { left: -5%; } .gw-banana-r { right: -6%; }
   .gw-banana { height: min(66svh, 720px); }
-  /* Both umbrellas planted behind their hedge (the pole's foot hidden), mirrored. */
-  .gw-chhatri-l, .gw-chhatri-r { bottom: 15%; height: min(34svh, 380px); }
-  .gw-chhatri-l { left: 15%; }
-  .gw-chhatri-r { right: 15%; scale: -1 1; }
-  .gw-hedge { width: min(25vw, 380px); bottom: 4%; }
-  .gw-hedge-l { left: 6%; } .gw-hedge-r { right: 8%; }
+  /* The umbrellas flank the gazebo, canopies tucked just behind its pillars, poles planted at its steps. */
+  .gw-chhatri-l, .gw-chhatri-r { bottom: 5%; height: min(30svh, 330px); }
+  .gw-chhatri-l { left: auto; right: calc(50% + min(56svh, 640px) * .24); }
+  .gw-chhatri-r { right: auto; left: calc(50% + min(56svh, 640px) * .24); scale: -1 1; }
+  /* The stone-wall hedges anchor both bottom corners. */
+  .gw-hedge { width: min(25vw, 420px); bottom: 1%; }
+  .gw-hedge-l { left: -3%; } .gw-hedge-r { right: -3%; }
   .gw-lotus-f { left: 2%; width: min(24vw, 360px); }
   .gw-rocks-f { right: 1%; width: min(26vw, 400px); }
   .gw-blossom { width: min(34vw, 560px); top: -5%; }
@@ -588,8 +592,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-blossom { width: min(28vw, 600px); }
 }
 @media (min-width: 1500px) {
-  .gw-peacock { right: 24%; }
-  .gw-chhatri-l { left: 19%; } .gw-chhatri-r { right: 19%; }
+  .gw-peacock { right: 7%; }
 }
 /* Short, wide windows (laptops at 1366×650): keep the names clear of the dome. */
 @media (min-width: 900px) and (max-height: 760px) {

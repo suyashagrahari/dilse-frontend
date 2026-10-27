@@ -4,9 +4,9 @@
 //
 // Back to front, each plane on its own parallax rate (one rAF-throttled scroll
 // listener writes --gw-sy on the hero; every plane reads it at its own k):
-//   sky (k .45) → drifting clouds (k .35) → chhatri umbrellas + banana plants
-//   at the edges (k .18) → the hedge wall + the gazebo, the couple standing in
-//   it (k .08) → the peacock strutting along the hedge → lotus + rocks in the
+//   sky (k .45) → drifting clouds (k .35) → banana plants at the edges
+//   (k .18) → the hedge walls in the corners, the chhatri umbrellas flanking
+//   the gazebo, the couple standing in it (k .08) → the peacock strutting along the hedge → lotus + rocks in the
 //   foreground (k −.06) → a cherry branch reaching in from each top corner
 //   (mirrored, k −.12), petals drifting through all of it.
 // The names sit in the sky above the gazebo.
@@ -99,14 +99,6 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.bananaL)} />
         </span>
-        <span className="gw-a gw-chhatri gw-chhatri-l">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.chhatri)} />
-        </span>
-        <span className="gw-a gw-chhatri gw-chhatri-r">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.chhatri)} />
-        </span>
         <span className="gw-a gw-banana gw-banana-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.bananaR)} />
@@ -121,6 +113,14 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
         <span className="gw-a gw-hedge gw-hedge-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.hedge)} />
+        </span>
+        <span className="gw-a gw-chhatri gw-chhatri-l">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.chhatri)} />
+        </span>
+        <span className="gw-a gw-chhatri gw-chhatri-r">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.chhatri)} />
         </span>
         <span className="gw-gazebo">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
