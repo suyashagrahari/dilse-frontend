@@ -1,5 +1,6 @@
 "use client";
 
+import { cdn } from "../../_wedding/media";
 import { memo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Users, X, Sparkles, ChevronRight } from "lucide-react";
@@ -58,7 +59,7 @@ function FamilyModal({
             >
               {person.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={person.photo} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={cdn(person.photo)} alt="" className="absolute inset-0 w-full h-full object-cover" />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   {/* Dot pattern bg */}

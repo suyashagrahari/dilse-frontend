@@ -6,7 +6,8 @@
 // garden extras: family contacts (tap to call / WhatsApp), an optional shagun
 // UPI line and an optional livestream link. The guest page and the studio live
 // in app/(templates)/garden-wedding-invitation/components. Art: public/wedding-v3
-// (see components/assets.ts), served from the repo, never from S3 or the CDN.
+// (see components/assets.ts), drawn from its media-CDN mirror (the demo photos
+// below and the invite card's canvas keep the same-origin copy).
 //
 // Field mapping on the engine: recipientName = the bride, senderName = the
 // groom, letter = the English invitation, endLine = the closing line,

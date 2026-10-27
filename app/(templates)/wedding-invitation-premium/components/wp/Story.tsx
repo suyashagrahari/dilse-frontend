@@ -9,7 +9,7 @@
 // framed it (focal point + zoom).
 
 import { useEffect, useRef } from "react";
-import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, photoImgStyle, Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { img } from "./art";
 import type { WpChapter } from "./model";
 
@@ -79,7 +79,7 @@ export default function Story({ chapters }: { chapters: WpChapter[] }) {
               {c.photo && (
                 <Reveal className="wp-ch-photo" effect="zoom">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.photo.url} alt={c.title || c.when} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+                  <img src={cdn(c.photo.url)} alt={c.title || c.when} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
                 </Reveal>
               )}
               <Reveal className="wp-ch-text" delay={90}>

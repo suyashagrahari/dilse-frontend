@@ -3,9 +3,10 @@
 // & Gold re-tint it). Every looping or long motion is transform / opacity.
 // Phones first; 600 / 760 / 960 / 1200px widen it into designed spreads.
 
+import { cdn } from "../../_wedding/media";
 import { A } from "./art";
 
-const TILE = `url("${A.tile.src}")`;
+const TILE = `url("${cdn(A.tile.src)}")`;
 
 export const RC_CSS = `
 html:has(.rc-root) { scroll-padding-top: 72px; scroll-padding-bottom: 96px; }

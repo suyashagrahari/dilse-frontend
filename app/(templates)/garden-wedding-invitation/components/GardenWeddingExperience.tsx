@@ -15,8 +15,8 @@
 // the share bar (WhatsApp, card PNG, QR, calendar).
 //
 // Every motion is transform/opacity, gated on visibility and reduced-motion
-// aware; art is same-origin (public/wedding-v3), lazy below the fold, with
-// intrinsic sizes. A bilingual toggle (top-left) switches every label to Hindi.
+// aware; art (public/wedding-v3) is drawn from its media-CDN mirror, lazy below
+// the fold, with intrinsic sizes. A bilingual toggle (top-left) switches every label to Hindi.
 // A personal link (?to=Sharma%20family) greets the guest by name and fills the
 // RSVP name.
 
@@ -30,6 +30,7 @@ import {
   Section,
   WeddingMasonry,
   WeddingRoot,
+  cdn,
   eventEnd,
   eventStart,
   formatEventDate,
@@ -50,9 +51,9 @@ import { GW_CSS } from "./gw/css";
 import { prefillInput, useGuestName } from "./gw/guest";
 import { T, readGarden, type Lang } from "./gw/model";
 
-/** The kit's paper textures, from this repo's public/wedding-v3/gw-kit (the kit's own defaults point at the CDN). */
-const LINEN = 'url("/wedding-v3/gw-kit/linen-overlay.webp")';
-const SILK = 'url("/wedding-v3/gw-kit/paper-silk-light.webp")';
+/** The kit's paper textures (public/wedding-v3/gw-kit), as CSS backgrounds from the media CDN. */
+const LINEN = `url("${cdn("/wedding-v3/gw-kit/linen-overlay.webp")}")`;
+const SILK = `url("${cdn("/wedding-v3/gw-kit/paper-silk-light.webp")}")`;
 const gwTextures = (theme: string): CSSProperties =>
   ({ minHeight: "100dvh", ["--wk-texture" as string]: LINEN, ["--wk-paper" as string]: theme === "champagne" ? SILK : LINEN }) as CSSProperties;
 

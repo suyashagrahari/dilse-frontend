@@ -42,6 +42,7 @@ export type { FamiliesBlockProps, MessageBlockProps, MonogramProps } from "./sec
 export * from "./types";
 export * from "./ics";
 export * from "./api";
+export { WEDDING_ART_CDN, cdn } from "./media";
 export * from "./art";
 
 export { BLESSINGS_TEXT_HI, FN_COUPLE, FN_TINT, RSVP_TEXT_HI, fnTitle, hiTime, kindOf } from "./i18n";

@@ -1,8 +1,11 @@
-// ─── The Lake Terrace: the owner's art, served from /public/wedding-v3 ───────
-// Every image lives in the repo (client/public/wedding-v3/…) and is served from
-// the site's own origin. Nothing comes from S3 or the CDN. The premium/ copies
-// are right-sized crops of template6 + template11 (the originals are 1600px
-// for slots no wider than 600px).
+// ─── The Lake Terrace: the owner's art, from the media CDN ─────────────────
+// Every image lives in the repo (client/public/wedding-v3/…) and is mirrored on
+// the media CDN (../../../_wedding/media.ts). The table keeps the same-origin
+// paths; `img()` and the CSS backgrounds hand the browser the CDN URL. The
+// premium/ copies are right-sized crops of template6 + template11 (the
+// originals are 1600px for slots no wider than 600px).
+
+import { cdn } from "../../../_wedding/media";
 
 export interface Art {
   src: string;
@@ -64,11 +67,11 @@ export const A = {
 
 export type ArtKey = keyof typeof A;
 
-/** <img> props for one piece: intrinsic size (no layout shift), lazy or eager. */
+/** <img> props for one piece, from the CDN: intrinsic size (no layout shift), lazy or eager. Never feed this src to a mask. */
 export function img(key: ArtKey, opts: { lazy?: boolean; high?: boolean } = {}) {
   const a = A[key];
   return {
-    src: a.src,
+    src: cdn(a.src),
     width: a.w,
     height: a.h,
     alt: "",

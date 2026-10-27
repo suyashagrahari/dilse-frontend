@@ -21,7 +21,7 @@
 // no particles, a 400 ms cross-fade. Enter / Space open it too.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../../_wedding";
 import { useDayMusic } from "../../../_valentine/music/context";
 import { A, SHUTTER_BOX, decodeAll, img, seeded } from "./assets";
 import type { Strings } from "./model";
@@ -174,7 +174,7 @@ export default function Jharokha({ first, second, dateLine, guest, s, lang, invo
       host.setAttribute("aria-hidden", "true");
       document.body.appendChild(host);
       const lite = (navigator.hardwareConcurrency || 8) <= 4 || window.innerWidth < 600;
-      pour(host, box, lite ? 22 : 36, [A.petal.src, A.petal.src, A.petalSakura.src]);
+      pour(host, box, lite ? 22 : 36, [cdn(A.petal.src), cdn(A.petal.src), cdn(A.petalSakura.src)]);
       window.setTimeout(() => host.remove(), 4200);
     });
     later(1450, () => {
@@ -212,7 +212,7 @@ export default function Jharokha({ first, second, dateLine, guest, s, lang, invo
       <div className="cw-gate-motes" aria-hidden>
         {motes.map((m, i) => (
           // eslint-disable-next-line @next/next/no-img-element
-          <img key={i} src={A.petal.src} alt="" width={m.size} height={m.size} style={{ left: `${m.left}%`, animationDelay: `${m.delay}s`, animationDuration: `${m.dur}s`, ["--dx" as string]: `${m.dx}px`, ["--rot" as string]: `${m.rot}deg` }} />
+          <img key={i} src={cdn(A.petal.src)} alt="" width={m.size} height={m.size} style={{ left: `${m.left}%`, animationDelay: `${m.delay}s`, animationDuration: `${m.dur}s`, ["--dx" as string]: `${m.dx}px`, ["--rot" as string]: `${m.rot}deg` }} />
         ))}
       </div>
       {(["l", "r"] as const).map((side) => (

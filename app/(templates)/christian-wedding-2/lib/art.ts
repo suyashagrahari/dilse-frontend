@@ -1,6 +1,8 @@
 // ─── Christian Wedding — Scroll Edition: the art ─────────────────────────────
-// Every piece is served from the site's own origin (client/public/wedding-v3/),
-// never from S3 or the CDN:
+// Every piece lives in client/public/wedding-v3/ and is mirrored on the media
+// CDN: the table keeps same-origin paths, `img()` and CSS backgrounds draw
+// through `cdn()`, and the invite-card canvas loads the raw path (the CDN sends
+// no CORS header):
 //   openings/christian2  Tiffany "Magnolias and Irises" casement sashes (Met, CC0),
 //                        the drawn casement frame + blossom garden (in-house)
 //   openings/_shared     light rays, sakura petal, sparkle (in-house)
@@ -17,6 +19,8 @@ export interface Art {
   sm?: string;
   smW?: number;
 }
+
+import { cdn } from "../../_wedding/media";
 
 const O = "/wedding-v3/openings";
 const V = "/wedding-v3";
@@ -53,8 +57,8 @@ export type ArtKey = keyof typeof A;
 export function img(key: ArtKey, opts: { lazy?: boolean; high?: boolean; sizes?: string } = {}) {
   const a: Art = A[key];
   return {
-    src: a.src,
-    ...(a.sm && a.smW ? { srcSet: `${a.sm} ${a.smW}w, ${a.src} ${a.w}w`, sizes: opts.sizes ?? "(max-width: 600px) 40vw, 22vw" } : {}),
+    src: cdn(a.src),
+    ...(a.sm && a.smW ? { srcSet: `${cdn(a.sm)} ${a.smW}w, ${cdn(a.src)} ${a.w}w`, sizes: opts.sizes ?? "(max-width: 600px) 40vw, 22vw" } : {}),
     width: a.w,
     height: a.h,
     alt: "",

@@ -1,9 +1,14 @@
-// ─── Mughal Garden Wedding Invitation: the owner's art, served from /public/wedding-v3 ───
+// ─── Mughal Garden Wedding Invitation: the owner's art, from the media CDN ───
 //
 // Generated from public/wedding-v3/manifest.json. These files live IN THE REPO
-// (client/public/wedding-v3/<folder>/) and are served by Next from the site's own
-// origin. Never upload them to S3 or the CDN. Sizes are the intrinsic webp sizes
-// (use them for width/height so images never shift the layout).
+// (client/public/wedding-v3/<folder>/) and are mirrored on the media CDN
+// (../../_wedding/media.ts). The table keeps the same-origin paths: `gwImg()`
+// and the CSS backgrounds hand the browser the CDN URL, while the invite card's
+// canvas (gw/inviteCard.ts) reads the same-origin path (the CDN sends no CORS
+// header). Sizes are the intrinsic webp sizes (use them for width/height so
+// images never shift the layout).
+
+import { cdn } from "../../_wedding/media";
 
 export interface WeddingAsset { src: string; w: number; h: number }
 
@@ -125,12 +130,12 @@ export const GW = {
 /**
  * <img> props for one asset: intrinsic width/height (no layout shift), async
  * decode, lazy below the fold, high priority for the opening scene, and an
- * optional 2× source (the 800 / 1600 gazebo pair).
+ * optional 2× source (the 800 / 1600 gazebo pair). From the CDN: never a mask or canvas source.
  */
 export function gwImg(a: WeddingAsset, o: { lazy?: boolean; high?: boolean; alt?: string; hi?: WeddingAsset; sizes?: string } = {}) {
   return {
-    src: a.src,
-    ...(o.hi ? { srcSet: `${a.src} ${a.w}w, ${o.hi.src} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
+    src: cdn(a.src),
+    ...(o.hi ? { srcSet: `${cdn(a.src)} ${a.w}w, ${cdn(o.hi.src)} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
     width: a.w,
     height: a.h,
     alt: o.alt ?? "",

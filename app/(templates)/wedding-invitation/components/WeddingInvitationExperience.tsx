@@ -14,7 +14,7 @@
 // for our guests (good to know, who to call, livestream, shagun) → RSVP per
 // function → blessings → the jharokha closes at dusk, replay.
 //
-// Art: public/wedding-v3 (./cw/assets.ts), served from the repo, never the CDN.
+// Art: public/wedding-v3 (./cw/assets.ts), drawn from its media-CDN mirror.
 // One long calm scroll after one cinematic moment; every motion is
 // transform/opacity, gated on visibility, and reduced-motion aware. A
 // bilingual toggle (top-left) switches every heading and button to Hindi.
@@ -23,7 +23,7 @@
 // no Hindi) render through the same model with every new block hidden.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BlessingsWall, Countdown, DEFAULT_TZ_OFFSET, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot } from "../../_wedding";
+import { BlessingsWall, Countdown, DEFAULT_TZ_OFFSET, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, cdn } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
 import { A, CW_KIT, img } from "./cw/assets";
@@ -43,12 +43,12 @@ const GALLERY_COLUMNS = [
   { min: 600, columns: 3 },
 ] as const;
 
-/** The kit's paper textures from this repo (public/wedding-v3/classic/kit); the kit's defaults point at the CDN. */
+/** The kit's paper textures (public/wedding-v3/classic/kit), as CSS backgrounds from the media CDN. */
 const rootStyle = (theme: string): CSSProperties =>
   ({
     minHeight: "100dvh",
-    ["--wk-texture" as string]: `url("${CW_KIT.linen}")`,
-    ["--wk-paper" as string]: `url("${theme === "champagne" ? CW_KIT.silk : CW_KIT.linen}")`,
+    ["--wk-texture" as string]: `url("${cdn(CW_KIT.linen)}")`,
+    ["--wk-paper" as string]: `url("${cdn(theme === "champagne" ? CW_KIT.silk : CW_KIT.linen)}")`,
   }) as CSSProperties;
 
 function Film({ id, label }: { id: string; label: string }) {

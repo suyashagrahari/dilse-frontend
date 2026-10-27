@@ -1,9 +1,11 @@
 // ─── Pampas & Peony: the art, as <img> props ─────────────────────────────────
-// Every piece comes from ../assets.ts (client/public/wedding-v3, same origin,
-// never the CDN). `pic()` returns width/height (no layout shift), lazy or
+// Every piece comes from ../assets.ts (client/public/wedding-v3); `pic()` draws
+// it from its media-CDN twin via `cdn()` (the invite card's canvas keeps the
+// same-origin path, see inviteCard.ts). `pic()` returns width/height (no layout shift), lazy or
 // eager + priority, and a 1×/2× srcSet where a smaller twin of the same
 // painting exists (pampas clouds 1600/800, drape arch 1372/686, swirl 1600/720).
 
+import { cdn } from "../../../_wedding/media";
 import { FW_ASSETS } from "../assets";
 
 const T3 = FW_ASSETS.template3;
@@ -64,8 +66,8 @@ export function pic(role: ArtRole, o: PicOpts = {}) {
   const a = ART[role];
   const small = SMALL[role] ? ART[SMALL[role]!] : null;
   return {
-    src: small && !o.high ? small.src : a.src,
-    ...(small ? { srcSet: `${small.src} ${small.w}w, ${a.src} ${a.w}w`, sizes: o.sizes ?? "100vw" } : {}),
+    src: cdn(small && !o.high ? small.src : a.src),
+    ...(small ? { srcSet: `${cdn(small.src)} ${small.w}w, ${cdn(a.src)} ${a.w}w`, sizes: o.sizes ?? "100vw" } : {}),
     width: a.w,
     height: a.h,
     alt: o.alt ?? "",

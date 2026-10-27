@@ -1,8 +1,10 @@
 import { DoorOpen, CalendarHeart, Image as ImageIcon, Mail, Sparkles } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { WEDDING_ART_CDN } from "../_wedding/media";
 
-// Gallery card. The cover is the owner's card art, served from the repo
-// (public/wedding-v3, never the CDN).
+// Gallery card. The cover is the owner's card art. Like the rest of the template's
+// art, it is served from the media CDN, with its @360w/@540w/@720w variants next to it (the
+// gallery card asks for those). public/wedding-v3 keeps the original.
 export const config: TemplatePageConfig = {
   slug: "palace-door-wedding-invitation",
   type: "palace-door-wedding-invitation",
@@ -10,7 +12,7 @@ export const config: TemplatePageConfig = {
   title: "Palace Door Wedding Invitation ✦ — Doors That Open to Your Shaadi",
   description:
     "Carved Rajasthani palace doors swing open to your wedding: your names in a golden frame, a floral mandap with lanterns, jhumka hangings and a havan kund, an illustrated couple for every function from Haldi and Mehendi to the Reception, RSVP per function, 40 photos and a blessings wall. Ivory and gold; the AI writes it.",
-  coverImage: "/wedding-v3/palace-door/cover-haveli.webp",
+  coverImage: `${WEDDING_ART_CDN}/palace-door/cover-haveli.webp`,
   emoji: "🚪",
   color: "from-amber-200 to-orange-300",
   previewText: "the palace doors open for you 🚪",

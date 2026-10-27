@@ -2,11 +2,11 @@
 
 // ─── A one-shot shower of petals (the kit's PetalBurst, on in-repo art) ──────
 // Same markup and keyframes as the kit's <PetalBurst> (.wk-burst / .wk-burst-bit),
-// but the particles come from public/wedding-v3/palace-door/kit instead of the
-// CDN. Seeded, so every render is identical. Nothing with reduced motion.
+// but the particles are wedding-v3/palace-door/kit art (from the media CDN).
+// Seeded, so every render is identical. Nothing with reduced motion.
 
 import { useMemo } from "react";
-import { useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../../_wedding";
 import { RW_KIT, seeded, type RwPetal } from "../assets";
 
 export interface PetalsProps {
@@ -24,7 +24,7 @@ export default function Petals({ kind, count = 22, mode = "fall", seed = 7 }: Pe
     const r = seeded(seed);
     const kinds = key.split(",") as RwPetal[];
     return Array.from({ length: Math.min(28, count) }, (_, i) => ({
-      src: RW_KIT.petals[kinds[i % kinds.length]],
+      src: cdn(RW_KIT.petals[kinds[i % kinds.length]]),
       x: r() * 100,
       dx: (r() - 0.5) * 160,
       dy: 60 + r() * 260,

@@ -1,9 +1,13 @@
-// ─── Palace Door Wedding Invitation: the owner's art, served from /public/wedding-v3 ───
+// ─── Palace Door Wedding Invitation: the owner's art, from the media CDN ───
 //
 // Generated from public/wedding-v3/manifest.json. These files live IN THE REPO
-// (client/public/wedding-v3/<folder>/) and are served by Next from the site's own
-// origin. Never upload them to S3 or the CDN. Sizes are the intrinsic webp sizes
-// (use them for width/height so images never shift the layout).
+// (client/public/wedding-v3/<folder>/) and on the media CDN. The tables keep the
+// same-origin path; `img()` and the CSS backgrounds draw it through `cdn()`
+// (_wedding/media.ts), while masks and the share canvas keep the plain path.
+// Sizes are the intrinsic webp sizes (use them for width/height so images never
+// shift the layout).
+
+import { cdn } from "../../_wedding/media";
 
 export interface WeddingAsset { src: string; w: number; h: number }
 
@@ -73,7 +77,7 @@ export const PD_ASSETS = {
 
 /**
  * The kit's paper textures and petal particles, copied from media-src into
- * public/wedding-v3/palace-door/kit (the kit's own defaults point at the CDN).
+ * public/wedding-v3/palace-door/kit (drawn from its CDN twin via `cdn()`).
  */
 export const PD_KIT = {
   linen: "/wedding-v3/palace-door/kit/linen-overlay.webp",
@@ -133,10 +137,10 @@ export const A = {
   coupleWedding: PD_ASSETS["template14-couple-haldi-mehndi"]["08-couple-wedding-red-lehenga"],
 } as const;
 
-/** <img> props for one asset: intrinsic size (no layout shift), lazy below the fold. */
-export function img(a: WeddingAsset, opts: { lazy?: boolean; high?: boolean; alt?: string } = {}) {
+/** <img> props for one asset: intrinsic size (no layout shift), lazy below the fold. From the CDN unless `sameOrigin` (an image a mask also reads, so it downloads once). */
+export function img(a: WeddingAsset, opts: { lazy?: boolean; high?: boolean; alt?: string; sameOrigin?: boolean } = {}) {
   return {
-    src: a.src,
+    src: opts.sameOrigin ? a.src : cdn(a.src),
     width: a.w,
     height: a.h,
     alt: opts.alt ?? "",

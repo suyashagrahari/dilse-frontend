@@ -5,6 +5,8 @@
 // Phones first (360px), then tablets (≥700), laptops (≥1024) and wide
 // desktops (≥1440), where the hero and the functions spread into columns.
 
+import { WEDDING_ART_CDN } from "../../../_wedding/media";
+
 export const PD_CSS = `
 .pd-root { --pd-ink: #3A2414; --pd-ink-soft: #6A4A30; --pd-wood-gold: #F3D88F; --pd-gold-a: #B88A35; --pd-gold-b: #E6C677; --pd-gold-c: #F6E2A6; --pd-sand: #EFE2BF; --pd-ease: cubic-bezier(.22,.7,.2,1); overflow-x: clip; }
 .pd-root .wk-section { position: relative; }
@@ -702,7 +704,7 @@ export const PD_CSS = `
 .pd-ambient i { position: absolute; bottom: -12px; border-radius: 50%; background: #F3D88F; box-shadow: 0 0 6px 2px rgba(233,196,106,.55); opacity: 0; animation: pd-rise-dust linear infinite; }
 @keyframes pd-rise-dust { 0% { translate: 0 0; opacity: 0; } 12% { opacity: .7; } 85% { opacity: .45; } 100% { translate: var(--dx) -105vh; opacity: 0; } }
 .pd-root .wk-section.pd-sec { isolation: isolate; }
-.pd-root .wk-section.pd-sec::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100vw; translate: -50% 0; z-index: -2; pointer-events: none; background: url(/wedding-v3/palace-door/lattice-tile.webp) 50% 0 / clamp(150px, 14vw, 220px) repeat; opacity: .2; }
+.pd-root .wk-section.pd-sec::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100vw; translate: -50% 0; z-index: -2; pointer-events: none; background: url(${WEDDING_ART_CDN}/palace-door/lattice-tile.webp) 50% 0 / clamp(150px, 14vw, 220px) repeat; opacity: .2; }
 .pd-root .wk-section.pd-sec::after { content: ""; position: absolute; top: clamp(6px, 2vw, 30px); left: 50%; width: min(560px, 92vw); aspect-ratio: 1; translate: -50% 0; z-index: -1; pointer-events: none; }
 @keyframes pd-turn { to { rotate: 360deg; } }
 /* no mandala watermark behind the section headings: the lattice carries the texture */
@@ -755,7 +757,7 @@ export const PD_CSS = `
 .pd-blessings-of::after { content: ""; display: block; width: min(260px, 70%); height: 1px; margin: 14px auto 0; background: linear-gradient(90deg, transparent, var(--wk-gold), transparent); }
 
 /* the auspicious day: a maroon band across the whole screen, like the palace wall */
-.pd-root .wk-section.pd-sec.pd-sec-day::after { display: block; top: 0; bottom: 0; left: 50%; width: 100vw; aspect-ratio: auto; translate: -50% 0; z-index: -1; background: url(/wedding-v3/palace-door/lattice-tile.webp) 50% 0 / clamp(150px, 13vw, 200px) repeat; opacity: .16; }
+.pd-root .wk-section.pd-sec.pd-sec-day::after { display: block; top: 0; bottom: 0; left: 50%; width: 100vw; aspect-ratio: auto; translate: -50% 0; z-index: -1; background: url(${WEDDING_ART_CDN}/palace-door/lattice-tile.webp) 50% 0 / clamp(150px, 13vw, 200px) repeat; opacity: .16; }
 .pd-root .wk-section.pd-sec.pd-sec-day::before { opacity: 1; background: radial-gradient(70% 55% at 50% 42%, #8A2B3E 0%, #6A1C2C 45%, #3E0E19 100%); box-shadow: inset 0 4px 0 #C9974F, inset 0 7px 0 #6A1C2C, inset 0 8px 0 rgba(243,216,143,.6), inset 0 -4px 0 #C9974F, inset 0 -7px 0 #6A1C2C, inset 0 -8px 0 rgba(243,216,143,.6); }
 .pd-sec-day .pd-scroll-paper { filter: drop-shadow(0 22px 30px rgba(20,0,5,.55)); }
 .pd-sec-day .pd-havan-glow { background: radial-gradient(closest-side, rgba(255,200,90,.9), rgba(255,150,40,.35) 55%, rgba(255,140,40,0) 100%); }
@@ -785,7 +787,7 @@ export const PD_CSS = `
 /* the venue: an arched card between the pillars, lanterns glowing above */
 .pd-venue { position: relative; }
 .pd-venue-card .wk-card { border-radius: 999px 999px 24px 24px / 170px 170px 24px 24px; padding-top: clamp(56px, 9vw, 80px); background: radial-gradient(80% 50% at 50% 0%, rgba(255,232,180,.55), rgba(255,232,180,0) 70%), var(--wk-surface-solid); }
-.pd-venue-card .wk-venue-map { position: relative; background: url(/wedding-v3/palace-door/lattice-tile.webp) center / 140px repeat, linear-gradient(135deg, #F7E9CB, #EEDAB0); border-color: color-mix(in srgb, var(--wk-gold) 55%, transparent); }
+.pd-venue-card .wk-venue-map { position: relative; background: url(${WEDDING_ART_CDN}/palace-door/lattice-tile.webp) center / 140px repeat, linear-gradient(135deg, #F7E9CB, #EEDAB0); border-color: color-mix(in srgb, var(--wk-gold) 55%, transparent); }
 .pd-venue-card .wk-venue-mapBtn { display: grid; place-items: center; align-content: center; gap: 14px; background: radial-gradient(closest-side, rgba(255,250,236,.92), rgba(255,250,236,.55) 60%, rgba(255,250,236,0)); color: #5E1727; font-size: 15px; }
 .pd-venue-card .wk-venue-mapBtn::before { content: ""; width: 34px; height: 34px; border-radius: 50% 50% 50% 0; rotate: -45deg; background: radial-gradient(circle at 50% 50%, #FFF6E0 0 28%, #8A2B3E 30%); box-shadow: 0 10px 14px -6px rgba(94,23,39,.6); animation: pd-pin 1.8s ease-in-out infinite; }
 @keyframes pd-pin { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
@@ -821,7 +823,7 @@ export const PD_CSS = `
 
 /* the finale: the door closes in front of warm light */
 .pd-finale { isolation: isolate; }
-.pd-finale::before { content: ""; position: absolute; inset: 0; z-index: -2; background: url(/wedding-v3/palace-door/lattice-tile.webp) 50% 0 / clamp(150px, 14vw, 220px) repeat; opacity: .2; pointer-events: none; }
+.pd-finale::before { content: ""; position: absolute; inset: 0; z-index: -2; background: url(${WEDDING_ART_CDN}/palace-door/lattice-tile.webp) 50% 0 / clamp(150px, 14vw, 220px) repeat; opacity: .2; pointer-events: none; }
 
 /* off screen (.pd-off, set by an IntersectionObserver): every loop pauses */
 .pd-off, .pd-off *, .pd-off::before, .pd-off::after, .pd-off *::before, .pd-off *::after { animation-play-state: paused !important; }

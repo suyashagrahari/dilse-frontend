@@ -13,14 +13,14 @@
 // shagun) → RSVP → blessings → the gateway closes on "Shubh Vivah".
 //
 // Light only (the redesign of 2026-10): pages published earlier on a dark
-// theme render in sandstone (rw/model.ts). Art: public/wedding-v3 (./assets).
+// theme render in sandstone (rw/model.ts). Art: wedding-v3 on the media CDN (./assets).
 // One long calm scroll after one cinematic moment; every motion is
 // transform/opacity, gated on visibility, and reduced-motion aware. A
 // bilingual toggle (top-left) switches every heading and button to Hindi.
 // ?to=Name greets the guest on the gateway and pre-fills their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BLESSINGS_TEXT_HI, BlessingsWall, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
+import { BLESSINGS_TEXT_HI, BlessingsWall, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, cdn, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
 import { A, RW_KIT, img } from "./assets";
@@ -49,8 +49,8 @@ const GALLERY_COLUMNS = [
 const rootStyle = (theme: string): CSSProperties =>
   ({
     minHeight: "100dvh",
-    ["--wk-texture" as string]: `url("${RW_KIT.linen}")`,
-    ["--wk-paper" as string]: `url("${theme === "blush" ? RW_KIT.linen : RW_KIT.silk}")`,
+    ["--wk-texture" as string]: `url("${cdn(RW_KIT.linen)}")`,
+    ["--wk-paper" as string]: `url("${cdn(theme === "blush" ? RW_KIT.linen : RW_KIT.silk)}")`,
     ...(theme === "champagne"
       ? {
           ["--wk-bg" as string]: "#FBF4E6",

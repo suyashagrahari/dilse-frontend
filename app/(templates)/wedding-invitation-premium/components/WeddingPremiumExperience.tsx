@@ -11,14 +11,14 @@
 // venue by the fountain → live stream → film → gallery → good to know + family
 // contacts → RSVP per function → blessings → shagun → the terrace at evening.
 //
-// All art is the owner's, served from /public/wedding-v3 (never the CDN).
+// All art is the owner's (public/wedding-v3), drawn from its media-CDN mirror.
 // Every motion is transform/opacity, reduced-motion aware. Light themes only:
 // a page stored with an old dark theme renders in the nearest light palette.
 // A bilingual toggle (top-left) switches every heading and button to Hindi.
 // ?to=<name> greets the guest by name and signs their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BLESSINGS_TEXT_HI, BlessingsWall, photoImgStyle, Countdown, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
+import { BLESSINGS_TEXT_HI, BlessingsWall, photoImgStyle, Countdown, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime, cdn } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { Contacts, Icon, LiveStream, PLAY, Shagun } from "./wp/Actions";
 import Events from "./wp/Events";
@@ -196,7 +196,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
             // The couple's cover photo, in an arched gold frame (beside the words on laptops, above them on phones).
             <figure className="wp-invite-portrait">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.cover.url} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.cover)} />
+              <img src={cdn(m.cover.url)} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.cover)} />
             </figure>
           )}
           <div className="wp-invite-body">

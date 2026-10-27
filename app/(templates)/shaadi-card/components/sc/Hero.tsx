@@ -15,6 +15,7 @@
 
 import type { ReactNode } from "react";
 import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
+import { cdn } from "../../../_wedding/media";
 import { ART, img } from "../assets";
 import type { Crop, Lang, Strings } from "../model";
 
@@ -97,7 +98,7 @@ export default function Hero({ open, s, lang, first, second, guest, invocation, 
           </span>
           <div className="sc-mandap">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img className="sc-mandap-bg" {...img(ART.mandapSm, { high: true })} srcSet={`${ART.mandapSm.src} 720w, ${ART.mandap.src} 1080w`} sizes="(max-width: 1023px) 92vw, 520px" aria-hidden />
+            <img className="sc-mandap-bg" {...img(ART.mandapSm, { high: true })} srcSet={`${cdn(ART.mandapSm.src)} 720w, ${cdn(ART.mandap.src)} 1080w`} sizes="(max-width: 1023px) 92vw, 520px" aria-hidden />
             <span className="sc-mandap-glow" aria-hidden />
             {couplePhoto ? (
               <span className="sc-mandap-photo">
@@ -109,7 +110,7 @@ export default function Hero({ open, s, lang, first, second, guest, invocation, 
             )}
             {/* The havan stands in front of the couple (the same art, clipped to the fire pit). */}
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img className="sc-mandap-havan" {...img(ART.mandapSm)} srcSet={`${ART.mandapSm.src} 720w, ${ART.mandap.src} 1080w`} sizes="(max-width: 1023px) 92vw, 520px" aria-hidden />
+            <img className="sc-mandap-havan" {...img(ART.mandapSm)} srcSet={`${cdn(ART.mandapSm.src)} 720w, ${cdn(ART.mandap.src)} 1080w`} sizes="(max-width: 1023px) 92vw, 520px" aria-hidden />
             <span className="sc-mandap-flame" aria-hidden />
           </div>
           <span className="sc-hero-pot sc-hero-pot-l" aria-hidden>

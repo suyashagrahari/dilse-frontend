@@ -11,7 +11,7 @@
 // Phones: a swipe rail with dots; 2 across at ≥700px, 3 at ≥1100px.
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { FN_COUPLE, FN_TINT, Reveal, fnTitle, formatEventTime, hiTime, kindOf, mapLink, type WeddingEvent } from "../../../_wedding";
+import { FN_COUPLE, FN_TINT, Reveal, cdn, fnTitle, formatEventTime, hiTime, kindOf, mapLink, type WeddingEvent } from "../../../_wedding";
 import { Btn, CLOCK, Icon, PIN } from "./Actions";
 import { img, type ArtKey } from "./art";
 import { MAIN_RE, type Lang } from "./model";
@@ -92,7 +92,7 @@ export default function Events({ events, locale, lang, labels: l }: EventsProps)
                 <div className="wp-ev-stage" aria-hidden>
                   <span className="wp-ev-window" />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className={`wp-ev-couple is-${kind}`} src={art.src} width={art.w} height={art.h} alt="" loading="lazy" decoding="async" draggable={false} />
+                  <img className={`wp-ev-couple is-${kind}`} src={cdn(art.src)} width={art.w} height={art.h} alt="" loading="lazy" decoding="async" draggable={false} />
                   <span className="wp-ev-floor" />
                   {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                   <img {...img(SPRIGS[i % SPRIGS.length], { lazy: true })} className="wp-ev-sprig" />

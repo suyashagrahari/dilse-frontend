@@ -8,7 +8,7 @@
 // rises in beside it; phones read one column, wide screens alternate sides.
 
 import { useEffect, useRef } from "react";
-import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, photoImgStyle, Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { GW, gwImg } from "../assets";
 import type { GwChapter } from "./model";
 
@@ -86,7 +86,7 @@ export default function Story({ chapters }: { chapters: GwChapter[] }) {
             {c.photo && (
               <Reveal className="gw-ch-photo" effect="zoom">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.photo.url} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+                <img src={cdn(c.photo.url)} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
               </Reveal>
             )}
             <Reveal className="gw-ch-text" delay={90}>

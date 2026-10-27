@@ -27,7 +27,7 @@
 // frame of the entrance or the swing. Reduced motion: a 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, initialOf, useWeddingReducedMotion } from "../../../_wedding";
 import Diya from "./Diya";
 import Petals from "./Petals";
 import { useDayMusic } from "../../../_valentine/music/context";
@@ -124,7 +124,7 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
   return (
     <div ref={root} className={`pd-gate is-${phase}${reduce ? " is-reduced" : ""}`} data-pd-gate={phase}>
       <div className="pd-gate-wall" aria-hidden>
-        <span className="pd-gate-lattice" style={{ backgroundImage: `url(${A.lattice.src})` }} />
+        <span className="pd-gate-lattice" style={{ backgroundImage: `url(${cdn(A.lattice.src)})` }} />
       </div>
       {/* Desktop: strings of gold lights draped either side of the door. */}
       <div className="pd-gate-lights" aria-hidden>
@@ -169,8 +169,9 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
               const a = side === "left" ? A.leafL : A.leafR;
               return (
                 <div key={side} className={`pd-leaf is-${side[0]}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} aria-hidden>
+                  {/* Same-origin: the shade below masks with this very file, so one download serves both. */}
                   {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                  <img data-pd-pre {...img(a, { high: true })} />
+                  <img data-pd-pre {...img(a, { high: true, sameOrigin: true })} />
                   <span className="pd-leaf-shade" style={{ WebkitMaskImage: `url(${a.src})`, maskImage: `url(${a.src})` }} />
                 </div>
               );
@@ -183,7 +184,7 @@ export default function Doors({ first, second, dateLine, guest, s, lang, invocat
 
           {/* The marigold-and-mango-leaf toran on the lintel, garland strings down the frame. */}
           {(["l", "r"] as const).map((sd) => (
-            <span key={sd} className={`pd-garland is-${sd}`} style={{ backgroundImage: `url(${A.garland.src})` }} aria-hidden />
+            <span key={sd} className={`pd-garland is-${sd}`} style={{ backgroundImage: `url(${cdn(A.garland.src)})` }} aria-hidden />
           ))}
           <span className="pd-toran" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

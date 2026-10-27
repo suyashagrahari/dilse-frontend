@@ -5,6 +5,9 @@
 // (360px), then tablets (≥ 700), laptops (≥ 1024) and wide desktops (≥ 1440).
 // Every photo frame and card is a rectangle with four equal rounded corners.
 
+import { WEDDING_ART_CDN } from "../../../_wedding/media";
+
+// The pattern tiles and the swirl are CSS backgrounds (never masks), so they load from the media CDN.
 export const CW_CSS = `
 .cw-root { --cw-ease: cubic-bezier(.22,.7,.2,1); --cw-rose: var(--wk-accent); --cw-rg: color-mix(in srgb, var(--wk-gold) 70%, var(--wk-accent)); --cw-line: color-mix(in srgb, var(--wk-gold) 55%, transparent); overflow-x: clip; scroll-padding-bottom: 96px; }
 .cw-root .wk-section { position: relative; }
@@ -193,7 +196,7 @@ export const CW_CSS = `
 /* ══ THE ROSE GARDEN (hero) ═══════════════════════════════════════════════ */
 .cw-hero { position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; padding: 0 16px clamp(30px, 6vw, 60px); isolation: isolate; overflow: clip; }
 .cw-hero-wash { position: absolute; inset: 0; z-index: -1; background: radial-gradient(70% 46% at 50% 30%, color-mix(in srgb, var(--wk-surface-solid) 94%, transparent) 0%, transparent 72%), radial-gradient(50% 40% at 85% 85%, color-mix(in srgb, var(--wk-accent) 10%, transparent), transparent 70%), radial-gradient(45% 40% at 10% 90%, color-mix(in srgb, var(--wk-gold) 12%, transparent), transparent 70%), linear-gradient(180deg, var(--wk-bg) 0%, color-mix(in srgb, var(--wk-bg2) 70%, var(--wk-bg)) 100%); }
-.cw-hero-wash::after { content: ""; position: absolute; inset: 0; opacity: .3; background: url("/wedding-v3/template8/04-cream-mandala-diamond-pattern-tile.webp") 0 0 / 150px auto repeat; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%); }
+.cw-hero-wash::after { content: ""; position: absolute; inset: 0; opacity: .3; background: url("${WEDDING_ART_CDN}/template8/04-cream-mandala-diamond-pattern-tile.webp") 0 0 / 150px auto repeat; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%); }
 .cw-hero-petals { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
 .cw-hero-petals img { position: absolute; top: -40px; opacity: 0; }
 .cw-hero.is-on .cw-hero-petals img { animation: cw-mote linear infinite; }
@@ -345,7 +348,7 @@ export const CW_CSS = `
 .cw-root .wk-section.cw-sec { isolation: isolate; }
 /* wide screens: gold line-art swirls (template8) bloom faintly beside the reading column */
 @media (min-width: 1180px) {
-  .cw-root .cw-sec-invite::before, .cw-root .cw-sec-invite::after, .cw-root .cw-sec-story::before, .cw-root .cw-sec-rsvp::before, .cw-root .cw-sec-rsvp::after, .cw-root .cw-sec-fam::after { content: ""; position: absolute; z-index: -1; width: clamp(260px, 22vw, 380px); aspect-ratio: 720 / 654; background: url("/wedding-v3/template8/01-gold-line-art-floral-swirl-720.webp") center / contain no-repeat; opacity: .32; pointer-events: none; }
+  .cw-root .cw-sec-invite::before, .cw-root .cw-sec-invite::after, .cw-root .cw-sec-story::before, .cw-root .cw-sec-rsvp::before, .cw-root .cw-sec-rsvp::after, .cw-root .cw-sec-fam::after { content: ""; position: absolute; z-index: -1; width: clamp(260px, 22vw, 380px); aspect-ratio: 720 / 654; background: url("${WEDDING_ART_CDN}/template8/01-gold-line-art-floral-swirl-720.webp") center / contain no-repeat; opacity: .32; pointer-events: none; }
   .cw-root .cw-sec-invite::before { left: calc(50% - 400px - clamp(260px, 22vw, 380px)); top: 18%; transform: scaleX(-1); }
   .cw-root .cw-sec-invite::after { right: calc(50% - 400px - clamp(260px, 22vw, 380px)); bottom: 12%; transform: rotate(180deg) scaleX(-1); }
   .cw-root .cw-sec-fam::after { right: calc(50% - 520px - clamp(260px, 22vw, 380px)); top: 6%; }
@@ -386,7 +389,7 @@ export const CW_CSS = `
 /* save the date */
 .cw-day { position: relative; padding: clamp(60px, 9vw, 110px) 16px; isolation: isolate; }
 .cw-day-band { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--wk-bg2) 60%, transparent) 20%, color-mix(in srgb, var(--wk-bg2) 60%, transparent) 80%, transparent); }
-.cw-day-band::after { content: ""; position: absolute; inset: 0; opacity: .55; background: url("/wedding-v3/template8/04-cream-mandala-diamond-pattern-tile.webp") 0 0 / 132px auto repeat; -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent); mix-blend-mode: multiply; }
+.cw-day-band::after { content: ""; position: absolute; inset: 0; opacity: .55; background: url("${WEDDING_ART_CDN}/template8/04-cream-mandala-diamond-pattern-tile.webp") 0 0 / 132px auto repeat; -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent); mix-blend-mode: multiply; }
 .cw-day-card { position: relative; max-width: 660px; margin: 0 auto; padding: clamp(30px, 6vw, 46px) clamp(14px, 4vw, 36px); border-radius: 28px; text-align: center; display: grid; justify-items: center; gap: 10px; background: color-mix(in srgb, var(--wk-surface-solid) 92%, transparent); box-shadow: inset 0 0 0 1px var(--cw-line), inset 0 0 0 7px var(--wk-surface-solid), inset 0 0 0 8px color-mix(in srgb, var(--wk-gold) 28%, transparent), 0 30px 60px -40px rgba(110,40,58,.55); }
 .cw-day-card .wk-eyebrow { margin: 0; }
 .cw-day-date { margin: 0; font: 500 clamp(26px, 7vw, 40px)/1.15 var(--wk-font-display); color: var(--wk-ink); text-wrap: balance; }
@@ -431,7 +434,7 @@ export const CW_CSS = `
 .cw-ev-card { position: relative; flex: 1; display: flex; flex-direction: column; border-radius: 28px; overflow: hidden; background: var(--wk-surface-solid); box-shadow: inset 0 0 0 1px var(--cw-line), inset 0 0 0 6px var(--wk-surface-solid), inset 0 0 0 7px color-mix(in srgb, var(--wk-gold) 24%, transparent), 0 30px 54px -38px rgba(110,40,58,.65); transition: transform .45s var(--cw-ease), box-shadow .45s ease; }
 @media (hover: hover) { .cw-ev-card:hover { transform: translateY(-6px); box-shadow: inset 0 0 0 1px var(--wk-gold), inset 0 0 0 6px var(--wk-surface-solid), inset 0 0 0 7px color-mix(in srgb, var(--wk-gold) 40%, transparent), 0 40px 64px -40px rgba(110,40,58,.75); } }
 .cw-ev-stage { position: relative; height: clamp(250px, 64vw, 290px); margin: 7px 7px 0; border-radius: 22px 22px 0 0; overflow: hidden; isolation: isolate; background: radial-gradient(70% 70% at 50% 70%, color-mix(in srgb, var(--fn) 34%, transparent), transparent 75%), linear-gradient(180deg, color-mix(in srgb, var(--fn) 14%, var(--wk-surface-solid)), var(--wk-surface-solid)); }
-.cw-ev-stage::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .35; background: url("/wedding-v3/template8/04-cream-mandala-diamond-pattern-tile.webp") 0 0 / 110px auto repeat; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%); mask-image: linear-gradient(180deg, #000, transparent 85%); }
+.cw-ev-stage::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .35; background: url("${WEDDING_ART_CDN}/template8/04-cream-mandala-diamond-pattern-tile.webp") 0 0 / 110px auto repeat; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%); mask-image: linear-gradient(180deg, #000, transparent 85%); }
 .cw-ev-window { position: absolute; left: 50%; bottom: 0; width: min(62%, 220px); height: 86%; transform: translateX(-50%); border-radius: 999px 999px 0 0; background: radial-gradient(80% 55% at 50% 38%, #fff 0%, color-mix(in srgb, var(--fn) 22%, #fff) 55%, color-mix(in srgb, var(--fn) 40%, #fff) 100%); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--wk-gold) 75%, transparent), inset 0 0 0 7px rgba(255,255,255,.55), inset 0 0 0 8px color-mix(in srgb, var(--wk-gold) 40%, transparent), 0 0 40px 6px color-mix(in srgb, var(--fn) 30%, transparent); }
 .cw-ev-swirl { position: absolute; top: 8px; width: 46%; height: auto; opacity: .22; pointer-events: none; }
 .cw-ev-swirl.is-l { left: -8%; transform: rotate(180deg) scaleX(-1); }

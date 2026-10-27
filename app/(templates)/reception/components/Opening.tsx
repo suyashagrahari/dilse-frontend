@@ -20,7 +20,7 @@
 // Reduced motion: no rotation, no particles — a 400 ms cross-fade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useWeddingReducedMotion } from "../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../_wedding";
 import { A, decodeAll, img } from "./art";
 import { seeded } from "./model";
 import type { Strings } from "./strings";
@@ -133,7 +133,7 @@ export default function Opening({ first, second, dateLine, guest, s, lang, onOpe
     const r = seeded(Date.now() % 9973);
     for (let i = 0; i < n; i++) {
       const el = document.createElement("img");
-      el.src = r() < 0.78 ? A.sparkle.src : A.petal.src;
+      el.src = cdn(r() < 0.78 ? A.sparkle.src : A.petal.src);
       el.alt = "";
       el.className = "rc-spark";
       const size = 10 + r() * (el.src.includes("petal") ? 12 : 18);

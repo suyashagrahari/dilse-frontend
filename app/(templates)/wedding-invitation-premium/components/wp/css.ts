@@ -5,9 +5,11 @@
 // element). Phones first; 700 / 960 / 1280px widen it into designed spreads.
 // Photo frames and cards are rounded rectangles: all four corners equal.
 
+import { cdn } from "../../../_wedding/media";
 import { A } from "./art";
 
-const BALUSTRADE = `url("${A.balustrade.src}")`;
+/** A CSS background (never a mask), so it loads from the media CDN. */
+const BALUSTRADE = `url("${cdn(A.balustrade.src)}")`;
 
 /** layout.json (openings/premium) as stage percentages. */
 const AP = { left: 12.667, top: 18.723, width: 74.667, height: 76.596 };

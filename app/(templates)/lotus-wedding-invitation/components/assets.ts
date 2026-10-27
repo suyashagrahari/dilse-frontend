@@ -1,8 +1,8 @@
-// ─── Lotus Temple Wedding Invitation: the owner's art, served from /public/wedding-v3 ───
+// ─── Lotus Temple Wedding Invitation: the owner's art, from the media CDN ───
 //
 // Generated from public/wedding-v3/manifest.json. These files live IN THE REPO
-// (client/public/wedding-v3/<folder>/) and are served by Next from the site's own
-// origin. Never upload them to S3 or the CDN. Sizes are the intrinsic webp sizes
+// (client/public/wedding-v3/<folder>/) and on the media CDN; the table keeps the
+// same-origin path and lw/art.ts `img()` draws it through `cdn()`. Sizes are the intrinsic webp sizes
 // (use them for width/height so images never shift the layout).
 
 export interface WeddingAsset { src: string; w: number; h: number }

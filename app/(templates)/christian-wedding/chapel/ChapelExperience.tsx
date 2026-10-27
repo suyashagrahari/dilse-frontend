@@ -18,7 +18,7 @@
 // their RSVP name.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { RSVPBlock, Reveal, VenueCard, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
+import { RSVPBlock, Reveal, VenueCard, WeddingMasonry, WeddingRoot, cdn, formatEventDate, formatEventTime } from "../../_wedding";
 import { DayMusicProvider } from "../../_valentine/music/DayMusic";
 import { ART, KIT_TEXTURE, img } from "./assets";
 import ChapelDoors from "./ChapelDoors";
@@ -59,8 +59,8 @@ export function ChapelMusic({ data, autoStart, overSheet = false, children }: { 
 export function rootStyle(theme: CwData["theme"]): CSSProperties {
   return {
     ...(CW_THEMES[theme]?.vars ?? CW_THEMES.ivory.vars),
-    ["--wk-texture" as string]: `url("${KIT_TEXTURE.linen}")`,
-    ["--wk-paper" as string]: `url("${KIT_TEXTURE.silk}")`,
+    ["--wk-texture" as string]: `url("${cdn(KIT_TEXTURE.linen)}")`,
+    ["--wk-paper" as string]: `url("${cdn(KIT_TEXTURE.silk)}")`,
   } as CSSProperties;
 }
 

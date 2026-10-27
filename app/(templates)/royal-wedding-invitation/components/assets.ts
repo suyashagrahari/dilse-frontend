@@ -1,7 +1,9 @@
-// ─── Royal Wedding Invitation: the art, served from /public/wedding-v3 ───────
+// ─── Royal Wedding Invitation: the art, from the media CDN ────────────────────
 //
-// Every file lives IN THE REPO (client/public/wedding-v3/…) and is served by
-// Next from the site's own origin. Never upload them to S3 or the CDN.
+// Every file lives IN THE REPO (client/public/wedding-v3/…) and its twin on the
+// media CDN. The tables keep the same-origin path; `img()` (and every CSS
+// background) draws it through `cdn()` (_wedding/media.ts). A new or changed
+// file must be uploaded before the code that shows it ships.
 // Sizes are the intrinsic webp sizes (width/height on every <img>, so nothing
 // shifts while it loads).
 //   openings/royal   the sandstone gateway, the jaali screens, brass toran and
@@ -12,6 +14,8 @@
 //   template1        pink chhatris, the peacock, clouds, lantern, gazebo, hedge
 //   template14       one illustrated couple per function + the parchment scroll
 //   template15       jhumkas, gold lanterns, havan kund, balustrade, carpet
+
+import { cdn } from "../../_wedding/media";
 
 export interface WeddingAsset {
   src: string;
@@ -88,7 +92,7 @@ export const GATE = {
 /** <img> props for one asset: intrinsic size (no layout shift), lazy below the fold. */
 export function img(x: WeddingAsset, opts: { lazy?: boolean; high?: boolean; alt?: string } = {}) {
   return {
-    src: x.src,
+    src: cdn(x.src),
     width: x.w,
     height: x.h,
     alt: opts.alt ?? "",

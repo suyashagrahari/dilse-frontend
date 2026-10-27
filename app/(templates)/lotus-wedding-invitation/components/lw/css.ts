@@ -4,10 +4,11 @@
 // `translate` / `rotate` / `scale` where an entrance and a loop share one
 // element). Phones first; 700 / 960 / 1280px widen it into designed spreads.
 
+import { cdn } from "../../../_wedding/media";
 import { A } from "./art";
 
-const TILE = `url("${A.tile.src}")`;
-const GARLAND = `url("${A.garland.src}")`;
+const TILE = `url("${cdn(A.tile.src)}")`;
+const GARLAND = `url("${cdn(A.garland.src)}")`;
 
 export const LW_CSS = `
 .lw-root {
@@ -574,7 +575,7 @@ export const LW_CSS = `
 /* Good to know: cards with a white-gold lotus seal and a sage-to-pink edge. */
 .lw-know { max-width: 1000px; }
 .lw-know-i { position: relative; overflow: hidden; padding: 20px 20px 20px 72px; background: var(--lw-card); transition: transform .4s var(--lw-ease); }
-.lw-know-i::before { content: ""; position: absolute; left: 16px; top: 16px; width: 40px; aspect-ratio: 1; border-radius: 50%; background: url("${A.bloomOpen.src}") center 60% / 86% auto no-repeat, radial-gradient(circle, #FFFDF8, var(--lw-pink-soft)); box-shadow: inset 0 0 0 1px var(--lw-line); }
+.lw-know-i::before { content: ""; position: absolute; left: 16px; top: 16px; width: 40px; aspect-ratio: 1; border-radius: 50%; background: url("${cdn(A.bloomOpen.src)}") center 60% / 86% auto no-repeat, radial-gradient(circle, #FFFDF8, var(--lw-pink-soft)); box-shadow: inset 0 0 0 1px var(--lw-line); }
 .lw-know-i::after { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(180deg, var(--lw-sage), var(--lw-pink)); }
 @media (hover: hover) { .lw-know-i:hover { transform: translateY(-3px); } }
 .lw-contacts-wrap { max-width: 1000px; }

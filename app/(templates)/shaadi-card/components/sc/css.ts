@@ -5,6 +5,7 @@
 // photo frame and card is a rounded rectangle with four equal corners.
 // Mobile first: 360 → 390 → 430 → 768 → 1024 → 1440 → 1920.
 
+import { cdn } from "../../../_wedding/media";
 import { ART } from "../assets";
 
 export const SC_CSS = `
@@ -203,7 +204,7 @@ body:has(.sc-root) .vm-icon-btn:focus-visible { outline-color: #b3155a !importan
 .sc-hero-sky::before { content: ""; position: absolute; left: 50%; top: 32%; width: 260vmax; height: 260vmax; margin: -130vmax 0 0 -130vmax;
   background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .34) 0deg 4deg, rgba(255, 255, 255, 0) 4deg 11deg); animation: sc-spin 120s linear infinite; }
 .sc-hero-toran { display: none; }
-.sc-hero-garland { position: absolute; left: 0; right: 0; top: 0; height: clamp(26px, 4.2vw, 44px); z-index: 3; background: url("${ART.garlandBorder.src}") repeat-x 50% 0 / auto 100%; pointer-events: none; }
+.sc-hero-garland { position: absolute; left: 0; right: 0; top: 0; height: clamp(26px, 4.2vw, 44px); z-index: 3; background: url("${cdn(ART.garlandBorder.src)}") repeat-x 50% 0 / auto 100%; pointer-events: none; }
 .sc-hero-strand { position: absolute; top: 0; z-index: 3; width: clamp(18px, 3.2vw, 34px); pointer-events: none; transform-origin: 50% 0; }
 .sc-hero-strand img { display: block; width: 100%; height: auto; }
 .sc-hero-strand-l { left: clamp(6px, 2vw, 28px); }

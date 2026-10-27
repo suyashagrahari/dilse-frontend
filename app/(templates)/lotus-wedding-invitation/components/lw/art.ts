@@ -1,7 +1,9 @@
-// ─── Lotus Temple: the owner's art, served from /public/wedding-v3 ───────────
-// Every image here lives in the repo (client/public/wedding-v3/<folder>/) and is
-// served from the site's own origin. Nothing comes from S3 or the CDN.
+// ─── Lotus Temple: the owner's art, from the media CDN ───────────────────────
+// Every image here lives in the repo (client/public/wedding-v3/<folder>/) and on
+// the media CDN. The table keeps the same-origin path; `img()` and the CSS
+// backgrounds draw it through `cdn()` (_wedding/media.ts).
 
+import { cdn } from "../../../_wedding/media";
 import { LW_ASSETS, type WeddingAsset } from "../assets";
 
 /** The pieces this template uses, by a short name. */
@@ -54,7 +56,7 @@ export type ArtKey = keyof typeof A;
 export function img(key: ArtKey, opts: { lazy?: boolean; high?: boolean } = {}) {
   const a = A[key];
   return {
-    src: a.src,
+    src: cdn(a.src),
     width: a.w,
     height: a.h,
     alt: "",

@@ -9,7 +9,7 @@
 // caparisoned elephant stands guard at each outer foot. Phones stack the two
 // windows with the medallion between them; laptops set them side by side.
 
-import { Reveal } from "../../../_wedding";
+import { Reveal, cdn } from "../../../_wedding";
 import type { FamilySide } from "../../../_wedding/types";
 import { A, img } from "../assets";
 
@@ -75,7 +75,7 @@ export default function Families({ bride, groom, first, blessingsOf, blessingsLa
             <>
               <span className="rw-fam-knot" aria-hidden>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/wedding-v3/classic/gold-mandala.webp" width={480} height={480} alt="" loading="lazy" decoding="async" />
+                <img src={cdn("/wedding-v3/classic/gold-mandala.webp")} width={480} height={480} alt="" loading="lazy" decoding="async" />
                 <b>&amp;</b>
               </span>
               <Window side={sides[1]} delay={140} />

@@ -8,7 +8,7 @@
 // it. Each chapter's photo is drawn the way the sender framed it.
 
 import { useEffect, useRef } from "react";
-import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, photoImgStyle, Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { img } from "./art";
 import type { LwChapter } from "./model";
 
@@ -79,7 +79,7 @@ export default function Story({ chapters }: { chapters: LwChapter[] }) {
               {c.photo && (
                 <Reveal className="lw-ch-photo" effect="zoom">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.photo.url} alt={c.title || c.when} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+                  <img src={cdn(c.photo.url)} alt={c.title || c.when} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
                 </Reveal>
               )}
               <Reveal className="lw-ch-text" delay={90}>

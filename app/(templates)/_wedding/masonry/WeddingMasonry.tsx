@@ -1,3 +1,4 @@
+
 "use client";
 // ─── <WeddingMasonry> — the guest-facing Pinterest-style gallery ─────────────
 //
@@ -16,6 +17,7 @@
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject, type ReactNode } from "react";
 import type { WeddingPhoto } from "../types";
+import { cdn } from "../media";
 import { DEFAULT_COLUMNS, aspectOf, columnsFor, layoutMasonry, type ColumnRule, type MasonryLayout, type MasonryTile } from "./layout";
 import Lightbox from "./Lightbox";
 
@@ -209,7 +211,7 @@ export default function WeddingMasonry({
             <>
               {/* eslint-disable-next-line @next/next/no-img-element -- CDN photos of any shape; next/image cannot know their size */}
               <img
-                src={p.url}
+                src={cdn(p.url)}
                 alt={p.caption || `Photo ${i + 1}`}
                 loading={i < cols * 2 ? "eager" : "lazy"}
                 decoding="async"

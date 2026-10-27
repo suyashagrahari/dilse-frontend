@@ -2,7 +2,8 @@
 // Shared by the wedding templates: which kind of function a title names (and
 // so which illustrated couple dresses its card), a function's usual name in
 // Hindi, how a Hindi invitation says a time, and the kit's RSVP and blessings
-// forms in Hindi. The couple art (template14) is served from /public/wedding-v3.
+// forms in Hindi. The couple art (template14) lives in public/wedding-v3; the
+// table keeps those paths and each <img> draws it through `cdn()` (./media.ts).
 
 import type { BlessingsText } from "./sections/BlessingsWall";
 import type { RsvpText } from "./sections/RSVPBlock";

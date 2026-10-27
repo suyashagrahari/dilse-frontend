@@ -19,7 +19,7 @@
 // Reduced motion: no rotation, no particles, a 400 ms cross-fade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useWeddingReducedMotion } from "../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../_wedding";
 import { useDayMusic } from "../../_valentine/music/context";
 import { ART, DOORWAY, FANLIGHT, LEAF, decodeAll, img, seeded } from "./assets";
 
@@ -138,7 +138,7 @@ export default function ChapelDoors({ first, second, dateLine, guest, replayKey 
       const dir = i % 2 === 0 ? -1 : 1;
       const el = document.createElement("span");
       el.className = "cw-dove";
-      el.innerHTML = `<img src="${ART.doveUp.src}" alt="" width="400" height="300"/><img src="${ART.doveDown.src}" alt="" width="400" height="300"/>`;
+      el.innerHTML = `<img src="${cdn(ART.doveUp.src)}" alt="" width="400" height="300"/><img src="${cdn(ART.doveDown.src)}" alt="" width="400" height="300"/>`;
       layer.appendChild(el);
       const dx = dir * (90 + r() * 170);
       const dy = -(260 + r() * 260);
@@ -165,7 +165,7 @@ export default function ChapelDoors({ first, second, dateLine, guest, replayKey 
     const r = seeded(11);
     for (let i = 0; i < n; i++) {
       const p = document.createElement("img");
-      p.src = i % 3 === 0 ? ART.petalSakura.src : ART.petalRose.src;
+      p.src = cdn(i % 3 === 0 ? ART.petalSakura.src : ART.petalRose.src);
       p.alt = "";
       p.className = "cw-petal";
       p.style.left = `${r() * 100}%`;
@@ -249,7 +249,7 @@ export default function ChapelDoors({ first, second, dateLine, guest, replayKey 
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img className="cw-aisle" data-cw-pre {...img(ART.aisle)} />
             <span className="cw-doorway-bloom" />
-            <span className="cw-doorway-rays" style={{ backgroundImage: `url(${ART.rays.sm})` }} />
+            <span className="cw-doorway-rays" style={{ backgroundImage: `url(${cdn(ART.rays.sm)})` }} />
             <span className="cw-motes">
               {motes.map((m, i) => (
                 <i key={i} style={{ left: `${m.left}%`, width: m.size, height: m.size, animationDelay: `${m.delay}s`, animationDuration: `${m.dur}s`, ["--dx" as string]: `${m.dx}px` }} />

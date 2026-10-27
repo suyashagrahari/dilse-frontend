@@ -6,7 +6,7 @@
 // one, drawn with the sender's focal point and zoom), a gold lotus bud between
 // them on wide screens. The order follows the couple's name order.
 
-import { Reveal, photoImgStyle } from "../../../_wedding";
+import { cdn, photoImgStyle, Reveal } from "../../../_wedding";
 import { img } from "./art";
 import type { LwFamily } from "./model";
 
@@ -16,7 +16,7 @@ function Side({ fam, title, i }: { fam: LwFamily; title: string; i: number }) {
       {fam.photo ? (
         <span className="lw-fam-photo">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={fam.photo.url} alt="" loading="lazy" decoding="async" style={photoImgStyle(fam.photo)} />
+          <img src={cdn(fam.photo.url)} alt="" loading="lazy" decoding="async" style={photoImgStyle(fam.photo)} />
         </span>
       ) : (
         <span className="lw-fam-icon" aria-hidden>

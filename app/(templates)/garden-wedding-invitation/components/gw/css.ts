@@ -4,6 +4,7 @@
 // their element is off screen (.is-idle / missing .is-on); everything is still
 // under prefers-reduced-motion. Mobile first: 360 → 390 → 768 → 1024 → 1440+.
 
+import { cdn } from "../../../_wedding/media";
 import { GW } from "../assets";
 
 export const GW_CSS = `
@@ -325,7 +326,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-venue-arch { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--gw-r); border: 6px solid var(--wk-surface-solid); box-shadow: var(--wk-shadow); background: var(--gw-sky2); }
 /* Phones crop the wide lake panel to its right side: the peacock on the balustrade and the pink dome. */
 .gw-venue-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 96% 50%; }
-.gw-balustrade { position: absolute; left: 0; right: 0; bottom: 0; height: 21%; background: url("${GW.balustrade.src}") repeat-x 0 100% / auto 100%; filter: drop-shadow(0 -4px 8px rgba(80,60,60,.12)); }
+.gw-balustrade { position: absolute; left: 0; right: 0; bottom: 0; height: 21%; background: url("${cdn(GW.balustrade.src)}") repeat-x 0 100% / auto 100%; filter: drop-shadow(0 -4px 8px rgba(80,60,60,.12)); }
 .gw-glints { position: absolute; inset: 52% 18% 24% 18%; }
 /* Phones show the right of the panel (peacock + dome): keep the glints on the open water to the left of the peacock. */
 @media (max-width: 719px) { .gw-glints { inset: 50% 68% 26% 3%; } }

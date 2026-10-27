@@ -16,6 +16,7 @@
 
 import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
 import type { LovePhoto } from "../../../_valentine/types";
+import { cdn } from "../../../_wedding/media";
 import { A, img } from "../assets";
 import Diya from "./Diya";
 import type { Strings } from "./model";
@@ -49,7 +50,7 @@ export default function Courtyard({ open, s, lang, first, second, photo, dateLin
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...img(A.ivy)} />
         {/* Tablets and up: a shorter, denser fringe, the strand repeated at a smaller scale. */}
-        <span className="pd-court-ivy-fringe" style={{ backgroundImage: `url(${A.ivy.src})` }} />
+        <span className="pd-court-ivy-fringe" style={{ backgroundImage: `url(${cdn(A.ivy.src)})` }} />
       </div>
       {/* The floral arch's two halves bloom from the top corners. */}
       {(["l", "r"] as const).map((sd) => (
@@ -141,7 +142,7 @@ export default function Courtyard({ open, s, lang, first, second, photo, dateLin
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="pd-court-carpet" {...img(A.carpet)} />
         {/* The balustrade, repeated edge to edge (the tile is cut post-centre to post-centre). */}
-        <span className="pd-court-rail" style={{ backgroundImage: `url(${A.railTile.src})` }} />
+        <span className="pd-court-rail" style={{ backgroundImage: `url(${cdn(A.railTile.src)})` }} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="pd-court-urn is-l" {...img(A.urn)} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

@@ -1,6 +1,10 @@
 // ─── The art: the owner's pieces (public/wedding-v3) + the CC0 ballroom doors ─
-// Every file ships from this repo's public folder (same origin: canvas-safe,
-// no CDN). Sizes are the files' natural sizes so <img> reserves its box.
+// Every file ships from this repo's public folder and is mirrored on the media
+// CDN. The table keeps same-origin paths: `img()` and the CSS tile draw through
+// `cdn()`; the invite-card canvas loads the raw path (the CDN sends no CORS
+// header). Sizes are the files' natural sizes so <img> reserves its box.
+
+import { cdn } from "../../_wedding/media";
 
 export const OPEN = "/wedding-v3/openings/reception";
 export const SHARED = "/wedding-v3/openings/_shared";
@@ -33,9 +37,9 @@ export type ArtKey = keyof typeof A;
 export function img(key: ArtKey, o: { lazy?: boolean; high?: boolean; sizes?: string } = {}) {
   const a = A[key] as { src: string; sm?: string; w: number; h: number; smw?: number };
   return {
-    src: a.src,
+    src: cdn(a.src),
     // Phones pick the 900px-tall variant (the browser chooses; nothing re-renders).
-    srcSet: a.sm && a.smw ? `${a.sm} ${a.smw}w, ${a.src} ${a.w}w` : undefined,
+    srcSet: a.sm && a.smw ? `${cdn(a.sm)} ${a.smw}w, ${cdn(a.src)} ${a.w}w` : undefined,
     sizes: a.sm && a.smw ? (o.sizes ?? "(max-width: 600px) 50vw, 420px") : undefined,
     width: a.w,
     height: a.h,

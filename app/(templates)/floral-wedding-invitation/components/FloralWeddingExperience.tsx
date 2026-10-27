@@ -20,7 +20,7 @@
 // (top-left) switches every heading and button to Hindi.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BlessingsWall, Countdown, DEFAULT_TZ_OFFSET, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, downloadWeddingIcs, formatEventTime, photoImgStyle } from "../../_wedding";
+import { BlessingsWall, Countdown, DEFAULT_TZ_OFFSET, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, downloadWeddingIcs, formatEventTime, photoImgStyle, cdn } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import Envelope from "./fw/Envelope";
 import Hero from "./fw/Hero";
@@ -179,7 +179,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
   const hasFamilies = sides.some((x) => x.names.length > 0);
   const hasGuests = m.things.length > 0 || m.contacts.length > 0 || !!m.upi || !!m.liveUrl;
   // The kit's linen / silk textures live on the CDN: this page wears its own handmade paper
-  // (.fw-paper, from public/wedding-v3), so both are switched off here.
+  // (.fw-paper, wedding-v3 art), so both are switched off here.
   const rootStyle = { minHeight: "100dvh", ["--fw-paper-o" as string]: String(PAPER_OPACITY[m.theme] ?? 0.6), ["--wk-texture" as string]: "none", ["--wk-paper" as string]: "none" } as CSSProperties;
 
   return (
@@ -207,7 +207,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
             <Reveal effect="zoom" className="fw-portrait">
               <span className="fw-portrait-pic">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.couple.url} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.couple)} />
+                <img src={cdn(m.couple.url)} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.couple)} />
               </span>
               <span className="fw-portrait-drape" aria-hidden>
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -289,7 +289,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
                   {side.pic && (
                     <span className="fw-fam-photo">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={side.pic.url} alt={side.title} loading="lazy" decoding="async" style={photoImgStyle(side.pic)} />
+                      <img src={cdn(side.pic.url)} alt={side.title} loading="lazy" decoding="async" style={photoImgStyle(side.pic)} />
                     </span>
                   )}
                   <p className="wk-eyebrow" lang={lang}>

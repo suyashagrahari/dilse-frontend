@@ -16,6 +16,7 @@ import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import StoryReview from "@/components/story/StoryReview";
 import type { StoryFill } from "@/components/story/storyFillContract";
 import { QUICK_FUNCTIONS, normalisePhone } from "../../lib/model";
+import { cdn } from "../../../_wedding/media";
 import { A } from "../../lib/art";
 import { setFillSource } from "../../lib/factCheck";
 
@@ -304,7 +305,7 @@ export default function AiWeddingSheet({ fill, open, onClose, onManual }: { fill
                   <>
                   <div className="c2q-intro">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={A.branch.src} alt="" aria-hidden width={A.branch.w} height={A.branch.h} decoding="async" />
+                    <img src={cdn(A.branch.src)} alt="" aria-hidden width={A.branch.w} height={A.branch.h} decoding="async" />
                     <p>
                       <b>{STEPS.length} quick questions, about a minute.</b> Only your names are needed — skip anything else. AI then writes the invitation, every celebration and your story, and you check each word before it is saved.
                     </p>

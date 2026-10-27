@@ -6,6 +6,8 @@
 // (≥700), laptops (≥1024) and wide desktops (≥1440). Photos and cards are
 // rounded rectangles with four equal corners — never arch-topped.
 
+import { WEDDING_ART_CDN } from "../../../_wedding/media";
+
 export const RW_CSS = `
 .rw-root { --rw-maroon: #8E2A3C; --rw-maroon-deep: #641C2A; --rw-ink: #3E1F1A; --rw-gold-a: #B88A35; --rw-gold-b: #E6C677; --rw-gold-c: #F6E2A6; --rw-sand: #F1E2C4; --rw-sand-deep: #E4CCA0; --rw-ease: cubic-bezier(.22,.7,.2,1); overflow-x: clip; scroll-padding-top: 72px; }
 .rw-root.rw-t-blush { --rw-maroon: #A23A5E; --rw-maroon-deep: #7A2444; }
@@ -76,7 +78,7 @@ export const RW_CSS = `
 /* the quiet court: a halo behind the gateway, the balustrade on the ground line, lanterns at the top corners */
 .rw-gate-side { display: block; position: absolute; inset: 0; pointer-events: none; }
 .rw-gate-halo { position: absolute; left: 50%; bottom: 0; width: calc(var(--sw) * 2.1); height: calc(var(--sh) * 1.15); transform: translateX(-50%); border-radius: 50% 50% 0 0; background: radial-gradient(closest-side at 50% 62%, rgba(255,246,222,.95), rgba(255,236,196,.55) 45%, rgba(255,236,196,0) 100%); }
-.rw-gate-rail { position: absolute; z-index: 4; left: 0; right: 0; bottom: 0; height: clamp(64px, 10svh, 112px); background: url("/wedding-v3/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.3) saturate(1.1) brightness(1.03); pointer-events: none; }
+.rw-gate-rail { position: absolute; z-index: 4; left: 0; right: 0; bottom: 0; height: clamp(64px, 10svh, 112px); background: url("${WEDDING_ART_CDN}/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.3) saturate(1.1) brightness(1.03); pointer-events: none; }
 .rw-gate.is-loading .rw-gate-rail { opacity: 0; }
 .rw-gate:not(.is-loading) .rw-gate-rail { animation: rw-up .9s var(--rw-ease) .2s both; }
 .rw-gate.is-push .rw-gate-rail { opacity: 0; transition: opacity .4s ease; }
@@ -409,7 +411,7 @@ export const RW_CSS = `
 .rw-rod::before, .rw-rod::after { content: ""; position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%; transform: translateY(-50%); background: radial-gradient(circle at 40% 35%, #FFF3C4, #C99A45 55%, #7A4E14); }
 .rw-rod::before { left: -10px; }
 .rw-rod::after { right: -10px; }
-.rw-paper { position: relative; width: 100%; margin: -6px 0; padding: 34px clamp(18px, 6vw, 40px) 62px; display: grid; justify-items: center; gap: 4px; text-align: center; background: linear-gradient(rgba(255,249,236,.62), rgba(255,246,228,.5)), url("/wedding-v3/template1/07-parchment-2.webp") center / cover, #F6E6C4; color: #4A2A1C; box-shadow: inset 0 0 40px rgba(150,100,40,.25); transform-origin: 50% 0; transition: transform 1.2s cubic-bezier(.65,0,.25,1), opacity .4s ease; }
+.rw-paper { position: relative; width: 100%; margin: -6px 0; padding: 34px clamp(18px, 6vw, 40px) 62px; display: grid; justify-items: center; gap: 4px; text-align: center; background: linear-gradient(rgba(255,249,236,.62), rgba(255,246,228,.5)), url("${WEDDING_ART_CDN}/template1/07-parchment-2.webp") center / cover, #F6E6C4; color: #4A2A1C; box-shadow: inset 0 0 40px rgba(150,100,40,.25); transform-origin: 50% 0; transition: transform 1.2s cubic-bezier(.65,0,.25,1), opacity .4s ease; }
 .rw-paper > * { margin: 0; }
 .rw-rod.is-bottom { transition: transform 1.2s cubic-bezier(.65,0,.25,1); }
 .rw-farmaan.is-rolled .rw-paper { transform: scaleY(.04); opacity: .4; }
@@ -603,7 +605,7 @@ export const RW_CSS = `
 /* the finale: the opening's world again, one screen tall */
 .rw-finale { position: relative; isolation: isolate; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 70px 16px clamp(76px, 12svh, 120px); text-align: center; overflow: clip; }
 .rw-fin-sky { position: absolute; inset: 0; z-index: -2; background: radial-gradient(60% 40% at 50% 34%, rgba(255,250,236,.95), rgba(255,250,236,0) 72%), linear-gradient(180deg, #FBF2E2 0, #F6E9D2 35%, #F1E1C4 75%, #EAD7B2 100%); }
-.rw-fin-rail { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; height: clamp(60px, 10svh, 104px); background: url("/wedding-v3/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.3) saturate(1.1) brightness(1.03); pointer-events: none; }
+.rw-fin-rail { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; height: clamp(60px, 10svh, 104px); background: url("${WEDDING_ART_CDN}/template15/07-white-stone-railing-balustrade.webp") 50% 100% / auto 100% repeat-x; filter: sepia(.3) saturate(1.1) brightness(1.03); pointer-events: none; }
 .rw-fin-lamp { position: absolute; z-index: 0; top: 0; width: clamp(110px, 14vw, 220px); pointer-events: none; }
 .rw-fin-lamp img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 16px rgba(110,60,20,.22)); }
 .rw-fin-lamp .is-long { display: none; }

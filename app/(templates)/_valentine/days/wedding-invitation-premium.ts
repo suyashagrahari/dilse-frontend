@@ -4,7 +4,7 @@
 // watercolour terrace over a lake: powder blue sky, ivory balustrades,
 // champagne gold, flamingos, a pink gazebo, a peacock and lanterns (the
 // owner's art, public/wedding-v3/template6 + template11 + openings/premium,
-// served from the repo, never the CDN). Then one scroll: the couple, the
+// drawn from its media-CDN mirror). Then one scroll: the couple, the
 // invitation in English + Hindi, families, countdown, story, functions, venue,
 // film, gallery, good to know, contacts, RSVP per function, blessings, shagun,
 // share and a closing terrace. The guest page + studio live in

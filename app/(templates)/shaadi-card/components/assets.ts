@@ -1,15 +1,19 @@
-// ─── The Shaadi Card's art (all same-origin, public/wedding-v3) ─────────────
+// ─── The Shaadi Card's art (public/wedding-v3, drawn from its CDN twin) ─────
 //
 // The owner's Canva extractions (template2 · 7 · 10 · 14 · 5), the drawn khidki
 // kit (openings/shaadi, CC0 + in-house SVG → webp) and phone-sized variants of
-// both in public/wedding-v3/shaadi (made by sharp; see the PR notes). Nothing
-// comes from the CDN, so the invite-card canvas is never tainted.
+// both in public/wedding-v3/shaadi (made by sharp; see the PR notes). The
+// tables keep same-origin paths: `img()`, the srcSets and CSS backgrounds draw
+// through `cdn()`, while the invite-card canvas loads the raw path, so it is
+// never tainted (the CDN sends no CORS header).
 
 export interface Art {
   src: string;
   w: number;
   h: number;
 }
+
+import { cdn } from "../../_wedding/media";
 
 const a = (src: string, w: number, h: number): Art => ({ src, w, h });
 const V3 = "/wedding-v3";
@@ -69,7 +73,7 @@ export const FN_ART: Record<string, Art> = {
 /** `<img>` props with intrinsic size; lazy below the fold. */
 export function img(x: Art, o: { lazy?: boolean; high?: boolean; alt?: string } = {}) {
   return {
-    src: x.src,
+    src: cdn(x.src),
     width: x.w,
     height: x.h,
     alt: o.alt ?? "",

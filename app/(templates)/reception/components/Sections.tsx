@@ -4,7 +4,7 @@
 
 import { useState, type ReactNode } from "react";
 import { cropImgStyle } from "../../_valentine/editor/PhotoCropper";
-import { Countdown, Reveal, formatEventDate, formatEventTime, googleCalendarUrl, mapLink, downloadWeddingIcs, DEFAULT_TZ_OFFSET, type WeddingEvent } from "../../_wedding";
+import { Countdown, Reveal, formatEventDate, formatEventTime, googleCalendarUrl, mapLink, downloadWeddingIcs, DEFAULT_TZ_OFFSET, type WeddingEvent, cdn } from "../../_wedding";
 import { Btn, CAL, CLOCK, Icon, PIN, PLAY, pageUrl, useFlash } from "./Actions";
 import { img } from "./art";
 import { clock12, swatchFor } from "./model";
@@ -84,7 +84,7 @@ function Portrait({ p, label, family, familyLabel, lang, delay }: { p: PersonInf
       <div className="rc-person-frame">
         {p.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.photo} alt={p.name} loading="lazy" decoding="async" style={cropImgStyle({ x: p.cropX ?? 50, y: p.cropY ?? 50, scale: p.scale ?? 100 })} />
+          <img src={cdn(p.photo)} alt={p.name} loading="lazy" decoding="async" style={cropImgStyle({ x: p.cropX ?? 50, y: p.cropY ?? 50, scale: p.scale ?? 100 })} />
         ) : (
           <span className="rc-person-ini" aria-hidden>
             {(p.name || label).slice(0, 1)}
@@ -165,7 +165,7 @@ export function Story({ chapters }: { chapters: StoryChapter[] }) {
           {c.photo && (
             <div className="rc-chapter-ph">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.photo} alt={c.title} loading="lazy" decoding="async" />
+              <img src={cdn(c.photo)} alt={c.title} loading="lazy" decoding="async" />
             </div>
           )}
           <div className="rc-chapter-t">

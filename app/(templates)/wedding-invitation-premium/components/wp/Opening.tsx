@@ -22,7 +22,7 @@
 // crossfade. A real <button>, Enter/Space, and a tap anywhere on the doors.
 
 import { useEffect, useRef, useState } from "react";
-import { useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../../_wedding";
 import { A, decodeAll, img, seeded } from "./art";
 import Lake from "./Lake";
 import type { Strings } from "./model";
@@ -116,7 +116,7 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
     for (let i = 0; i < n; i++) {
       const petal = i % 3 === 0;
       const el = document.createElement("img");
-      el.src = petal ? A.petal.src : A.sparkle.src;
+      el.src = cdn(petal ? A.petal.src : A.sparkle.src);
       el.alt = "";
       el.className = petal ? "wp-fx wp-fx-petal" : "wp-fx";
       const size = petal ? 12 + r() * 12 : 10 + r() * 16;
@@ -252,7 +252,7 @@ export default function Opening({ first, second, dateLine, city, guest, s, lang,
         {/* The step through: sunlight blooms out of the doorway to fill the screen; the terrace appears out of it. */}
         <span className="wp-open-flash" aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/wedding-v3/classic/gold-mandala.webp" width={480} height={480} alt="" decoding="async" />
+          <img src={cdn("/wedding-v3/classic/gold-mandala.webp")} width={480} height={480} alt="" decoding="async" />
         </span>
 
         <div className="wp-open-cta">

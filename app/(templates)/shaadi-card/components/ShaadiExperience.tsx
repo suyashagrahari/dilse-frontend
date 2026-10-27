@@ -17,7 +17,7 @@
 // motion is transform/opacity; reduced motion is honoured throughout.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { RSVPBlock, Reveal, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
+import { RSVPBlock, Reveal, WeddingMasonry, WeddingRoot, cdn, formatEventDate, formatEventTime } from "../../_wedding";
 import { ART, img } from "./assets";
 import { T, defaultInvitation, readView, type Lang, type ShaadiCardData, type ShaadiTheme, type Wish } from "./model";
 import Blessings from "./sc/Blessings";
@@ -128,7 +128,7 @@ const THEMES: Record<ShaadiTheme, Record<string, string>> = {
   },
 };
 
-const LINEN = 'url("/wedding-v3/gw-kit/linen-overlay.webp")';
+const LINEN = `url("${cdn("/wedding-v3/gw-kit/linen-overlay.webp")}")`;
 const GALLERY_COLUMNS = [
   { min: 0, columns: 2 },
   { min: 560, columns: 3 },

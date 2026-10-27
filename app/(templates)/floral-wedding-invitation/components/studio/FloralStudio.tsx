@@ -16,7 +16,7 @@
 // "jump to the gap" work.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
+import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_ART_CDN, WEDDING_THEMES } from "../../../_wedding";
 import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
@@ -881,7 +881,7 @@ const FWS_CSS = `
 .fws-row3 > :last-child:nth-child(3) { grid-column: 1 / -1; }
 @media (min-width: 560px) { .fws-row3 { grid-template-columns: 1fr 1fr 1.4fr; } .fws-row3 > :last-child:nth-child(3) { grid-column: auto; } .fws-row3-tight { grid-template-columns: 1.3fr 1fr 1fr; } .fws-row3-story { grid-template-columns: 1fr 3fr; } .fws-row3-c { grid-template-columns: 1.2fr 1fr 1.2fr; } }
 .fws-ai { position: relative; margin: 6px 0 6px; padding: 20px 18px 18px; border-radius: 22px; overflow: hidden; color: #3d2a24; background: radial-gradient(120% 90% at 100% 0%, #f7e1dc 0%, transparent 55%), linear-gradient(160deg, #fffaf4, #f8ece2); box-shadow: 0 0 0 1px rgba(184,146,74,.45), 0 18px 40px -26px rgba(122,63,71,.55); }
-.fws-ai::after { content: ""; position: absolute; right: -30px; top: -26px; width: 140px; height: 140px; background: url("/wedding-v3/template3/11-pink-peony-bouquet.webp") center / contain no-repeat; opacity: .5; transform: rotate(-14deg); pointer-events: none; }
+.fws-ai::after { content: ""; position: absolute; right: -30px; top: -26px; width: 140px; height: 140px; background: url("${WEDDING_ART_CDN}/template3/11-pink-peony-bouquet.webp") center / contain no-repeat; opacity: .5; transform: rotate(-14deg); pointer-events: none; }
 .fws-ai > * { position: relative; z-index: 1; }
 .fws-ai-k { margin: 0; font: 700 11px/1 var(--vw-font-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--fws-gold); }
 .fws-ai-h { margin: 8px 0 4px; font: 600 22px/1.2 var(--vw-font-serif); color: var(--fws-wine); max-width: 80%; }

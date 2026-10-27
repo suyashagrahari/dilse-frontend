@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import type { WeddingPhoto } from "../types";
+import { cdn } from "../media";
 
 export interface LightboxProps {
   photos: readonly WeddingPhoto[];
@@ -104,7 +105,7 @@ export default function Lightbox({ photos, index, onIndex, onClose }: LightboxPr
       if (q && n > 1) {
         const im = new Image();
         im.decoding = "async";
-        im.src = q.url;
+        im.src = cdn(q.url);
       }
     }
   }, [index, n, photos]);
@@ -219,7 +220,7 @@ export default function Lightbox({ photos, index, onIndex, onClose }: LightboxPr
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           key={p.url}
-          src={p.url}
+          src={cdn(p.url)}
           alt={p.caption || `Photo ${index + 1}`}
           draggable={false}
           className="wk-lb-img"

@@ -7,7 +7,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
-import { Countdown, Reveal, formatEventDate, formatEventTime, initialOf } from "../../../_wedding";
+import { Countdown, Reveal, formatEventDate, formatEventTime, initialOf, cdn } from "../../../_wedding";
 import { ART, img } from "../assets";
 import { SECOND_LANGS, type CwData, type CwView } from "../model";
 import ShareBar, { ICON, Icon } from "./ShareBar";
@@ -22,7 +22,7 @@ export function Photo({ src, x = 50, y = 50, scale = 100, alt = "", ratio, class
   return (
     <span className={`cw-photo ${className}`} style={{ aspectRatio: ratio }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} loading={lazy ? "lazy" : "eager"} decoding="async" style={style} />
+      <img src={cdn(src)} alt={alt} loading={lazy ? "lazy" : "eager"} decoding="async" style={style} />
     </span>
   );
 }

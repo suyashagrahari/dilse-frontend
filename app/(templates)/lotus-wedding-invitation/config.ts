@@ -1,8 +1,10 @@
 import { Sun, CalendarHeart, Image as ImageIcon, Mail, Sparkles } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { WEDDING_ART_CDN } from "../_wedding/media";
 
-// Gallery card. The cover is the template's own opening (a lotus blooming in the pond, the owner's art), served from the repo
-// (public/wedding-v3, never the CDN).
+// Gallery card. The cover is the template's own opening (a lotus blooming in the pond, the owner's art). Like the rest of the template's
+// art, it is served from the media CDN, with its @360w/@540w/@720w variants next to it (the
+// gallery card asks for those). public/wedding-v3 keeps the original.
 export const config: TemplatePageConfig = {
   slug: "lotus-wedding-invitation",
   type: "lotus-wedding-invitation",
@@ -10,7 +12,7 @@ export const config: TemplatePageConfig = {
   title: "Lotus Temple Wedding Invitation ✦ — Lotus Pond, Gopuram & Brass Lamps",
   description:
     "A South Indian temple wedding invitation in white, gold and lotus pink: brass lamps glow, lotuses bloom from a temple pond, gold string lights frame a Shri Ganeshay Namah opening and the gopuram rises over your muhurtham, then every function with maps, 40 photos, RSVP per function and a blessings wall. The AI writes it.",
-  coverImage: "/wedding-v3/lotus/cover-bloom.webp",
+  coverImage: `${WEDDING_ART_CDN}/lotus/cover-bloom.webp`,
   emoji: "🪷",
   color: "from-amber-100 to-pink-200",
   previewText: "the temple lamps are lit for you 🪷",

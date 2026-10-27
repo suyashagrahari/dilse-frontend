@@ -25,7 +25,7 @@
 // cross-fade. Enter / Space open it too; the pill is a real <button>.
 
 import { useEffect, useRef, useState } from "react";
-import { useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../../_wedding";
 import { ART, decodeAll, img } from "../assets";
 import type { Lang, Strings } from "../model";
 
@@ -94,7 +94,7 @@ function sprayPetals(host: HTMLElement, origin: DOMRect, count: number) {
   const vh = host0.height || window.innerHeight;
   for (let i = 0; i < count; i++) {
     const el = document.createElement("img");
-    el.src = kinds[i % kinds.length];
+    el.src = cdn(kinds[i % kinds.length]);
     el.alt = "";
     el.className = "sc-petal";
     el.decoding = "async";
@@ -240,7 +240,7 @@ export default function Khidki({ first, second, dateLine, guest, s, lang, invoca
           <div className="sc-stage-in">
             <div className="sc-aperture" aria-hidden>
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img className="sc-ap-bg" {...img(ART.mandapSm, { high: true })} srcSet={`${ART.mandapSm.src} 720w, ${ART.mandap.src} 1080w`} sizes="(max-width: 600px) 80vw, 420px" />
+              <img className="sc-ap-bg" {...img(ART.mandapSm, { high: true })} srcSet={`${cdn(ART.mandapSm.src)} 720w, ${cdn(ART.mandap.src)} 1080w`} sizes="(max-width: 600px) 80vw, 420px" />
               <span className="sc-ap-bloom" />
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="sc-ap-rays" {...img(ART.raysSm)} />

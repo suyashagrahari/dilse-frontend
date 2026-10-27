@@ -1,8 +1,10 @@
 import { Flower, CalendarHeart, Image as ImageIcon, Mail, Sparkles } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { WEDDING_ART_CDN } from "../_wedding/media";
 
-// Gallery card. The cover is the owner's card art, served from the repo
-// (public/wedding-v3, never the CDN).
+// Gallery card. The cover is the owner's card art. Like the rest of the template's
+// art, it is served from the media CDN, with its @360w/@540w/@720w variants next to it (the
+// gallery card asks for those). public/wedding-v3 keeps the original.
 export const config: TemplatePageConfig = {
   slug: "floral-wedding-invitation",
   type: "floral-wedding-invitation",
@@ -10,7 +12,7 @@ export const config: TemplatePageConfig = {
   title: "Pampas & Peony Wedding Invitation ✦ — Boho Floral, Every Function",
   description:
     "A boho floral wedding invitation on handmade paper: guests break a wax seal on an envelope addressed to them, the card unfolds, pampas grass sways and the couple swings under a floral drape while gold line-art draws itself. Then every function with maps and dress codes, 40 photos you can resize, RSVP per function, who to call, a blessings wall and a downloadable card. Champagne, blush or powder; the AI writes it.",
-  coverImage: "/wedding-v3/template3/card.webp",
+  coverImage: `${WEDDING_ART_CDN}/template3/card.webp`,
   emoji: "🌸",
   color: "from-stone-200 to-rose-200",
   previewText: "a floral invitation, just for you 🌸",

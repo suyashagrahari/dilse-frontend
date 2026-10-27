@@ -8,7 +8,7 @@
 // A vine hangs over the top corner and sways. Transform/opacity only.
 
 import { useEffect, useRef } from "react";
-import { Reveal, photoImgStyle, useWeddingReducedMotion } from "../../../_wedding";
+import { cdn, photoImgStyle, Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { pic } from "./art";
 import type { FwChapter } from "./model";
 
@@ -80,7 +80,7 @@ export default function Story({ chapters }: { chapters: FwChapter[] }) {
                 <span className="fw-ch-print" style={{ ["--tilt" as string]: `${i % 2 ? 2.2 : -2.4}deg` }}>
                   <span className="fw-ch-pic">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.photo.url} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
+                    <img src={cdn(c.photo.url)} alt={c.title} loading="lazy" decoding="async" style={photoImgStyle(c.photo)} />
                   </span>
                   {c.when && <span className="fw-ch-stamp">{c.when}</span>}
                 </span>

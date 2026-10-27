@@ -1,8 +1,11 @@
-// ─── Classic (Gulabi Jharokha): the art, served from /public/wedding-v3 ─────
+// ─── Classic (Gulabi Jharokha): the art, from the media CDN ────────────────
 //
-// Every file lives IN THE REPO (client/public/wedding-v3/…) and is served by
-// Next from the site's own origin. Never upload them to S3 or the CDN. Sizes
-// are the intrinsic webp sizes (width/height on every <img>: no layout shift).
+// Every file lives IN THE REPO (client/public/wedding-v3/…) and is mirrored on
+// the media CDN (../../../_wedding/media.ts). The table keeps the same-origin
+// paths; `img()` and every plain <img>/background hands the browser the CDN
+// URL, while the shutter masks keep the same-origin path (the CDN sends no
+// CORS header). Sizes are the intrinsic webp sizes (width/height on every
+// <img>: no layout shift).
 //
 //   openings/classic  the jharokha frame + pink dawn over a lake palace (drawn
 //                     in-house, feat/wr-openings) and the light rays / petals
@@ -20,6 +23,8 @@
 //                     blossom lanterns; template3's couple on the swing (RSVP)
 //   classic/gold-mandala  template16's gold mandala (480px), the slow halo
 //                     turning behind the couple in the hero
+
+import { cdn } from "../../../_wedding/media";
 
 export interface CwAsset {
   src: string;
@@ -67,7 +72,7 @@ export const A = {
 /** The couple dressed for each kind of function (template14): the kit's map. */
 export { FN_COUPLE } from "../../../_wedding/i18n";
 
-/** The kit's paper textures, from this repo (the kit's defaults point at the CDN). */
+/** The kit's paper textures (same-origin paths; drawn as CSS backgrounds through `cdn()`). */
 export const CW_KIT = {
   linen: "/wedding-v3/classic/kit/linen-overlay.webp",
   silk: "/wedding-v3/classic/kit/paper-silk-light.webp",
@@ -83,10 +88,10 @@ export const SHUTTER_BOX = {
   right: { x: 48.618, y: 20.18, w: 34.954, h: 62.883 },
 } as const;
 
-/** <img> props for one asset: intrinsic size (no layout shift), lazy below the fold. */
+/** <img> props for one asset, from the CDN: intrinsic size (no layout shift), lazy below the fold. Never feed this src to a mask. */
 export function img(asset: CwAsset, opts: { lazy?: boolean; high?: boolean; alt?: string } = {}) {
   return {
-    src: asset.src,
+    src: cdn(asset.src),
     width: asset.w,
     height: asset.h,
     alt: opts.alt ?? "",

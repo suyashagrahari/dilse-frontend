@@ -12,12 +12,12 @@
 // people to call → RSVP per function → the blessings wall (voice notes) →
 // shagun → share → the closing seal.
 //
-// Light only. All art is the owner's or CC0, served from /public/wedding-v3.
+// Light only. All art is the owner's or CC0, from /public/wedding-v3 via its CDN twin.
 // Every photo frame and card is a rounded rectangle with four equal corners.
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
-import { Countdown, RSVPBlock, Reveal, WeddingMasonry, WeddingRoot, downloadWeddingIcs, formatEventDate, formatEventTime, googleCalendarUrl, mapLink, DEFAULT_TZ_OFFSET, type WeddingEvent } from "../../_wedding";
+import { cdn, Countdown, DEFAULT_TZ_OFFSET, downloadWeddingIcs, formatEventDate, formatEventTime, googleCalendarUrl, mapLink, Reveal, RSVPBlock, WeddingMasonry, WeddingRoot, type WeddingEvent } from "../../_wedding";
 import { cropImgStyle } from "../../_valentine/editor/PhotoCropper";
 import { Btn, CAL, Contacts, Icon, LiveStream, PIN, PLAY, SHIRT, ShareBar, Shagun, WA, openWhatsApp, pageUrl } from "./Actions";
 import Opening from "./Opening";
@@ -81,7 +81,7 @@ function Photo({ p, alt, className, style, lazy = true }: { p: Portrait; alt: st
   return (
     <div className={`c2-frame${className ? ` ${className}` : ""}`} style={style}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={localArt(p.url)} alt={alt} loading={lazy ? "lazy" : "eager"} decoding="async" style={cropImgStyle(p.crop)} />
+      <img src={cdn(localArt(p.url))} alt={alt} loading={lazy ? "lazy" : "eager"} decoding="async" style={cropImgStyle(p.crop)} />
     </div>
   );
 }
@@ -236,7 +236,7 @@ export default function Experience({ data: d, mode, shareId, wishes = [], brand 
       const url = localArt(p.url);
       const probe = new Image();
       probe.onerror = () => live && setDeadPhotos((s) => (s.has(url) ? s : new Set(s).add(url)));
-      probe.src = url;
+      probe.src = cdn(url);
     }
     return () => {
       live = false;

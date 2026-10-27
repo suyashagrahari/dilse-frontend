@@ -12,14 +12,14 @@
 // to know, who to call, livestream, shagun) → RSVP → blessings → the door
 // closes on "Shubh Vivah", the share bar, the hands tied with the mauli.
 //
-// Art: public/wedding-v3 (./assets.ts), served from the repo, never the CDN.
+// Art: public/wedding-v3 (./assets.ts), drawn from its media-CDN twin.
 // One long calm scroll after one cinematic moment; every motion is
 // transform/opacity, gated on visibility, and reduced-motion aware. A
 // bilingual toggle (top-left) switches every heading and button to Hindi.
 // ?to=Name greets the guest on the door and pre-fills their RSVP.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
+import { BlessingsWall, FamiliesBlock, MessageBlock, RSVPBlock, Reveal, Section, VenueCard, WeddingMasonry, WeddingRoot, cdn, formatEventDate, formatEventTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import { useDayMusic } from "../../_valentine/music/context";
 import { A, PD_KIT, img, seeded } from "./assets";
@@ -54,12 +54,12 @@ const GALLERY_COLUMNS = [
   { min: 600, columns: 3 },
 ] as const;
 
-/** The kit's paper textures from this repo (public/wedding-v3/palace-door/kit); the kit's defaults point at the CDN. */
+/** The kit's paper textures (public/wedding-v3/palace-door/kit), drawn from the CDN. */
 const rootStyle = (theme: string): CSSProperties =>
   ({
     minHeight: "100dvh",
-    ["--wk-texture" as string]: `url("${PD_KIT.linen}")`,
-    ["--wk-paper" as string]: `url("${theme === "champagne" ? PD_KIT.silk : PD_KIT.linen}")`,
+    ["--wk-texture" as string]: `url("${cdn(PD_KIT.linen)}")`,
+    ["--wk-paper" as string]: `url("${cdn(theme === "champagne" ? PD_KIT.silk : PD_KIT.linen)}")`,
   }) as CSSProperties;
 
 function Film({ id, label }: { id: string; label: string }) {

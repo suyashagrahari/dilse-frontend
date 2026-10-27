@@ -23,7 +23,7 @@
 // rebuild) open here unchanged: every new key reads as empty / off.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard } from "../../../_wedding";
+import { MasonryEditor, RsvpDashboard, cdn } from "../../../_wedding";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
 import PhotoCropper, { CROP_DEFAULT, clampCrop, type Crop } from "../../../_valentine/editor/PhotoCropper";
@@ -546,7 +546,7 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
       {ai?.available && fill && (
         <section className="wis-ai" aria-labelledby="wis-ai-h">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="wis-ai-roses" src="/wedding-v3/template8/02-pink-white-rose-bouquet.webp" alt="" width={800} height={686} aria-hidden />
+          <img className="wis-ai-roses" src={cdn("/wedding-v3/template8/02-pink-white-rose-bouquet.webp")} alt="" width={800} height={686} aria-hidden />
           <p className="wis-ai-k">✦ Let AI write it</p>
           <h3 className="wis-ai-h" id="wis-ai-h">
             Answer 6 quick questions

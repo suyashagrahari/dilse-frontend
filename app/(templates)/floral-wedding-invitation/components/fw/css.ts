@@ -4,9 +4,10 @@
 // the envelope), set per theme below. Every animation is transform/opacity;
 // loops pause off screen (.is-idle) and stop under reduced motion.
 
+import { cdn } from "../../../_wedding/media";
 import { ART } from "./art";
 
-const u = (role: keyof typeof ART) => `url("${ART[role].src}")`;
+const u = (role: keyof typeof ART) => `url("${cdn(ART[role].src)}")`;
 
 export const FW_CSS = `
 .fw-root { --fw-r: clamp(14px, 1.5vw, 18px); --fw-r-in: clamp(9px, 1vw, 12px); --fw-script: #8c4a52; --fw-wax1: #b0646b; --fw-wax2: #84404a; --fw-env: #ecdccb; --fw-env-2: #e2cdb7; --fw-liner: #f6e6df; --fw-ease: cubic-bezier(.22,.8,.24,1); position: relative; overflow-x: clip; color: var(--wk-ink); }

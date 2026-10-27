@@ -18,7 +18,7 @@
 // The owner's guest replies + blessings open above the form on a saved page.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES } from "../../../_wedding";
+import { MasonryEditor, RsvpDashboard, ThemePicker, WEDDING_THEMES, cdn } from "../../../_wedding";
 import { LIGHT_THEMES } from "../../../_wedding/themes";
 import { compressImage } from "../../../dedication/components/mediaUploads";
 import MusicPicker from "../../../_valentine/editor/MusicPicker";
@@ -500,7 +500,7 @@ export default function GardenStudio({ mf, updateMf, updateExtra, ai, password, 
       {ai?.available && fill && (
         <section className="gws-ai" aria-labelledby="gws-ai-h">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="gws-ai-art" src={GW.lanterns.src} width={GW.lanterns.w} height={GW.lanterns.h} alt="" aria-hidden decoding="async" />
+          <img className="gws-ai-art" src={cdn(GW.lanterns.src)} width={GW.lanterns.w} height={GW.lanterns.h} alt="" aria-hidden decoding="async" />
           <p className="gws-ai-k">✦ Written for you</p>
           <h3 className="gws-ai-h" id="gws-ai-h">
             Describe your wedding in a few lines

@@ -14,7 +14,7 @@
 // transform/opacity only.
 
 import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
-import { initialOf } from "../../../_wedding";
+import { cdn, initialOf } from "../../../_wedding";
 import { A, img, seeded } from "./assets";
 import { dateParts, type Strings } from "./model";
 import type { LovePhoto } from "../../../_love/types";
@@ -79,7 +79,7 @@ export default function Hero({ on, s, lang, first, second, guest, date, time, ve
       <div className="cw-hero-petals" aria-hidden>
         {PETALS.map((p, i) => (
           // eslint-disable-next-line @next/next/no-img-element
-          <img key={i} src={p.sakura ? A.petalSakura.src : A.petal.src} alt="" width={p.size} height={p.size} loading="lazy" decoding="async" style={{ left: p.left, animationDuration: p.dur, animationDelay: p.delay, ["--dx" as string]: p.dx, ["--rot" as string]: p.rot }} />
+          <img key={i} src={cdn(p.sakura ? A.petalSakura.src : A.petal.src)} alt="" width={p.size} height={p.size} loading="lazy" decoding="async" style={{ left: p.left, animationDuration: p.dur, animationDelay: p.delay, ["--dx" as string]: p.dx, ["--rot" as string]: p.rot }} />
         ))}
       </div>
       <span className="cw-hero-crown" aria-hidden>
@@ -191,7 +191,7 @@ export default function Hero({ on, s, lang, first, second, guest, date, time, ve
             </defs>
             <g clipPath="url(#cw-arch-clip)">
               <rect width="400" height="520" fill="#f8d8da" />
-              <image href={A.dawn.src} x="-60" y="-40" width="520" height="866" preserveAspectRatio="xMidYMid slice" className="cw-hero-arch-dawn" />
+              <image href={cdn(A.dawn.src)} x="-60" y="-40" width="520" height="866" preserveAspectRatio="xMidYMid slice" className="cw-hero-arch-dawn" />
               <rect width="400" height="520" fill="url(#cw-arch-sun)" className="cw-hero-arch-sun" />
               <rect width="400" height="520" fill="url(#cw-arch-fade)" />
             </g>
@@ -200,7 +200,7 @@ export default function Hero({ on, s, lang, first, second, guest, date, time, ve
           </svg>
           {TWINKLES.map((t, i) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} className="cw-hero-twinkle" src={A.sparkle.src} alt="" width={t.s} height={t.s} loading="lazy" decoding="async" style={{ left: t.l, top: t.t, animationDelay: t.d }} />
+            <img key={i} className="cw-hero-twinkle" src={cdn(A.sparkle.src)} alt="" width={t.s} height={t.s} loading="lazy" decoding="async" style={{ left: t.l, top: t.t, animationDelay: t.d }} />
           ))}
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img className="cw-hero-gazebo" {...img(A.gazebo, { high: true })} aria-hidden />

@@ -6,7 +6,7 @@
 // a rounded rectangle (all four corners equal) with a double hairline border.
 // Phones: photo above text. ≥ 760 px: photo and text side by side, alternating.
 
-import { Reveal } from "../../../_wedding";
+import { Reveal, cdn } from "../../../_wedding";
 import CroppedPhoto from "../../../_valentine/kit/CroppedPhoto";
 import { A } from "./assets";
 import type { CwChapter } from "./model";
@@ -19,7 +19,7 @@ export default function Story({ chapters }: { chapters: CwChapter[] }) {
         <li key={i} className={`cw-ch${c.photo ? " has-photo" : ""}${i % 2 ? " is-alt" : ""}`}>
           <span className="cw-ch-dot" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={A.petal.src} alt="" width={22} height={22} loading="lazy" decoding="async" />
+            <img src={cdn(A.petal.src)} alt="" width={22} height={22} loading="lazy" decoding="async" />
           </span>
           {c.photo && (
             <Reveal effect="zoom" className="cw-ch-photo">

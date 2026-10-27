@@ -1,7 +1,9 @@
-// ─── Christian Wedding: the art, served from /public/wedding-v3 ─────────────
+// ─── Christian Wedding: the art, from /public/wedding-v3 and its CDN twin ────
 //
-// Every file lives IN THE REPO and is served by Next from the site's own
-// origin (never S3 / the CDN). Sizes are the intrinsic webp sizes, so images
+// Every file lives IN THE REPO (public/wedding-v3) and is mirrored on the media
+// CDN. The tables keep same-origin paths; `img()` and the CSS backgrounds draw
+// through `cdn()`, while the invite-card canvas loads the raw same-origin path
+// (the CDN sends no CORS header). Sizes are the intrinsic webp sizes, so images
 // never shift the layout.
 //
 //   wedding-v3/christian-wedding/   the chapel portal (ivory limestone, the
@@ -20,6 +22,8 @@ export interface Art {
   /** A half-size variant for phones. */
   sm?: string;
 }
+
+import { cdn } from "../../_wedding/media";
 
 const V = "/wedding-v3/";
 
@@ -56,7 +60,7 @@ export const ART = {
   ivy: { src: `${V}template15/10-ivy-curtain-hanging-greenery.webp`, w: 1600, h: 622 },
 } as const satisfies Record<string, Art>;
 
-/** The kit's paper textures from this repo (the kit's defaults point at the CDN). */
+/** The kit's paper textures (CSS backgrounds: the caller passes them through `cdn()`). */
 export const KIT_TEXTURE = {
   linen: `${V}palace-door/kit/linen-overlay.webp`,
   silk: `${V}palace-door/kit/paper-silk-light.webp`,
@@ -82,8 +86,8 @@ export const ROSE = { x: 50.15, y: 26.33, r: 3.5 } as const;
 /** <img> props for one asset: intrinsic size (no layout shift), lazy below the fold. */
 export function img(a: Art, opts: { lazy?: boolean; high?: boolean; alt?: string; small?: boolean } = {}) {
   return {
-    src: opts.small && a.sm ? a.sm : a.src,
-    ...(a.sm && !opts.small ? { srcSet: `${a.sm} ${Math.round(a.w / 2)}w, ${a.src} ${a.w}w` } : {}),
+    src: cdn(opts.small && a.sm ? a.sm : a.src),
+    ...(a.sm && !opts.small ? { srcSet: `${cdn(a.sm)} ${Math.round(a.w / 2)}w, ${cdn(a.src)} ${a.w}w` } : {}),
     width: a.w,
     height: a.h,
     alt: opts.alt ?? "",

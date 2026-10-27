@@ -10,7 +10,7 @@
 
 import { useMemo } from "react";
 import { cropImgStyle } from "../../_valentine/editor/PhotoCropper";
-import { formatEventDate, formatEventTime, type WeddingEvent } from "../../_wedding";
+import { formatEventDate, formatEventTime, type WeddingEvent, cdn } from "../../_wedding";
 import { Btn, CAL, HEART, Icon, PIN, SaveDates, WA, openWhatsApp } from "./Actions";
 import { img } from "./art";
 import { seeded } from "./model";
@@ -121,7 +121,7 @@ export default function Hero({ open, s, lang, first, second, guest, tagline, mai
             {photo ? (
               <div className="rc-hero-photo">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo} alt={couple} style={cropImgStyle(photoCrop ?? { x: 50, y: 40, scale: 100 })} decoding="async" />
+                <img src={cdn(photo)} alt={couple} style={cropImgStyle(photoCrop ?? { x: 50, y: 40, scale: 100 })} decoding="async" />
               </div>
             ) : (
               // eslint-disable-next-line @next/next/no-img-element

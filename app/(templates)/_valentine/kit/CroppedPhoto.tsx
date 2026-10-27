@@ -2,12 +2,14 @@
 
 // A LovePhoto drawn the way the sender framed it in the editor (focal point
 // cropX/cropY 0–100, zoom scale 100–300). Fills its box (object-fit: cover), so
-// give the parent a size/aspect-ratio — nothing shifts while it loads.
+// give the parent a size/aspect-ratio — nothing shifts while it loads. The
+// built-in demo photos (/wedding-v3/…) are drawn from the media CDN.
 //
 //   <div style={{ aspectRatio: "4 / 5" }}><CroppedPhoto photo={p} /></div>
 
 import type { CSSProperties } from "react";
 import type { LovePhoto } from "../types";
+import { cdn } from "../../_wedding/media";
 
 export default function CroppedPhoto({ photo, alt, eager, style, className }: { photo: LovePhoto; alt?: string; eager?: boolean; style?: CSSProperties; className?: string }) {
   const x = photo.cropX ?? 50;
@@ -17,7 +19,7 @@ export default function CroppedPhoto({ photo, alt, eager, style, className }: { 
     <span className={className} style={{ position: "relative", display: "block", width: "100%", height: "100%", overflow: "hidden", background: "rgba(0,0,0,.06)", ...style }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={photo.url}
+        src={cdn(photo.url)}
         alt={alt ?? photo.caption ?? ""}
         loading={eager ? "eager" : "lazy"}
         decoding="async"

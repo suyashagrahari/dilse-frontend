@@ -11,7 +11,7 @@
 // gopuram → live stream → film → gallery → good to know + family contacts →
 // RSVP → blessings → shagun → the lotus blooms again on "Shubh Vivah".
 //
-// All art is the owner's, served from /public/wedding-v3 (never the CDN).
+// All art is the owner's (public/wedding-v3), drawn from its media-CDN twin.
 // Every motion is transform/opacity, gated on visibility and reduced-motion
 // aware. Light themes only. A bilingual toggle (top-left) switches every
 // heading and button to Hindi. ?to=<name> greets the guest by name.

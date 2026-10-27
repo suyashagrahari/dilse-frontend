@@ -13,7 +13,7 @@
 // share → "See you on the dance floor".
 //
 // Light themes only (champagne · blush · pearl). All art ships from
-// /public/wedding-v3. Motion is transform/opacity, reduced-motion aware.
+// /public/wedding-v3 via its CDN twin. Motion is transform/opacity, reduced-motion aware.
 // ?to=<name> greets the guest by name and fills the RSVP.
 
 import { useEffect, useMemo, useRef, useState } from "react";

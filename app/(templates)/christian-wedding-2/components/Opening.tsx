@@ -18,7 +18,7 @@
 // Reduced motion: no rotation, no particles, a 400 ms cross-fade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useWeddingReducedMotion } from "../../_wedding";
+import { cdn, useWeddingReducedMotion } from "../../_wedding";
 import { A, decodeAll, img, seeded } from "../lib/art";
 
 export interface OpeningProps {
@@ -90,7 +90,7 @@ function releasePetals(host: HTMLElement | null, count: number, seed: number) {
   const H = host.clientHeight;
   for (let i = 0; i < count; i++) {
     const p = document.createElement("img");
-    p.src = A.petal.src;
+    p.src = cdn(A.petal.src);
     p.alt = "";
     p.decoding = "async";
     const size = 10 + r() * 12;
@@ -202,7 +202,7 @@ export default function Opening({ first, second, dateLine, place, guest, onOpene
   const cls = `c2-open is-${phase}${ready ? " is-ready" : ""}${reduce ? " is-reduced" : ""}`;
   return (
     <div ref={rootRef} className={cls} data-c2-open={phase} role="dialog" aria-modal="true" aria-label="Wedding invitation">
-      <div className="c2-open-blur" style={{ backgroundImage: `url(${A.gardenBg.src})` }} aria-hidden />
+      <div className="c2-open-blur" style={{ backgroundImage: `url(${cdn(A.gardenBg.src)})` }} aria-hidden />
       <div className="c2-open-wall" aria-hidden />
       <div className="c2-open-inner">
         <div className="c2-open-copy">
@@ -263,7 +263,7 @@ export default function Opening({ first, second, dateLine, place, guest, onOpene
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={i}
-                    src={A.petal.src}
+                    src={cdn(A.petal.src)}
                     alt=""
                     className="c2-petal-ambient"
                     style={{ left: `${p.x}%`, width: p.size, height: p.size, animation: `c2-ambient ${p.dur}s linear ${p.delay}s infinite` }}
