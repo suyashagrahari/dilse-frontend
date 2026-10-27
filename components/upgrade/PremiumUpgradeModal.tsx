@@ -166,11 +166,11 @@ export default function PremiumUpgradeModal({ offer, cover, recipient, onTry, on
 
               <div className="upm-actions">
                 <button ref={tryRef} type="button" className="upm-try" onClick={() => void run()}>
-                  {stage === "error" ? <RotateCcw size={16} /> : <Sparkles size={16} />}
+                  {stage === "error" ? <RotateCcw size={14} /> : <Sparkles size={14} />}
                   <span>{stage === "error" ? "Try again" : "Preview Premium"}</span>
                 </button>
                 <button type="button" className="upm-free" onClick={onFree}>
-                  <Send size={15} />
+                  <Send size={13} />
                   <span>Publish free</span>
                 </button>
               </div>
@@ -218,9 +218,9 @@ const CSS = `
 .upm-free-note p { margin: 0; font-size: 12.5px; line-height: 1.45; color: #1f5a3c; }
 .upm-free-note b { color: #136b40; }
 .upm-err { margin: 12px 0 0; padding: 9px 12px; border-radius: 12px; font-size: 13px; color: #9b1c3a; background: #ffe6ec; }
-.upm-actions { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin-top: 14px; }
-.upm-actions button { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 50px; padding: 0 12px;
-  border-radius: 16px; font-size: 15px; font-weight: 800; text-align: center; white-space: nowrap; border: 2px solid #2b2440; transition: transform .15s ease, box-shadow .15s ease; }
+.upm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.upm-actions button { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 8px; min-width: 0;
+  border-radius: 14px; font-size: 13.5px; font-weight: 800; text-align: center; white-space: nowrap; letter-spacing: -.01em; border: 2px solid #2b2440; transition: transform .15s ease, box-shadow .15s ease; }
 .upm-actions button svg { flex: none; }
 .upm-actions .upm-try { color: #fff; background: linear-gradient(135deg,#ff5f96,#8b6fd4); box-shadow: 3px 4px 0 rgba(43,36,64,.22); position: relative; overflow: hidden; }
 .upm-try::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.45) 50%, transparent 70%); transform: translateX(-100%); animation: upmShine 2.8s ease-in-out 1s infinite; }
@@ -237,7 +237,8 @@ const CSS = `
 .upm-bar i { display: block; height: 100%; background: linear-gradient(90deg,#ff8fb1,#8b6fd4); transition: width 1.4s ease; }
 @keyframes upmBloom { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.12); } }
 @keyframes upmShine { 0% { transform: translateX(-100%); } 60%,100% { transform: translateX(100%); } }
-@media (max-width: 359px) { .upm-actions { grid-template-columns: 1fr; } .upm-title { font-size: 19px; } }
+@media (max-width: 374px) { .upm-actions button { font-size: 12.5px; gap: 5px; padding: 0 6px; } .upm-actions { gap: 7px; } }
+@media (max-width: 339px) { .upm-actions { grid-template-columns: 1fr; } .upm-title { font-size: 19px; } }
 @media (max-height: 700px) { .upm-hero { aspect-ratio: 5 / 2; } .upm-sub { display: none; } .upm-perks li { padding: 5px 0; } }
 @media (prefers-reduced-motion: reduce) { .upm-blooms span, .upm-try::after { animation: none; } }
 `;
