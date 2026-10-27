@@ -9,10 +9,10 @@
 // sky → the invitation in English + Hindi under a gold lattice crown → the two
 // families between flowering trees → the date beside a playing fountain, with
 // a split-flap countdown → the story along a growing vine → the functions as
-// painted garden cards → the lake venue over a balustrade → the film → the
-// album (resizable masonry) → garden notes, family contacts, shagun → RSVP
-// under a flamingo border → blessings → dusk at the pavilion, sky lanterns,
-// the share bar (WhatsApp, card PNG, QR, calendar).
+// garden cards with the couple dressed for each function → the pavilion on
+// the venue card → the film → the album (resizable masonry) → garden notes,
+// family contacts, shagun → RSVP beside an arched garden window → blessings →
+// the garden again, the couple in the pavilion, a quiet goodbye.
 //
 // Every motion is transform/opacity, gated on visibility and reduced-motion
 // aware; art (public/wedding-v3) is drawn from its media-CDN mirror, lazy below
@@ -184,15 +184,6 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
   const hasFamilies = bride.names.length > 0 || groom.names.length > 0;
   const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 🌸` : `You're invited to the wedding of ${couple} 🌸`;
   const venueLine = [main?.venue, main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ");
-  const card = {
-    first: m.first,
-    second: m.second,
-    dateLine: dateLine,
-    timeLine: [mainTime, m.muhurat].filter(Boolean).join(" · "),
-    venue: main?.venue ?? "",
-    address: main?.address ?? "",
-    invocation: m.invocation,
-  };
   const live = m.liveUrl ? { url: m.liveUrl, open: liveOpen, label: s.live, soon: s.liveSoon } : undefined;
 
   return (
@@ -374,7 +365,6 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
         second={m.second}
         hashtag={m.hashtag}
         lang={lang}
-        share={<ShareBar variant="finale" s={s} lang={lang} shareText={shareText} couple={couple} main={main} events={m.events} card={card} />}
       />
     </WeddingRoot>
   );

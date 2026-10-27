@@ -352,28 +352,18 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 
 /* ── Venue ────────────────────────────────────────────────────────────── */
 /* Phones crop the wide lake panel to its right side: the peacock on the balustrade and the pink dome. */
-.gw-venue { position: relative; }
-.gw-vscene { position: relative; overflow: hidden; aspect-ratio: 4 / 3.2; border-radius: var(--gw-r); background: #e6f0f7; box-shadow: 0 34px 70px -40px rgba(80,40,50,.5), 0 0 0 1px rgba(184,140,72,.45); isolation: isolate; }
-.gw-vs-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .9; }
-/* The cutout has a couple at its foot (from its original card): clip them away behind the balustrade. */
-.gw-vs-lake { position: absolute; left: 50%; bottom: 3%; width: max(100%, 640px); height: auto; translate: -50% 0; clip-path: inset(0 0 18% 0); }
-.gw-vs-dome { position: absolute; z-index: 1; right: -6%; bottom: 10%; height: 74%; width: auto; }
-.gw-vs-banana { position: absolute; z-index: 1; left: -10%; bottom: 8%; height: 92%; width: auto; scale: -1 1; }
-.gw-vscene .gw-balustrade { z-index: 2; }
-.gw-vs-frame { position: absolute; z-index: 4; inset: 10px; border: 1px solid rgba(255,250,240,.85); border-radius: calc(var(--gw-r) - 6px); box-shadow: inset 0 0 0 1px rgba(184,140,72,.35); pointer-events: none; }
-.gw-vscene .gw-glints { z-index: 1; inset: 58% 30% 26% 24%; }
-.gw-venue-cols { position: relative; z-index: 2; margin: -48px auto 0; width: calc(100% - 24px); padding: clamp(18px, 3vw, 28px); border-radius: var(--gw-r); background: rgba(255,251,248,.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid color-mix(in srgb, var(--wk-gold) 40%, transparent); box-shadow: 0 30px 60px -36px rgba(80,40,50,.45); }
-.gw-venue-cols .gw-venue-travel { background: transparent; box-shadow: none; border-top: 0; border-right: 0; border-bottom: 0; }
-.gw-balustrade { position: absolute; left: 0; right: 0; bottom: 0; height: 21%; background: url("${cdn(GW.balustrade.src)}") repeat-x 0 100% / auto 100%; filter: drop-shadow(0 -4px 8px rgba(80,60,60,.12)); }
-.gw-glints { position: absolute; inset: 52% 18% 24% 18%; }
 /* Phones show the right of the panel (peacock + dome): keep the glints on the open water to the left of the peacock. */
-@media (max-width: 719px) { .gw-glints { inset: 50% 68% 26% 3%; } }
-.gw-glints i { position: absolute; width: 18px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.95); opacity: 0; }
-.gw-glints i:nth-child(1) { left: 6%; top: 20%; } .gw-glints i:nth-child(2) { left: 30%; top: 55%; } .gw-glints i:nth-child(3) { left: 52%; top: 30%; } .gw-glints i:nth-child(4) { left: 72%; top: 62%; } .gw-glints i:nth-child(5) { left: 88%; top: 18%; }
-.gw-venue.is-on .gw-glints i { animation: gw-glint 3.2s ease-in-out infinite; }
-.gw-venue.is-on .gw-glints i:nth-child(2) { animation-delay: .7s; } .gw-venue.is-on .gw-glints i:nth-child(3) { animation-delay: 1.4s; } .gw-venue.is-on .gw-glints i:nth-child(4) { animation-delay: 2.1s; } .gw-venue.is-on .gw-glints i:nth-child(5) { animation-delay: 2.7s; }
-.gw-venue-cols { display: grid; gap: 18px; }
-.gw-venue-text { text-align: center; }
+/* Royal-style: the flowering pavilion stands on the card's top edge; ivory card, double gold hairline, peony corners. */
+.gw-venue { position: relative; display: grid; justify-items: center; }
+.gw-venue-dome { position: relative; z-index: 0; width: min(86%, 420px); height: auto; margin-bottom: -30px; filter: drop-shadow(0 16px 18px rgba(120,60,60,.14)); }
+.gw-venue-card { position: relative; z-index: 1; width: 100%; max-width: 680px; padding: clamp(34px, 6vw, 52px) clamp(22px, 5vw, 52px) clamp(30px, 5vw, 44px); text-align: center; border-radius: var(--gw-r); background: var(--wk-surface-solid); box-shadow: 0 0 0 1px rgba(184,140,72,.5), 0 34px 70px -40px rgba(110,40,58,.45); }
+.gw-venue-card::before { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(184,140,72,.35); border-radius: calc(var(--gw-r) - 6px); pointer-events: none; }
+.gw-venue-corner { position: absolute; z-index: 2; bottom: clamp(-40px, -4vw, -20px); height: clamp(100px, 20vw, 170px); pointer-events: none; }
+.gw-venue-corner img { display: block; height: 100%; width: auto; }
+.gw-venue-corner-l { left: clamp(-48px, -5vw, -18px); rotate: -12deg; }
+.gw-venue-corner-r { right: clamp(-48px, -5vw, -18px); rotate: 12deg; scale: -1 1; }
+.gw-venue-travel { max-width: 46ch; margin: 24px auto 0; padding-top: 20px; border-top: 1px solid rgba(184,140,72,.35); }
+.gw-venue-travel .gw-know-t { margin-top: 6px; }
 .gw-venue-name { margin: 0; font: 500 clamp(30px, 7vw, 46px)/1.1 var(--wk-font-display); }
 .gw-venue-addr { margin: 8px 0 0; font: 400 16px/1.5 var(--wk-font-sans); color: var(--wk-muted); }
 .gw-venue-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
@@ -381,7 +371,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-venue-map iframe { width: 100%; height: 100%; border: 0; }
 .gw-know-h { margin: 0 0 6px; font: 600 11.5px/1.3 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--wk-gold-ink); }
 .gw-know-t { margin: 0; font: 400 15.5px/1.6 var(--wk-font-sans); }
-.gw-venue-travel { text-align: left; border-left: 3px solid var(--gw-sage); }
 
 /* ── Film ─────────────────────────────────────────────────────────────── */
 .gw-film { position: relative; aspect-ratio: 16 / 9; border-radius: var(--gw-r); overflow: hidden; border: 5px solid var(--wk-surface-solid); box-shadow: var(--wk-shadow); background: #000; }
@@ -465,9 +454,9 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* On a phone the side lanes sit under the text column: keep the lanterns a soft glow there. */
 .gw-finale-stage { position: relative; flex: none; height: min(34svh, 62vw, 380px); width: 100%; max-width: 1000px; margin: 0 auto; }
 /* A soft lawn under the pavilion and the trees, so nothing stands on air. */
-.gw-fin-pav { position: absolute; left: 50%; bottom: 0; height: 100%; aspect-ratio: 800 / 617; translate: -50% 0; opacity: 0; transform: translateY(40px) scale(.96); transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
+.gw-fin-pav { position: absolute; left: 50%; bottom: 0; height: 100%; aspect-ratio: 800 / 618; translate: -50% 0; opacity: 0; transform: translateY(40px) scale(.96); transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-fin-pav-img { display: block; width: 100%; height: 100%; }
-.gw-fin-couple { position: absolute; left: 50%; bottom: 15%; height: 56%; translate: -50% 0; opacity: 0; transform: translateY(10px); transition: opacity 1.2s var(--gw-ease) .7s, transform 1.4s var(--gw-ease) .7s; }
+.gw-fin-couple { position: absolute; left: 50%; bottom: 13.5%; height: 44%; translate: -50% 0; opacity: 0; transform: translateY(10px); transition: opacity 1.2s var(--gw-ease) .7s, transform 1.4s var(--gw-ease) .7s; }
 .gw-fin-couple img { display: block; height: 100%; width: auto; }
 .gw-finale.is-bloom .gw-fin-pav, .gw-finale.is-bloom .gw-fin-couple { opacity: 1; transform: none; }
 .gw-fin-petals { position: absolute; inset: -20% 0 0; pointer-events: none; }
@@ -596,15 +585,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-day-count { grid-area: count; align-self: start; }
   .gw-fountain { grid-area: fountain; align-self: end; }
   .gw-fountain-core { width: min(30vw, 400px); }
-  .gw-venue { max-width: 1180px; margin: 0 auto; }
-  .gw-vscene { aspect-ratio: 1180 / 520; }
-  .gw-vs-lake { width: 100%; }
-  .gw-vs-dome { right: 3%; height: 86%; }
-  .gw-vs-banana { left: -2%; height: 100%; bottom: 4%; }
-  .gw-venue-cols { width: min(100% - 80px, 1000px); margin-top: -70px; }
-  .gw-venue-cols { grid-template-columns: 1.15fr 1fr; align-items: start; }
-  .gw-venue-text { text-align: left; }
-  .gw-venue-btns { justify-content: flex-start; }
   /* Rows stay full: 3 or 6 notes → 3 columns, 4 → 4 columns, anything else keeps 2. */
   .gw-know:has(> .gw-know-i:first-child:nth-last-child(3)), .gw-know:has(> .gw-know-i:first-child:nth-last-child(6)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gw-know:has(> .gw-know-i:first-child:nth-last-child(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }

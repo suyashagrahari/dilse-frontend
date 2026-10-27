@@ -3,12 +3,11 @@
 // ─── The finale: back in the garden, all on one screen ──────────────────────
 // The hero's world again (watercolour sky, two cloud banks, a blossom branch in
 // each top corner, a bunch of pink peonies in each bottom corner, a fine gold
-// frame) around the flowering pavilion with the couple standing in it; petals fall once the
+// frame) around the hero's own gazebo with the couple standing in it; petals fall once the
 // pavilion is 50% in view. Then "शुभ विवाह · Shubh Vivah", the names, the
-// closing line, the hashtag and the share bar, sized so the whole goodbye fits
-// one screen. Reduced motion: no petals.
+// closing line and the hashtag, sized so the whole goodbye fits one screen. Reduced motion: no petals.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { GW, gwImg } from "../assets";
 import { useOnScreen } from "./art";
@@ -23,10 +22,9 @@ export interface FinaleProps {
   second: string;
   hashtag: string;
   lang: "en" | "hi";
-  share: ReactNode;
 }
 
-export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, share }: FinaleProps) {
+export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
@@ -83,10 +81,10 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
       <div ref={stage} className="gw-finale-stage" aria-hidden>
         <span className="gw-fin-pav">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="gw-fin-pav-img" {...gwImg(GW.pavilion, { lazy: true })} />
+          <img className="gw-fin-pav-img" {...gwImg(GW.gazebo, { lazy: true, hi: GW.gazebo2x, sizes: "(min-width: 1024px) 600px, 100vw" })} />
           <span className="gw-fin-couple">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.couplePeach, { lazy: true })} />
+            <img {...gwImg(GW.couple, { lazy: true })} />
           </span>
         </span>
         {bloom && !reduce && <Petals mode="drift" count={10} seed={23} className="gw-fin-petals" />}
@@ -112,7 +110,6 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
             {hashtag}
           </Reveal>
         )}
-        <Reveal delay={320}>{share}</Reveal>
       </div>
     </section>
   );
