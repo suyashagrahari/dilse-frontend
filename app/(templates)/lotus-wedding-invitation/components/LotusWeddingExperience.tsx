@@ -9,7 +9,7 @@
 // families → the date and a flip countdown under brass lamps → our story on a
 // growing lotus stem → the functions as date-plate cards → the venue with the
 // gopuram → live stream → film → gallery → good to know + family contacts →
-// RSVP → blessings → shagun → share → the lotus blooms again on "Shubh Vivah".
+// RSVP → blessings → shagun → the lotus blooms again on "Shubh Vivah".
 //
 // All art is the owner's, served from /public/wedding-v3 (never the CDN).
 // Every motion is transform/opacity, gated on visibility and reduced-motion
@@ -19,7 +19,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BlessingsWall, Countdown, MessageBlock, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, formatEventDate, formatEventTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
-import { Contacts, Icon, LiveStream, PLAY, ShareBar, Shagun, pageUrl } from "./lw/Actions";
+import { Contacts, Icon, LiveStream, PLAY, Shagun } from "./lw/Actions";
 import DateBadge from "./lw/DateBadge";
 import Families from "./lw/Families";
 import Finale from "./lw/Finale";
@@ -31,7 +31,6 @@ import Venue from "./lw/Venue";
 import { img } from "./lw/art";
 import { LW_CSS } from "./lw/css";
 import { prefillRsvpName, useGuestName } from "./lw/guest";
-import type { InviteCardInput } from "./lw/inviteCard";
 import { T, readLotus, type Lang } from "./lw/model";
 
 function Film({ id, label }: { id: string; label: string }) {
@@ -174,24 +173,6 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
   };
 
   const hasFamilies = !!(m.brideFam.names || m.groomFam.names || m.brideFam.photo || m.groomFam.photo || m.blessingsOf);
-  const shareText = lang === "hi" ? `🪷 ${couple} के शुभ विवाह का निमंत्रण` : `🪷 You're invited to the wedding of ${couple}`;
-  const card: InviteCardInput = {
-    first: m.first,
-    second: m.second,
-    dateLine: shortDate,
-    month: badge?.en ?? "",
-    day: badge?.day ?? "",
-    year: badge?.year ?? "",
-    time: main?.time ? formatEventTime(main.time, "en-IN") : "",
-    venue: main?.venue ?? "",
-    address: main?.address ?? "",
-    muhurat: m.muhurat,
-    together: T.en.together,
-    inviteLine: "request the pleasure of your company",
-    guest,
-    invocation: m.invocation,
-    url: typeof window === "undefined" ? "" : pageUrl(),
-  };
 
   return (
     <WeddingRoot theme={m.theme} className={`lw-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}`} style={{ minHeight: "100dvh" }}>
@@ -225,7 +206,6 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
         main={main}
         events={m.events}
         couple={couple}
-        shareText={shareText}
       />
 
       {/* ── The invitation ──────────────────────────────────────────────── */}
@@ -295,7 +275,7 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
             <img {...img("umbrella", { lazy: true })} className="lw-umbrella lw-umbrella-r" />
           </div>
           <Head eyebrow={s.eventsEyebrow} title={s.events} lang={lang} />
-          <LotusEvents events={m.events} couple={couple} locale={locale} labels={{ directions: s.directions, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp, nav: s.nav }} />
+          <LotusEvents events={m.events} locale={locale} labels={{ directions: s.directions, dress: s.dress, tba: s.tba, nav: s.nav }} />
         </Section>
       )}
 
@@ -409,14 +389,6 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
         </Section>
       )}
 
-      {/* ── Share ───────────────────────────────────────────────────────── */}
-      <Section id="share" ornament={null} width="normal" className="lw-sec lw-sec-share">
-        <Head eyebrow={s.shareEyebrow} title={s.share} lang={lang} />
-        <Reveal>
-          <ShareBar s={s} shareText={shareText} card={card} />
-        </Reveal>
-      </Section>
-
       <div ref={endRef} />
       <Finale
         seal={T.en.shubh}
@@ -427,8 +399,6 @@ export default function LotusWeddingExperience({ data, mode, react }: Experience
         second={m.second}
         hashtag={m.hashtag}
         lang={lang}
-        whatsapp={s.whatsapp}
-        shareText={shareText}
       />
     </WeddingRoot>
   );

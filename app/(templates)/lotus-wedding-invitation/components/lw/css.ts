@@ -233,8 +233,6 @@ export const LW_CSS = `
 .lw-hero-when { margin: 0; font: 600 clamp(19px, 3.6vw, 23px)/1.3 var(--wk-font-display); color: var(--wk-ink); }
 .lw-hero-muhurat { margin: 4px 0 0; font: italic 500 17px/1.4 var(--wk-font-display); color: var(--lw-pink-d); }
 .lw-hero-venue { margin: 6px 0 0; font: 500 14px/1.5 var(--wk-font-sans); letter-spacing: .06em; color: var(--wk-muted); }
-.lw-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 24px; }
-@media (min-width: 960px) { .lw-hero-ganesha, .lw-hero-line, .lw-hero-div { margin-left: 0; } .lw-hero-actions { justify-content: flex-start; } }
 
 /* The date badge hangs on its cord from the string lights and swings in. */
 .lw-hero-badge { position: relative; width: clamp(104px, 26vw, 128px); margin: 0 auto 18px; transform-origin: 50% -120px; opacity: 0; }
@@ -261,6 +259,7 @@ export const LW_CSS = `
 @media (min-width: 960px) { .lw-hero-pond-r { right: 4%; width: 34%; } }
 .lw-hero.is-on .lw-hero-pond { opacity: 1; translate: 0 0; }
 .lw-hero-water { position: absolute; left: -14%; right: -14%; bottom: -2%; height: 16%; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, rgba(196,222,211,.85), rgba(196,222,211,0) 72%); }
+@media (min-width: 960px) { .lw-hero-ganesha, .lw-hero-line, .lw-hero-div { margin-left: 0; } }
 .lw-hero-scroll { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: max-content; margin: 34px auto 0; font: 600 11px/1 var(--wk-font-sans); letter-spacing: .3em; text-transform: uppercase; color: var(--lw-sage-d); text-decoration: none; opacity: 0; transition: opacity 1s 1.8s; }
 .lw-hero.is-on .lw-hero-scroll { opacity: .85; }
 .lw-hero-scroll i { width: 1.5px; height: 34px; background: linear-gradient(var(--lw-sage), transparent); transform-origin: 50% 0; animation: lw-scroll 2.2s ease-in-out infinite; }
@@ -377,11 +376,17 @@ export const LW_CSS = `
 .lw-ev-swatch { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--lw-gold); }
 .lw-ev-k { font-weight: 700; color: var(--lw-sage-d); }
 .lw-ev-note { margin: 12px 0 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--lw-pink); font: italic 400 16px/1.55 var(--wk-font-display); color: var(--wk-muted); }
-.lw-ev-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding-top: 16px; }
-.lw-ev-actions > * { justify-content: center; width: 100%; min-width: 0; white-space: nowrap; }
-.lw-ev-actions > * > span { overflow: hidden; text-overflow: ellipsis; }
-.lw-ev-wa { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 0; cursor: pointer; font: 700 14px/1 var(--wk-font-sans); color: #fff; background: #1FA855; box-shadow: 0 10px 20px -14px rgba(18,120,60,.9); }
-.lw-ev-wa:focus-visible, .lw-ev-g:focus-visible { outline: 3px solid var(--lw-gold); outline-offset: 3px; }
+/* The couple dressed for the function, under a temple arch at a lotus pond. */
+.lw-ev-alcove { position: relative; display: flex; align-items: flex-end; justify-content: center; height: clamp(150px, 21svh, 200px); margin: 14px 14px 0; overflow: hidden; border-radius: 50% 50% 16px 16px / 34% 34% 16px 16px; box-shadow: inset 0 0 0 1px rgba(196,160,90,.35); background: radial-gradient(60% 70% at 50% 78%, rgba(251,214,226,.95), transparent 72%), linear-gradient(180deg, #FDF6EC, #EEF3EE); }
+.lw-ev.is-main .lw-ev-alcove { background: radial-gradient(60% 70% at 50% 78%, rgba(255,226,170,.9), transparent 72%), linear-gradient(180deg, #FFF7EC, #FBE7EE); }
+.lw-ev-water { position: absolute; left: 6%; right: 6%; bottom: 4px; height: 24%; border-radius: 50%; background: radial-gradient(closest-side, rgba(141,170,152,.6), rgba(141,170,152,.18) 70%, transparent); }
+.lw-ev-couple { position: relative; height: 88%; width: auto; max-width: 84%; object-fit: contain; object-position: bottom; margin-bottom: 8px; transform-origin: 50% 100%; opacity: 0; transform: translateY(14px) scale(.96); transition: opacity .8s ease .2s, transform 1.1s cubic-bezier(.34,1.4,.64,1) .2s; }
+.lw-evs.is-in .lw-ev-couple { opacity: 1; transform: none; }
+.lw-ev-alcove + .lw-ev-plate { min-height: 84px; margin-top: 10px; padding: 12px 20px; }
+.lw-ev-alcove + .lw-ev-plate .lw-ev-day { font-size: clamp(38px, 4.2vw, 46px); }
+.lw-ev-actions { display: flex; justify-content: center; margin-top: auto; padding-top: 16px; }
+.lw-ev-actions > * { justify-content: center; min-width: min(100%, 200px); white-space: nowrap; }
+.lw-ev-g:focus-visible { outline: 3px solid var(--lw-gold); outline-offset: 3px; }
 .lw-ev-g { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--lw-sage) 45%, transparent); font: 700 14px/1 var(--wk-font-sans); color: var(--lw-sage-ink); text-decoration: none; background: rgba(255,253,246,.82); }
 .lw-ev-all { display: flex; justify-content: center; margin-top: 32px; }
 
@@ -438,7 +443,6 @@ export const LW_CSS = `
 .lw-shagun-id b { font: 600 18px/1.3 var(--wk-font-display); }
 .lw-shagun-id code { padding: 6px 14px; border-radius: 999px; background: var(--lw-sage-soft); color: var(--lw-sage-ink); font: 600 14.5px/1.3 ui-monospace, monospace; word-break: break-all; }
 .lw-shagun-a { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.lw-sharebar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .lw-upasthiti { margin: -14px 0 24px; text-align: center; font: italic 500 clamp(19px, 3.6vw, 22px)/1.4 var(--wk-font-display); color: var(--lw-pink-d); }
 .lw-rsvp .wk-card, .lw-root #blessings .wk-card { background: var(--lw-card); }
 
@@ -493,7 +497,6 @@ export const LW_CSS = `
   .lw-hero-line { font-size: clamp(16px, 2.3svh, 22px); }
   .lw-hero-div { margin: clamp(8px, 1.4svh, 18px) 0; width: 170px; }
   .lw-hero-when { font-size: clamp(17px, 2.5svh, 23px); }
-  .lw-hero-actions { margin-top: clamp(12px, 2svh, 24px); }
   .lw-hero-scroll { margin-top: clamp(10px, 2svh, 34px); }
 }
 
@@ -544,7 +547,6 @@ export const LW_CSS = `
 .lw-ev-dots button { display: grid; place-items: center; min-width: 24px; height: 28px; padding: 0 2px; border: 0; background: none; cursor: pointer; }
 .lw-ev-dots button::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--lw-sage-d) 30%, transparent); transition: width .3s var(--lw-ease), background-color .3s ease; }
 .lw-ev-dots button.is-on::after { width: 24px; background: var(--lw-sage-d); }
-.lw-ev-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 699px) {
   .lw-ev-list { --cw: min(82vw, 330px); flex-wrap: nowrap; justify-content: flex-start; gap: 14px; margin: 0 calc(50% - 50vw); padding: 34px calc((100vw - var(--cw)) / 2) 16px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; overscroll-behavior-x: contain; }
   .lw-ev-list::-webkit-scrollbar { display: none; }
@@ -598,6 +600,30 @@ export const LW_CSS = `
 .lw-off, .lw-off *, .lw-off::before, .lw-off::after, .lw-off *::before, .lw-off *::after { animation-play-state: paused !important; }
 
 /* ── Reduced motion: everything rests in its final place. ── */
+/* Phones: the couple's arch a little shorter, so a whole card fits on screen. */
+@media (max-width: 699px) {
+  .lw-ev-alcove { height: clamp(128px, 19svh, 168px); }
+  .lw-ev-alcove + .lw-ev-plate { min-height: 74px; padding: 10px 18px; }
+  .lw-ev-body { padding-top: 14px; }
+}
+
+/* Phones: the finale is exactly one screen, the lamps hang below the top bar. */
+@media (max-width: 699px) {
+  .lw-finale { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: 132px 16px 132px; }
+  .lw-finale-lights img { height: 96px; }
+  .lw-finale-lamp { top: 70px; width: 66px; }
+  .lw-finale-lamp-l { left: 3%; }
+  .lw-finale-lamp-r { right: 3%; }
+  .lw-finale-pond { width: min(66vw, 300px); margin-bottom: 0; }
+  .lw-seal { margin-bottom: 10px; }
+  .lw-seal b { font-size: 40px; }
+  .lw-finale-names { font-size: clamp(42px, 11vw, 54px); }
+  .lw-finale-line { font-size: 16px; }
+  .lw-hashtag { margin-bottom: 0; }
+  .lw-finale-l { width: 140px; }
+  .lw-finale-r { width: 130px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lw-root *, .lw-root *::before, .lw-root *::after { animation: none !important; }
   .lw-hg, .lw-in, .lw-open-copy > *, .lw-open-stage, .lw-open-cta, .lw-open-lights, .lw-open-side img, .lw-hero-lights, .lw-hero-gopuram, .lw-hero-couple, .lw-hero-pond, .lw-hero-sun, .lw-hero-badge, .lw-hero-scroll { transition: none !important; opacity: 1 !important; translate: none !important; scale: none !important; }

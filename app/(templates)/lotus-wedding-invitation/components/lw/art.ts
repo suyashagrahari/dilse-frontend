@@ -39,6 +39,13 @@ export const A = {
   swing: { src: "/wedding-v3/lotus/couple-on-marigold-swing-760.webp", w: 760, h: 1294 },
   branch: { src: "/wedding-v3/lotus/mossy-tree-branch-1000.webp", w: 1000, h: 547 },
   feather: LW_ASSETS.template7["03-peacock-feather"],
+  // The couple dressed for each function (template14), one per event card.
+  coupleHaldi: { src: "/wedding-v3/template14-couple-haldi-mehndi/07-couple-haldi-yellow.webp", w: 466, h: 800 },
+  coupleMehndi: { src: "/wedding-v3/template14-couple-haldi-mehndi/05-couple-mehndi-orange-saree.webp", w: 581, h: 800 },
+  coupleSangeet: { src: "/wedding-v3/template14-couple-haldi-mehndi/03-couple-sangeet-dancing.webp", w: 748, h: 800 },
+  coupleReception: { src: "/wedding-v3/template14-couple-haldi-mehndi/04-couple-reception-tux-gown.webp", w: 604, h: 800 },
+  coupleEngagement: { src: "/wedding-v3/template14-couple-haldi-mehndi/06-couple-engagement-ivory-lehenga.webp", w: 502, h: 800 },
+  coupleWedding: { src: "/wedding-v3/template14-couple-haldi-mehndi/08-couple-wedding-red-lehenga.webp", w: 446, h: 800 },
 } satisfies Record<string, WeddingAsset>;
 
 export type ArtKey = keyof typeof A;

@@ -4,12 +4,11 @@
 // Gold lights across the top, a pair of brass lamps glowing, pink lotuses in
 // the corners. When the pond is 50% on screen the lotus opens (the same SVG as
 // the opening) and a few petals drift up; then the seal, the names, the
-// closing line, the hashtag and a WhatsApp share. Reduced motion: already open.
+// closing line and the hashtag. Reduced motion: already open.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import LotusBloom from "./LotusBloom";
-import { Icon, WA, openWhatsApp } from "./Actions";
 import { img, seeded } from "./art";
 
 export interface FinaleProps {
@@ -21,11 +20,9 @@ export interface FinaleProps {
   second: string;
   hashtag: string;
   lang: "en" | "hi";
-  whatsapp: string;
-  shareText: string;
 }
 
-export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, whatsapp, shareText }: FinaleProps) {
+export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
   const pondRef = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
@@ -105,11 +102,6 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
             {hashtag}
           </Reveal>
         )}
-        <Reveal delay={320}>
-          <button type="button" className="lw-btn is-lg" onClick={() => openWhatsApp(shareText)} lang={lang}>
-            <Icon d={WA} fill size={18} /> <span>{whatsapp}</span>
-          </button>
-        </Reveal>
       </div>
       <div className="lw-finale-foot" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

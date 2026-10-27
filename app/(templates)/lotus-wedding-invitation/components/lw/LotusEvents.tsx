@@ -3,23 +3,34 @@
 // ─── The functions: ivory cards with a date plate ────────────────────────────
 // Each function is an ivory card under a rounded sage plate with its date (day,
 // month, weekday), with a white-gold lotus piece growing from the corner (bud,
-// pod, bloom or leaf in turn), then time, venue, a dress-code swatch, a note,
-// and two actions: directions and WhatsApp. Phones: a rail that snaps one card
+// pod, bloom or leaf in turn) and the couple dressed for the function standing
+// at a lotus pond above it, then time, venue, a dress-code swatch, a note and
+// directions. Phones: a rail that snaps one card
 // to the centre with dots underneath; 2 columns at ≥700px, 3 at ≥1100px.
 
 import { useEffect, useRef, useState } from "react";
 import { Reveal, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
-import { Btn, CLOCK, Icon, PIN, WA, openWhatsApp } from "./Actions";
+import { Btn, CLOCK, Icon, PIN } from "./Actions";
 import { img, type ArtKey } from "./art";
 import { MAIN_RE } from "./model";
 
 const SPRIGS: ArtKey[] = ["budA", "podB", "bloomStem", "leafStem", "budB", "podA"];
+const COUPLES: [RegExp, ArtKey][] = [
+  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, "coupleHaldi"],
+  [/mehendi|mehndi|henna|मेहंदी/i, "coupleMehndi"],
+  [/sangeet|garba|dandiya|music|dance|संगीत/i, "coupleSangeet"],
+  [/reception|cocktail|dinner|party|gala|banquet|स्वागत/i, "coupleReception"],
+  [/tilak|roka|engagement|sagai|ring|mangni|सगाई/i, "coupleEngagement"],
+  [MAIN_RE, "coupleWedding"],
+  [/baraat|barat|procession|ghudchadi|sehra|milni|बारात/i, "coupleWedding"],
+];
+const ROTATION: ArtKey[] = ["coupleEngagement", "coupleHaldi", "coupleMehndi", "coupleSangeet", "coupleWedding", "coupleReception"];
+const coupleFor = (title: string, i: number): ArtKey => COUPLES.find(([re]) => re.test(title))?.[1] ?? ROTATION[i % ROTATION.length];
 
 export interface LotusEventsProps {
   events: readonly WeddingEvent[];
-  couple: string;
   locale: string;
-  labels: { directions: string; dress: string; tba: string; whatsapp: string; nav: string };
+  labels: { directions: string; dress: string; tba: string; nav: string };
 }
 
 function parts(date: string, locale: string) {
@@ -29,11 +40,10 @@ function parts(date: string, locale: string) {
     day: String(d.getDate()),
     month: d.toLocaleDateString(locale, { month: "short", timeZone: "Asia/Kolkata" }),
     weekday: d.toLocaleDateString(locale, { weekday: "long", timeZone: "Asia/Kolkata" }),
-    full: d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }),
   };
 }
 
-export default function LotusEvents({ events, couple, locale, labels: l }: LotusEventsProps) {
+export default function LotusEvents({ events, locale, labels: l }: LotusEventsProps) {
   const [at, setAt] = useState(0);
   const railRef = useRef<HTMLOListElement>(null);
   const list = events.filter((e) => e.title || e.venue || e.date);
@@ -89,12 +99,16 @@ export default function LotusEvents({ events, couple, locale, labels: l }: Lotus
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
           const isMain = MAIN_RE.test(e.title);
-          const shareLine = `${e.title} · ${couple}${d ? ` · ${d.full}` : ""}${time ? `, ${time}` : ""}${e.venue ? ` · ${e.venue}` : ""}`;
           return (
             <li key={key} className={`lw-ev${isMain ? " is-main" : ""}${i === at ? " is-at" : ""}`}>
               <article className="lw-ev-card">
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                 <img {...img(SPRIGS[i % SPRIGS.length], { lazy: true })} className="lw-ev-sprig" aria-hidden />
+                <div className="lw-ev-alcove" aria-hidden>
+                  <span className="lw-ev-water" />
+                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                  <img {...img(coupleFor(e.title, i), { lazy: true })} className="lw-ev-couple" />
+                </div>
                 <div className="lw-ev-plate">
                   {d ? (
                     <>
@@ -130,16 +144,13 @@ export default function LotusEvents({ events, couple, locale, labels: l }: Lotus
                     </p>
                   )}
                   {e.note && <p className="lw-ev-note">{e.note}</p>}
-                  <div className="lw-ev-actions">
-                    {map && (
+                  {map && (
+                    <div className="lw-ev-actions">
                       <Btn href={map} icon={PIN} ghost className="is-sm">
                         {l.directions}
                       </Btn>
-                    )}
-                    <button type="button" className="lw-ev-wa" onClick={() => openWhatsApp(shareLine)} aria-label={`${l.whatsapp}: ${e.title}`}>
-                      <Icon d={WA} fill size={16} /> <span>WhatsApp</span>
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </article>
             </li>

@@ -10,7 +10,6 @@
 
 import type { WeddingEvent } from "../../../_wedding";
 import DateBadge from "./DateBadge";
-import { HeroActions } from "./Actions";
 import { img } from "./art";
 import type { Strings } from "./model";
 
@@ -31,7 +30,6 @@ export interface HeroProps {
   main?: WeddingEvent;
   events: WeddingEvent[];
   couple: string;
-  shareText: string;
 }
 
 export default function Hero(p: HeroProps) {
@@ -126,9 +124,6 @@ export default function Hero(p: HeroProps) {
               {p.venue}
             </p>
           )}
-          <div className="lw-in" style={{ ["--d" as string]: "880ms" }}>
-            <HeroActions s={s} shareText={p.shareText} />
-          </div>
         </div>
       </div>
       <a className="lw-hero-scroll" href="#invitation" aria-label={s.scroll}>

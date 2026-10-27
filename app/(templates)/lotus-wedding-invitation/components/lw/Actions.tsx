@@ -1,13 +1,11 @@
 "use client";
 
-// ─── Sharing, contacts, shagun, live: the guest's practical bits ───────────
-// WhatsApp goes straight to wa.me (that is the button guests look for); the
-// general "Share" uses the phone's own sheet when there is one. Every link the
-// guest sees carries their ?to= name, so a forwarded copy greets the same family.
+// ─── Contacts, shagun, live: the guest's practical bits ────────────────────
+// WhatsApp goes straight to wa.me. Every link the guest sees carries their
+// ?to= name, so a forwarded copy greets the same family.
 
 import { useEffect, useState, type ReactNode } from "react";
 import { Reveal, eventEnd, eventStart, type WeddingEvent } from "../../../_wedding";
-import { drawInviteCard, type InviteCardInput } from "./inviteCard";
 import type { LwContact, Strings } from "./model";
 
 export function Icon({ d, size = 16, fill = false }: { d: string; size?: number; fill?: boolean }) {
@@ -80,71 +78,6 @@ export function Btn({ onClick, href, icon, fill, children, ghost, label, classNa
     <button type="button" className={cls} onClick={onClick} aria-label={label}>
       <Icon d={icon} fill={fill} /> <span>{children}</span>
     </button>
-  );
-}
-
-// ── Save the date + WhatsApp (the hero's pair) ──────────────────────────────
-
-export function HeroActions({ s, shareText }: { s: Strings; shareText: string }) {
-  return (
-    <div className="lw-hero-actions">
-      <Btn icon={WA} fill onClick={() => openWhatsApp(shareText)}>
-        {s.whatsapp}
-      </Btn>
-    </div>
-  );
-}
-
-// ── The share bar (near the end): WhatsApp · Share · Copy · Download card ────
-
-export function ShareBar({ s, shareText, card }: { s: Strings; shareText: string; card: InviteCardInput }) {
-  const [flash, setFlash] = useFlash();
-  const [busy, setBusy] = useState(false);
-  const [canShare, setCanShare] = useState(false);
-  useEffect(() => {
-    // navigator.share only exists in the browser; read it after mount.
-    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
-  }, []);
-
-  const download = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const blob = await drawInviteCard(card);
-      if (!blob) throw new Error("no card");
-      const a = document.createElement("a");
-      const href = URL.createObjectURL(blob);
-      a.href = href;
-      a.download = `${card.first}-${card.second}-wedding-invitation.png`.replace(/[^\w.-]+/g, "-");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.setTimeout(() => URL.revokeObjectURL(href), 4000);
-      setFlash("card");
-    } catch {
-      setFlash("card-err");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="lw-sharebar">
-      <Btn icon={WA} fill onClick={() => openWhatsApp(shareText)}>
-        {s.whatsapp}
-      </Btn>
-      {canShare && (
-        <Btn icon={SHARE} ghost onClick={() => void navigator.share({ title: shareText, text: shareText, url: pageUrl() }).catch(() => undefined)}>
-          {s.shareMore}
-        </Btn>
-      )}
-      <Btn icon={LINK} ghost onClick={() => void copyText(pageUrl()).then((ok) => setFlash(ok ? "copy" : "copy-err"))}>
-        {flash === "copy" ? `${s.copied} ✓` : s.copy}
-      </Btn>
-      <Btn icon={DOWN} ghost onClick={() => void download()}>
-        {busy ? s.cardBusy : flash === "card" ? "Downloaded ✓" : flash === "card-err" ? "Try again" : s.card}
-      </Btn>
-    </div>
   );
 }
 
