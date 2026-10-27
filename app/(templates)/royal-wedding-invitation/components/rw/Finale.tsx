@@ -8,10 +8,10 @@
 // screen the doors slide shut (1.4 s) and the seal settles on them: शुभ विवाह
 // and the couple's initials. The elephants stand guard at its foot. Beside it
 // on laptops (below it on phones): "Shubh Vivah · With love", the names in
-// maroon-to-gold foil script, the closing line, the hashtag, the share bar
-// (children) and "Replay the opening". Reduced motion: the doors are shut.
+// maroon-to-gold foil script, the closing line, the hashtag and "Replay the
+// opening". Reduced motion: the doors are shut.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal, initialOf, useWeddingReducedMotion } from "../../../_wedding";
 import Petals from "./Petals";
 import { A, GATE, img } from "../assets";
@@ -29,10 +29,9 @@ export interface FinaleProps {
   lang: "en" | "hi";
   replayLabel: string;
   onReplay: () => void;
-  children?: ReactNode;
 }
 
-export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, replayLabel, onReplay, children }: FinaleProps) {
+export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, replayLabel, onReplay }: FinaleProps) {
   const gateRef = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
   const [closed, setClosed] = useState(false);
@@ -123,7 +122,6 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
             {hashtag}
           </Reveal>
         )}
-        {children}
         <button type="button" className="rw-replay" onClick={onReplay} lang={lang}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" />

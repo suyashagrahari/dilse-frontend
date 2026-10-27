@@ -2,14 +2,13 @@
 
 // ─── The finale: the terrace again, one full screen ─────────────────────────
 // The hero's leaf garland flush along the top with two blossom lanterns, the
-// "Shubh Vivah" seal, the names, the closing line, the hashtag, a WhatsApp
-// share and "Replay the opening", and at the foot the still lake, the pink
+// "Shubh Vivah" seal, the names, the closing line, the hashtag and "Replay
+// the opening", and at the foot the still lake, the pink
 // gazebo and the white balustrade. On phones it fills
 // exactly one screen. Nothing moves.
 
 import { useEffect, useRef, useState } from "react";
 import { Reveal } from "../../../_wedding";
-import { Icon, WA, openWhatsApp } from "./Actions";
 import { img } from "./art";
 import Lake from "./Lake";
 
@@ -23,13 +22,11 @@ export interface FinaleProps {
   second: string;
   hashtag: string;
   lang: "en" | "hi";
-  whatsapp: string;
   replay: string;
-  shareText: string;
   onReplay: () => void;
 }
 
-export default function Finale({ seal, sealHi, bilingual, closing, endLine, first, second, hashtag, lang, whatsapp, replay, shareText, onReplay }: FinaleProps) {
+export default function Finale({ seal, sealHi, bilingual, closing, endLine, first, second, hashtag, lang, replay, onReplay }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -78,9 +75,6 @@ export default function Finale({ seal, sealHi, bilingual, closing, endLine, firs
           </Reveal>
         )}
         <Reveal delay={320} className="wp-finale-actions">
-          <button type="button" className="wp-btn is-lg" onClick={() => openWhatsApp(shareText)} lang={lang}>
-            <Icon d={WA} fill size={18} /> <span>{whatsapp}</span>
-          </button>
           <button type="button" className="wp-replay" onClick={onReplay} lang={lang}>
             ↺ {replay}
           </button>

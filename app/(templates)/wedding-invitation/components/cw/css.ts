@@ -19,9 +19,7 @@ export const CW_CSS = `
 .cw-btn-rose { color: var(--wk-accent-ink); background: linear-gradient(115deg, color-mix(in srgb, var(--wk-accent) 82%, #3a0a18), var(--wk-accent) 48%, color-mix(in srgb, var(--wk-accent) 72%, #f4b8a6)); box-shadow: 0 12px 26px -14px color-mix(in srgb, var(--wk-accent) 80%, #000), inset 0 1px 0 rgba(255,255,255,.35); }
 .cw-btn-ghost { color: var(--wk-ink); background: var(--wk-surface-solid); box-shadow: inset 0 0 0 1.5px var(--cw-line); }
 .cw-btn-ghost:hover { box-shadow: inset 0 0 0 1.5px var(--wk-gold); }
-.cw-btn-wa { color: #fff; background: #1FA855; box-shadow: 0 10px 22px -14px rgba(20,120,60,.8); }
 .cw-btn-sm { min-height: 42px; padding: 0 14px; font-size: 13.5px; gap: 6px; }
-.cw-btn-icon { width: 46px; padding: 0; }
 .cw-round { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--wk-ink); background: var(--wk-surface-solid); box-shadow: inset 0 0 0 1.5px var(--cw-line); transition: transform .18s ease; }
 .cw-round:active { transform: scale(.94); }
 .cw-round.is-wa { color: #fff; background: #1FA855; box-shadow: none; }
@@ -466,16 +464,13 @@ export const CW_CSS = `
 .cw-ev-swatch { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; box-shadow: 0 0 0 2px var(--wk-surface-solid), 0 0 0 3px color-mix(in srgb, var(--wk-gold) 70%, transparent); }
 .cw-ev-k { font-weight: 600; color: var(--wk-gold-ink); }
 .cw-ev-note { margin: 2px 0 0; padding: 10px 14px; border-radius: 14px; font: italic 400 16px/1.5 var(--wk-font-display); color: var(--wk-muted); background: color-mix(in srgb, var(--fn) 9%, transparent); }
-.cw-ev-actions { position: relative; margin-top: auto; padding-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
-.cw-ev-actions .cw-btn { flex: 1 1 auto; padding: 0 12px; }
-.cw-ev-gcal { align-self: center; margin-top: -4px; padding: 6px 10px; font: 600 12.5px/1.2 var(--wk-font-sans); letter-spacing: .04em; color: var(--wk-gold-ink); text-decoration: underline; text-decoration-color: var(--cw-line); text-underline-offset: 4px; }
-.cw-ev-gcal:hover { color: var(--wk-accent); }
+.cw-ev-actions { position: relative; margin-top: auto; padding-top: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.cw-ev-actions .cw-btn { flex: 0 1 auto; padding: 0 18px; }
 .cw-ev-dots { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
 .cw-ev-dots { gap: 0; }
 .cw-ev-dots button { display: grid; place-items: center; min-width: 24px; height: 28px; padding: 0 2px; border: 0; background: none; cursor: pointer; }
 .cw-ev-dots button::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--wk-accent) 28%, transparent); transition: width .3s var(--cw-ease), background-color .3s ease; }
 .cw-ev-dots button.is-on::after { width: 24px; background: var(--wk-accent); }
-.cw-ev-all { display: flex; justify-content: center; margin-top: 28px; }
 
 /* venue */
 .cw-venue { position: relative; max-width: 680px; margin: 0 auto; }
@@ -567,15 +562,6 @@ export const CW_CSS = `
 .cw-finale-names span { font-family: var(--wk-font-display); font-size: .5em; }
 .cw-finale-line { margin: 0; max-width: 32rem; font: italic 400 clamp(17px, 4.4vw, 21px)/1.45 var(--wk-font-display); color: var(--wk-muted); text-wrap: balance; }
 .cw-hashtag { margin: 4px 0 0; font: 600 15px/1 var(--wk-font-sans); letter-spacing: .04em; color: var(--wk-accent); }
-.cw-finale-share { width: 100%; max-width: 660px; display: grid; justify-items: center; }
-.cw-share { display: grid; gap: 16px; justify-items: center; margin-top: 18px; width: 100%; }
-.cw-share-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.cw-personal { width: 100%; display: grid; gap: 8px; padding: 16px; border-radius: 22px; background: color-mix(in srgb, var(--wk-surface-solid) 88%, transparent); box-shadow: inset 0 0 0 1px var(--cw-line); text-align: left; }
-.cw-personal-l { font: 600 12px/1.2 var(--wk-font-caps); letter-spacing: .18em; text-transform: uppercase; color: var(--wk-gold-ink); }
-.cw-root.is-hi .cw-personal-l { letter-spacing: .02em; font-family: var(--wk-font-deva); font-size: 14px; }
-.cw-personal-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.cw-personal-row .wk-input { flex: 1 1 170px; min-width: 0; min-height: 46px; font-size: 16px; }
-.cw-share-note { min-height: 18px; margin: 0; font: 500 13.5px/1.3 var(--wk-font-sans); color: var(--wk-accent); word-break: break-all; }
 .cw-replay { margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: none; font: 600 13.5px/1 var(--wk-font-sans); color: var(--wk-gold-ink); cursor: pointer; }
 .cw-finale-floor { position: relative; width: 100vw; height: clamp(150px, 34vw, 280px); margin: 22px calc(50% - 50vw) 0; pointer-events: none; }
 .cw-finale-floor img { position: absolute; bottom: -6px; height: 100%; width: auto; }
@@ -583,14 +569,6 @@ export const CW_CSS = `
 .cw-finale-pampas.is-l { left: -3%; -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
 .cw-finale-pampas.is-r { right: -3%; transform: scaleX(-1); -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 98%); mask-image: linear-gradient(90deg, #000 62%, transparent 98%); }
 .cw-finale-peony { left: 50%; height: 80% !important; transform: translateX(-50%); bottom: -10px !important; filter: drop-shadow(0 -4px 12px rgba(110,40,58,.12)); }
-
-/* the QR dialog (portalled to <body>, so no theme tokens here) */
-.cw-qr-scrim { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 16px; background: rgba(44,16,24,.55); animation: cw-fade .25s ease both; }
-.cw-qr { width: min(320px, 100%); padding: 22px 20px 16px; border-radius: 24px; background: #FFFBF9; text-align: center; box-shadow: 0 30px 60px -20px rgba(40,10,20,.5); display: grid; justify-items: center; gap: 10px; font-family: system-ui, sans-serif; }
-.cw-qr svg { width: 232px; height: 232px; max-width: 100%; border-radius: 12px; }
-.cw-qr p { margin: 0; font-size: 15px; color: #4A2630; }
-.cw-qr-close { min-height: 44px; min-width: 120px; border: 0; border-radius: 999px; background: #8E3B52; color: #fff; font: 600 14px/1 system-ui, sans-serif; cursor: pointer; }
-@keyframes cw-fade { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   .cw-root *, .cw-root *::before, .cw-root *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; transition-delay: 0s !important; }

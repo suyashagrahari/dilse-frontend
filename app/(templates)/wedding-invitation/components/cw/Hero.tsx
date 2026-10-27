@@ -2,8 +2,7 @@
 
 // ─── The invitation's first screen: the rose garden behind the jharokha ─────
 // What the guest steps into: blush paper, the names in rose-gold script, the
-// date on a hairline strip, the venue, and the two things guests do first
-// (RSVP, save the date). Beside them (below on phones) the couple under the
+// date on a hairline strip, the venue, and the RSVP button. Beside them (below on phones) the couple under the
 // floral gazebo, framed by a palace arch window that looks out on the pink
 // dawn over the lake palace (the jharokha's own view), a gold mandala (from
 // template16) turning slowly behind the arch like a halo, a few twinkles and
@@ -32,8 +31,6 @@ export interface HeroProps {
   venue: string;
   photo: LovePhoto | null;
   onRsvp?: () => void;
-  onSave?: () => void;
-  saved?: boolean;
 }
 
 function Icon({ d }: { d: string }) {
@@ -44,7 +41,6 @@ function Icon({ d }: { d: string }) {
   );
 }
 const HEART = "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z";
-const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
 
 /** A cusped Mughal arch, 400 × 520, open at the bottom; INNER is the same arch inset 12 units (the gold double line). */
 const ARCH = "M20 520V206C20 128 112 84 166 50c16-10 28-24 34-44 6 20 18 34 34 44 54 34 146 78 146 156v314z";
@@ -71,7 +67,7 @@ const TWINKLES = [
   { l: "50%", t: "2%", d: ".6s", s: 20 },
 ];
 
-export default function Hero({ on, s, lang, first, second, guest, date, time, venue, photo, onRsvp, onSave, saved }: HeroProps) {
+export default function Hero({ on, s, lang, first, second, guest, date, time, venue, photo, onRsvp }: HeroProps) {
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
   const p = dateParts(date, locale);
   // Script names never wrap mid-name: long ones step down a size instead.
@@ -157,18 +153,11 @@ export default function Hero({ on, s, lang, first, second, guest, date, time, ve
               {venue && <span className="cw-hero-venue">{venue}</span>}
             </p>
           )}
-          {(onRsvp || onSave) && (
+          {onRsvp && (
             <div className="cw-hero-acts">
-              {onRsvp && (
-                <button type="button" className="cw-btn cw-btn-rose" onClick={onRsvp} lang={lang}>
-                  <Icon d={HEART} /> {s.rsvpBtn}
-                </button>
-              )}
-              {onSave && (
-                <button type="button" className="cw-btn cw-btn-ghost" onClick={onSave} lang={lang}>
-                  <Icon d={CAL} /> {saved ? s.saved : s.saveDate}
-                </button>
-              )}
+              <button type="button" className="cw-btn cw-btn-rose" onClick={onRsvp} lang={lang}>
+                <Icon d={HEART} /> {s.rsvpBtn}
+              </button>
             </div>
           )}
         </div>

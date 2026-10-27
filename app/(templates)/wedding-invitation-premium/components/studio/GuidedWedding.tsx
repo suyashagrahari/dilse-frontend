@@ -282,7 +282,7 @@ export default function GuidedWedding({ open, fill, onClose, onApplied }: Guided
       case 1:
         return {
           q: "When is the wedding?",
-          sub: "The day of the pheras or the ceremony. The countdown and calendar invites use it.",
+          sub: "The day of the pheras or the ceremony. The countdown counts down to it.",
           node: (
             <div className="gw-row2">
               <label className="gw-field">

@@ -234,10 +234,9 @@ type Keys =
   | "open" | "opening" | "dear" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide"
   | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "galleryEyebrow" | "gettingThere"
   | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "done"
-  | "directions" | "calendar" | "saveAll" | "swipe" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
+  | "directions" | "swipe" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
   | "upasthiti" | "callUs" | "call" | "chat" | "shagun" | "shagunLine" | "pay" | "copy" | "copied"
-  | "live" | "liveSoon" | "copyLink" | "card" | "cardMaking" | "inviteSomeone" | "inviteName" | "inviteSend"
-  | "together" | "royalOf" | "welcome" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "saved" | "scroll" | "decree" | "at" | "replay";
+  | "live" | "liveSoon" | "royalOf" | "welcome" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "scroll" | "decree" | "at" | "replay";
 
 type StringsShape = { [K in Keys]: string } & { units: { d: string; h: string; m: string; s: string } };
 
@@ -272,8 +271,6 @@ export const T: Record<Lang, StringsShape> = {
     units: { d: "Days", h: "Hours", m: "Minutes", s: "Seconds" },
     done: "Just married",
     directions: "Directions",
-    calendar: "Add to calendar",
-    saveAll: "Save all dates",
     swipe: "Swipe to see every function",
     dress: "Dress code",
     tba: "Time to be announced",
@@ -293,20 +290,12 @@ export const T: Record<Lang, StringsShape> = {
     copied: "Copied",
     live: "Watch live",
     liveSoon: "The livestream opens 30 minutes before the ceremony",
-    copyLink: "Copy link",
-    card: "Invite card (PNG)",
-    cardMaking: "Making your card…",
-    inviteSomeone: "Send a personal invite",
-    inviteName: "Guest's name, e.g. Sharma family",
-    inviteSend: "Send on WhatsApp",
-    together: "Together with their families",
     royalOf: "The royal wedding of",
     welcome: "Padharo mhare des",
     infoEyebrow: "For our guests",
     info: "Good to know",
     getDirections: "Get directions",
     showMap: "Show map",
-    saved: "Saved ✓",
     scroll: "Enter the palace",
     decree: "By the grace of the Almighty, on the auspicious day of",
     at: "at",
@@ -342,8 +331,6 @@ export const T: Record<Lang, StringsShape> = {
     units: { d: "दिन", h: "घंटे", m: "मिनट", s: "सेकंड" },
     done: "विवाह संपन्न",
     directions: "रास्ता",
-    calendar: "कैलेंडर में जोड़ें",
-    saveAll: "सभी तिथियाँ सहेजें",
     swipe: "सभी कार्यक्रम देखने के लिए स्वाइप करें",
     dress: "पोशाक",
     tba: "समय की सूचना जल्द",
@@ -363,20 +350,12 @@ export const T: Record<Lang, StringsShape> = {
     copied: "कॉपी हो गया",
     live: "लाइव देखें",
     liveSoon: "समारोह से 30 मिनट पहले लाइव शुरू होगा",
-    copyLink: "लिंक कॉपी करें",
-    card: "निमंत्रण कार्ड (PNG)",
-    cardMaking: "कार्ड बन रहा है…",
-    inviteSomeone: "नाम से निमंत्रण भेजें",
-    inviteName: "अतिथि का नाम, जैसे शर्मा परिवार",
-    inviteSend: "WhatsApp पर भेजें",
-    together: "अपने परिवारों के साथ",
     royalOf: "शुभ विवाह",
     welcome: "पधारो म्हारे देस",
     infoEyebrow: "अतिथियों के लिए",
     info: "ज़रूरी जानकारी",
     getDirections: "रास्ता देखें",
     showMap: "नक्शा दिखाएँ",
-    saved: "सहेजा गया ✓",
     scroll: "महल में पधारें",
     decree: "ईश्वर की कृपा से, शुभ तिथि",
     at: "समय",

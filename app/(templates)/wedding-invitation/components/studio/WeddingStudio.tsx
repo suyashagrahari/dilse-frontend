@@ -636,7 +636,7 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
         </div>
 
         <div className="wis-card">
-          <p className="wis-sub">The big day · the countdown, the date strip and the invite card</p>
+          <p className="wis-sub">The big day · the countdown and the date strip</p>
           <div className="wis-row3">
             <Field label="Date" htmlFor="wis-date">
               <input id="wis-date" type="date" className="vs-input" value={s(x.date)} onChange={(e) => setBigDay("date", e.target.value)} />
@@ -687,7 +687,7 @@ export default function WeddingStudio({ day, mf, updateMf, updateExtra, ai, pass
 
       {/* ── 2 Functions ────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-details" aria-label="Functions">
-        <Head n={2} icon="lamp" title="Functions" sub={`Up to ${WI_LIMITS.events}. Each one is its own card in the suite, with a map, a dress-code swatch and an add-to-calendar button.`} />
+        <Head n={2} icon="lamp" title="Functions" sub={`Up to ${WI_LIMITS.events}. Each one is its own card in the suite, with a map and a dress-code swatch.`} />
         <ol className="wis-evs">
           {events.map((e, i) => {
             const isOpen = openEv === i;

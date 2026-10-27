@@ -15,12 +15,12 @@ export const config: TemplatePageConfig = {
   category: "wedding",
   title: "Wedding Invitation — Elegant Invite with RSVP",
   description:
-    "An elegant wedding invitation website: a wax-seal envelope opens to your names, date and live countdown, the wedding and reception with maps and calendar, your photos in a magazine gallery, your song and one-tap RSVP, in English or Hindi. One hand-painted blush and rose-gold look; the AI writes it from a few lines.",
+    "An elegant wedding invitation website: a wax-seal envelope opens to your names, date and live countdown, the wedding and reception with maps, your photos in a magazine gallery, your song and one-tap RSVP, in English or Hindi. One hand-painted blush and rose-gold look; the AI writes it from a few lines.",
   coverImage: "/wedding-v3/classic/cover-phones.webp",
   emoji: "💌",
   color: "from-amber-100 to-yellow-200",
   previewText: "an invitation, sealed with love 💌",
-  bodyText: "Open the seal, save the date, RSVP in one tap.",
+  bodyText: "Open the seal, count down to the day, RSVP in one tap.",
   bgGradient: "from-amber-50 via-yellow-50 to-rose-50",
   tabs: [
     { id: "open", icon: Mail, label: "Open" },
@@ -39,7 +39,7 @@ export const config: TemplatePageConfig = {
       headerEmoji: "💍",
       title: "With love",
       subtitle: "We can't wait to celebrate with you",
-      wishes: ["Save the date 📅", "RSVP in one tap 💌", "See you there ✨"],
+      wishes: ["Count down to the day ⏳", "RSVP in one tap 💌", "See you there ✨"],
       closingEmoji: "💌",
       closingSubtext: "SubhSandesh",
     },

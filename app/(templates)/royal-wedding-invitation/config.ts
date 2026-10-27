@@ -33,7 +33,7 @@ export const config: TemplatePageConfig = {
       headerEmoji: "👑",
       title: "Shubh Vivah",
       subtitle: "With love, the families",
-      wishes: ["RSVP for every function", "Every date on your calendar", "Leave your blessings"],
+      wishes: ["RSVP for every function", "Directions to every venue", "Leave your blessings"],
       closingEmoji: "🪔",
       closingSubtext: "SubhSandesh",
     },

@@ -3,11 +3,11 @@
 // ─── The finale: the jharokha closes softly at dusk ─────────────────────────
 // The same carved window, small, stands open on the pink lake; when it is
 // half on screen the ivory shutters swing gently shut (1.6 s) and a few rose
-// petals settle. Then "Shubh Vivah", the closing line, the hashtag, the share
-// bar and "Replay the opening", over a border of pampas and peonies (template3).
+// petals settle. Then "Shubh Vivah", the closing line, the hashtag and
+// "Replay the opening", over a border of pampas and peonies (template3).
 // Reduced motion: the window is simply closed.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { A, SHUTTER_BOX, img } from "./assets";
 
@@ -22,10 +22,9 @@ export interface FinaleProps {
   lang: "en" | "hi";
   replayLabel: string;
   onReplay?: () => void;
-  children?: ReactNode;
 }
 
-export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, replayLabel, onReplay, children }: FinaleProps) {
+export default function Finale({ seal, sealHi, closing, endLine, first, second, hashtag, lang, replayLabel, onReplay }: FinaleProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useWeddingReducedMotion();
   const [closed, setClosed] = useState(false);
@@ -88,11 +87,6 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
       {hashtag && (
         <Reveal as="p" className="cw-hashtag" delay={300}>
           {hashtag}
-        </Reveal>
-      )}
-      {children && (
-        <Reveal delay={340} className="cw-finale-share">
-          {children}
         </Reveal>
       )}
       {onReplay && (
