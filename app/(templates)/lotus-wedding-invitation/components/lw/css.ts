@@ -607,6 +607,12 @@ export const LW_CSS = `
   .lw-ev-body { padding-top: 14px; }
 }
 
+/* Phones: the couple's figures sit left of centre in the art (her saree flies right), so nudge them right. */
+@media (max-width: 699px) {
+  .lw-hero-couple { left: 17%; }
+  .lw-hero-gopuram { left: 12%; }
+}
+
 /* Phones: the finale is exactly one screen, the lamps hang below the top bar. */
 @media (max-width: 699px) {
   .lw-finale { display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: 132px 16px 132px; }
