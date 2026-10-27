@@ -15,6 +15,12 @@ export const FREE_NAME: Record<string, string> = {
   "birthday-gf": "Birthday GF",
   "happy-birthday": "Happy Birthday",
   "apology-dashboard": "Apology Dashboard",
+  "missyou-gf": "Miss You GF",
+  "miss-you": "Miss You",
+  proposal: "Will You Marry Me?",
+  "will-you-be-mine": "Will You Be Mine?",
+  "happy-anniversary": "Happy Anniversary",
+  "happy-halloween": "Happy Halloween",
 };
 export const freeName = (slug: string) => FREE_NAME[slug] ?? slug;
 

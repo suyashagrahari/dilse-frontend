@@ -72,7 +72,7 @@ export default function UpgradesTab({ userId, hdr }: { userId: string; hdr: () =
   if (!data || !data.offers.length) {
     return (
       <Card title="Premium upgrades">
-        <Empty>This person has not met a premium offer yet. It appears when they publish Build a Bouquet, Birthday GF, Happy Birthday or Apology Dashboard.</Empty>
+        <Empty>This person has not met a premium offer yet. It appears when they publish a free template that has a premium version (birthday, bouquet, apology, miss you, proposal, anniversary, Halloween…).</Empty>
       </Card>
     );
   }

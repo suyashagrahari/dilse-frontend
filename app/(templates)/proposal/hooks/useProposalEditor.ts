@@ -16,6 +16,27 @@ import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 import { goBackFromTemplate } from "@/lib/backNav";
 
+import { useUpgradeOffer } from "@/lib/upgrade/useUpgradeOffer";
+import { composeValentineDraft } from "@/lib/upgrade/compose";
+import { PERSPECTIVE_FIELDS, defaultsFor } from "../components/copy";
+import { MEMORY_PHOTOS } from "../components/assets";
+
+/** The demo's sample captions: not the sender's words. */
+const SAMPLE_CAPTIONS = new Set(DEMO_DATA.memories.map((m) => m.caption));
+
+/**
+ * What goes to the server for the premium offer: only what the sender wrote.
+ * The perspective's sample wording and the demo's captions are blanked, and
+ * photos never leave the browser.
+ */
+function upgradeBody(d: ProposalData): Record<string, unknown> {
+  const defaults = defaultsFor(d.perspective);
+  const body: Record<string, unknown> = { senderName: d.senderName, recipientName: d.recipientName, perspective: d.perspective, metDate: d.metDate };
+  for (const k of PERSPECTIVE_FIELDS) body[k] = d[k] === defaults[k] ? "" : d[k];
+  body.memories = d.memories.map((m) => ({ caption: SAMPLE_CAPTIONS.has(m.caption) ? "" : m.caption }));
+  return body;
+}
+
 const DRAFT_KEY = "proposal_draft";
 const BASE = `${API_URL}/proposal-pages`;
 
@@ -143,6 +164,36 @@ export function useProposalEditor() {
    */
   const publishInFlightRef = useRef(false);
 
+  // ── "See it in Premium, free" (lib/upgrade/useUpgradeOffer) ─────────────────
+  // Publish first offers The Proposal ✦ Premium, filled from what they wrote
+  // here (server AI) with their own photos — never the demo's sample photos.
+  const up = useUpgradeOffer<ProposalData>({
+    from: TEMPLATE,
+    active: isPersonalized && !shareUrl,
+    token: accessToken,
+    pageId,
+    backUrl: (id) => (id ? `/${TEMPLATE}?edit=${id}&publishFree=1` : `/${TEMPLATE}?publishFree=1`),
+    body: upgradeBody,
+    compose: (res, d) =>
+      composeValentineDraft("proposal-premium", res.patch ?? {}, {
+        recipientName: d.recipientName,
+        senderName: d.senderName,
+        photos: d.memories
+          .filter((m) => m.imageUrl && !MEMORY_PHOTOS.includes(m.imageUrl))
+          .map((m) => ({ url: m.imageUrl, caption: SAMPLE_CAPTIONS.has(m.caption) ? "" : m.caption.slice(0, 60) })),
+      }),
+    recipientOf: (d) => d.recipientName,
+    withRecipient: (d, name) => ({ ...d, recipientName: name }),
+    keepFree: (d, password) => saveDraft({ data: d, password, completed: true }),
+    onDismiss: () => { publishInFlightRef.current = false; },
+    copy: {
+      sub: "One tap and we turn your proposal into a fairytale in a golden-hour garden: your names, your story, your photos, a ring box and the big question, already in place. Watch exactly how it looks before you decide.",
+      keep: "Your proposal page stays saved: you can still publish it free from the premium preview.",
+      recipientLabel: "Who are you asking?",
+      recipientPlaceholder: "Their name, e.g. Ananya",
+    },
+  });
+
   const headers = useCallback(
     () => ({
       "Content-Type": "application/json",
@@ -203,10 +254,11 @@ export function useProposalEditor() {
     // We own the row from here; adoption stands down (see useDraft).
     publishInFlightRef.current = true;
 
+    const run = async () => {
+    publishInFlightRef.current = true;
     setPublishing(true);
     setEditMode("preview");
     bumpPreview();
-    (async () => {
       try {
         const res = await fetch(BASE, {
           method: "POST",
@@ -233,6 +285,7 @@ export function useProposalEditor() {
         if (pubResult.success) {
           // The share URL is always the server's — never rebuilt on the client.
           setShareUrl(String(pubResult.data.shareUrl));
+          up.notePublished(savedId);
           await fill.persistStory();
           clearDraft();
           // The auth-deferred path: user hit Publish while logged out, logged in,
@@ -255,7 +308,12 @@ export function useProposalEditor() {
         publishInFlightRef.current = false;
         setPublishing(false);
       }
-    })();
+    };
+    // The premium offer first; adoption stands down while it is open.
+    setContent(data);
+    setIsPersonalized(true);
+    setEditMode("preview");
+    void up.intercept(data, password, () => void run()).then((opened) => { if (!opened) void run(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
@@ -483,6 +541,13 @@ export function useProposalEditor() {
       setShowAuth(true);
       return;
     }
+    if (await up.intercept(content, pagePassword, () => void publishSignedIn())) return;
+    await publishSignedIn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, pagePassword, isAuthenticated, accessToken, pushToast, up.intercept]);
+
+  /** The signed-in publish: save (create or update), clear the paywall, publish. */
+  const publishSignedIn = async () => {
     setPublishing(true);
     try {
       let id = pageId;
@@ -502,6 +567,7 @@ export function useProposalEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        up.notePublished(id);
         await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
@@ -520,7 +586,16 @@ export function useProposalEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
+  };
+
+  // Back from the premium preview's "Free": publish once the page is back, no offer.
+  const autoFreeRef = useRef(false);
+  useEffect(() => {
+    if (autoFreeRef.current || !up.publishFreeAsked) return;
+    if (!isPersonalized || shareUrl || publishing || !isAuthenticated || !accessToken) return;
+    autoFreeRef.current = true;
+    void publish();
+  }, [up.publishFreeAsked, isPersonalized, shareUrl, publishing, isAuthenticated, accessToken, publish]);
 
   /** Cancelling the login modal drops the pending intent, so nothing fires later. */
   const closeAuth = useCallback(() => {
@@ -569,6 +644,7 @@ export function useProposalEditor() {
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
+    upgrade: up.modal,
     pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",

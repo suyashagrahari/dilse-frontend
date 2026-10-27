@@ -42,8 +42,37 @@ import { composeValentineDraft } from "@/lib/upgrade/compose";
  * Days whose publish first offers a premium sibling, filled from what they
  * wrote (lib/upgrade/useUpgradeOffer; the server decides whether it is on).
  */
-const PREMIUM_UPGRADE: Partial<Record<DaySlug, DaySlug>> = {
-  "happy-birthday": "birthday-premium",
+const PREMIUM_UPGRADE: Partial<Record<DaySlug, { to: DaySlug; sub: string; keep: string; recipientLabel: string }>> = {
+  "happy-birthday": {
+    to: "birthday-premium",
+    sub: "One tap and we turn your page into a pop-up birthday storybook: your names, your letter, your photos and your song, already in place. Watch exactly how it looks before you decide.",
+    keep: "Your birthday page stays saved: you can still publish it from the premium preview.",
+    recipientLabel: "Whose birthday is it?",
+  },
+  "will-you-be-mine": {
+    to: "proposal-premium",
+    sub: "One tap and we turn your question into a fairytale proposal in a golden-hour garden: your names, your story, your photos and your song, already in place. Watch exactly how it looks before you decide.",
+    keep: "Your page stays saved: you can still publish it from the premium preview.",
+    recipientLabel: "Who are you asking?",
+  },
+  "happy-anniversary": {
+    to: "anniversary-premium",
+    sub: "One tap and we turn your page into The Book of Us, an anniversary storybook: your names, your letter, your photos and your song, already in place. Watch exactly how it looks before you decide.",
+    keep: "Your anniversary page stays saved: you can still publish it from the premium preview.",
+    recipientLabel: "Who is it for?",
+  },
+  "happy-halloween": {
+    to: "happy-halloween-premium",
+    sub: "One tap and we turn your page into a Boo-tiful Night: your names, your letter, your photos and your song, already in place. Watch exactly how it looks before you decide.",
+    keep: "Your Halloween page stays saved: you can still publish it from the premium preview.",
+    recipientLabel: "Who is it for?",
+  },
+  "miss-you": {
+    to: "miss-you-premium",
+    sub: "One tap and we turn your page into a long-distance day from sunrise to sunrise: your names, your letter, your photos and your song, already in place. Watch exactly how it looks before you decide.",
+    keep: "Your Miss You page stays saved: you can still publish it from the premium preview.",
+    recipientLabel: "Who are you missing?",
+  },
 };
 
 type DraftShape = { data?: ValentineDayData; password?: string; completed?: boolean };
@@ -105,7 +134,8 @@ export function useValentineDayEditor(slug: DaySlug) {
   const publishInFlightRef = useRef(false);
 
   // ── "See it in Premium, free" ───────────────────────────────────────────────
-  const upgradeTo = PREMIUM_UPGRADE[slug];
+  const upgradePlan = PREMIUM_UPGRADE[slug];
+  const upgradeTo = upgradePlan?.to;
   const up = useUpgradeOffer<ValentineDayData>({
     from: slug,
     enabled: !!upgradeTo,
@@ -133,9 +163,9 @@ export function useValentineDayEditor(slug: DaySlug) {
     keepFree: (d, password) => saveDraft({ data: d, password, completed: true }),
     onDismiss: () => { publishInFlightRef.current = false; },
     copy: {
-      sub: "One tap and we turn your page into a pop-up birthday storybook: your names, your letter, your photos and your song, already in place. Watch exactly how it looks before you decide.",
-      keep: "Your birthday page stays saved: you can still publish it from the premium preview.",
-      recipientLabel: "Whose birthday is it?",
+      sub: upgradePlan?.sub ?? "",
+      keep: upgradePlan?.keep ?? "",
+      recipientLabel: upgradePlan?.recipientLabel ?? "Who is it for?",
       recipientPlaceholder: "Their name, e.g. Riya",
     },
   });

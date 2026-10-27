@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Share2, Loader2, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import PremiumUpgradeModal from "@/components/upgrade/PremiumUpgradeModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useProposalEditor } from "./hooks/useProposalEditor";
 import ProposalTemplate from "./components/ProposalTemplate";
@@ -196,6 +197,9 @@ function ProposalPageInner() {
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
       </AnimatePresence>
+
+      {/* "See it in Premium, free" — opened by Publish before the free publish runs. */}
+      <AnimatePresence>{e.upgrade && <PremiumUpgradeModal {...e.upgrade} />}</AnimatePresence>
     </div>
   );
 }

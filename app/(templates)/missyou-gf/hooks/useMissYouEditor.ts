@@ -17,6 +17,25 @@ import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 import { goBackFromTemplate } from "@/lib/backNav";
+import { useUpgradeOffer } from "@/lib/upgrade/useUpgradeOffer";
+import { composeValentineDraft } from "@/lib/upgrade/compose";
+
+/** Seconds of a recording, read from its metadata (0 when it cannot be read in time). */
+function audioSeconds(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    try {
+      const a = new Audio();
+      const done = (n: number) => { a.src = ""; resolve(Math.max(0, Math.min(60, Math.round(n)))); };
+      const t = window.setTimeout(() => done(0), 3000);
+      a.preload = "metadata";
+      a.onloadedmetadata = () => { window.clearTimeout(t); done(Number.isFinite(a.duration) ? a.duration : 0); };
+      a.onerror = () => { window.clearTimeout(t); done(0); };
+      a.src = url;
+    } catch {
+      resolve(0);
+    }
+  });
+}
 
 const DRAFT_KEY = "missyou_draft";
 const BASE = `${API_URL}/missyou-gf-pages`;
@@ -91,6 +110,43 @@ export function useMissYouEditor() {
    */
   const publishInFlightRef = useRef(false);
 
+  // ── "See it in Premium, free" (lib/upgrade/useUpgradeOffer) ─────────────────
+  // Publish first offers Miss You ✦ Premium, filled from what they wrote here
+  // (server AI), with their own memory photos and their voice note.
+  const up = useUpgradeOffer<MissYouData>({
+    from: TEMPLATE,
+    active: isPersonalized && !shareUrl,
+    token: accessToken,
+    pageId,
+    backUrl: (id) => (id ? `/${TEMPLATE}?edit=${id}&publishFree=1` : `/${TEMPLATE}?publishFree=1`),
+    // Photos and the voice note stay in the browser; only their words go up.
+    body: (d) => ({ ...missYouDataToBody(d, ""), memories: (d.memories || []).map((m) => ({ caption: m.caption })), voiceUrl: "", sharePhoto: "" }),
+    compose: async (res, d) => {
+      const photos = (d.memories || []).filter((m) => m.image).map((m) => ({ url: m.image, caption: m.caption.slice(0, 60) }));
+      const next = await composeValentineDraft("miss-you-premium", res.patch ?? {}, {
+        recipientName: d.recipientName,
+        senderName: d.senderName,
+        petName: d.petName,
+        photos,
+      });
+      const voice = d.voiceUrl || "";
+      if (next.premium && /^(https:\/\/|data:audio\/)/i.test(voice)) {
+        next.premium = { ...next.premium, voiceNote: voice, voiceNoteSec: await audioSeconds(voice) };
+      }
+      return next;
+    },
+    recipientOf: (d) => d.recipientName,
+    withRecipient: (d, name) => ({ ...d, recipientName: name }),
+    keepFree: (d, password) => saveDraft({ data: d, password, completed: true }),
+    onDismiss: () => { publishInFlightRef.current = false; },
+    copy: {
+      sub: "One tap and we turn your page into a long-distance day from sunrise to sunrise: your names, your cities, your letter and your photos, already in place. Watch exactly how it looks before you decide.",
+      keep: "Your Miss You page stays saved: you can still publish it free from the premium preview.",
+      recipientLabel: "Who are you missing?",
+      recipientPlaceholder: "Their name, e.g. Riya",
+    },
+  });
+
   const headers = useCallback(
     () => ({
       "Content-Type": "application/json",
@@ -146,10 +202,11 @@ export function useMissYouEditor() {
     // We own the row from here; adoption stands down (see useDraft).
     publishInFlightRef.current = true;
 
+    const run = async () => {
+    publishInFlightRef.current = true;
     setPublishing(true);
     setEditMode("preview");
     bumpPreview();
-    (async () => {
       try {
         const res = await fetch(BASE, { method: "POST", headers: headers(), body: JSON.stringify(missYouDataToBody(data, password)) });
         const result = await res.json();
@@ -171,6 +228,7 @@ export function useMissYouEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          up.notePublished(savedId);
           await persistStory();
           clearDraft();
           pushToast({ type: "publish", title: "Published! 🤍", message: "Tap Share to send it" });
@@ -183,7 +241,12 @@ export function useMissYouEditor() {
         publishInFlightRef.current = false;
         setPublishing(false);
       }
-    })();
+    };
+    // The premium offer first; adoption stands down while it is open.
+    setContent(data);
+    setIsPersonalized(true);
+    setEditMode("preview");
+    void up.intercept(data, password, () => void run()).then((opened) => { if (!opened) void run(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
@@ -335,6 +398,13 @@ export function useMissYouEditor() {
       setShowAuth(true);
       return;
     }
+    if (await up.intercept(content, pagePassword, () => void publishSignedIn())) return;
+    await publishSignedIn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, pagePassword, isAuthenticated, accessToken, pushToast, up.intercept]);
+
+  /** The signed-in publish: save (create or update), clear the paywall, publish. */
+  const publishSignedIn = async () => {
     setPublishing(true);
     try {
       let id = pageId;
@@ -354,6 +424,7 @@ export function useMissYouEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        up.notePublished(id);
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
@@ -371,7 +442,16 @@ export function useMissYouEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
+  };
+
+  // Back from the premium preview's "Free": publish once the page is back, no offer.
+  const autoFreeRef = useRef(false);
+  useEffect(() => {
+    if (autoFreeRef.current || !up.publishFreeAsked) return;
+    if (!isPersonalized || shareUrl || publishing || !isAuthenticated || !accessToken) return;
+    autoFreeRef.current = true;
+    void publish();
+  }, [up.publishFreeAsked, isPersonalized, shareUrl, publishing, isAuthenticated, accessToken, publish]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -434,6 +514,7 @@ export function useMissYouEditor() {
     showHistory, historyLoading, engagement, openHistory, closeHistory,
     canViewHistory: !!pageId && !!shareUrl,
 
+    upgrade: up.modal,
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
