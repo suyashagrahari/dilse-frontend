@@ -83,6 +83,13 @@ export const GW_ASSETS = {
     "gw-peony-right-2x": { src: "/wedding-v3/template9/gw-peony-right-2x.webp", w: 592, h: 2058, sameOrigin: true },
     // From the owner's asset library (template21 pink peony flowers): a sharp bunch for the opening's corners.
     "gw-peony-corner": { src: "/wedding-v3/template9/gw-peony-corner.webp", w: 680, h: 977, sameOrigin: true },
+    // From the owner's asset library (template14): one couple per function, for the celebration cards.
+    "gw-couple-sangeet": { src: "/wedding-v3/template9/gw-couple-sangeet.webp", w: 524, h: 560, sameOrigin: true },
+    "gw-couple-reception": { src: "/wedding-v3/template9/gw-couple-reception.webp", w: 423, h: 560, sameOrigin: true },
+    "gw-couple-mehendi": { src: "/wedding-v3/template9/gw-couple-mehendi.webp", w: 407, h: 560, sameOrigin: true },
+    "gw-couple-engagement": { src: "/wedding-v3/template9/gw-couple-engagement.webp", w: 351, h: 560, sameOrigin: true },
+    "gw-couple-haldi": { src: "/wedding-v3/template9/gw-couple-haldi.webp", w: 326, h: 560, sameOrigin: true },
+    "gw-couple-wedding": { src: "/wedding-v3/template9/gw-couple-wedding.webp", w: 312, h: 560, sameOrigin: true },
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
@@ -135,6 +142,12 @@ export const GW = {
   lattice: T9["gw-lattice-top"],
   archCrown: T9["gw-arch-crown"],
   peonyCorner: T9["gw-peony-corner"],
+  coupleHaldi: T9["gw-couple-haldi"],
+  coupleMehendi: T9["gw-couple-mehendi"],
+  coupleSangeet: T9["gw-couple-sangeet"],
+  coupleReception: T9["gw-couple-reception"],
+  coupleEngagement: T9["gw-couple-engagement"],
+  coupleWedding: T9["gw-couple-wedding"],
   og: T1["gw-og"],
 } as const;
 

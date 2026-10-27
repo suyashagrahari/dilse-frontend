@@ -1,23 +1,18 @@
 "use client";
 
-// ─── The finale: dusk in the garden ─────────────────────────────────────────
-// The flowering pavilion with the couple standing in it, peony trees leaning
-// in from both sides, sky lanterns rising (only while on screen) and petals
-// falling once the pavilion is 50% in view. Then "शुभ विवाह · Shubh Vivah",
-// the names, the closing line, the hashtag and the full share bar. Reduced
-// motion: lanterns hang still, no petals.
+// ─── The finale: back in the garden, all on one screen ──────────────────────
+// The hero's world again (watercolour sky, two cloud banks, a blossom branch in
+// each top corner, the stone-wall hedges in the bottom corners) around the
+// flowering pavilion with the couple standing in it; petals fall once the
+// pavilion is 50% in view. Then "शुभ विवाह · Shubh Vivah", the names, the
+// closing line, the hashtag and the share bar, sized so the whole goodbye fits
+// one screen. Reduced motion: no petals.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { GW, gwImg } from "../assets";
-import { seeded, useOnScreen } from "./art";
+import { useOnScreen } from "./art";
 import Petals from "./Petals";
-
-const LANTERNS = (() => {
-  const r = seeded(17);
-  // Two side lanes (2–26% and 74–98%) so no lantern drifts across the names and the share bar.
-  return Array.from({ length: 9 }, (_, i) => ({ left: (i % 2 ? 74 : 2) + r() * 24, size: 14 + r() * 16, delay: -r() * 14, dur: 12 + r() * 8, sway: 8 + r() * 18 }));
-})();
 
 export interface FinaleProps {
   seal: string;
@@ -56,19 +51,35 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
 
   return (
     <section ref={ref} className={`gw-finale${on ? " is-on" : ""}${bloom || reduce ? " is-bloom" : ""}`} aria-label={seal}>
-      <div className="gw-sky-lanterns" aria-hidden>
-        {LANTERNS.map((l, i) => (
-          <i
-            key={i}
-            style={{ left: `${l.left}%`, width: l.size, height: l.size * 1.3, animationDelay: `${l.delay}s, ${l.delay}s`, animationDuration: `${l.dur}s, ${3 + (i % 4)}s`, ["--sway" as string]: `${l.sway}px` }}
-          />
-        ))}
+      <div className="gw-fin-world" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="gw-fin-sky" {...gwImg(GW.sky, { lazy: true })} />
+        <span className="gw-fin-cloud gw-fin-cloud-l">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.cloudA, { lazy: true })} />
+        </span>
+        <span className="gw-fin-cloud gw-fin-cloud-r">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.cloudB, { lazy: true })} />
+        </span>
+        <span className="gw-fin-blossom gw-fin-blossom-l">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.blossom, { lazy: true })} />
+        </span>
+        <span className="gw-fin-blossom gw-fin-blossom-r">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.blossom, { lazy: true })} />
+        </span>
+        <span className="gw-fin-hedge gw-fin-hedge-l">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.hedge, { lazy: true })} />
+        </span>
+        <span className="gw-fin-hedge gw-fin-hedge-r">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...gwImg(GW.hedge, { lazy: true })} />
+        </span>
       </div>
       <div ref={stage} className="gw-finale-stage" aria-hidden>
-        <span className="gw-fin-tree gw-fin-tree-l">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.peonyL, { lazy: true, hi: GW.peonyL2x, sizes: "300px" })} />
-        </span>
         <span className="gw-fin-pav">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img className="gw-fin-pav-img" {...gwImg(GW.pavilion, { lazy: true })} />
@@ -76,10 +87,6 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img {...gwImg(GW.couplePeach, { lazy: true })} />
           </span>
-        </span>
-        <span className="gw-fin-tree gw-fin-tree-r">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.peonyR, { lazy: true, hi: GW.peonyR2x, sizes: "300px" })} />
         </span>
         {bloom && !reduce && <Petals mode="drift" count={10} seed={23} className="gw-fin-petals" />}
       </div>

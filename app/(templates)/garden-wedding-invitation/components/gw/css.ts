@@ -217,11 +217,12 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 
 /* ── The invitation ───────────────────────────────────────────────────── */
 .gw-sec-invite::before { background: radial-gradient(60% 50% at 50% 40%, color-mix(in srgb, var(--gw-blush) 40%, transparent), transparent 70%); }
-.gw-invite { --pad: clamp(20px, 5.5vw, 60px); position: relative; max-width: 900px; margin: 0 auto; padding: 0 var(--pad) clamp(30px, 5vw, 52px); border-radius: var(--gw-r); background: var(--wk-surface-solid); border: 1px solid color-mix(in srgb, var(--wk-gold) 45%, transparent); box-shadow: var(--wk-shadow); }
-.gw-invite-crown { display: block; width: calc(100% + 2 * var(--pad)); max-width: none; height: auto; margin: 0 calc(-1 * var(--pad)); border-radius: calc(var(--gw-r) - 1px) calc(var(--gw-r) - 1px) 0 0; }
+.gw-invite { --pad: clamp(20px, 5.5vw, 60px); position: relative; max-width: 1120px; margin: 0 auto; padding: 0 var(--pad) clamp(30px, 5vw, 52px); border-radius: var(--gw-r); background: var(--wk-surface-solid); border: 1px solid color-mix(in srgb, var(--wk-gold) 45%, transparent); box-shadow: var(--wk-shadow); }
+/* The arch is drawn a touch flatter (ratio .257 instead of .326) so the wide card stays short. */
+.gw-invite-crown { display: block; width: calc(100% + 2 * var(--pad)); max-width: none; height: auto; aspect-ratio: 1091 / 280; margin: 0 calc(-1 * var(--pad)); border-radius: calc(var(--gw-r) - 1px) calc(var(--gw-r) - 1px) 0 0; }
 /* The heading sits inside the arch (a % margin is width-relative; the crown is .326 of its width tall). */
-.gw-invite-in { position: relative; z-index: 1; margin-top: calc(-0.16 * (100% + 2 * var(--pad))); }
-.gw-invite .wk-msg > .wk-msg-heading:first-child { margin-bottom: max(14px, calc(0.16 * (100% + 2 * var(--pad)) - 52px)); }
+.gw-invite-in { position: relative; z-index: 1; margin-top: calc(-0.125 * (100% + 2 * var(--pad))); }
+.gw-invite .wk-msg > .wk-msg-heading:first-child { margin-bottom: max(14px, calc(0.13 * (100% + 2 * var(--pad)) - 52px)); }
 .gw-invite .wk-msg-heading { color: var(--wk-accent); margin-bottom: 12px; word-spacing: .18em; }
 .gw-invite .wk-msg-text { font-size: clamp(17px, 4.4vw, 20px); line-height: 1.75; }
 /* The Hindi column is shorter than the English one: centre it against it instead of leaving it hanging at the top. */
@@ -248,7 +249,10 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-fam .wk-family-photo { width: 112px; height: 112px; border-radius: var(--gw-r-sm); }
 
 /* ── The day: date card, countdown, fountain ─────────────────────────── */
-.gw-sec-day::before { background: radial-gradient(70% 60% at 50% 70%, color-mix(in srgb, var(--gw-sky) 70%, transparent), transparent 75%); }
+/* The day sits in its own patch of garden sky: the hero's watercolour, faded at the edges, clouds drifting in from the corners. */
+.gw-sec-day::before { background: url("${cdn(GW.sky.src)}") center 30% / cover no-repeat; opacity: .7; -webkit-mask-image: radial-gradient(75% 70% at 50% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(75% 70% at 50% 50%, #000 45%, transparent 100%); }
+.gw-sec-day::after { content: ""; position: absolute; z-index: -1; inset: 0 auto; left: 50%; width: 100vw; translate: -50% 0; pointer-events: none; opacity: .85; background: url("${cdn(GW.cloudA.src)}") no-repeat -4% 12% / min(42vw, 560px) auto, url("${cdn(GW.cloudB.src)}") no-repeat 104% 86% / min(46vw, 620px) auto; }
+.gw-sec-day .gw-day-card { padding-top: calc(19% + 6px); background: url("${GW.archCrown.src}") 50% 0 / 100% auto no-repeat, var(--wk-surface-solid); }
 .gw-day { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(22px, 4vw, 34px); justify-items: center; }
 .gw-day-card { width: min(100%, 380px); padding: clamp(26px, 5vw, 34px) 22px 28px; text-align: center; border-radius: var(--gw-r); background: var(--wk-surface-solid); border: 1px solid color-mix(in srgb, var(--wk-gold) 50%, transparent); box-shadow: var(--wk-shadow); }
 .gw-day-week { margin: 0; font: 600 13px/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-accent); }
@@ -310,11 +314,10 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-ev-card { position: relative; display: flex; flex-direction: column; width: 100%; border-radius: var(--gw-r); overflow: hidden; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); transition: transform .35s var(--gw-ease); }
 .gw-ev.is-main .gw-ev-card { border-color: color-mix(in srgb, var(--wk-gold) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--wk-gold) 18%, transparent), var(--wk-shadow); }
 @media (hover: hover) { .gw-ev-card:hover { transform: translateY(-4px); } .gw-ev-card:hover .gw-ev-img { transform: scale(1.05); } }
-.gw-ev-art { position: relative; height: clamp(170px, 46vw, 200px); margin: 10px 10px 0; overflow: hidden; border-radius: calc(var(--gw-r) - 6px); isolation: isolate; }
+.gw-ev-art { position: relative; height: clamp(210px, 56vw, 250px); margin: 10px 10px 0; overflow: hidden; border-radius: calc(var(--gw-r) - 6px); isolation: isolate; }
 .gw-ev-wash { position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 95% at 50% 105%, color-mix(in srgb, var(--gw-sw, var(--gw-blush)) 42%, #fff) 0%, color-mix(in srgb, var(--gw-sky) 55%, #fff) 72%); }
 .gw-ev-img { position: absolute; left: 50%; translate: -50% 0; width: auto; transition: transform .7s var(--gw-ease); transform-origin: 50% 100%; }
-.is-stand .gw-ev-img { bottom: 0; height: 88%; }
-.is-hang .gw-ev-img { top: -4%; height: 104%; transform-origin: 50% 0; }
+.gw-ev-img { bottom: 0; height: 94%; filter: drop-shadow(0 10px 14px rgba(110,40,58,.18)); }
 .gw-ev-no { position: absolute; top: 12px; right: 12px; font: 600 12px/1 var(--wk-font-caps); letter-spacing: .2em; color: var(--wk-gold-ink); background: rgba(255,253,251,.8); padding: 6px 8px; border-radius: 999px; }
 .gw-ev-body { display: flex; flex-direction: column; flex: 1; padding: 16px clamp(16px, 4vw, 20px) 20px; }
 .gw-ev-date { margin: 0; }
@@ -327,7 +330,17 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-ev-swatch { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--wk-gold); }
 .gw-ev-note { margin: 4px 0 0; padding-left: 12px; border-left: 2px solid var(--gw-sage); font: italic 400 16.5px/1.5 var(--wk-font-display); color: var(--wk-muted); }
 .gw-ev-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 16px; }
-.gw-ev-actions .gw-pill:not(.gw-pill-icon) { flex: 1 1 auto; padding: 0 12px; }
+.gw-ev-actions .gw-ev-dir { flex: 1 1 100%; justify-content: center; }
+.gw-ev-dots { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+.gw-ev-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--wk-accent) 28%, transparent); cursor: pointer; transition: width .3s var(--gw-ease), background-color .3s; }
+.gw-ev-dots button.is-on { width: 24px; background: var(--wk-accent); }
+@media (max-width: 599px) {
+  .gw-ev-list { flex-wrap: nowrap; justify-content: flex-start; max-width: none; margin: 0 -16px; padding: 6px 16px 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .gw-ev-list::-webkit-scrollbar { display: none; }
+  .gw-ev { flex: 0 0 86%; scroll-snap-align: center; display: flex; }
+  .gw-ev > .gw-ev-card { height: 100%; }
+}
+@media (min-width: 600px) { .gw-ev-dots { display: none; } }
 /* Narrow cards (phones, 2–3 column grids): drop the pill icons so Directions, Calendar and WhatsApp share one row. */
 .gw-ev-card { container-type: inline-size; }
 @container (max-width: 420px) { .gw-ev-actions { gap: 6px; } .gw-ev-actions .gw-pill:not(.gw-pill-icon) svg { display: none; } .gw-ev-actions .gw-pill:not(.gw-pill-icon) { padding: 0 10px; font-size: 13px; } }
@@ -338,6 +351,13 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-ev-all { display: flex; justify-content: center; margin-top: 28px; }
 
 /* ── Venue ────────────────────────────────────────────────────────────── */
+.gw-venue { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: clamp(460px, 44vw, 640px); padding: 0 0 clamp(26px, 4vw, 48px); }
+/* Phones: the lake shows above the card first, the card follows. */
+@media (max-width: 599px) { .gw-venue { min-height: 0; padding-top: 62vw; } .gw-venue .gw-venue-arch { bottom: auto; height: calc(62vw + 120px); } }
+.gw-venue .gw-venue-arch { position: absolute; inset: 0 calc(50% - 50vw); aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 88%, transparent); }
+.gw-venue .gw-venue-img { object-position: 50% 35%; }
+.gw-venue .gw-venue-cols { position: relative; z-index: 2; width: min(100%, 980px); margin: 0; padding: clamp(18px, 3vw, 28px); border-radius: var(--gw-r); background: rgba(255,251,248,.86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid color-mix(in srgb, var(--wk-gold) 40%, transparent); box-shadow: 0 30px 60px -36px rgba(80,40,50,.45); }
+.gw-venue .gw-venue-travel { background: transparent; box-shadow: none; border-top: 0; border-right: 0; border-bottom: 0; }
 .gw-venue-arch { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--gw-r); border: 6px solid var(--wk-surface-solid); box-shadow: var(--wk-shadow); background: var(--gw-sky2); }
 /* Phones crop the wide lake panel to its right side: the peacock on the balustrade and the pink dome. */
 .gw-venue-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 96% 50%; }
@@ -370,13 +390,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-film-label { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font: 600 12px/1 var(--wk-font-caps); letter-spacing: .24em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
 
 /* ── Gallery ──────────────────────────────────────────────────────────── */
-.gw-gal-leaf { position: absolute; z-index: 0; top: 140px; display: none; pointer-events: none; opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
-.gw-gal-leaf img { display: block; height: 100%; width: auto; }
-.gw-gal-leaf-l { left: -150px; height: 520px; transform: translateX(-40px) rotate(-6deg); }
-.gw-gal-leaf-r { right: -130px; height: 480px; transform: translateX(40px); }
-.gw-gal-leaf-r img { transform: scaleX(-1); }
-.gw-sec.is-seen .gw-gal-leaf-l { opacity: .9; transform: rotate(-6deg); }
-.gw-sec.is-seen .gw-gal-leaf-r { opacity: .9; transform: none; }
 /* A designed section on wide screens, not a full-bleed wall: ~4 columns of ~270px at most. */
 .gw-gallery { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; }
 
@@ -409,42 +422,51 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-sec-rsvp::before { background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gw-blush) 26%, transparent) 40%, transparent); }
 .gw-upasthiti { margin: -6px 0 6px; text-align: center; font: 400 clamp(26px, 6.6vw, 34px)/1.3 var(--wk-font-script); color: var(--wk-accent); }
 .gw-rsvp { position: relative; }
-.gw-rsvp-band { position: relative; z-index: 2; display: block; width: calc(100% + 24px); max-width: none; height: auto; margin: 0 -12px -9%; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 98%), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent 98%), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-rsvp-in { position: relative; z-index: 1; }
-.gw-rsvp-in .wk-rsvp { padding-top: clamp(44px, 9vw, 64px); }
-.gw-rsvp-peacock { position: absolute; z-index: 0; right: -330px; bottom: 60px; height: 560px; display: none; opacity: 0; transform: translateX(60px); transition: opacity 1.2s var(--gw-ease), transform 1.8s var(--gw-ease); }
-.gw-rsvp-peacock img { display: block; height: 100%; width: auto; }
-.gw-sec.is-seen .gw-rsvp-peacock { opacity: 1; transform: none; }
+.gw-rsvp-crown { position: relative; z-index: 2; display: block; width: 100%; height: auto; pointer-events: none; border-radius: var(--gw-r) var(--gw-r) 0 0; }
+/* The card slides up under the crown (a % margin is width-relative: the crown is .3263 of its width tall); its title sits inside the arch. */
+.gw-rsvp-in { position: relative; z-index: 1; margin-top: -32.63%; }
+.gw-rsvp-in .wk-rsvp { padding-top: 23%; }
+@media (max-width: 599px) { .gw-rsvp-in .wk-rsvp { padding-top: 30%; } }
+.gw-rsvp-corner { position: absolute; z-index: 3; bottom: clamp(-40px, -4vw, -20px); height: clamp(110px, 22vw, 190px); pointer-events: none; opacity: 0; transform: translateY(24px); transition: opacity 1s var(--gw-ease) .3s, transform 1.4s var(--gw-ease) .3s; }
+.gw-rsvp-corner img { display: block; width: auto; height: 100%; }
+.gw-rsvp-corner-l { left: clamp(-50px, -5vw, -18px); rotate: -12deg; }
+.gw-rsvp-corner-r { right: clamp(-50px, -5vw, -18px); rotate: 12deg; scale: -1 1; }
+.gw-rsvp.is-in .gw-rsvp-corner { opacity: 1; transform: none; }
 
 /* ── Blessings ────────────────────────────────────────────────────────── */
 
 /* ── Finale ───────────────────────────────────────────────────────────── */
-.gw-finale { position: relative; overflow: hidden; isolation: isolate; padding: clamp(40px, 8vw, 80px) 16px clamp(90px, 14vw, 140px); text-align: center; background: linear-gradient(180deg, var(--wk-bg) 0%, color-mix(in srgb, #fbe2dc 70%, var(--wk-bg)) 30%, color-mix(in srgb, #f1d3dd 80%, var(--wk-bg)) 66%, color-mix(in srgb, #e3d4ea 70%, var(--wk-bg)) 100%); }
-.gw-sky-lanterns { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.gw-finale { position: relative; overflow: hidden; isolation: isolate; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(64px, 9svh, 96px) 16px clamp(36px, 6svh, 64px); text-align: center; background: linear-gradient(180deg, var(--wk-bg) 0%, #eaf2f8 14%, #d4e6f3 40%, #f9eef0 82%, var(--wk-bg) 100%); }
+.gw-fin-world { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.gw-fin-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .75; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent); }
+.gw-fin-cloud, .gw-fin-blossom, .gw-fin-hedge { position: absolute; }
+.gw-fin-cloud img, .gw-fin-blossom img, .gw-fin-hedge img { display: block; width: 100%; height: auto; }
+.gw-fin-cloud-l { top: 10%; left: -14%; width: min(60vw, 600px); opacity: .9; }
+.gw-fin-cloud-r { top: 34%; right: -18%; width: min(66vw, 680px); opacity: .9; }
+.gw-finale.is-on .gw-fin-cloud img { animation: gw-float 16s ease-in-out infinite alternate; }
+/* Same turn as the hero's branches: the cut end in the corner, the blossoms hanging in. */
+.gw-fin-blossom { top: 0; width: min(46vw, 460px); }
+.gw-fin-blossom-l { left: -12%; } .gw-fin-blossom-l img { transform: rotate(180deg); }
+.gw-fin-blossom-r { right: -12%; } .gw-fin-blossom-r img { transform: scaleY(-1); }
+.gw-fin-hedge { bottom: -2%; width: min(26vw, 420px); display: none; }
+.gw-fin-hedge-l { left: -3%; } .gw-fin-hedge-r { right: -3%; } .gw-fin-hedge-r img { transform: scaleX(-1); }
+@media (min-width: 900px) { .gw-fin-hedge { display: block; } .gw-fin-blossom { width: min(32vw, 560px); } .gw-fin-blossom-l { left: -4%; } .gw-fin-blossom-r { right: -4%; } }
 /* On a phone the side lanes sit under the text column: keep the lanterns a soft glow there. */
-@media (max-width: 599px) { .gw-sky-lanterns { opacity: .6; } }
-.gw-sky-lanterns i { position: absolute; bottom: -50px; border-radius: 42% 42% 30% 30%; background: radial-gradient(circle at 50% 72%, #fff6d2, #ffc978 46%, #ef9566 86%); box-shadow: 0 0 22px 4px rgba(255,190,120,.55); opacity: 0; }
-.gw-finale.is-on .gw-sky-lanterns i { animation-name: gw-rise, gw-lsway; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; animation-direction: normal, alternate; }
-.gw-finale-stage { position: relative; height: clamp(280px, 62vw, 520px); max-width: 1000px; margin: 0 auto; }
+.gw-finale-stage { position: relative; flex: none; height: min(34svh, 62vw, 380px); width: 100%; max-width: 1000px; margin: 0 auto; }
 /* A soft lawn under the pavilion and the trees, so nothing stands on air. */
-.gw-finale-stage::before { content: ""; position: absolute; z-index: 0; left: -10%; right: -10%; bottom: -6%; height: 22%; border-radius: 50%; background: radial-gradient(closest-side, rgba(170,190,140,.42), rgba(200,214,170,.22) 60%, rgba(200,214,170,0)); pointer-events: none; }
-.gw-fin-pav { position: absolute; left: 50%; bottom: 0; width: min(92vw, 600px); aspect-ratio: 800 / 617; translate: -50% 0; opacity: 0; transform: translateY(40px) scale(.96); transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
+.gw-fin-pav { position: absolute; left: 50%; bottom: 0; height: 100%; aspect-ratio: 800 / 617; translate: -50% 0; opacity: 0; transform: translateY(40px) scale(.96); transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-fin-pav-img { display: block; width: 100%; height: 100%; }
 .gw-fin-couple { position: absolute; left: 50%; bottom: 15%; height: 56%; translate: -50% 0; opacity: 0; transform: translateY(10px); transition: opacity 1.2s var(--gw-ease) .7s, transform 1.4s var(--gw-ease) .7s; }
 .gw-fin-couple img { display: block; height: 100%; width: auto; }
-.gw-fin-tree { position: absolute; bottom: 0; height: 92%; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%); mask-image: linear-gradient(to bottom, transparent, #000 18%); opacity: 0; transition: opacity 1.2s var(--gw-ease) .2s, transform 1.6s var(--gw-ease) .2s; }
-.gw-fin-tree img { display: block; height: 100%; width: auto; }
-.gw-fin-tree-l { left: -60px; transform: translateX(-50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to right, #000 0, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to right, #000 0, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-fin-tree-r { right: -60px; transform: translateX(50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to left, #000 0, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to left, #000 0, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-finale.is-bloom .gw-fin-pav, .gw-finale.is-bloom .gw-fin-couple, .gw-finale.is-bloom .gw-fin-tree { opacity: 1; transform: none; }
+.gw-finale.is-bloom .gw-fin-pav, .gw-finale.is-bloom .gw-fin-couple { opacity: 1; transform: none; }
 .gw-fin-petals { position: absolute; inset: -20% 0 0; pointer-events: none; }
-.gw-finale-in { position: relative; z-index: 2; max-width: 640px; margin: 18px auto 0; }
-.gw-seal-line { display: grid; gap: 2px; margin: 0 0 14px; }
-.gw-seal-line b { font: 400 clamp(40px, 10vw, 58px)/1.25 var(--wk-font-deva); background: var(--wk-foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.gw-finale-in { position: relative; z-index: 2; max-width: 640px; margin: 10px auto 0; }
+.gw-seal-line { display: grid; gap: 2px; margin: 0 0 8px; }
+.gw-seal-line b { font: 400 clamp(34px, min(8vw, 5.4svh), 52px)/1.2 var(--wk-font-deva); background: var(--wk-foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
 .gw-seal-line small { font: 600 12px/1 var(--wk-font-caps); letter-spacing: .4em; text-transform: uppercase; color: var(--wk-gold-ink); }
-.gw-finale-names { margin: 4px 0 0; font: 400 clamp(44px, 11vw, 74px)/1.1 var(--wk-font-script); color: var(--wk-ink); }
+.gw-finale-names { margin: 2px 0 0; font: 400 clamp(40px, min(10vw, 7.4svh), 70px)/1.1 var(--wk-font-script); color: var(--wk-ink); }
 .gw-finale-names span { color: var(--wk-gold-ink); font-size: .7em; }
-.gw-finale-line { margin: 10px auto 0; max-width: 44ch; font: italic 400 clamp(17px, 4.4vw, 20px)/1.5 var(--wk-font-display); color: var(--wk-muted); }
+.gw-finale-line { margin: 6px auto 0; max-width: 44ch; font: italic 400 clamp(17px, 4.4vw, 20px)/1.5 var(--wk-font-display); color: var(--wk-muted); }
 .gw-hashtag { display: inline-block; margin: 14px 0 0; padding: 8px 16px; border-radius: 999px; background: rgba(255,253,251,.7); font: 600 14px/1 var(--wk-font-sans); color: var(--wk-accent); }
 .gw-share-finale { display: grid; gap: 12px; max-width: 520px; margin: 24px auto 0; }
 .gw-wa { background: #128c4b; color: #fff; box-shadow: 0 12px 26px -14px #128c4b; }
@@ -481,8 +503,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 @keyframes gw-ripple { 0% { opacity: .9; transform: scale(.25); } 100% { opacity: 0; transform: scale(1); } }
 @keyframes gw-glint { 0%, 100% { opacity: 0; transform: scaleX(.4); } 50% { opacity: .95; transform: scaleX(1); } }
 @keyframes gw-live { 0% { box-shadow: 0 0 0 0 rgba(255,90,110,.6); } 100% { box-shadow: 0 0 0 10px rgba(255,90,110,0); } }
-@keyframes gw-rise { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 10% { opacity: .95; } 85% { opacity: .85; } 100% { transform: translate3d(0, -115vh, 0); opacity: 0; } }
-@keyframes gw-lsway { from { translate: calc(var(--sway) * -1) 0; } to { translate: var(--sway) 0; } }
 @keyframes gw-petal-fall { 0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0); } 8% { opacity: .95; } 50% { transform: translate3d(var(--sway), 50vh, 0) rotate(calc(var(--spin) / 2)); } 92% { opacity: .9; } 100% { opacity: 0; transform: translate3d(calc(var(--sway) * -.4), 104vh, 0) rotate(var(--spin)); } }
 @keyframes gw-petal-burst { 0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0) scale(.4); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate3d(var(--tx), var(--ty), 0) rotate(var(--spin)) scale(1); } }
 @keyframes gw-fade { from { opacity: 0; } }
@@ -528,6 +548,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-ev-list { max-width: none; }
   .gw-ev { flex: 0 1 calc((100% - var(--gw-ev-gap)) / 2); }
   .gw-venue-arch { aspect-ratio: 1091 / 380; }
+  .gw-venue .gw-venue-arch { aspect-ratio: auto; }
   .gw-venue-img { object-position: 50% 50%; }
   .gw-chhatri-r { display: block; }
   .gw-fam-tree { display: block; }
@@ -574,15 +595,13 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-fountain { grid-area: fountain; align-self: end; }
   .gw-fountain-core { width: min(30vw, 400px); }
   .gw-venue { max-width: 1000px; margin: 0 auto; }
+  .gw-venue .gw-venue-img { object-position: 50% 45%; }
   .gw-venue-cols { grid-template-columns: 1.15fr 1fr; align-items: start; }
   .gw-venue-text { text-align: left; }
   .gw-venue-btns { justify-content: flex-start; }
   /* Rows stay full: 3 or 6 notes → 3 columns, 4 → 4 columns, anything else keeps 2. */
   .gw-know:has(> .gw-know-i:first-child:nth-last-child(3)), .gw-know:has(> .gw-know-i:first-child:nth-last-child(6)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gw-know:has(> .gw-know-i:first-child:nth-last-child(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .gw-gal-leaf { display: block; }
-  .gw-rsvp-peacock { display: block; }
-  .gw-fin-tree-l { left: calc(50% - 50vw); } .gw-fin-tree-r { right: calc(50% - 50vw); }
 }
 @media (min-width: 1120px) {
   .gw-ev { flex-basis: calc((100% - 2 * var(--gw-ev-gap)) / 3); }
@@ -604,7 +623,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 @media (prefers-reduced-motion: reduce) {
   .gw-root *, .gw-root *::before, .gw-root *::after { animation: none !important; }
   .gw-hero .gw-a, .gw-hero .gw-cloud, .gw-hero .gw-gazebo, .gw-hero .gw-couple, .gw-hero .gw-peacock, .gw-hero .gw-blossom, .gw-hero .gw-ht, .gw-hero .gw-cue,
-  .gw-fin-pav, .gw-fin-couple, .gw-fin-tree, .gw-fam-tree, .gw-gal-leaf, .gw-rsvp-peacock, .gw-invite-corner { transition: opacity .4s linear !important; transform: none !important; }
+  .gw-fin-pav, .gw-fin-couple, .gw-fam-tree, .gw-invite-corner, .gw-rsvp-corner { transition: opacity .4s linear !important; transform: none !important; }
   .gw-l, .gw-hero-text { transform: none !important; }
   .gw-petals { display: none; }
 }

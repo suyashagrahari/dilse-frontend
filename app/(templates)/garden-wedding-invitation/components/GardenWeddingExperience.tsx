@@ -291,12 +291,11 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
         <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament="divider-lotus" width="wide" className="gw-sec gw-sec-events">
           <GardenEvents
             events={m.events}
-            couple={couple}
             locale={locale}
             lang={lang}
             mainId={main?.id}
             live={live}
-            labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, share: s.share, saved: s.saved }}
+            labels={{ directions: s.directions, dress: s.dress, tba: s.tba }}
           />
         </Section>
       )}
@@ -320,14 +319,6 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
       {/* ── Gallery ─────────────────────────────────────────────────────── */}
       {m.gallery.length > 0 && (
         <Section id="gallery" eyebrow={<span lang={lang}>{s.galleryEyebrow}</span>} title={<span lang={lang}>{s.gallery}</span>} ornament="divider-lotus" width="wide" className="gw-sec gw-sec-gallery">
-          <span className="gw-gal-leaf gw-gal-leaf-l" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.bananaB, { lazy: true })} />
-          </span>
-          <span className="gw-gal-leaf gw-gal-leaf-r" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.palm, { lazy: true })} />
-          </span>
           <WeddingMasonry photos={m.gallery} mask="rounded" radius={16} columns={GALLERY_COLUMNS} frame="foil" tileCaptions label={s.gallery} className="gw-gallery" />
         </Section>
       )}
@@ -339,18 +330,22 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
         </Section>
       )}
 
-      {/* ── RSVP, under the flamingo border ─────────────────────────────── */}
+      {/* ── RSVP: the reply card under the lattice arch, peonies at its foot ─ */}
       <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="narrow" className="gw-sec gw-sec-rsvp">
-        <span className="gw-rsvp-peacock" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.peacockFlowers, { lazy: true })} />
-        </span>
         <Reveal as="p" className="gw-upasthiti">
           <span lang={lang}>{s.upasthiti}</span>
         </Reveal>
         <Reveal className="gw-rsvp">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="gw-rsvp-band" {...gwImg(GW.flamingos, { lazy: true })} />
+          <img className="gw-rsvp-crown" {...gwImg(GW.archCrown, { lazy: true })} />
+          <span className="gw-rsvp-corner gw-rsvp-corner-l" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
+          </span>
+          <span className="gw-rsvp-corner gw-rsvp-corner-r" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
+          </span>
           <div ref={rsvpRef} className="gw-rsvp-in">
             <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
           </div>
