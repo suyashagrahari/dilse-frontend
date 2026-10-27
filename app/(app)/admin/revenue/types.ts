@@ -147,7 +147,19 @@ export interface UserBilling {
   statementsSent: StatementSent[];
 }
 
-export interface StatementPreview { subject: string; html: string; text: string; orderCount: number; totalInrPaise: number; to: string }
+export interface StatementPreview {
+  subject: string;
+  html: string;
+  text: string;
+  orderCount: number;
+  totalInrPaise: number;
+  to: string;
+  /** The thank-you message the email opens with (the default one when none was written). */
+  message?: string;
+  /** The statement PDF that is attached to the email. */
+  pdfBase64?: string;
+  pdfFileName?: string;
+}
 
 /** What `POST …/billing/send` answers. `status` is the truth about delivery. */
 export interface StatementResult {

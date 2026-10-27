@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { API_URL } from "@/lib/config";
 import { useToast } from "@/lib/toast/useToast";
 import {
-  Receipt, Send, Eye, CalendarDays, CheckCircle2, AlertTriangle, CircleSlash, ExternalLink, Mail, RefreshCw, ListChecks,
+  Receipt, Send, Eye, CalendarDays, CheckCircle2, AlertTriangle, CircleSlash, ExternalLink, Mail, RefreshCw, ListChecks, Sparkles, FileText, Download, RotateCcw,
 } from "lucide-react";
 import { C } from "./types";
 import { Card, Stat, Row, Empty, Btn, Dialog, Skeleton, Pill, fmtAgo } from "./ui";
@@ -27,6 +27,13 @@ import {
  * address and the total that preview produced — the admin approves the email
  * they just read, not an idea of it. The server sends only to the account's
  * own address and refuses a repeat of the same orders within ten minutes.
+ *
+ * ── THE THANK-YOU ───────────────────────────────────────────────────────────
+ *
+ * The email opens with a thank-you message, then the summary, with the full
+ * statement attached as a PDF. "Write with AI" fills the subject and message
+ * (Regenerate asks for a different one); both stay editable, and empty means
+ * the server's default. The preview shows the email and the PDF.
  */
 export default function BillingTab({ userId, hdr }: { userId: string; hdr: () => Record<string, string> }) {
   const [data, setData] = useState<UserBilling | null>(null);
@@ -239,6 +246,10 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
   const [to, setTo] = useState(data.days[0]?.date || istDay());
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [note, setNote] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [writing, setWriting] = useState(false);
+  const [view, setView] = useState<"email" | "pdf">("email");
 
   const [preview, setPreview] = useState<(StatementPreview & { key: string }) | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -248,18 +259,21 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
 
   // The request body for the current selection. Ticked orders carry their own
   // span so the server's range check agrees with the ids.
-  const body = useMemo(() => {
-    const n = note.trim() || undefined;
+  const selection = useMemo(() => {
     if (mode === "orders") {
       const sel = eligible.filter((o) => picked.has(o._id));
       if (!sel.length) return null;
       const daysOf = sel.map((o) => istDayOf(o.paidAt || o.createdAt)).sort();
-      return { from: daysOf[0], to: daysOf[daysOf.length - 1], orderIds: sel.map((o) => o._id), note: n };
+      return { from: daysOf[0], to: daysOf[daysOf.length - 1], orderIds: sel.map((o) => o._id) };
     }
-    if (mode === "day") return isYmd(day) ? { from: day, to: day, note: n } : null;
+    if (mode === "day") return isYmd(day) ? { from: day, to: day } : null;
     if (!isYmd(from) || !isYmd(to) || from > to) return null;
-    return { from, to, note: n };
-  }, [mode, day, from, to, picked, eligible, note]);
+    return { from, to };
+  }, [mode, day, from, to, picked, eligible]);
+  const body = useMemo(
+    () => (selection ? { ...selection, note: note.trim() || undefined, subject: subject.trim() || undefined, message: message.trim() || undefined } : null),
+    [selection, note, subject, message]
+  );
 
   const key = JSON.stringify(body);
   const fresh = !!preview && preview.key === key;
@@ -283,6 +297,34 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
       setPreviewing(false);
     }
   };
+
+  // "Write with AI" / "Regenerate": fills the subject and message; sends nothing.
+  const doWrite = async () => {
+    if (!selection || writing) return;
+    setWriting(true);
+    try {
+      const r = await fetch(`${API_URL}/admin/super/revenue/users/${user._id}/billing/compose`, {
+        method: "POST", headers: hdr(), body: JSON.stringify({ ...selection, previous: message.trim() || undefined }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.success) {
+        setSubject(j.data.subject || "");
+        setMessage(j.data.message || "");
+      } else pushToast({ title: j?.error || `Could not write the message (${r.status})`, type: "error" });
+    } catch {
+      pushToast({ title: "Could not reach the server", type: "error" });
+    } finally {
+      setWriting(false);
+    }
+  };
+
+  // The PDF from the preview, as a link the browser can show and download.
+  const pdfUrl = useMemo(() => {
+    if (!preview?.pdfBase64) return "";
+    const bytes = Uint8Array.from(atob(preview.pdfBase64), (c) => c.charCodeAt(0));
+    return URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  }, [preview]);
+  useEffect(() => () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); }, [pdfUrl]);
 
   // The one place billing mail leaves the building — the confirm button.
   const doSend = async () => {
@@ -332,8 +374,8 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
       ) : (
         <>
           <p className="bt-lead">
-            A professional statement of payments already received: date and time, template, page link, list price,
-            offer, amount and Razorpay transaction id. It is sent <b>only</b> when you confirm below.
+            A thank-you email with the statement of payments already received attached as a PDF: date and time,
+            template, page link, list price, offer, amount and Razorpay transaction id. It is sent <b>only</b> when you confirm below.
           </p>
 
           <div className="bt-modes" role="radiogroup" aria-label="What to include">
@@ -373,6 +415,24 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
             </div>
           )}
 
+          <div className="bt-thanks">
+            <div className="bt-thanks-h">
+              <span className="sa-edit-k" style={{ margin: 0 }}>Thank-you message</span>
+              <span style={{ flex: 1 }} />
+              {(subject || message) && (
+                <Btn variant="ghost" onClick={() => { setSubject(""); setMessage(""); }} disabled={writing} title="Use the default thank-you">
+                  <RotateCcw size={12} /> Default
+                </Btn>
+              )}
+              <Btn variant="ghost" onClick={doWrite} disabled={!selection || writing}>
+                <Sparkles size={12} /> {writing ? "Writing…" : message ? "Regenerate" : "Write with AI"}
+              </Btn>
+            </div>
+            <input className="sa-input" value={subject} maxLength={120} onChange={(e) => setSubject(e.target.value)} placeholder="Subject (empty: “Your SubhSandesh payment statement — …”)" aria-label="Subject" />
+            <textarea className="sa-ta" value={message} maxLength={1500} onChange={(e) => setMessage(e.target.value)} rows={message ? 7 : 3} aria-label="Thank-you message"
+              placeholder="Empty: a warm default thank-you that greets them by first name. Press “Write with AI” for one made for this customer, then edit it freely." />
+          </div>
+
           <label style={{ display: "block", marginTop: 10 }}>
             <span className="sa-edit-k">Note to include (optional)</span>
             <textarea className="sa-ta" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="e.g. As requested on our call — here is your statement for October." rows={2} />
@@ -401,8 +461,26 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
                 </div>
                 {!fresh && <Pill text="Out of date" color={C.warn} />}
               </div>
-              {/* sandbox="" — no scripts, no forms, no navigation: the email is only looked at. */}
-              <iframe title="Statement preview" sandbox="" srcDoc={preview.html} className="bt-frame" />
+              <div className="bt-views" role="tablist" aria-label="Preview">
+                <button type="button" role="tab" aria-selected={view === "email"} className="bt-mode" data-on={view === "email" ? "1" : "0"} onClick={() => setView("email")}>
+                  <Mail size={13} /> Email
+                </button>
+                <button type="button" role="tab" aria-selected={view === "pdf"} className="bt-mode" data-on={view === "pdf" ? "1" : "0"} onClick={() => setView("pdf")} disabled={!pdfUrl}>
+                  <FileText size={13} /> PDF statement
+                </button>
+                <span style={{ flex: 1 }} />
+                {pdfUrl && (
+                  <a className="bt-dl" href={pdfUrl} download={preview.pdfFileName || "statement.pdf"}>
+                    <Download size={12} /> {preview.pdfFileName || "statement.pdf"}
+                  </a>
+                )}
+              </div>
+              {view === "pdf" && pdfUrl ? (
+                <iframe title="Statement PDF" src={pdfUrl} className="bt-frame" />
+              ) : (
+                // sandbox="" — no scripts, no forms, no navigation: the email is only looked at.
+                <iframe title="Statement preview" sandbox="" srcDoc={preview.html} className="bt-frame" />
+              )}
             </div>
           )}
         </>
@@ -417,8 +495,8 @@ function StatementPanel({ data, hdr, onSent }: { data: UserBilling; hdr: () => R
             </p>
             <div className="bt-to"><Mail size={14} /> {preview.to}</div>
             <p style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.6, margin: "10px 0 16px" }}>
-              From billing@subhsandesh.in, replies to support@subhsandesh.in. Invoice numbers are assigned to these
-              orders now, and the send is recorded in the audit log. It can&apos;t be unsent.
+              From billing@subhsandesh.in, replies to support@subhsandesh.in, with the statement attached as a PDF.
+              Invoice numbers are assigned to these orders now, and the send is recorded in the audit log. It can&apos;t be unsent.
             </p>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
               <Btn variant="ghost" onClick={() => setConfirmOpen(false)} disabled={sending}>Cancel</Btn>
@@ -502,5 +580,12 @@ const BT_CSS = `
   .bt-to { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.4);
     font-weight: 800; font-size: 14px; color: ${A.maroon}; overflow-wrap: anywhere; }
   .bt-pay { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+  .bt-thanks { display: grid; gap: 7px; margin-top: 12px; padding: 11px; border-radius: 14px; border: 1px solid rgba(201,168,76,.45); background: linear-gradient(180deg, #fffaf3, #fdf3e6); }
+  .bt-thanks-h { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .bt-thanks-h .sa-btn { min-height: 30px; }
+  .bt-views { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid ${A.edge}; background: #fffdf9; flex-wrap: wrap; }
+  .bt-mode:disabled { opacity: .45; cursor: default; }
+  .bt-dl { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; color: ${A.maroon}; text-decoration: none; overflow-wrap: anywhere; }
+  .bt-dl:hover { text-decoration: underline; }
 `;
 
