@@ -1,11 +1,13 @@
 "use client";
 
 // ─── The venue: a lake garden seen over a white balustrade ───────────────────
-// The watercolour lake (mountains, lotus, a pink dome and a peacock) in a wide
-// rounded frame, a white balustrade along its foot, sunlight glints on the water
-// (opacity loops, only while on screen), then the venue, its address,
-// Directions and a tap-to-load map (no Google request until the guest asks),
-// and "Getting there" beside it on wide screens.
+// A scene composed from separate paintings so each stays crisp (never one small
+// picture stretched): the watercolour sky, the mountains and lake, the pink
+// palace dome, a banana plant, the white balustrade, sunlight
+// glints on the water (opacity loops, only while on screen), all inside a fine
+// gold frame. The details card overlaps its foot: the venue, its address,
+// Directions, a tap-to-load map (no Google request until the guest asks) and
+// "Getting there" beside it on wide screens.
 
 import { useRef, useState } from "react";
 import { Reveal, mapLink, type WeddingEvent } from "../../../_wedding";
@@ -28,9 +30,15 @@ export default function Venue({ event, lang, gettingThere, labels: l }: VenuePro
   const q = [event.venue, event.address].filter(Boolean).join(", ");
   return (
     <div ref={ref} className={`gw-venue${on ? " is-on" : ""}`}>
-      <Reveal effect="zoom" className="gw-venue-arch">
+      <Reveal effect="zoom" className="gw-vscene">
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-venue-img" {...gwImg(GW.lake, { lazy: true })} />
+        <img className="gw-vs-sky" {...gwImg(GW.sky, { lazy: true })} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="gw-vs-lake" {...gwImg(GW.lakeCut, { lazy: true })} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="gw-vs-dome" {...gwImg(GW.dome, { lazy: true })} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="gw-vs-banana" {...gwImg(GW.bananaRHi, { lazy: true })} />
         <span className="gw-glints" aria-hidden>
           <i />
           <i />
@@ -39,6 +47,7 @@ export default function Venue({ event, lang, gettingThere, labels: l }: VenuePro
           <i />
         </span>
         <span className="gw-balustrade" aria-hidden />
+        <span className="gw-vs-frame" aria-hidden />
       </Reveal>
       <div className="gw-venue-cols">
         <Reveal className="gw-venue-text" delay={100}>

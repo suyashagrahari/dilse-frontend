@@ -126,6 +126,12 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-gate.is-reduced .gw-gbloom { display: none; }
 .gw-gate.is-reduced.is-opening > *, .gw-gate.is-reduced.is-opening .gw-gcard { transition: opacity .4s linear !important; transform: none !important; opacity: 0 !important; }
 
+/* ── The luxury finish: a double gold hairline frame and gold-foil type ── */
+.gw-frame { position: absolute; z-index: 8; inset: clamp(10px, 1.4vw, 20px); border: 1px solid rgba(184,140,72,.6); border-radius: clamp(14px, 1.6vw, 22px); pointer-events: none; }
+.gw-frame::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(184,140,72,.32); border-radius: inherit; }
+.gw-frame::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 9px; height: 9px; translate: -50% 0; rotate: 45deg; background: linear-gradient(135deg, #f3dca4, #b98a3e); box-shadow: 0 0 0 3px rgba(255,251,246,.9); }
+.gw-amp, .gw-finale-names span { background: linear-gradient(100deg, #9c6b2a 0%, #e8c77e 32%, #b07d34 55%, #f2d792 78%, #9c6b2a 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+
 /* ── The garden (hero) ────────────────────────────────────────────────── */
 .gw-hero { --gw-sy: 0px; position: relative; height: max(100svh, 620px); max-height: 1180px; overflow: hidden; isolation: isolate; background: linear-gradient(180deg, #d4e6f3 0%, #eaf2f8 38%, #f9eef0 78%, var(--wk-bg) 100%); }
 .gw-hero::after { content: ""; position: absolute; inset: auto 0 0; height: 16%; z-index: 6; background: linear-gradient(to bottom, transparent, var(--wk-bg)); pointer-events: none; }
@@ -140,7 +146,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-l-hang { transform: translate3d(0, calc(var(--gw-sy) * -.12), 0); z-index: 7; }
 .gw-hero-petals { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
 .gw-hero-text { position: absolute; z-index: 9; top: max(64px, 8svh); left: 0; right: 0; padding: 0 16px; text-align: center; transform: translate3d(0, calc(var(--gw-sy) * .3), 0); }
-.gw-a, .gw-cloud, .gw-blossom, .gw-gazebo, .gw-peacock { position: absolute; }
+.gw-a, .gw-cloud, .gw-blossom, .gw-gazebo { position: absolute; }
 /* clouds part when the gate opens, then drift */
 .gw-cloud { transition: transform 2.2s var(--gw-ease), opacity 1.6s var(--gw-ease); }
 .gw-cloud-a { top: 3%; left: -16%; width: min(66vw, 560px); transform: translateX(26vw) scale(1.25); }
@@ -154,6 +160,11 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* far: banana plants + chhatri umbrellas */
 .gw-a { opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-hero.is-open .gw-a { opacity: 1; transform: none; }
+/* Pink peonies in both bottom corners, mirrored (sharp art at every size). */
+.gw-hcorner { bottom: -6%; height: min(38svh, 62vw, 420px); transform: translateY(50px); transition-delay: .5s; }
+.gw-hcorner img { display: block; height: 100%; width: auto; }
+.gw-hcorner-l { left: -10%; rotate: 8deg; }
+.gw-hcorner-r { right: -10%; rotate: -8deg; scale: -1 1; }
 .gw-banana { bottom: 12%; height: min(48svh, 600px); width: auto; transform: translateY(40px); }
 .gw-banana img { height: 100%; width: auto; transform-origin: 50% 100%; }
 .gw-banana-l { left: -30%; }
@@ -163,24 +174,13 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-chhatri-l { left: -2%; }
 .gw-chhatri-r { right: 3%; display: none; }
 /* mid: hedges, the gazebo with the couple, the peacock */
-.gw-hedge { bottom: 6%; width: min(44vw, 400px); transform: translateY(40px); transition-delay: .2s; }
-.gw-hedge-l { left: -12%; }
-.gw-hedge-r { right: -14%; }
-.gw-hedge-r img { transform: scaleX(-1); }
 .gw-gazebo { left: 50%; bottom: 2.5%; height: min(44svh, 88vw, 600px); aspect-ratio: 800 / 618; translate: -50% 0; opacity: 0; transform: translateY(46px) scale(.97); transition: opacity 1.3s var(--gw-ease) .25s, transform 1.8s var(--gw-ease) .25s; }
 .gw-hero.is-open .gw-gazebo { opacity: 1; transform: none; }
 .gw-gazebo-img { display: block; width: 100%; height: 100%; }
 .gw-couple { position: absolute; left: 50%; bottom: 13.5%; height: 44%; translate: -50% 0; opacity: 0; transform: translateY(10px) scale(.94); transform-origin: 50% 100%; transition: opacity 1.2s var(--gw-ease) 1.15s, transform 1.4s var(--gw-ease) 1.15s; }
 .gw-couple img { display: block; height: 100%; width: auto; filter: drop-shadow(0 8px 10px rgba(80,40,50,.18)); }
 .gw-hero.is-open .gw-couple { opacity: 1; transform: none; }
-.gw-peacock { right: -4%; bottom: 6%; height: min(22svh, 300px); aspect-ratio: 392 / 800; opacity: 0; transform: translateX(44vw); transition: transform 3.2s cubic-bezier(.3,.1,.3,1) 1.4s, opacity .8s linear 1.4s; }
-.gw-hero.is-open .gw-peacock { opacity: 1; transform: none; }
-.gw-peacock-walk { display: block; height: 100%; }
-.gw-peacock-walk img { display: block; height: 100%; width: auto; transform-origin: 50% 100%; }
-.gw-hero.is-open .gw-peacock-walk { animation: gw-strut .4s ease-in-out 1.4s 8 alternate; }
 /* front: lotus + rocks */
-.gw-lotus-f { left: -9%; bottom: -3%; width: min(40vw, 330px); transform: translateY(50px); transition-delay: .5s; }
-.gw-rocks-f { right: -10%; bottom: -1%; width: min(46vw, 380px); transform: translateY(50px); transition-delay: .6s; }
 /* hanging: cherry branch, lanterns */
 .gw-blossom { top: -3%; width: min(62vw, 520px); opacity: 0; transform: translate(-30px, -30px); transition: opacity 1.2s var(--gw-ease) .4s, transform 1.6s var(--gw-ease) .4s; }
 /* The branch art's cut end is at its lower right: turn it so that end tucks into the top corner and the
@@ -351,16 +351,19 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-ev-all { display: flex; justify-content: center; margin-top: 28px; }
 
 /* ── Venue ────────────────────────────────────────────────────────────── */
-.gw-venue { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: clamp(460px, 44vw, 640px); padding: 0 0 clamp(26px, 4vw, 48px); }
-/* Phones: the lake shows above the card first, the card follows. */
-@media (max-width: 599px) { .gw-venue { min-height: 0; padding-top: 62vw; } .gw-venue .gw-venue-arch { bottom: auto; height: calc(62vw + 120px); } }
-.gw-venue .gw-venue-arch { position: absolute; inset: 0 calc(50% - 50vw); aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 88%, transparent); }
-.gw-venue .gw-venue-img { object-position: 50% 35%; }
-.gw-venue .gw-venue-cols { position: relative; z-index: 2; width: min(100%, 980px); margin: 0; padding: clamp(18px, 3vw, 28px); border-radius: var(--gw-r); background: rgba(255,251,248,.86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid color-mix(in srgb, var(--wk-gold) 40%, transparent); box-shadow: 0 30px 60px -36px rgba(80,40,50,.45); }
-.gw-venue .gw-venue-travel { background: transparent; box-shadow: none; border-top: 0; border-right: 0; border-bottom: 0; }
-.gw-venue-arch { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--gw-r); border: 6px solid var(--wk-surface-solid); box-shadow: var(--wk-shadow); background: var(--gw-sky2); }
 /* Phones crop the wide lake panel to its right side: the peacock on the balustrade and the pink dome. */
-.gw-venue-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 96% 50%; }
+.gw-venue { position: relative; }
+.gw-vscene { position: relative; overflow: hidden; aspect-ratio: 4 / 3.2; border-radius: var(--gw-r); background: #e6f0f7; box-shadow: 0 34px 70px -40px rgba(80,40,50,.5), 0 0 0 1px rgba(184,140,72,.45); isolation: isolate; }
+.gw-vs-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .9; }
+/* The cutout has a couple at its foot (from its original card): clip them away behind the balustrade. */
+.gw-vs-lake { position: absolute; left: 50%; bottom: 3%; width: max(100%, 640px); height: auto; translate: -50% 0; clip-path: inset(0 0 18% 0); }
+.gw-vs-dome { position: absolute; z-index: 1; right: -6%; bottom: 10%; height: 74%; width: auto; }
+.gw-vs-banana { position: absolute; z-index: 1; left: -10%; bottom: 8%; height: 92%; width: auto; scale: -1 1; }
+.gw-vscene .gw-balustrade { z-index: 2; }
+.gw-vs-frame { position: absolute; z-index: 4; inset: 10px; border: 1px solid rgba(255,250,240,.85); border-radius: calc(var(--gw-r) - 6px); box-shadow: inset 0 0 0 1px rgba(184,140,72,.35); pointer-events: none; }
+.gw-vscene .gw-glints { z-index: 1; inset: 58% 30% 26% 24%; }
+.gw-venue-cols { position: relative; z-index: 2; margin: -48px auto 0; width: calc(100% - 24px); padding: clamp(18px, 3vw, 28px); border-radius: var(--gw-r); background: rgba(255,251,248,.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid color-mix(in srgb, var(--wk-gold) 40%, transparent); box-shadow: 0 30px 60px -36px rgba(80,40,50,.45); }
+.gw-venue-cols .gw-venue-travel { background: transparent; box-shadow: none; border-top: 0; border-right: 0; border-bottom: 0; }
 .gw-balustrade { position: absolute; left: 0; right: 0; bottom: 0; height: 21%; background: url("${cdn(GW.balustrade.src)}") repeat-x 0 100% / auto 100%; filter: drop-shadow(0 -4px 8px rgba(80,60,60,.12)); }
 .gw-glints { position: absolute; inset: 52% 18% 24% 18%; }
 /* Phones show the right of the panel (peacock + dome): keep the glints on the open water to the left of the peacock. */
@@ -369,7 +372,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-glints i:nth-child(1) { left: 6%; top: 20%; } .gw-glints i:nth-child(2) { left: 30%; top: 55%; } .gw-glints i:nth-child(3) { left: 52%; top: 30%; } .gw-glints i:nth-child(4) { left: 72%; top: 62%; } .gw-glints i:nth-child(5) { left: 88%; top: 18%; }
 .gw-venue.is-on .gw-glints i { animation: gw-glint 3.2s ease-in-out infinite; }
 .gw-venue.is-on .gw-glints i:nth-child(2) { animation-delay: .7s; } .gw-venue.is-on .gw-glints i:nth-child(3) { animation-delay: 1.4s; } .gw-venue.is-on .gw-glints i:nth-child(4) { animation-delay: 2.1s; } .gw-venue.is-on .gw-glints i:nth-child(5) { animation-delay: 2.7s; }
-.gw-venue-cols { display: grid; gap: 18px; margin-top: 24px; }
+.gw-venue-cols { display: grid; gap: 18px; }
 .gw-venue-text { text-align: center; }
 .gw-venue-name { margin: 0; font: 500 clamp(30px, 7vw, 46px)/1.1 var(--wk-font-display); }
 .gw-venue-addr { margin: 8px 0 0; font: 400 16px/1.5 var(--wk-font-sans); color: var(--wk-muted); }
@@ -421,17 +424,24 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* ── RSVP ─────────────────────────────────────────────────────────────── */
 .gw-sec-rsvp::before { background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gw-blush) 26%, transparent) 40%, transparent); }
 .gw-upasthiti { margin: -6px 0 6px; text-align: center; font: 400 clamp(26px, 6.6vw, 34px)/1.3 var(--wk-font-script); color: var(--wk-accent); }
-.gw-rsvp { position: relative; }
-.gw-rsvp-crown { position: relative; z-index: 2; display: block; width: 100%; height: auto; pointer-events: none; border-radius: var(--gw-r) var(--gw-r) 0 0; }
-/* The card slides up under the crown (a % margin is width-relative: the crown is .3263 of its width tall); its title sits inside the arch. */
-.gw-rsvp-in { position: relative; z-index: 1; margin-top: -32.63%; }
-.gw-rsvp-in .wk-rsvp { padding-top: 23%; }
-@media (max-width: 599px) { .gw-rsvp-in .wk-rsvp { padding-top: 30%; } }
-.gw-rsvp-corner { position: absolute; z-index: 3; bottom: clamp(-40px, -4vw, -20px); height: clamp(110px, 22vw, 190px); pointer-events: none; opacity: 0; transform: translateY(24px); transition: opacity 1s var(--gw-ease) .3s, transform 1.4s var(--gw-ease) .3s; }
-.gw-rsvp-corner img { display: block; width: auto; height: 100%; }
-.gw-rsvp-corner-l { left: clamp(-50px, -5vw, -18px); rotate: -12deg; }
-.gw-rsvp-corner-r { right: clamp(-50px, -5vw, -18px); rotate: 12deg; scale: -1 1; }
-.gw-rsvp.is-in .gw-rsvp-corner { opacity: 1; transform: none; }
+/* Royal-style: an arched garden window with the couple beside the reply card (stacked on phones). */
+.gw-rsvp { position: relative; display: grid; gap: 22px; max-width: 680px; margin: 0 auto; }
+.gw-rsvp-art { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; }
+.gw-rsvp-window { position: relative; display: block; width: min(80%, 320px); aspect-ratio: 4 / 4.6; border-radius: 999px 999px 26px 26px; overflow: hidden; isolation: isolate; background: linear-gradient(180deg, #d4e6f3, #f9eef0); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 7px rgba(255,251,246,.95), 0 0 0 8px rgba(184,140,72,.4), 0 34px 60px -30px rgba(110,40,58,.45); }
+.gw-rw-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .85; }
+.gw-rw-blossom { position: absolute; top: -4%; left: -18%; width: 92%; height: auto; transform: rotate(180deg); }
+.gw-rw-pair { position: absolute; z-index: 1; left: 50%; bottom: 7%; height: 80%; width: auto; translate: -50% 0; filter: drop-shadow(0 12px 14px rgba(110,40,50,.25)); }
+.gw-rw-peony { position: absolute; z-index: 2; bottom: -10%; height: 46%; width: auto; }
+.gw-rw-peony.is-l { left: -16%; rotate: 10deg; } .gw-rw-peony.is-r { right: -16%; rotate: -10deg; scale: -1 1; }
+.gw-rsvp-names { margin: 0; font: 600 12.5px/1.4 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
+.gw-rsvp-form { min-width: 0; }
+.gw-rsvp-form .wk-rsvp { box-shadow: 0 0 0 1px rgba(184,140,72,.4), 0 30px 60px -36px rgba(110,40,58,.4); }
+@media (min-width: 900px) {
+  .gw-rsvp { max-width: 1160px; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(36px, 5vw, 72px); }
+  .gw-rsvp-art { position: sticky; top: 90px; }
+  .gw-rsvp-window { width: min(100%, 420px); }
+  .gw-rsvp-form .wk-rsvp { padding: clamp(30px, 3vw, 44px) clamp(28px, 3.4vw, 52px); }
+}
 
 /* ── Blessings ────────────────────────────────────────────────────────── */
 
@@ -439,8 +449,11 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-finale { position: relative; overflow: hidden; isolation: isolate; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(64px, 9svh, 96px) 16px clamp(36px, 6svh, 64px); text-align: center; background: linear-gradient(180deg, var(--wk-bg) 0%, #eaf2f8 14%, #d4e6f3 40%, #f9eef0 82%, var(--wk-bg) 100%); }
 .gw-fin-world { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .gw-fin-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .75; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent); }
-.gw-fin-cloud, .gw-fin-blossom, .gw-fin-hedge { position: absolute; }
-.gw-fin-cloud img, .gw-fin-blossom img, .gw-fin-hedge img { display: block; width: 100%; height: auto; }
+.gw-fin-cloud, .gw-fin-blossom, .gw-fin-peony { position: absolute; }
+.gw-fin-cloud img, .gw-fin-blossom img { display: block; width: 100%; height: auto; }
+.gw-fin-peony { bottom: -6%; height: min(30svh, 50vw, 360px); }
+.gw-fin-peony img { display: block; height: 100%; width: auto; }
+.gw-fin-peony-l { left: -12%; rotate: 8deg; } .gw-fin-peony-r { right: -12%; rotate: -8deg; scale: -1 1; }
 .gw-fin-cloud-l { top: 10%; left: -14%; width: min(60vw, 600px); opacity: .9; }
 .gw-fin-cloud-r { top: 34%; right: -18%; width: min(66vw, 680px); opacity: .9; }
 .gw-finale.is-on .gw-fin-cloud img { animation: gw-float 16s ease-in-out infinite alternate; }
@@ -448,9 +461,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-fin-blossom { top: 0; width: min(46vw, 460px); }
 .gw-fin-blossom-l { left: -12%; } .gw-fin-blossom-l img { transform: rotate(180deg); }
 .gw-fin-blossom-r { right: -12%; } .gw-fin-blossom-r img { transform: scaleY(-1); }
-.gw-fin-hedge { bottom: -2%; width: min(26vw, 420px); display: none; }
-.gw-fin-hedge-l { left: -3%; } .gw-fin-hedge-r { right: -3%; } .gw-fin-hedge-r img { transform: scaleX(-1); }
-@media (min-width: 900px) { .gw-fin-hedge { display: block; } .gw-fin-blossom { width: min(32vw, 560px); } .gw-fin-blossom-l { left: -4%; } .gw-fin-blossom-r { right: -4%; } }
+@media (min-width: 900px) { .gw-fin-peony { height: min(46svh, 480px); } .gw-fin-peony-l { left: -2%; } .gw-fin-peony-r { right: -2%; } .gw-fin-blossom { width: min(32vw, 560px); } .gw-fin-blossom-l { left: -4%; } .gw-fin-blossom-r { right: -4%; } }
 /* On a phone the side lanes sit under the text column: keep the lanterns a soft glow there. */
 .gw-finale-stage { position: relative; flex: none; height: min(34svh, 62vw, 380px); width: 100%; max-width: 1000px; margin: 0 auto; }
 /* A soft lawn under the pavilion and the trees, so nothing stands on air. */
@@ -495,8 +506,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 @keyframes gw-sway-s { from { transform: rotate(-1deg); } to { transform: rotate(2.2deg); } }
 @keyframes gw-grow-in { from { opacity: 0; transform: translateY(30px) scale(.94); } to { opacity: 1; transform: none; } }
 @keyframes gw-ring { 0% { opacity: .9; transform: scale(.95); } 100% { opacity: 0; transform: scale(1.5); } }
-@keyframes gw-strut { from { transform: translateY(0); } to { transform: translateY(-5px); } }
-@keyframes gw-preen { 0%, 70% { transform: rotate(0); } 85% { transform: rotate(-2.5deg); } 100% { transform: rotate(1deg); } }
 @keyframes gw-cue { 0%, 100% { transform: scaleY(.5); transform-origin: 50% 0; opacity: .3; } 50% { transform: scaleY(1); opacity: .8; } }
 @keyframes gw-jet { 0%, 100% { transform: scaleY(.72); } 50% { transform: scaleY(1.06); } }
 @keyframes gw-drop { 0% { opacity: 0; transform: translateY(0) scaleY(.6); } 18% { opacity: 1; } 85% { opacity: .9; } 100% { opacity: 0; transform: translateY(var(--fall)) scaleY(1.25); } }
@@ -547,9 +556,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-ch.no-photo .gw-ch-dot { top: -18px; translate: -50% 0; }
   .gw-ev-list { max-width: none; }
   .gw-ev { flex: 0 1 calc((100% - var(--gw-ev-gap)) / 2); }
-  .gw-venue-arch { aspect-ratio: 1091 / 380; }
-  .gw-venue .gw-venue-arch { aspect-ratio: auto; }
-  .gw-venue-img { object-position: 50% 50%; }
   .gw-chhatri-r { display: block; }
   .gw-fam-tree { display: block; }
   /* Half-trees: their cut side belongs at the screen edge, so pin them there (the column is centred). */
@@ -561,18 +567,14 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-hero-text { top: max(48px, 5.5svh); }
   .gw-hero-text .wk-eyebrow { max-width: none; }
   .gw-names { font-size: clamp(64px, 11svh, 100px); }
-  .gw-peacock { right: 6%; bottom: 9%; height: min(30svh, 330px); }
   .gw-banana-l { left: -5%; } .gw-banana-r { right: -6%; }
   .gw-banana { height: min(66svh, 720px); }
+  .gw-hcorner { height: min(50svh, 520px); bottom: -7%; }
+  .gw-hcorner-l { left: -3%; } .gw-hcorner-r { right: -3%; }
   /* The umbrellas flank the gazebo, canopies tucked just behind its pillars, poles planted at its steps. */
   .gw-chhatri-l, .gw-chhatri-r { bottom: 5%; height: min(30svh, 330px); }
   .gw-chhatri-l { left: auto; right: calc(50% + min(56svh, 640px) * .24); }
   .gw-chhatri-r { right: auto; left: calc(50% + min(56svh, 640px) * .24); scale: -1 1; }
-  /* The stone-wall hedges anchor both bottom corners. */
-  .gw-hedge { width: min(25vw, 420px); bottom: 1%; }
-  .gw-hedge-l { left: -3%; } .gw-hedge-r { right: -3%; }
-  .gw-lotus-f { left: 2%; width: min(24vw, 360px); }
-  .gw-rocks-f { right: 1%; width: min(26vw, 400px); }
   .gw-blossom { width: min(34vw, 560px); top: -5%; }
   .gw-blossom-l { left: -5%; } .gw-blossom-r { right: -5%; }
   .gw-cloud-a { left: 2%; width: min(40vw, 640px); } .gw-cloud-b { right: -4%; width: min(46vw, 760px); } .gw-cloud-c { left: 40%; top: 26%; width: min(22vw, 360px); }
@@ -594,8 +596,12 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-day-count { grid-area: count; align-self: start; }
   .gw-fountain { grid-area: fountain; align-self: end; }
   .gw-fountain-core { width: min(30vw, 400px); }
-  .gw-venue { max-width: 1000px; margin: 0 auto; }
-  .gw-venue .gw-venue-img { object-position: 50% 45%; }
+  .gw-venue { max-width: 1180px; margin: 0 auto; }
+  .gw-vscene { aspect-ratio: 1180 / 520; }
+  .gw-vs-lake { width: 100%; }
+  .gw-vs-dome { right: 3%; height: 86%; }
+  .gw-vs-banana { left: -2%; height: 100%; bottom: 4%; }
+  .gw-venue-cols { width: min(100% - 80px, 1000px); margin-top: -70px; }
   .gw-venue-cols { grid-template-columns: 1.15fr 1fr; align-items: start; }
   .gw-venue-text { text-align: left; }
   .gw-venue-btns { justify-content: flex-start; }
@@ -610,9 +616,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 @media (min-width: 900px) and (max-width: 1279px) {
   .gw-blossom { width: min(28vw, 600px); }
 }
-@media (min-width: 1500px) {
-  .gw-peacock { right: 7%; }
-}
+
 /* Short, wide windows (laptops at 1366×650): keep the names clear of the dome. */
 @media (min-width: 900px) and (max-height: 760px) {
   .gw-gazebo { height: min(50svh, 560px); }
@@ -622,8 +626,8 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* ── Reduced motion: everything in place, nothing loops ───────────────── */
 @media (prefers-reduced-motion: reduce) {
   .gw-root *, .gw-root *::before, .gw-root *::after { animation: none !important; }
-  .gw-hero .gw-a, .gw-hero .gw-cloud, .gw-hero .gw-gazebo, .gw-hero .gw-couple, .gw-hero .gw-peacock, .gw-hero .gw-blossom, .gw-hero .gw-ht, .gw-hero .gw-cue,
-  .gw-fin-pav, .gw-fin-couple, .gw-fam-tree, .gw-invite-corner, .gw-rsvp-corner { transition: opacity .4s linear !important; transform: none !important; }
+  .gw-hero .gw-a, .gw-hero .gw-cloud, .gw-hero .gw-gazebo, .gw-hero .gw-couple, .gw-hero .gw-blossom, .gw-hero .gw-ht, .gw-hero .gw-cue,
+  .gw-fin-pav, .gw-fin-couple, .gw-fam-tree, .gw-invite-corner { transition: opacity .4s linear !important; transform: none !important; }
   .gw-l, .gw-hero-text { transform: none !important; }
   .gw-petals { display: none; }
 }

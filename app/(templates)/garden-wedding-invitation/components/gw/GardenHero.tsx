@@ -5,14 +5,14 @@
 // Back to front, each plane on its own parallax rate (one rAF-throttled scroll
 // listener writes --gw-sy on the hero; every plane reads it at its own k):
 //   sky (k .45) → drifting clouds (k .35) → banana plants at the edges
-//   (k .18) → the hedge walls in the corners, the chhatri umbrellas flanking
-//   the gazebo, the couple standing in it (k .08) → the peacock strutting along the hedge → lotus + rocks in the
-//   foreground (k −.06) → a cherry branch reaching in from each top corner
-//   (mirrored, k −.12), petals drifting through all of it.
+//   (k .18) → the chhatri umbrellas flanking the gazebo, the couple standing
+//   in it (k .08) → a bunch of pink peonies in each bottom corner (k −.06) →
+//   a cherry branch reaching in from each top corner (mirrored, k −.12),
+//   petals drifting through all of it, a fine gold frame around the scene.
 // The names sit in the sky above the gazebo.
 //
 // Entrance (`open`): the clouds part, the gazebo rises, the couple appears in
-// it, the peacock walks in from the right and settles. After that the scene
+// it, the peonies grow in from the corners. After that the scene
 // holds still (the owner wants nothing swinging); only the clouds drift and the
 // petals fall, paused whenever the hero is off screen. No parallax under reduced motion or
 // on low-end phones (`lite`). Transform/opacity only.
@@ -75,6 +75,7 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
 
   return (
     <header ref={ref} className={`gw-hero${open ? " is-open" : ""}`}>
+      <span className="gw-frame" aria-hidden />
       <div className="gw-l gw-l-sky" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img {...gwImg(GW.sky, { high: true })} />
@@ -97,23 +98,15 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
       <div className="gw-l gw-l-far" aria-hidden>
         <span className="gw-a gw-banana gw-banana-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.bananaL)} />
+          <img {...gwImg(GW.bananaL, { hi: GW.bananaLHi, sizes: "(min-width: 900px) 40vw, 60vw" })} />
         </span>
         <span className="gw-a gw-banana gw-banana-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.bananaR)} />
+          <img {...gwImg(GW.bananaR, { hi: GW.bananaRHi, sizes: "(min-width: 900px) 40vw, 60vw" })} />
         </span>
       </div>
 
       <div className="gw-l gw-l-mid" aria-hidden>
-        <span className="gw-a gw-hedge gw-hedge-l">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.hedge)} />
-        </span>
-        <span className="gw-a gw-hedge gw-hedge-r">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.hedge)} />
-        </span>
         <span className="gw-a gw-chhatri gw-chhatri-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.chhatri)} />
@@ -130,22 +123,16 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
             <img {...gwImg(GW.couple, { alt: `${first} ${s.and} ${second}` })} />
           </span>
         </span>
-        <span className="gw-peacock">
-          <span className="gw-peacock-walk">
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.peacock)} />
-          </span>
-        </span>
       </div>
 
       <div className="gw-l gw-l-front" aria-hidden>
-        <span className="gw-a gw-lotus-f">
+        <span className="gw-a gw-hcorner gw-hcorner-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.lotus)} />
+          <img {...gwImg(GW.peonyCorner, { hi: GW.peonyCorner2x, sizes: "(min-width: 900px) 30vw, 46vw" })} />
         </span>
-        <span className="gw-a gw-rocks-f">
+        <span className="gw-a gw-hcorner gw-hcorner-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.rocks)} />
+          <img {...gwImg(GW.peonyCorner, { hi: GW.peonyCorner2x, sizes: "(min-width: 900px) 30vw, 46vw" })} />
         </span>
       </div>
 

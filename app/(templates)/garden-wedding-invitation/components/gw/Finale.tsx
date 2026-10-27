@@ -2,8 +2,8 @@
 
 // ─── The finale: back in the garden, all on one screen ──────────────────────
 // The hero's world again (watercolour sky, two cloud banks, a blossom branch in
-// each top corner, the stone-wall hedges in the bottom corners) around the
-// flowering pavilion with the couple standing in it; petals fall once the
+// each top corner, a bunch of pink peonies in each bottom corner, a fine gold
+// frame) around the flowering pavilion with the couple standing in it; petals fall once the
 // pavilion is 50% in view. Then "शुभ विवाह · Shubh Vivah", the names, the
 // closing line, the hashtag and the share bar, sized so the whole goodbye fits
 // one screen. Reduced motion: no petals.
@@ -70,14 +70,15 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.blossom, { lazy: true })} />
         </span>
-        <span className="gw-fin-hedge gw-fin-hedge-l">
+        <span className="gw-fin-peony gw-fin-peony-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.hedge, { lazy: true })} />
+          <img {...gwImg(GW.peonyCorner, { lazy: true, hi: GW.peonyCorner2x, sizes: "(min-width: 900px) 26vw, 40vw" })} />
         </span>
-        <span className="gw-fin-hedge gw-fin-hedge-r">
+        <span className="gw-fin-peony gw-fin-peony-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.hedge, { lazy: true })} />
+          <img {...gwImg(GW.peonyCorner, { lazy: true, hi: GW.peonyCorner2x, sizes: "(min-width: 900px) 26vw, 40vw" })} />
         </span>
+        <span className="gw-frame" />
       </div>
       <div ref={stage} className="gw-finale-stage" aria-hidden>
         <span className="gw-fin-pav">

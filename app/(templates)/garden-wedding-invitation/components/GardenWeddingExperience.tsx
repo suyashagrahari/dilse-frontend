@@ -330,26 +330,31 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
         </Section>
       )}
 
-      {/* ── RSVP: the reply card under the lattice arch, peonies at its foot ─ */}
-      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="narrow" className="gw-sec gw-sec-rsvp">
+      {/* ── RSVP: an arched garden window with the couple beside the reply card ─ */}
+      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="wide" className="gw-sec gw-sec-rsvp">
         <Reveal as="p" className="gw-upasthiti">
           <span lang={lang}>{s.upasthiti}</span>
         </Reveal>
-        <Reveal className="gw-rsvp">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="gw-rsvp-crown" {...gwImg(GW.archCrown, { lazy: true })} />
-          <span className="gw-rsvp-corner gw-rsvp-corner-l" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
-          </span>
-          <span className="gw-rsvp-corner gw-rsvp-corner-r" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
-          </span>
-          <div ref={rsvpRef} className="gw-rsvp-in">
+        <div className="gw-rsvp">
+          <Reveal effect="zoom" className="gw-rsvp-art">
+            <span className="gw-rsvp-window" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="gw-rw-sky" {...gwImg(GW.sky, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="gw-rw-blossom" {...gwImg(GW.blossom, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="gw-rw-pair" {...gwImg(GW.coupleWedding, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="gw-rw-peony is-l" {...gwImg(GW.peonyCorner, { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="gw-rw-peony is-r" {...gwImg(GW.peonyCorner, { lazy: true })} />
+            </span>
+            <p className="gw-rsvp-names">{couple}</p>
+          </Reveal>
+          <div ref={rsvpRef} className="gw-rsvp-form">
             <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
           </div>
-        </Reveal>
+        </div>
       </Section>
 
       {/* ── Blessings ───────────────────────────────────────────────────── */}
