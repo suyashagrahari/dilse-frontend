@@ -20,24 +20,29 @@ import { Users, X, ChevronRight, Heart, ExternalLink } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { RsvpDashboard, fetchGuests, type GuestsData } from "@/app/(templates)/_wedding";
 
-/** Every template whose pages take RSVPs (its `/<slug>-pages/:id/guests` exists). */
-export const RSVP_TEMPLATES = new Set([
-  "wedding-invitation",
-  "wedding-invitation-premium",
-  "royal-wedding-invitation",
-  "lotus-wedding-invitation",
-  "palace-door-wedding-invitation",
-  "floral-wedding-invitation",
-  "garden-wedding-invitation",
-  "christian-wedding",
-  "christian-wedding-2",
-  "reception",
-  "shaadi-card",
-]);
+/**
+ * Every template whose pages take RSVPs: the profile's templateType → the slug
+ * of its guest list (`/<slug>-pages/:id/guests`). Shaadi Card pages are listed
+ * as "shaadi"; Christian Wedding's Scroll Edition shares the "christian-wedding"
+ * collection, whose guest list serves both editions.
+ */
+export const RSVP_TEMPLATES: Record<string, string> = {
+  "wedding-invitation": "wedding-invitation",
+  "wedding-invitation-premium": "wedding-invitation-premium",
+  "royal-wedding-invitation": "royal-wedding-invitation",
+  "lotus-wedding-invitation": "lotus-wedding-invitation",
+  "palace-door-wedding-invitation": "palace-door-wedding-invitation",
+  "floral-wedding-invitation": "floral-wedding-invitation",
+  "garden-wedding-invitation": "garden-wedding-invitation",
+  "christian-wedding": "christian-wedding",
+  reception: "reception",
+  shaadi: "shaadi-card",
+};
 
 export interface GuestPage {
   _id: string;
   shareId: string;
+  /** The guest-list slug (RSVP_TEMPLATES), not the profile's templateType. */
   templateType: string;
   /** "Royal Wedding Invitation". */
   label: string;
