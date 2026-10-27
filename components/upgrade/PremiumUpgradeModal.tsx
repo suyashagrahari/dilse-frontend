@@ -4,9 +4,9 @@
 //
 // A centred card (on a phone too: it never rises from the bottom) with the
 // premium template's poster, its price for this visitor, what it adds, and two
-// equal choices side by side: ✨ Try Premium (left) · Publish free (right).
+// equal choices side by side: ✨ Preview Premium (left) · Publish free (right).
 //
-// "Try Premium" does not charge or publish anything. The parent converts their
+// "Preview Premium" does not charge or publish anything. The parent converts their
 // free content into a premium draft (an AI writes the extra words; their photos,
 // if any, come across, and none are invented) and opens the premium editor in
 // preview. While that runs the card shows the bouquet being re-tied; if it
@@ -129,13 +129,13 @@ export default function PremiumUpgradeModal({ offer, cover, recipient, onTry, on
                 </motion.p>
               </AnimatePresence>
               <div className="upm-bar"><i style={{ width: `${((step + 1) / WORKING_STEPS.length) * 100}%` }} /></div>
-              <p className="upm-fine">Nothing is published or charged. You&apos;ll see it first.</p>
+              <p className="upm-fine">Free preview: nothing is published or charged.</p>
             </motion.div>
           ) : (
             <motion.div key="o" className="upm-body" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <h2 id={titleId} className="upm-title">Send it in Premium?</h2>
+              <h2 id={titleId} className="upm-title">See it in Premium, free</h2>
               <p className="upm-sub">
-                Same flowers, same card, now delivered in a gift box that blooms open. We carry everything across, and you can change anything before sending.
+                One tap and we fill the whole premium bouquet for you: your flowers, your card, your names, already in place. Watch exactly how it looks before you decide.
               </p>
 
               <ul className="upm-perks">
@@ -157,19 +157,24 @@ export default function PremiumUpgradeModal({ offer, cover, recipient, onTry, on
                 </label>
               )}
 
+              <div className="upm-free-note">
+                <span aria-hidden>👀</span>
+                <p><b>Free to preview.</b> No payment to look around. You only pay if you like it and publish Premium.</p>
+              </div>
+
               {stage === "error" && <p className="upm-err" role="alert">{error}</p>}
 
               <div className="upm-actions">
                 <button ref={tryRef} type="button" className="upm-try" onClick={() => void run()}>
                   {stage === "error" ? <RotateCcw size={16} /> : <Sparkles size={16} />}
-                  <span>{stage === "error" ? "Try again" : "Try Premium"}</span>
+                  <span>{stage === "error" ? "Try again" : "Preview Premium"}</span>
                 </button>
                 <button type="button" className="upm-free" onClick={onFree}>
                   <Send size={15} />
                   <span>Publish free</span>
                 </button>
               </div>
-              <p className="upm-fine">Trying it is free. Your free bouquet stays saved, so you can still publish it after.</p>
+              <p className="upm-fine">Your free bouquet stays saved: you can still publish it free from the premium preview.</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -208,10 +213,15 @@ const CSS = `
 .upm-field { display: grid; gap: 6px; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: #5d5574; }
 .upm-field input { font: inherit; font-size: 15px; font-weight: 600; color: #2b2440; padding: 11px 13px; border-radius: 13px; border: 1.5px solid #d9cfe8; background: #fff; outline: none; }
 .upm-field input:focus { border-color: #8b6fd4; box-shadow: 0 0 0 3px rgba(139,111,212,.18); }
+.upm-free-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: #ecfbf3; border: 1.5px dashed #46b37b; }
+.upm-free-note span { font-size: 18px; line-height: 1.2; }
+.upm-free-note p { margin: 0; font-size: 12.5px; line-height: 1.45; color: #1f5a3c; }
+.upm-free-note b { color: #136b40; }
 .upm-err { margin: 12px 0 0; padding: 9px 12px; border-radius: 12px; font-size: 13px; color: #9b1c3a; background: #ffe6ec; }
 .upm-actions { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin-top: 14px; }
 .upm-actions button { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 50px; padding: 0 12px;
   border-radius: 16px; font-size: 15px; font-weight: 800; text-align: center; white-space: nowrap; border: 2px solid #2b2440; transition: transform .15s ease, box-shadow .15s ease; }
+.upm-actions button svg { flex: none; }
 .upm-actions .upm-try { color: #fff; background: linear-gradient(135deg,#ff5f96,#8b6fd4); box-shadow: 3px 4px 0 rgba(43,36,64,.22); position: relative; overflow: hidden; }
 .upm-try::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.45) 50%, transparent 70%); transform: translateX(-100%); animation: upmShine 2.8s ease-in-out 1s infinite; }
 .upm-actions .upm-free { color: #2b2440; background: #fff; box-shadow: 2px 3px 0 rgba(43,36,64,.14); }

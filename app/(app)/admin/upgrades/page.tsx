@@ -20,7 +20,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Rocket, Eye, Sparkles, Crown, Send, Loader2, RefreshCw, Power } from "lucide-react";
+import { Rocket, Eye, EyeOff, Sparkles, Crown, Send, Loader2, RefreshCw } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
@@ -164,13 +164,30 @@ export default function UpgradesPage() {
                   <span>{o.title}</span>
                 </span>
               }
-              right={
-                <button type="button" className="ug-switch" data-on={o.enabled ? "1" : "0"} onClick={() => void toggle(o)} disabled={saving === o.from} aria-pressed={o.enabled}>
-                  {saving === o.from ? <Loader2 size={13} className="ug-spin" /> : <Power size={13} />}
-                  {o.enabled ? "Offer on" : "Offer off"}
-                </button>
-              }
             >
+              <div className="ug-vis" data-on={o.enabled ? "1" : "0"}>
+                <span className="ug-vis-ic">{o.enabled ? <Eye size={18} /> : <EyeOff size={18} />}</span>
+                <div className="ug-vis-tx">
+                  <b>{o.enabled ? "Offer is ON: users see it" : "Offer is HIDDEN"}</b>
+                  <p>
+                    {o.enabled
+                      ? "Publish on the free template first opens the Premium preview offer."
+                      : "Publish goes straight to the free publish. Nobody sees the Premium offer."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={o.enabled}
+                  aria-label={o.enabled ? "Hide the offer" : "Show the offer"}
+                  className="ug-toggle"
+                  onClick={() => void toggle(o)}
+                  disabled={saving === o.from}
+                >
+                  <span className="ug-knob">{saving === o.from && <Loader2 size={12} className="ug-spin" />}</span>
+                </button>
+              </div>
+
               <div className="ug-tiles">
                 <StatTile icon={<Eye size={15} />} label="Saw the offer" value={shown} sub={`${s.shown.total} times`} accent={A.gold} />
                 <StatTile icon={<Sparkles size={15} />} label="Tried Premium" value={s.try_clicked.visitors} sub={`${pct(s.try_clicked.visitors, shown)} of those who saw it`} accent={A.info} delay={0.05} />
@@ -262,10 +279,19 @@ const CSS = `
 .ug-offer { margin-bottom: 14px; }
 .ug-title { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; }
 .ug-arrow { color: ${A.muted}; font-weight: 800; }
-.ug-switch { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px; font-size: 12.5px; font-weight: 800;
-  color: ${A.muted}; background: rgba(61,12,17,.05); border: 1px solid ${A.edge}; }
-.ug-switch[data-on="1"] { color: #fff; background: ${A.ok}; border-color: ${A.ok}; }
-.ug-switch:disabled { opacity: .6; cursor: wait; }
+.ug-vis { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 12px 14px; border-radius: 16px; border: 1.5px solid ${A.edge}; background: rgba(61,12,17,.03); }
+.ug-vis[data-on="1"] { border-color: rgba(30,122,75,.35); background: rgba(30,122,75,.07); }
+.ug-vis-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; flex: none; color: ${A.muted}; background: #fff; border: 1px solid ${A.edge}; }
+.ug-vis[data-on="1"] .ug-vis-ic { color: ${A.ok}; }
+.ug-vis-tx { flex: 1; min-width: 0; }
+.ug-vis-tx b { font-size: 14px; color: ${A.ink}; }
+.ug-vis-tx p { margin: 2px 0 0; font-size: 12.5px; color: ${A.soft}; }
+.ug-toggle { all: unset; cursor: pointer; flex: none; position: relative; width: 52px; height: 30px; border-radius: 99px; background: #d9cfcf; transition: background .2s; }
+.ug-toggle[aria-checked="true"] { background: ${A.ok}; }
+.ug-toggle:disabled { opacity: .6; cursor: wait; }
+.ug-toggle:focus-visible { outline: 3px solid ${A.gold}; outline-offset: 2px; }
+.ug-knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); display: grid; place-items: center; color: ${A.muted}; transition: transform .2s; }
+.ug-toggle[aria-checked="true"] .ug-knob { transform: translateX(22px); }
 .ug-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .ug-cols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; margin-top: 16px; }
 @media (max-width: 760px) { .ug-cols { grid-template-columns: 1fr; } }

@@ -95,7 +95,7 @@ export function useBouquetEditor() {
   //
   // Publishing opens "Send it in Premium?" first — for a signed-in visitor
   // straight away, for a new one right after they log in. "Publish free" runs
-  // the publish this editor always ran; "Try Premium" converts the bouquet into
+  // the publish this editor always ran; "Preview Premium" converts the bouquet into
   // a Digital Bouquet draft and opens it in preview. The offer is fetched ahead
   // (once there is something to publish) so the card opens without a wait.
   // `undefined` = not asked yet, `null` = no offer: publish as usual.
@@ -456,7 +456,7 @@ export function useBouquetEditor() {
   }, [accessToken, pageId, offer]);
 
   /**
-   * "Try Premium": their bouquet → a Digital Bouquet draft, opened in preview.
+   * "Preview Premium": their bouquet → a Digital Bouquet draft, opened in preview.
    * The free bouquet stays saved (as a completed draft, and as its row when it
    * has one), so "Publish the free one instead" on the premium page finds it.
    */

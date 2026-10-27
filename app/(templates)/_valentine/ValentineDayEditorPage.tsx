@@ -24,7 +24,7 @@ import { FONTS } from "./theme";
 import type { DaySlug, ValentineReactions } from "./types";
 import { useValentineDayEditor } from "./useValentineDayEditor";
 import { answeredWhen } from "./kit/answer";
-import UpgradeBridge from "@/components/upgrade/UpgradeBridge";
+import UpgradeTopBar, { useUpgradeArrival } from "@/components/upgrade/UpgradeBridge";
 
 const noopReact = () => {};
 
@@ -74,6 +74,7 @@ function Inner({ slug }: { slug: DaySlug }) {
   const sf = day.studioForm;
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const canEdit = e.isPersonalized && (!e.showShare || !!sf?.editAfterPublish);
+  const upgrade = useUpgradeArrival(slug, e.shareUrl, e.pageId, accessToken);
 
   const topAction = e.showShare
     ? { label: e.shareLabel, onClick: e.handleShare }
@@ -91,7 +92,7 @@ function Inner({ slug }: { slug: DaySlug }) {
     // sits on top of a day's last button or hint (DayRoot pads by it).
     // ✦ Premium days (and `topBar` days) have no bottom dock: their controls sit
     // top-right (PremiumTopBar), so the bottom of the screen belongs to the scene.
-    <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: topBar ? "0px" : "96px", ["--vw-top-space" as string]: topBar ? "60px" : "0px" }}>
+    <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: topBar ? "0px" : "96px", ["--vw-top-space" as string]: topBar || upgrade ? "60px" : "0px" }}>
       {/* The sender's music plays in the preview too (and from the form's
           Listen button). It waits for a tap until they've saved once, so the
           demo stays quiet while they look around — except a template's own
@@ -116,10 +117,21 @@ function Inner({ slug }: { slug: DaySlug }) {
 
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
 
-      {/* Opened by a free template's "Try Premium" (lib/upgrade/offer.ts): Edit · Publish free instead. */}
-      <UpgradeBridge slug={slug} shareUrl={e.shareUrl} pageId={e.pageId} editing={e.editMode === "manual" || e.storyStarter} onEdit={e.handleEditFromPreview} token={accessToken} font={FONTS.ui} />
-
-      {topBar ? (
+      {upgrade && !e.shareUrl ? (
+        // Opened by a free template's "Preview Premium" (lib/upgrade/offer.ts):
+        // Back · Edit · Publish free · Publish Premium, one compact capsule at the top.
+        <UpgradeTopBar
+          ctx={upgrade}
+          onBack={e.goBack}
+          onEdit={e.handleEditFromPreview}
+          onPublish={e.showPublish ? e.publish : e.handleEditClick}
+          publishing={e.publishing}
+          token={accessToken}
+          accent={`linear-gradient(135deg, ${day.theme.accent}, ${day.theme.accentDeep})`}
+          accentInk={day.theme.accentInk}
+          font={FONTS.ui}
+        />
+      ) : topBar ? (
         <PremiumTopBar
           dark={!!day.theme.dark}
           accent={`linear-gradient(135deg, ${day.theme.accent}, ${day.theme.accentDeep})`}
