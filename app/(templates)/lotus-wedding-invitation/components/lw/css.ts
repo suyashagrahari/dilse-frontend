@@ -201,6 +201,11 @@ export const LW_CSS = `
 .lw-lights-b { display: none !important; }
 @media (min-width: 960px) { .lw-hero-lights img, .lw-finale-lights img, .lw-open-lights img { width: 50%; } .lw-lights-b { display: block !important; transform: scaleX(-1); } }
 .lw-hero.is-on .lw-hero-lights { opacity: 1; translate: 0 0; }
+.lw-hero-lamps { position: absolute; z-index: 2; inset: 0 0 auto 0; height: 0; pointer-events: none; }
+.lw-hero-lamp { position: absolute; top: 0; width: clamp(40px, 4.6vw, 64px); height: auto; translate: 0 -100%; transform-origin: 50% 0; filter: drop-shadow(0 0 14px rgba(255,200,100,.5)); transition: translate 1.6s var(--lw-ease) .4s; animation: lw-lamp-sway 6s ease-in-out infinite alternate; }
+.lw-hero-lamp-l { left: clamp(10px, 3vw, 48px); }
+.lw-hero-lamp-r { right: clamp(10px, 3vw, 48px); animation-delay: -3s; transition-delay: .55s; }
+.lw-hero.is-on .lw-hero-lamp { translate: 0 0; }
 .lw-hero-grid { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 20px; max-width: 1260px; margin: 0 auto; }
 .lw-hero-words { position: relative; order: 1; text-align: center; max-width: 620px; }
 .lw-hero-art { order: 2; position: relative; width: min(100%, 480px); aspect-ratio: .92; }
@@ -632,7 +637,7 @@ export const LW_CSS = `
 
 @media (prefers-reduced-motion: reduce) {
   .lw-root *, .lw-root *::before, .lw-root *::after { animation: none !important; }
-  .lw-hg, .lw-in, .lw-open-copy > *, .lw-open-stage, .lw-open-cta, .lw-open-lights, .lw-open-side img, .lw-hero-lights, .lw-hero-gopuram, .lw-hero-couple, .lw-hero-pond, .lw-hero-sun, .lw-hero-badge, .lw-hero-scroll { transition: none !important; opacity: 1 !important; translate: none !important; scale: none !important; }
+  .lw-hg, .lw-in, .lw-open-copy > *, .lw-open-stage, .lw-open-cta, .lw-open-lights, .lw-open-side img, .lw-hero-lights, .lw-hero-lamp, .lw-hero-gopuram, .lw-hero-couple, .lw-hero-pond, .lw-hero-sun, .lw-hero-badge, .lw-hero-scroll { transition: none !important; opacity: 1 !important; translate: none !important; scale: none !important; }
   .lw-hero-garland, .lw-open-garland { translate: none !important; }
   .lw-lamp { translate: 0 var(--lw-lamp-y, -18%) !important; transition: none !important; }
   .lw-petal { transition: none !important; }
