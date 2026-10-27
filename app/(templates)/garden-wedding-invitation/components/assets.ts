@@ -10,7 +10,7 @@
 
 import { cdn } from "../../_wedding/media";
 
-export interface WeddingAsset { src: string; w: number; h: number }
+export interface WeddingAsset { src: string; w: number; h: number; sameOrigin?: boolean }
 
 export const GW_ASSETS = {
   "template1": {
@@ -76,6 +76,11 @@ export const GW_ASSETS = {
     "card": { src: "/wedding-v3/template9/card.webp", w: 600, h: 852 },
     // Derived: the lattice band and arch crown above the panel's baked-in text.
     "gw-lattice-top": { src: "/wedding-v3/template9/gw-lattice-top.webp", w: 1091, h: 150 },
+    // Derived: the whole lattice arch, its inside cut away so the card shows through.
+    "gw-arch-crown": { src: "/wedding-v3/template9/gw-arch-crown.webp", w: 1091, h: 356, sameOrigin: true },
+    // Derived: the peony trees at 2× (lanczos + light unsharp) so they stay crisp at full height.
+    "gw-peony-left-2x": { src: "/wedding-v3/template9/gw-peony-left-2x.webp", w: 600, h: 2058, sameOrigin: true },
+    "gw-peony-right-2x": { src: "/wedding-v3/template9/gw-peony-right-2x.webp", w: 592, h: 2058, sameOrigin: true },
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
@@ -123,7 +128,10 @@ export const GW = {
   blossom: T11["06-cherry-blossom-branch"],
   peonyL: T9["03-peony-tree-left-with-lotus-leaves"],
   peonyR: T9["04-peony-tree-right-with-lotus-leaves"],
+  peonyL2x: T9["gw-peony-left-2x"],
+  peonyR2x: T9["gw-peony-right-2x"],
   lattice: T9["gw-lattice-top"],
+  archCrown: T9["gw-arch-crown"],
   og: T1["gw-og"],
 } as const;
 
@@ -131,11 +139,13 @@ export const GW = {
  * <img> props for one asset: intrinsic width/height (no layout shift), async
  * decode, lazy below the fold, high priority for the opening scene, and an
  * optional 2× source (the 800 / 1600 gazebo pair). From the CDN: never a mask or canvas source.
+ * `sameOrigin` files (the opening's derived art) are not on the CDN yet and come from public/.
  */
 export function gwImg(a: WeddingAsset, o: { lazy?: boolean; high?: boolean; alt?: string; hi?: WeddingAsset; sizes?: string } = {}) {
+  const url = (x: WeddingAsset) => (x.sameOrigin ? x.src : cdn(x.src));
   return {
-    src: cdn(a.src),
-    ...(o.hi ? { srcSet: `${cdn(a.src)} ${a.w}w, ${cdn(o.hi.src)} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
+    src: url(a),
+    ...(o.hi ? { srcSet: `${url(a)} ${a.w}w, ${url(o.hi)} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
     width: a.w,
     height: a.h,
     alt: o.alt ?? "",

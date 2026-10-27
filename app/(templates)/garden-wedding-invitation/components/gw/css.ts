@@ -49,7 +49,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 
 /* ── The gate ─────────────────────────────────────────────────────────── */
 .gw-gate { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; overflow: hidden; padding: 70px 16px 40px; }
-.gw-gate-veil { position: absolute; inset: 0; background: linear-gradient(180deg, #dcebf6 0%, #f7f1f2 52%, #f7e3e8 100%); transition: opacity .9s var(--gw-ease) .5s; }
+.gw-gate-veil { position: absolute; inset: 0; background: linear-gradient(180deg, #dcebf6 0%, #f7f1f2 52%, #f7e3e8 100%); transition: opacity 1.2s cubic-bezier(.4,0,.2,1) .35s; }
 .gw-gate-sky { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .75; }
 .gw-gate > span, .gw-gcard { opacity: 0; }
 .gw-gate.is-ready > span, .gw-gate.is-ready .gw-gcard { opacity: 1; transition: opacity .9s var(--gw-ease), transform 1.35s var(--gw-swing); }
@@ -69,16 +69,22 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-gate.is-ready .gw-gleaf-tree { animation: gw-grow-in 1.4s var(--gw-ease) both; transform-origin: 50% 100%; }
 .gw-ghang { position: absolute; z-index: 3; top: -6px; }
 .gw-ghang img { display: block; height: 100%; width: auto; transform-origin: 50% 0; }
-.gw-ghang-l { left: 5%; height: min(19svh, 170px); }
-.gw-ghang-r { right: 3%; height: min(30svh, 280px); }
-.gw-gate.is-ready .gw-ghang img { animation: gw-swing 5.5s ease-in-out infinite alternate; }
-.gw-gate.is-ready .gw-ghang-r img { animation-duration: 6.8s; animation-delay: -2s; }
+/* One pair of lanterns, mirrored: the left is the right one flipped, same size, same inset. */
+.gw-ghang-l, .gw-ghang-r { height: min(28svh, 260px); }
+.gw-ghang-l { left: 4%; scale: -1 1; }
+.gw-ghang-r { right: 4%; }
+.gw-gate.is-ready .gw-ghang img { animation: gw-swing 6s ease-in-out infinite alternate; }
+.gw-gate.is-ready .gw-ghang-r img { animation-delay: -3s; }
 .gw-gfoot { position: absolute; z-index: 2; bottom: -3%; left: 50%; translate: -50% 0; width: min(64vw, 340px); }
 .gw-gfoot img { display: block; width: 100%; height: auto; }
 .gw-gcard { position: relative; z-index: 4; width: min(100%, 410px); padding: 0 clamp(18px, 6vw, 34px) 24px; text-align: center; border-radius: 26px; background: rgba(255,251,248,.94); border: 1px solid rgba(192,138,92,.38); box-shadow: 0 30px 70px -34px rgba(110,40,58,.55), 0 2px 10px -6px rgba(110,40,58,.2); transform: translateY(14px); }
 .gw-gate.is-ready .gw-gcard { transform: none; }
 .gw-gcard-crown { display: block; width: calc(100% + 2 * clamp(18px, 6vw, 34px)); max-width: none; height: auto; margin: 0 calc(-1 * clamp(18px, 6vw, 34px)); border-radius: 26px 26px 0 0; }
-.gw-gcard-in { margin-top: -14px; }
+/* The text starts inside the arch: pull it up by ~17% of the crown's width (a % margin is width-relative). */
+.gw-gcard-in { position: relative; margin-top: -14px; }
+/* With the invocation: it sits inside the arch (a % margin is width-relative, the crown is .326 of its width tall)
+   and whatever follows starts just below the arch's shoulders. */
+.gw-gcard-in > .gw-mantra:first-child { margin-top: calc(14px - 0.135 * (100% + 2 * clamp(18px, 6vw, 34px))); margin-bottom: max(8px, calc(0.135 * (100% + 2 * clamp(18px, 6vw, 34px)) - 22px)); }
 .gw-gcard-k { margin: 6px 0 0; }
 .gw-dear { margin: 8px 0 0; font: italic 400 clamp(18px, 4.8vw, 21px)/1.35 var(--wk-font-display); color: var(--wk-muted); }
 .gw-dear b { font-style: normal; font-weight: 600; color: var(--wk-accent); }
@@ -94,16 +100,24 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-gcta { display: block; margin: 8px auto 0; min-height: 40px; padding: 0 16px; border: 0; background: none; cursor: pointer; font: 600 12px/1 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--wk-accent); }
 .gw-gate .gw-petals { z-index: 5; }
 .gw-gate-burst { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
-/* opening */
+/* A soft light that blooms from the seal and carries the eye into the garden. */
+.gw-gbloom { position: absolute; z-index: 3; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.12); background: radial-gradient(closest-side, rgba(255,251,247,.96) 0%, rgba(255,243,240,.7) 38%, rgba(255,240,242,0) 72%); }
+@keyframes gw-bloom { 0% { opacity: 0; transform: scale(.12); } 28% { opacity: .85; } 100% { opacity: 0; transform: scale(1.1); } }
+/* opening: one timeline, transform/opacity only, every layer on its own compositor track */
 .gw-gate.is-opening { pointer-events: none; }
+.gw-gate.is-opening > span, .gw-gate.is-opening .gw-gcard, .gw-gate.is-opening .gw-gate-veil { will-change: transform, opacity; }
+.gw-gate.is-opening .gw-gbloom { animation: gw-bloom 1.7s cubic-bezier(.22,1,.36,1) forwards; }
 .gw-gate.is-opening .gw-gate-veil { opacity: 0; }
-.gw-gate.is-opening .gw-gcard { opacity: 0; transform: translateY(-34px) scale(1.06); transition: opacity .7s var(--gw-ease) .1s, transform .9s var(--gw-ease) .1s; }
-.gw-gate.is-opening .gw-gleaf-l { transform: translateX(-75vw) rotate(-7deg); }
-.gw-gate.is-opening .gw-gleaf-r { transform: translateX(75vw) rotate(7deg); }
-.gw-gate.is-opening .gw-gc-l { transform: translateX(-62vw) scale(1.6); opacity: 0; transition-delay: .2s; transition-duration: 1.4s, 1.4s; }
-.gw-gate.is-opening .gw-gc-r { transform: translateX(62vw) scale(1.6); opacity: 0; transition-delay: .2s; transition-duration: 1.4s, 1.4s; }
-.gw-gate.is-opening .gw-ghang { transform: translateY(-60svh); transition-delay: .15s; }
-.gw-gate.is-opening .gw-gfoot { transform: translateY(40svh); opacity: 0; }
+.gw-gate.is-opening .gw-gcard { opacity: 0; transform: translateY(-12px) scale(1.05); transition: opacity .6s cubic-bezier(.4,0,.2,1) .05s, transform 1s cubic-bezier(.22,1,.36,1) .05s; }
+.gw-gate.is-opening .gw-gleaf { transition: transform 1.55s cubic-bezier(.65,.05,.25,1) .05s, opacity 1s ease .7s; opacity: 0; }
+.gw-gate.is-opening .gw-gleaf-l { transform: translateX(-62vw) scale(1.06); }
+.gw-gate.is-opening .gw-gleaf-r { transform: translateX(62vw) scale(1.06); }
+.gw-gate.is-opening .gw-gc { transition: transform 1.7s cubic-bezier(.22,1,.36,1) .15s, opacity 1.3s ease .15s; opacity: 0; }
+.gw-gate.is-opening .gw-gc-l { transform: translateX(-55vw) scale(1.45); }
+.gw-gate.is-opening .gw-gc-r { transform: translateX(55vw) scale(1.45); }
+.gw-gate.is-opening .gw-ghang { transform: translateY(-55svh); opacity: 0; transition: transform 1.35s cubic-bezier(.6,0,.3,1) .2s, opacity .9s ease .55s; }
+.gw-gate.is-opening .gw-gfoot { transform: translateY(32svh); opacity: 0; transition: transform 1.2s cubic-bezier(.6,0,.3,1) .05s, opacity .8s ease .25s; }
+.gw-gate.is-reduced .gw-gbloom { display: none; }
 .gw-gate.is-reduced.is-opening > *, .gw-gate.is-reduced.is-opening .gw-gcard { transition: opacity .4s linear !important; transform: none !important; opacity: 0 !important; }
 
 /* ── The garden (hero) ────────────────────────────────────────────────── */
@@ -174,7 +188,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-hero.is-open .gw-blossom, .gw-hero.is-open .gw-hang { opacity: 1; transform: none; }
 .gw-hero.is-open .gw-blossom img { animation: gw-sway-s 9s ease-in-out infinite alternate; }
 .gw-hero.is-open .gw-hang img { animation: gw-swing 5.5s ease-in-out infinite alternate; }
-.gw-hero.is-open .gw-hang-r img { animation-duration: 6.6s; animation-delay: -2.4s; }
+.gw-hero.is-open .gw-hang-r img { animation-delay: -2.75s; }
 .gw-hero.is-idle *, .gw-hero.is-idle .gw-petals i { animation-play-state: paused !important; }
 /* the words in the sky */
 .gw-ht { opacity: 0; transform: translateY(16px); transition: opacity 1s var(--gw-ease), transform 1.2s var(--gw-ease); }
@@ -535,11 +549,15 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-lotus-f { left: 2%; width: min(24vw, 360px); }
   .gw-rocks-f { right: 1%; width: min(26vw, 400px); }
   .gw-blossom { left: -5%; width: min(40vw, 600px); }
-  .gw-hang-l { display: block; left: 22%; height: min(21svh, 220px); }
-  .gw-hang-r { right: 7%; height: min(32svh, 360px); }
+  /* A mirrored pair: the left lanterns are the right ones flipped, same size, same inset. */
+  .gw-hang-l, .gw-hang-r { height: min(30svh, 330px); }
+  .gw-hang-l { display: block; left: 7%; scale: -1 1; }
+  .gw-hang-r { right: 7%; }
   .gw-cloud-a { left: 2%; width: min(40vw, 640px); } .gw-cloud-b { right: -4%; width: min(46vw, 760px); } .gw-cloud-c { left: 40%; top: 26%; width: min(22vw, 360px); }
-  .gw-gleaf-l { left: calc(50% - 260px - min(26vw, 320px)); }
-  .gw-gleaf-r { right: calc(50% - 260px - min(26vw, 320px)); }
+  /* The peony trees frame the screen from its edges; the middle stays open sky for the card. */
+  .gw-gleaf { height: min(96svh, 960px); }
+  .gw-gleaf-l { left: -24px; }
+  .gw-gleaf-r { right: -24px; }
   .gw-gcard { width: 440px; }
   .gw-day { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "fountain card" "fountain count"; align-items: center; column-gap: 40px; }
   .gw-day-card { grid-area: card; }
@@ -562,13 +580,13 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-ev { flex-basis: calc((100% - 2 * var(--gw-ev-gap)) / 3); }
   .gw-fam-tree-l { left: -200px; } .gw-fam-tree-r { right: -200px; }
 }
-/* Small laptops: the names run wide, so the left lantern goes and the blossom branch stays in its corner. */
+/* Small laptops: the names run wide, so the lanterns sit closer to the edges and the blossom branch stays small. */
 @media (min-width: 900px) and (max-width: 1279px) {
-  .gw-hang-l { display: none; }
+  .gw-hang-l { left: 3%; } .gw-hang-r { right: 3%; }
+  .gw-hang-l, .gw-hang-r { height: min(26svh, 260px); }
   .gw-blossom { width: min(30vw, 600px); }
 }
 @media (min-width: 1500px) {
-  .gw-hang-l { left: 26%; }
   .gw-peacock { right: 18%; }
   .gw-chhatri-l { left: 19%; }
 }

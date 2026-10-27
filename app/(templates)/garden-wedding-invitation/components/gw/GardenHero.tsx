@@ -156,7 +156,7 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
         </span>
         <span className="gw-hang gw-hang-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.lantern)} />
+          <img {...gwImg(GW.lanterns)} />
         </span>
         <span className="gw-hang gw-hang-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

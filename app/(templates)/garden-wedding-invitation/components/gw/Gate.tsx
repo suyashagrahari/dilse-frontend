@@ -3,16 +3,16 @@
 // ─── The garden gate (the opening) ──────────────────────────────────────────
 //
 // A pastel sky, two cloud banks and a gate of flowering peony trees, lanterns
-// hanging at the corners, lotus at the foot. In the middle a rounded ivory card
+// hanging as a mirrored pair at the top corners, lotus at the foot. In the middle a rounded ivory card
 // under the gold lattice crown: "॥ श्री गणेशाय नमः ॥", the guest's own greeting
 // (?to=), the names, the date and a lotus seal to tap. The tap is also the
 // gesture that starts the music (DayMusic listens for the first tap).
 //
-//   0.00 s  the seal presses, petals burst from it
-//   0.10 s  the card lifts and fades; the peony trees swing out to the sides
-//   0.25 s  the clouds part (they slide out and grow, as if we fly through)
-//   0.40 s  the lanterns rise away, the ivory veil thins to the garden below
-//   1.70 s  the gate layer is removed
+//   0.00 s  the seal presses, petals burst from it, a soft light blooms behind the card
+//   0.05 s  the card settles back and fades; the peony trees part like gate doors
+//   0.15 s  the clouds part (they slide out and grow, as if we fly through)
+//   0.20 s  the lanterns rise away, the veil thins to the garden below
+//   2.00 s  the gate layer is removed
 //
 // The gate's own art is decoded before it fades in, and the garden under it
 // (already mounted) is decoded while the guest reads the card, so the reveal's
@@ -103,7 +103,7 @@ export default function Gate({ first, second, dateLine, guest, s, lang, invocati
     } catch {}
     setPhase("opening");
     onOpened();
-    later(reduce ? 420 : 1750, () => setPhase("gone"));
+    later(reduce ? 420 : 2000, () => setPhase("gone"));
   };
 
   if (phase === "gone") return null;
@@ -123,19 +123,19 @@ export default function Gate({ first, second, dateLine, guest, s, lang, invocati
       </span>
       <span className="gw-gleaf gw-gleaf-l" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-gleaf-tree" {...gwImg(GW.peonyL, { high: true })} />
+        <img className="gw-gleaf-tree" {...gwImg(GW.peonyL, { high: true, hi: GW.peonyL2x, sizes: "300px" })} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="gw-gleaf-flower" {...gwImg(GW.anthurium)} />
       </span>
       <span className="gw-gleaf gw-gleaf-r" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-gleaf-tree" {...gwImg(GW.peonyR, { high: true })} />
+        <img className="gw-gleaf-tree" {...gwImg(GW.peonyR, { high: true, hi: GW.peonyR2x, sizes: "300px" })} />
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="gw-gleaf-flower" {...gwImg(GW.rose)} />
       </span>
       <span className="gw-ghang gw-ghang-l" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...gwImg(GW.lantern)} />
+        <img {...gwImg(GW.lanterns)} />
       </span>
       <span className="gw-ghang gw-ghang-r" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -148,7 +148,7 @@ export default function Gate({ first, second, dateLine, guest, s, lang, invocati
 
       <div className="gw-gcard">
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-gcard-crown" {...gwImg(GW.lattice, { high: true })} />
+        <img className="gw-gcard-crown" {...gwImg(GW.archCrown, { high: true })} />
         <div className="gw-gcard-in">
           {invocation && (
             <p className="gw-mantra" lang="hi">
@@ -180,6 +180,7 @@ export default function Gate({ first, second, dateLine, guest, s, lang, invocati
           </button>
         </div>
       </div>
+      <div className="gw-gbloom" aria-hidden />
       {ready && phase === "closed" && <Petals mode="drift" count={8} seed={3} />}
       {phase === "opening" && !reduce && <Petals mode="burst" count={26} seed={11} className="gw-gate-burst" />}
     </div>
