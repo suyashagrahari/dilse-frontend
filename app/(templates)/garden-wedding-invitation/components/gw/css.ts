@@ -555,9 +555,14 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-hang-r { right: 7%; }
   .gw-cloud-a { left: 2%; width: min(40vw, 640px); } .gw-cloud-b { right: -4%; width: min(46vw, 760px); } .gw-cloud-c { left: 40%; top: 26%; width: min(22vw, 360px); }
   /* The peony trees frame the screen from its edges; the middle stays open sky for the card. */
-  .gw-gleaf { height: min(96svh, 960px); }
-  .gw-gleaf-l { left: -24px; }
-  .gw-gleaf-r { right: -24px; }
+  /* Floor to ceiling: the trees fill the whole height, only a whisper of fade at the very top. */
+  .gw-gleaf { height: 104svh; bottom: -2svh; }
+  .gw-gleaf-l { left: -24px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); }
+  .gw-gleaf-r { right: -24px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); }
+  /* The lanterns hang in the open sky between the trees and the card, mirrored about the centre. */
+  .gw-ghang-l, .gw-ghang-r { height: min(34svh, 320px); }
+  .gw-ghang-l { left: max(4%, calc(50% - 220px - 70px - min(34svh, 320px) * .585)); }
+  .gw-ghang-r { right: max(4%, calc(50% - 220px - 70px - min(34svh, 320px) * .585)); }
   .gw-gcard { width: 440px; }
   .gw-day { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "fountain card" "fountain count"; align-items: center; column-gap: 40px; }
   .gw-day-card { grid-area: card; }
