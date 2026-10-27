@@ -164,12 +164,13 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-hcorner img { display: block; height: 100%; width: auto; }
 .gw-hcorner-l { left: -10%; rotate: 8deg; }
 .gw-hcorner-r { right: -10%; rotate: -8deg; scale: -1 1; }
-.gw-chhatri { bottom: 16%; height: min(19svh, 300px); transform: translateY(60px); transition-delay: .35s; }
+/* Phones and tablets: the gazebo sits a little higher and smaller, both umbrellas flank it, mirrored. */
+.gw-chhatri { bottom: 9%; height: min(28svh, 54vw, 320px); transform: translateY(60px); transition-delay: .35s; }
 .gw-chhatri img { height: 100%; width: auto; }
-.gw-chhatri-l { left: -2%; }
-.gw-chhatri-r { right: 3%; display: none; }
+.gw-chhatri-l { right: calc(50% + min(56svh, 112vw, 600px) * .19); }
+.gw-chhatri-r { left: calc(50% + min(56svh, 112vw, 600px) * .19); scale: -1 1; }
 /* mid: hedges, the gazebo with the couple, the peacock */
-.gw-gazebo { left: 50%; bottom: 2.5%; height: min(44svh, 88vw, 600px); aspect-ratio: 800 / 618; translate: -50% 0; opacity: 0; transform: translateY(46px) scale(.97); transition: opacity 1.3s var(--gw-ease) .25s, transform 1.8s var(--gw-ease) .25s; }
+.gw-gazebo { left: 50%; bottom: 5%; height: min(56svh, 112vw, 600px); aspect-ratio: 800 / 618; translate: -50% 0; opacity: 0; transform: translateY(46px) scale(.97); transition: opacity 1.3s var(--gw-ease) .25s, transform 1.8s var(--gw-ease) .25s; }
 .gw-hero.is-open .gw-gazebo { opacity: 1; transform: none; }
 .gw-gazebo-img { display: block; width: 100%; height: 100%; }
 .gw-couple { position: absolute; left: 50%; bottom: 13.5%; height: 44%; translate: -50% 0; opacity: 0; transform: translateY(10px) scale(.94); transform-origin: 50% 100%; transition: opacity 1.2s var(--gw-ease) 1.15s, transform 1.4s var(--gw-ease) 1.15s; }
@@ -540,7 +541,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-ch.no-photo .gw-ch-dot { top: -18px; translate: -50% 0; }
   .gw-ev-list { max-width: none; }
   .gw-ev { flex: 0 1 calc((100% - var(--gw-ev-gap)) / 2); }
-  .gw-chhatri-r { display: block; }
   .gw-fam-tree { display: block; }
   /* Half-trees: their cut side belongs at the screen edge, so pin them there (the column is centred). */
   .gw-fam-tree-l { left: calc(50% - 50vw); } .gw-fam-tree-r { right: calc(50% - 50vw); }
