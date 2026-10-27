@@ -95,7 +95,7 @@ export default function UpgradeTopBar({ ctx, onBack, onEdit, onPublish, publishi
         Free
       </button>
       <button type="button" className="upt-primary" onClick={onPublish} disabled={publishing} style={{ background: accent, color: accentInk }} aria-label="Publish Premium" title="Publish Premium (payment asked here)">
-        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13 M22 2l-7 20-4-9-9-4 20-7Z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" /></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14.6 9.4 L23 12 L14.6 14.6 L12 23 L9.4 14.6 L1 12 L9.4 9.4 Z" fill="currentColor" /></svg>
         {publishing ? "…" : "Premium"}
         <span className="upt-shine" aria-hidden />
       </button>
@@ -108,15 +108,14 @@ const CSS = `
   display: flex; align-items: center; gap: 3px; padding: 4px; border-radius: 999px; color: #2a1a22; background: rgba(255,252,246,.86); border: 1px solid rgba(60,30,20,.12);
   -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 12px 30px -14px rgba(0,0,0,.55); }
 .upt button { border: 0; cursor: pointer; font-family: inherit; }
-.upt-icon { width: 32px; height: 36px; display: grid; place-items: center; border-radius: 999px; background: transparent; color: inherit; }
+.upt-icon { width: 30px; height: 36px; display: grid; place-items: center; border-radius: 999px; background: transparent; color: inherit; }
 .upt-icon:hover { background: rgba(127,127,127,.14); }
-.upt-sep { width: 1px; height: 20px; margin: 0 1px; background: rgba(60,30,20,.15); }
-.upt-free { height: 36px; padding: 0 10px 0 9px; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; background: #fff; color: #2a1a22;
+.upt-sep { width: 1px; height: 18px; margin: 0; background: rgba(60,30,20,.15); }
+.upt-free { height: 36px; padding: 0 9px 0 8px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: #fff; color: #2a1a22;
   font-size: 13px; font-weight: 800; white-space: nowrap; box-shadow: inset 0 0 0 1.5px rgba(42,26,34,.75); }
 .upt-free:hover { background: #f6f1ea; }
-.upt-primary { position: relative; overflow: hidden; height: 36px; padding: 0 12px 0 10px; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px;
+.upt-primary { position: relative; overflow: hidden; height: 36px; padding: 0 11px 0 9px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px;
   font-size: 13px; font-weight: 800; white-space: nowrap; box-shadow: 0 6px 18px -6px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.45); }
-.upt-primary::before { content: "✦"; font-size: 10px; margin-right: -2px; opacity: .9; }
 .upt-primary:disabled { opacity: .7; cursor: default; }
 .upt svg { flex: none; }
 .upt-shine { position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; pointer-events: none; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);

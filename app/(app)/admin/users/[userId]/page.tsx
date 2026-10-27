@@ -8,7 +8,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ShieldAlert, UserCog, UserRound, LayoutDashboard, LayoutGrid, FileText,
-  Coins, KeyRound, History, TriangleAlert, CalendarDays, Receipt,
+  Coins, KeyRound, History, TriangleAlert, CalendarDays, Receipt, Rocket,
 } from "lucide-react";
 import { C, STATUS_COLOR, type ProfileData } from "./types";
 import { ProfileStyles, Skeleton, Empty, Pill, Btn, Dialog, fmtAgo } from "./ui";
@@ -22,19 +22,20 @@ import ActivityTab from "./ActivityTab";
 import DangerTab from "./DangerTab";
 import AccessTab from "./AccessTab";
 import BillingTab from "./BillingTab";
+import UpgradesTab from "./UpgradesTab";
 import { useToast } from "@/lib/toast/useToast";
 
-const TABS = ["Overview", "Billing", "Pages", "Drafts", "Points", "Access", "Activity", "Danger Zone"] as const;
+const TABS = ["Overview", "Billing", "Pages", "Drafts", "Upgrades", "Points", "Access", "Activity", "Danger Zone"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_ICON: Record<Tab, typeof UserCog> = {
-  Overview: LayoutDashboard, Billing: Receipt, Pages: LayoutGrid, Drafts: FileText, Points: Coins,
+  Overview: LayoutDashboard, Billing: Receipt, Pages: LayoutGrid, Drafts: FileText, Upgrades: Rocket, Points: Coins,
   Access: KeyRound, Activity: History, "Danger Zone": TriangleAlert,
 };
 
 /** "Danger Zone" ⇄ "danger-zone" — the tab's name in `?tab=`. */
 const tabSlug = (t: Tab) => t.toLowerCase().replace(/\s+/g, "-");
 
-const ABOUT = "Everything about one account — billing, pages, points, access and the audit trail. Role changes live on the Overview tab; payments and billing statements on Billing; suspensions and account closure behind Danger Zone.";
+const ABOUT = "Everything about one account — billing, pages, premium upgrades, points, access and the audit trail. Role changes live on the Overview tab; payments and billing statements on Billing; suspensions and account closure behind Danger Zone.";
 
 export default function AdminUserProfilePage() {
   return (
@@ -321,6 +322,7 @@ function ProfileInner() {
             {tab === "Drafts" && (
               <DraftsTab userId={String(userId)} userEmail={user.email} hdr={hdr} />
             )}
+            {tab === "Upgrades" && <UpgradesTab userId={String(userId)} hdr={hdr} />}
             {tab === "Points" && <PointsTab data={data} hdr={hdr} reload={load} />}
             {tab === "Access" && (
               <AccessTab userId={String(userId)} hdr={hdr} user={data.user} accessToken={accessToken} onFreeAccess={load} />
