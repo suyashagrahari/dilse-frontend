@@ -46,6 +46,14 @@ export default function Hero(p: HeroProps) {
         <img {...img("lights", { high: true })} className="lw-lights-b" />
       </div>
 
+      {/* A brass lamp hanging at each side, lowered on its chain as the hero opens. */}
+      <div className="lw-hero-lamps" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lamp", { high: true })} className="lw-hero-lamp lw-hero-lamp-l" />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...img("lamp", { high: true })} className="lw-hero-lamp lw-hero-lamp-r" />
+      </div>
+
       {/* The white-gold lotus pond rising at the screen's two bottom corners (tablets and up). */}
       <div className="lw-hero-gold" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
