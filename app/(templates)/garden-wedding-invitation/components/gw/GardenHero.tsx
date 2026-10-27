@@ -4,9 +4,8 @@
 //
 // Back to front, each plane on its own parallax rate (one rAF-throttled scroll
 // listener writes --gw-sy on the hero; every plane reads it at its own k):
-//   sky (k .45) → drifting clouds (k .35) → banana plants at the edges
-//   (k .18) → the chhatri umbrellas flanking the gazebo, the couple standing
-//   in it (k .08) → a bunch of pink peonies in each bottom corner (k −.06) →
+//   sky (k .45) → drifting clouds (k .35) → the chhatri umbrellas flanking
+//   the gazebo, the couple standing in it (k .08) → a bunch of pink peonies in each bottom corner (k −.06) →
 //   a cherry branch reaching in from each top corner (mirrored, k −.12),
 //   petals drifting through all of it, a fine gold frame around the scene.
 // The names sit in the sky above the gazebo.
@@ -92,17 +91,6 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
         <span className="gw-cloud gw-cloud-c">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.cloudA)} />
-        </span>
-      </div>
-
-      <div className="gw-l gw-l-far" aria-hidden>
-        <span className="gw-a gw-banana gw-banana-l">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.bananaL, { hi: GW.bananaLHi, sizes: "(min-width: 900px) 40vw, 60vw" })} />
-        </span>
-        <span className="gw-a gw-banana gw-banana-r">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.bananaR, { hi: GW.bananaRHi, sizes: "(min-width: 900px) 40vw, 60vw" })} />
         </span>
       </div>
 

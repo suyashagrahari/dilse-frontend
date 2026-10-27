@@ -140,7 +140,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-l-sky { transform: translate3d(0, calc(var(--gw-sy) * .45), 0); }
 .gw-l-sky img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .82; }
 .gw-l-clouds { transform: translate3d(0, calc(var(--gw-sy) * .35), 0); z-index: 1; }
-.gw-l-far { transform: translate3d(0, calc(var(--gw-sy) * .18), 0); z-index: 2; }
 .gw-l-mid { transform: translate3d(0, calc(var(--gw-sy) * .07), 0); z-index: 3; }
 .gw-l-front { transform: translate3d(0, calc(var(--gw-sy) * -.05), 0); z-index: 5; }
 .gw-l-hang { transform: translate3d(0, calc(var(--gw-sy) * -.12), 0); z-index: 7; }
@@ -157,7 +156,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-cloud img { animation: gw-float 16s ease-in-out infinite alternate; }
 .gw-cloud-b img { animation-duration: 21s; animation-delay: -6s; }
 .gw-cloud-c img { animation-duration: 26s; animation-delay: -3s; }
-/* far: banana plants + chhatri umbrellas */
+/* the garden pieces (umbrellas, peony corners) fade in on open */
 .gw-a { opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-hero.is-open .gw-a { opacity: 1; transform: none; }
 /* Pink peonies in both bottom corners, mirrored (sharp art at every size). */
@@ -165,10 +164,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-hcorner img { display: block; height: 100%; width: auto; }
 .gw-hcorner-l { left: -10%; rotate: 8deg; }
 .gw-hcorner-r { right: -10%; rotate: -8deg; scale: -1 1; }
-.gw-banana { bottom: 12%; height: min(48svh, 600px); width: auto; transform: translateY(40px); }
-.gw-banana img { height: 100%; width: auto; transform-origin: 50% 100%; }
-.gw-banana-l { left: -30%; }
-.gw-banana-r { right: -32%; transition-delay: .1s; }
 .gw-chhatri { bottom: 16%; height: min(19svh, 300px); transform: translateY(60px); transition-delay: .35s; }
 .gw-chhatri img { height: 100%; width: auto; }
 .gw-chhatri-l { left: -2%; }
@@ -556,8 +551,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-hero-text { top: max(48px, 5.5svh); }
   .gw-hero-text .wk-eyebrow { max-width: none; }
   .gw-names { font-size: clamp(64px, 11svh, 100px); }
-  .gw-banana-l { left: -5%; } .gw-banana-r { right: -6%; }
-  .gw-banana { height: min(66svh, 720px); }
   .gw-hcorner { height: min(50svh, 520px); bottom: -7%; }
   .gw-hcorner-l { left: -3%; } .gw-hcorner-r { right: -3%; }
   /* The umbrellas flank the gazebo, canopies tucked just behind its pillars, poles planted at its steps. */
