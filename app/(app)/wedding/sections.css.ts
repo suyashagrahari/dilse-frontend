@@ -57,10 +57,10 @@ export const SECTIONS_CSS = `
 .whJHalo { position: absolute; left: 50%; top: 44%; width: 100%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; z-index: 0;
   background: radial-gradient(circle, color-mix(in srgb, var(--glow) 34%, transparent) 0, transparent 64%); animation: whHalo 6s ease-in-out infinite; }
 @keyframes whHalo { 0%, 100% { transform: scale(.94); opacity: .8; } 50% { transform: scale(1.06); opacity: 1; } }
-.whFx { position: absolute; inset: 0; pointer-events: none; translate: calc(var(--mx, 0) * 6px) calc(var(--my, 0) * 4px); transition: translate .5s ease-out, opacity 1s ease .3s; }
+.whFx { position: absolute; inset: 0; pointer-events: none; transition: opacity 1s ease .3s; }
 .whFx.back { z-index: 1; }
 .whFx.front { z-index: 6; }
-.whJProp { position: absolute; height: auto; pointer-events: none; translate: calc(var(--mx, 0) * -12px) calc(var(--my, 0) * -7px); transition: translate .5s ease-out; }
+.whJProp { position: absolute; height: auto; pointer-events: none; }
 .whJProp.flip { scale: -1 1; }
 .whJProp.sway { transform-origin: 50% 0; animation: whSway 5.5s ease-in-out infinite; }
 .whJProp.march { animation: whMarch 1.1s ease-in-out infinite; }
@@ -71,8 +71,8 @@ export const SECTIONS_CSS = `
 @keyframes whFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5%); } }
 .whJScene::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 0; height: 12%; z-index: 2; pointer-events: none; border-radius: 50%;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--deep) 22%, transparent), transparent); }
-.whJCoupleBox { position: absolute; bottom: 3%; width: 0; z-index: 3; translate: calc(var(--mx, 0) * 10px) calc(var(--my, 0) * 5px);
-  transition: translate .5s ease-out, transform 1.1s cubic-bezier(.2,.9,.25,1) .12s, opacity .8s ease .12s; }
+.whJCoupleBox { position: absolute; bottom: 3%; width: 0; z-index: 3;
+  transition: transform 1.1s cubic-bezier(.2,.9,.25,1) .12s, opacity .8s ease .12s; }
 .whJCouple { position: absolute; left: 0; bottom: 0; height: 100%; width: auto; max-width: none; translate: -50% 0; transform-origin: 50% 100%;
   filter: drop-shadow(0 14px 14px rgba(61,12,17,.22)); animation: whBreathe 5.5s ease-in-out infinite; }
 @keyframes whBreathe { 0%, 100% { scale: 1; } 50% { scale: 1.012 1.022; } }
@@ -177,9 +177,9 @@ export const SECTIONS_CSS = `
 @media (min-width: 768px) {
   .whJ { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 44px; align-items: start; }
   .whJStageWrap { display: block; position: sticky; top: max(96px, calc(50svh - 0.5 * min(calc(100svh - 190px), 760px) + 4px)); perspective: 1400px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
-  .whJStage { --mx: 0; --my: 0; position: relative; width: min(100%, calc(min(calc(100svh - 190px), 760px) * .84)); margin: 0 auto; aspect-ratio: .84;
-    border-radius: 28px; overflow: hidden; isolation: isolate; transform: rotateY(calc(var(--mx) * 6deg)) rotateX(calc(var(--my) * -5deg));
-    transition: transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .8s ease;
+  .whJStage { position: relative; width: min(100%, calc(min(calc(100svh - 190px), 760px) * .84)); margin: 0 auto; aspect-ratio: .84;
+    border-radius: 28px; overflow: hidden; isolation: isolate;
+    transition: box-shadow .8s ease;
     box-shadow: 0 44px 80px -48px color-mix(in srgb, var(--deep) 80%, transparent), 0 0 0 1px rgba(201,168,76,.5), 0 0 0 8px rgba(255,250,244,.92), 0 0 0 9px rgba(201,168,76,.35); }
   .whJStage::after { content: ""; position: absolute; inset: 12px; border-radius: 18px; z-index: 9; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.8); }
   .whJFrame { position: absolute; inset: 0; opacity: 0; transform: scale(1.07); transition: opacity .9s ease, transform 1.4s cubic-bezier(.2,.8,.2,1); }
@@ -196,9 +196,6 @@ export const SECTIONS_CSS = `
     background: radial-gradient(circle, color-mix(in srgb, var(--glow) 50%, transparent), transparent 58%); animation: whWash 1.3s ease-out; }
   .whJWash::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; box-shadow: 0 0 0 2px rgba(201,168,76,.85); }
   @keyframes whWash { 0% { transform: scale(.08); opacity: .95; } 100% { transform: scale(1.3); opacity: 0; } }
-  .whJGlare { position: absolute; inset: -40%; z-index: 8; pointer-events: none; opacity: 0; translate: calc(var(--mx) * 22%) calc(var(--my) * 22%);
-    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.5), rgba(255,255,255,0) 34%); transition: opacity .5s ease, translate .3s ease-out; }
-  .whJStage.is-tilt .whJGlare { opacity: .7; }
   .whJCount { position: relative; display: flex; align-items: baseline; gap: 6px; padding: 9px 16px; border-radius: 999px; white-space: nowrap;
     font: 600 12px/1 var(--caps); letter-spacing: .16em; color: var(--muted); background: rgba(255,250,244,.9); box-shadow: inset 0 0 0 1px rgba(201,168,76,.45), 0 10px 24px -16px rgba(61,12,17,.5); }
   .whJCount b { color: var(--deep); transition: color .5s ease; }
@@ -230,7 +227,7 @@ export const SECTIONS_CSS = `
   .whJourney .whJ *, .whJourney .whJ *::before, .whJourney .whJ *::after { animation: none !important; transition: none !important; }
   .whDraw { stroke-dashoffset: 0; }
   .whDot { opacity: 1; }
-  .whFall, .whRise, .whBurst, .whJWash, .whJGlare { display: none; }
+  .whFall, .whRise, .whBurst, .whJWash { display: none; }
   .whJStage { transform: none !important; }
 }
 

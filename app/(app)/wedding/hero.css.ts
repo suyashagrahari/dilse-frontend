@@ -1,8 +1,8 @@
 // The /wedding hero: a full-bleed terrace at golden hour (see HubHero.tsx).
 // Phone first: the words on top, the scene below, the terrace running under
 // the bottom nav. From 1024px the words sit left and the scene fills the right.
-// Parallax layers (.px0–.px4) read --sy (scroll px) and --mx/--my (pointer,
-// -1…1) and use `translate` so a layer's own transform/animation is untouched.
+// Parallax layers (.px0–.px4) read --sy (scroll px) and use `translate` so a
+// layer's own transform/animation is untouched. The pointer moves nothing.
 // HubHero writes the layers' `translate` inline, per layer, from the same
 // numbers — a custom property set on .whHero would restyle every descendant on
 // every scroll frame; these rules are the fallback before it hydrates.
@@ -21,10 +21,10 @@ export const HERO_CSS = `
 @media (min-width: 768px) { .whHero { margin-top: 0; min-height: max(100svh, 720px); } }
 
 .px0 { translate: 0 calc(var(--sy) * .32px); }
-.px1 { translate: calc(var(--mx) * -8px) calc(var(--sy) * .22px); }
-.px2 { translate: calc(var(--mx) * -12px) calc(var(--sy) * .14px + var(--my) * -6px); }
-.px3 { translate: calc(var(--mx) * -18px) calc(var(--sy) * .07px); }
-.px4 { translate: calc(var(--mx) * -26px) calc(var(--sy) * .02px); }
+.px1 { translate: 0 calc(var(--sy) * .22px); }
+.px2 { translate: 0 calc(var(--sy) * .14px); }
+.px3 { translate: 0 calc(var(--sy) * .07px); }
+.px4 { translate: 0 calc(var(--sy) * .02px); }
 
 /* ── sky ─────────────────────────────────────────────────────────────── */
 .whSky { position: absolute; inset: 0; z-index: -2; pointer-events: none; }

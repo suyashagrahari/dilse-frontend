@@ -6,8 +6,8 @@
 // terrace at golden hour: a peacock's train
 // fans open behind the couple, two more peacocks keep them company, marigold
 // strands and gold jhumkas sway from the toran, lanterns glow and petals and
-// feathers drift down. Scroll and (on desktop) the pointer move the layers at
-// different depths.
+// feathers drift down. Scrolling moves the layers at different depths; the
+// pointer does not move anything (the owner wants the scene to stay put).
 //
 // Performance: the couple is the LCP element (preloaded at high priority by
 // page.tsx), the art is sized variants of public/wedding-v3/hub/lux served
@@ -94,8 +94,8 @@ function Pic({ phone, ...img }: React.ImgHTMLAttributes<HTMLImageElement> & { ph
   );
 }
 
-/** Parallax per layer .px0–.px4: [px per unit of pointer x, px per px of scroll, px per unit of pointer y]. Mirrors hero.css.ts. */
-const PX: [number, number, number][] = [[0, 0.32, 0], [-8, 0.22, 0], [-12, 0.14, -6], [-18, 0.07, 0], [-26, 0.02, 0]];
+/** Parallax per layer .px0–.px4: px per px of scroll. Mirrors hero.css.ts. */
+const PX = [0.32, 0.22, 0.14, 0.07, 0.02];
 
 const FAN = Array.from({ length: 17 }, (_, i) => -84 + i * 10.5);
 
@@ -147,8 +147,8 @@ export default function HubHero() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Parallax: scroll depth and (fine pointers only) the pointer, written as
-  // each layer's own inline `translate` in one rAF (the same numbers as the
+  // Parallax: scroll depth only, written as each layer's own inline
+  // `translate` in one rAF (the same numbers as the
   // .px0–.px4 rules in hero.css.ts). Writing them as custom properties on the
   // hero restyled every element inside it on every scroll frame. The hero's
   // height is read once per resize, never inside a scroll handler.
@@ -157,7 +157,7 @@ export default function HubHero() {
     if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const layers = PX.map((k, i) => ({ k, els: Array.from(el.querySelectorAll<HTMLElement>(`.px${i}`)) }));
     let raf = 0;
-    let sy = 0, mx = 0, my = 0, tx = 0, ty = 0;
+    let sy = 0;
     let visible = true;
     let height = el.offsetHeight;
     const ro = new ResizeObserver(() => { height = el.offsetHeight; });
@@ -167,22 +167,13 @@ export default function HubHero() {
       // Read in the frame, not in the scroll event: reading scrollY there
       // forces a style + layout pass on every event.
       sy = Math.min(window.scrollY, height);
-      mx += (tx - mx) * 0.12;
-      my += (ty - my) * 0.12;
       for (const { k, els } of layers) {
-        const v = `${(mx * k[0]).toFixed(2)}px ${(sy * k[1] + my * k[2]).toFixed(2)}px`;
+        const v = `0 ${(sy * k).toFixed(2)}px`;
         for (const n of els) n.style.translate = v;
       }
-      if (Math.abs(tx - mx) > 0.002 || Math.abs(ty - my) > 0.002) raf = requestAnimationFrame(paint);
     };
     const kick = () => { if (!raf && visible) raf = requestAnimationFrame(paint); };
     const onScroll = kick;
-    const fine = window.matchMedia("(pointer: fine)").matches;
-    const onMove = (e: PointerEvent) => {
-      tx = (e.clientX / window.innerWidth) * 2 - 1;
-      ty = (e.clientY / window.innerHeight) * 2 - 1;
-      kick();
-    };
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       el.classList.toggle("is-off", !visible);
@@ -190,14 +181,12 @@ export default function HubHero() {
     });
     io.observe(el);
     window.addEventListener("scroll", onScroll, { passive: true });
-    if (fine) window.addEventListener("pointermove", onMove, { passive: true });
     onScroll();
     return () => {
       io.disconnect();
       ro.disconnect();
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("pointermove", onMove);
     };
   }, []);
 

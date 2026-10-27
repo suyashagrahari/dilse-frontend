@@ -8,12 +8,12 @@
 // beams, baraat fireworks, a garland circling the sacred fire, reception
 // sparkles). Phones get a snap carousel with a peek of the next card and a
 // segmented progress rail; from 768px the art pins in a sticky stage that
-// tilts under the pointer while the functions scroll past on the right.
+// stays still while the functions scroll past on the right.
 //
 // Motion is transform / opacity / stroke-dashoffset only, pauses whenever the
 // section or a card is off-screen, and switches off for reduced motion.
 
-import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { JOURNEY, type JourneyStep } from "./content";
@@ -230,7 +230,6 @@ export default function HubJourney({ visible }: { visible: Set<string> }) {
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLOListElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const raf = useRef(0);
 
   // The stage's scenes mount one per idle slot after hydration (the one in
   // front at once), so no single task builds all seven.
@@ -285,31 +284,6 @@ export default function HubJourney({ visible }: { visible: Set<string> }) {
     return () => io.disconnect();
   }, []);
 
-  useEffect(() => () => cancelAnimationFrame(raf.current), []);
-
-  // A gentle 3D tilt of the stage under a mouse; the layers inside parallax off --mx / --my.
-  const tilt = (e: PointerEvent<HTMLDivElement>) => {
-    const el = stage.current;
-    if (!el || e.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const r = el.getBoundingClientRect();
-    const mx = ((e.clientX - r.left) / r.width) * 2 - 1;
-    const my = ((e.clientY - r.top) / r.height) * 2 - 1;
-    cancelAnimationFrame(raf.current);
-    raf.current = requestAnimationFrame(() => {
-      el.style.setProperty("--mx", mx.toFixed(3));
-      el.style.setProperty("--my", my.toFixed(3));
-      el.classList.add("is-tilt");
-    });
-  };
-  const untilt = () => {
-    const el = stage.current;
-    if (!el) return;
-    cancelAnimationFrame(raf.current);
-    el.style.setProperty("--mx", "0");
-    el.style.setProperty("--my", "0");
-    el.classList.remove("is-tilt");
-  };
-
   const go = (i: number) => {
     const el = list.current;
     const card = el?.querySelectorAll<HTMLElement>(".whJStep")[i];
@@ -329,14 +303,13 @@ export default function HubJourney({ visible }: { visible: Set<string> }) {
 
         <div className="whJ" style={{ "--p": active / (JOURNEY.length - 1), "--deep": now.deep, "--glow": now.glow, "--tint": now.tint } as Vars}>
           <div className="whJStageWrap" aria-hidden>
-            <div className="whJStage" ref={stage} onPointerMove={tilt} onPointerLeave={untilt}>
+            <div className="whJStage" ref={stage}>
               {wide && JOURNEY.map((s, i) => (i === active || i < ready) && (
                 <div key={s.id} className={`whJFrame${i === active ? " is-on" : ""}`}>
                   <Scene s={s} />
                 </div>
               ))}
               <span key={active} className="whJWash" />
-              <span className="whJGlare" />
               <Corners />
             </div>
             <span className="whJCount"><b>{pad(active + 1)}</b> / {pad(JOURNEY.length)}<em>{now.name}</em></span>
