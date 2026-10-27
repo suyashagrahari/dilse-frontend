@@ -1317,11 +1317,11 @@ export default function ProfilePage() {
   // Published invitations that take RSVPs: their guest numbers sit right under
   // the hero, so a couple sees who is coming without opening the editor.
   const guestPages: GuestPage[] = myCreations
-    .filter((p) => p.isPublished && p.shareId && RSVP_TEMPLATES.has(p.templateType))
+    .filter((p) => p.isPublished && p.shareId && RSVP_TEMPLATES[p.templateType])
     .map((p) => ({
       _id: p._id,
       shareId: p.shareId,
-      templateType: p.templateType,
+      templateType: RSVP_TEMPLATES[p.templateType],
       label: templateLabel(p.templateType),
       emoji: templateEmoji(p.templateType),
       title: p.recipientName || p.senderName || templateLabel(p.templateType),
