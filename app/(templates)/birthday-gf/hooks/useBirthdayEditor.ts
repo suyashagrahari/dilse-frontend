@@ -13,6 +13,26 @@ import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useResumeDraft } from "@/lib/draft/resume";
 import { goBackFromTemplate } from "@/lib/backNav";
+import { useUpgradeOffer } from "@/lib/upgrade/useUpgradeOffer";
+import { composeValentineDraft } from "@/lib/upgrade/compose";
+import type { LovePhoto } from "@/app/(templates)/_love/types";
+
+/** Every photo they added, once each, captions kept — none when they added none. */
+function photosOf(d: BirthdayData): LovePhoto[] {
+  const out: LovePhoto[] = [];
+  const seen = new Set<string>();
+  const add = (url: string | undefined, caption = "") => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    out.push({ url, caption: caption.slice(0, 60) });
+  };
+  add(d.homeCoverPhoto?.url);
+  add(d.homePhoto1);
+  add(d.homePhoto2);
+  for (const p of d.galleryPhotos || []) add(p.url, p.caption);
+  add(d.surprisePhoto);
+  return out;
+}
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "birthday-gf";
@@ -88,6 +108,40 @@ export function useBirthdayEditor() {
    * so a state flag would still read as the previous render's value.
    */
   const publishInFlightRef = useRef(false);
+
+  // ── "See it in Premium, free" (lib/upgrade/useUpgradeOffer) ─────────────────
+  // Publish first offers Birthday Surprise ✦ Premium, filled from what they
+  // wrote here (server AI) with their own photos; "Publish free" carries on.
+  const up = useUpgradeOffer<BirthdayData>({
+    from: TEMPLATE,
+    active: isPersonalized && !shareUrl,
+    token: accessToken,
+    pageId,
+    backUrl: (id) => (id ? `/${TEMPLATE}?id=${id}&publishFree=1` : `/${TEMPLATE}?publishFree=1`),
+    body: (d) => ({
+      recipientName: d.recipientName,
+      senderName: d.senderName,
+      birthdayWish: d.birthdayWish,
+      personalMessage: d.personalMessage,
+      galleryPhotos: (d.galleryPhotos || []).map((p) => ({ caption: p.caption })),
+      quizQuestions: d.quizQuestions,
+      truthDareQuestions: d.truthDareQuestions,
+    }),
+    compose: (res, d) =>
+      composeValentineDraft("birthday-premium", res.patch ?? {}, { recipientName: d.recipientName, senderName: d.senderName, photos: photosOf(d) }),
+    recipientOf: (d) => d.recipientName,
+    withRecipient: (d, name) => ({ ...d, recipientName: name }),
+    keepFree: (d) => {
+      try { sessionStorage.setItem("birthday_gf_draft", JSON.stringify({ data: d, step: 0, completed: true })); } catch {}
+    },
+    onDismiss: () => { publishInFlightRef.current = false; },
+    copy: {
+      sub: "One tap and we turn your page into a pop-up birthday storybook: your names, your wishes and message, your photos, already in place. Watch exactly how it looks before you decide.",
+      keep: "Your free birthday page stays saved: you can still publish it free from the premium preview.",
+      recipientLabel: "Whose birthday is it?",
+      recipientPlaceholder: "Their name, e.g. Riya",
+    },
+  });
 
   // Game data from DB (persisted across refreshes)
   const [gameResponsesFromDB, setGameResponsesFromDB] = useState<Record<string, unknown>[]>([]);
@@ -203,11 +257,10 @@ export function useBirthdayEditor() {
       password:           password || "",
     };
 
+    const run = async () => {
     setSaving(true);
     setPublishing(true);
     setEditMode(null);
-
-    (async () => {
       try {
         const res = await fetch(`${API_URL}/birthday-gf-pages`, {
           method: "POST",
@@ -237,6 +290,7 @@ export function useBirthdayEditor() {
           const url = pubResult.data.shareUrl as string;
           setShareUrl(url);
           setEditMode(null); // published — no editor sheet stays open over it
+          up.notePublished(savedId);
           try { sessionStorage.removeItem("birthday_gf_draft"); } catch {}
           pushToast({
             type: "publish",
@@ -253,7 +307,11 @@ export function useBirthdayEditor() {
         setSaving(false);
         setPublishing(false);
       }
-    })();
+    };
+    // The premium offer first; adoption keeps standing down while it is open.
+    setContent(data);
+    setIsPersonalized(true);
+    void up.intercept(data, password, () => void run()).then((opened) => { if (!opened) void run(); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
@@ -560,6 +618,13 @@ export function useBirthdayEditor() {
       setShowAuth(true);
       return;
     }
+    if (await up.intercept(content, pagePassword, () => void publishSignedIn())) return;
+    await publishSignedIn();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken, content, pagePassword, up.intercept]);
+
+  /** The signed-in publish: save the row if there is none, clear the paywall, publish. */
+  const publishSignedIn = async () => {
     setPublishing(true);
     try {
       let id = pageId;
@@ -607,6 +672,7 @@ export function useBirthdayEditor() {
         const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
         setEditMode(null); // published — no editor sheet stays open over it
+        up.notePublished(id);
         try { sessionStorage.removeItem("birthday_gf_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({
@@ -627,7 +693,16 @@ export function useBirthdayEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
+  };
+
+  // Back from the premium preview's "Free": publish once the page is back, no offer.
+  const autoFreeRef = useRef(false);
+  useEffect(() => {
+    if (autoFreeRef.current || !up.publishFreeAsked) return;
+    if (!isPersonalized || shareUrl || publishing || !isAuthenticated || !accessToken) return;
+    autoFreeRef.current = true;
+    void handlePublish();
+  }, [up.publishFreeAsked, isPersonalized, shareUrl, publishing, isAuthenticated, accessToken, handlePublish]);
 
   const [showPublishSheet, setShowPublishSheet] = useState(false);
 
@@ -678,6 +753,7 @@ export function useBirthdayEditor() {
     handlePublish, handleCopy, handleShare,
     pushToast, gameResponsesFromDB, quizAttemptsFromDB,
 
+    upgrade: up.modal,
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",

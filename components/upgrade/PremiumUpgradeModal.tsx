@@ -21,7 +21,7 @@ import { X, Sparkles, Send, RotateCcw } from "lucide-react";
 import { formatPrice, type UpgradeOffer } from "@/lib/upgrade/offer";
 
 const PERK_ICONS = ["🎁", "🌷", "💌", "💗", "✨"];
-const WORKING_STEPS = ["Reading your card…", "Re-tying your flowers…", "Writing a line for each bloom…", "Wrapping it in Premium…"];
+const WORKING_STEPS = ["Reading what you wrote…", "Carrying your names and photos…", "Writing the premium pages…", "Wrapping it in Premium…"];
 
 export interface PremiumUpgradeModalProps {
   offer: UpgradeOffer;
@@ -29,13 +29,17 @@ export interface PremiumUpgradeModalProps {
   cover: string;
   /** Asked when the free page has no recipient yet, so the preview can say their name. */
   recipient?: { value: string; onChange: (v: string) => void; label: string; placeholder: string } | null;
+  /** The line under the title (what gets carried across). Defaults to the bouquet's. */
+  sub?: string;
+  /** The reassurance under the buttons. Defaults to the bouquet's. */
+  keep?: string;
   /** Converts + navigates. A thrown Error's message is shown. */
   onTry: () => Promise<void>;
   onFree: () => void;
   onClose: () => void;
 }
 
-export default function PremiumUpgradeModal({ offer, cover, recipient, onTry, onFree, onClose }: PremiumUpgradeModalProps) {
+export default function PremiumUpgradeModal({ offer, cover, recipient, sub, keep, onTry, onFree, onClose }: PremiumUpgradeModalProps) {
   const [stage, setStage] = useState<"offer" | "working" | "error">("offer");
   const [error, setError] = useState("");
   const [step, setStep] = useState(0);
@@ -135,7 +139,7 @@ export default function PremiumUpgradeModal({ offer, cover, recipient, onTry, on
             <motion.div key="o" className="upm-body" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <h2 id={titleId} className="upm-title">See it in Premium, free</h2>
               <p className="upm-sub">
-                One tap and we fill the whole premium bouquet for you: your flowers, your card, your names, already in place. Watch exactly how it looks before you decide.
+                {sub ?? "One tap and we fill the whole premium bouquet for you: your flowers, your card, your names, already in place. Watch exactly how it looks before you decide."}
               </p>
 
               <ul className="upm-perks">
@@ -174,7 +178,7 @@ export default function PremiumUpgradeModal({ offer, cover, recipient, onTry, on
                   <span>Publish free</span>
                 </button>
               </div>
-              <p className="upm-fine">Your free bouquet stays saved: you can still publish it free from the premium preview.</p>
+              <p className="upm-fine">{keep ?? "Your free bouquet stays saved: you can still publish it free from the premium preview."}</p>
             </motion.div>
           )}
         </AnimatePresence>

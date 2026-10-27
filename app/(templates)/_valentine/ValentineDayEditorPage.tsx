@@ -25,6 +25,7 @@ import type { DaySlug, ValentineReactions } from "./types";
 import { useValentineDayEditor } from "./useValentineDayEditor";
 import { answeredWhen } from "./kit/answer";
 import UpgradeTopBar, { useUpgradeArrival } from "@/components/upgrade/UpgradeBridge";
+import PremiumUpgradeModal from "@/components/upgrade/PremiumUpgradeModal";
 
 const noopReact = () => {};
 
@@ -186,6 +187,9 @@ function Inner({ slug }: { slug: DaySlug }) {
       </AnimatePresence>
 
       <AnimatePresence>{e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}</AnimatePresence>
+
+      {/* "See it in Premium, free" — a $2 day with a premium sibling asks before publishing. */}
+      <AnimatePresence>{e.upgrade && <PremiumUpgradeModal {...e.upgrade} />}</AnimatePresence>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { Suspense, lazy, useState, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import PremiumUpgradeModal from "@/components/upgrade/PremiumUpgradeModal";
 
 import { useBirthdayEditor } from "./hooks/useBirthdayEditor";
 
@@ -280,6 +281,9 @@ function BirthdayGfPageInner() {
           <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />
         )}
       </AnimatePresence>
+
+      {/* "See it in Premium, free" — opened by Publish before the free publish runs. */}
+      <AnimatePresence>{editor.upgrade && <PremiumUpgradeModal {...editor.upgrade} />}</AnimatePresence>
 
     </div>
   );

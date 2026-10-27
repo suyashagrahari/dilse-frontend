@@ -100,8 +100,12 @@ export async function fetchUpgradeOffer(from: string, token?: string | null): Pr
   }
 }
 
-/** Free content → a premium draft (AI-written). Throws a user-facing message. */
-export async function convertToPremium<T>(from: string, data: unknown, token?: string | null, pageId?: string | null): Promise<{ to: string; draft: T; source: "ai" | "carried" }> {
+/**
+ * Free content → the premium version (AI-written). Throws a user-facing message.
+ * The bouquet comes back as a whole `draft`; the birthday pages as a `patch`
+ * over the premium demo (lib/upgrade/compose.ts).
+ */
+export async function convertToPremium<T>(from: string, data: unknown, token?: string | null, pageId?: string | null): Promise<{ to: string; draft?: T; patch?: Record<string, unknown>; source: "ai" | "carried" }> {
   const r = await fetch(`${API_URL}/upgrade/${encodeURIComponent(from)}/convert`, {
     method: "POST",
     headers: jsonHeaders(token),
@@ -145,11 +149,23 @@ export function clearUpgradeContext(): void {
   try { window.sessionStorage.removeItem(CTX_KEY); } catch {}
 }
 
-/** Put a draft where the premium editor restores it into preview (useValentineDayEditor). */
-export function handDraftTo(slug: string, draft: unknown): void {
-  const payload = JSON.stringify({ data: draft, password: "", completed: true });
-  try { window.localStorage.setItem(`${slug}_draft`, payload); return; } catch {}
-  try { window.sessionStorage.setItem(`${slug}_draft`, payload); } catch {}
+/**
+ * Put a draft where the premium editor restores it into preview
+ * (useValentineDayEditor). Photos still held in the browser (data: URLs, not
+ * uploaded yet) can overflow storage; then the draft goes without them rather
+ * than not at all. Returns false when even that failed.
+ */
+export function handDraftTo(slug: string, draft: unknown): boolean {
+  const put = (d: unknown) => {
+    const payload = JSON.stringify({ data: d, password: "", completed: true });
+    try { window.localStorage.setItem(`${slug}_draft`, payload); return true; } catch {}
+    try { window.sessionStorage.setItem(`${slug}_draft`, payload); return true; } catch {}
+    return false;
+  };
+  if (put(draft)) return true;
+  const d = draft as { photos?: { url?: string }[] };
+  if (Array.isArray(d?.photos)) return put({ ...d, photos: d.photos.filter((p) => !String(p?.url ?? "").startsWith("data:")) });
+  return false;
 }
 
 /** "₹149" / "$1.99". */

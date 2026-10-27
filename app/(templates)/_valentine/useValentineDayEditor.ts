@@ -35,6 +35,16 @@ import {
   type ValentineReactions,
 } from "./types";
 import { goBackFromTemplate } from "@/lib/backNav";
+import { useUpgradeOffer } from "@/lib/upgrade/useUpgradeOffer";
+import { composeValentineDraft } from "@/lib/upgrade/compose";
+
+/**
+ * Days whose publish first offers a premium sibling, filled from what they
+ * wrote (lib/upgrade/useUpgradeOffer; the server decides whether it is on).
+ */
+const PREMIUM_UPGRADE: Partial<Record<DaySlug, DaySlug>> = {
+  "happy-birthday": "birthday-premium",
+};
 
 type DraftShape = { data?: ValentineDayData; password?: string; completed?: boolean };
 
@@ -93,6 +103,42 @@ export function useValentineDayEditor(slug: DaySlug) {
   const pendingPublishRef = useRef<{ data: ValentineDayData; password: string } | null>(null);
   /** See useCatchEditor: stops useDraft's adoption racing the deferred publish. */
   const publishInFlightRef = useRef(false);
+
+  // ── "See it in Premium, free" ───────────────────────────────────────────────
+  const upgradeTo = PREMIUM_UPGRADE[slug];
+  const up = useUpgradeOffer<ValentineDayData>({
+    from: slug,
+    enabled: !!upgradeTo,
+    active: isPersonalized && !shareUrl,
+    token: accessToken,
+    pageId,
+    backUrl: (id) => (id ? `/${slug}?edit=${id}&publishFree=1` : `/${slug}?publishFree=1`),
+    // Photos stay in the browser; only their words go to the server.
+    body: (d) => ({ ...toBody(d, ""), photos: d.photos.map((p) => ({ caption: p.caption ?? "", note: p.note ?? "" })) }),
+    compose: async (res, d) => {
+      const next = await composeValentineDraft(upgradeTo as DaySlug, res.patch ?? {}, {
+        recipientName: d.recipientName,
+        senderName: d.senderName,
+        petName: d.petName,
+        photos: d.photos,
+      });
+      // Their song comes along too.
+      if (d.musicMode === "youtube" && d.musicYoutubeId) {
+        return { ...next, music: true, musicMode: "youtube" as const, musicYoutubeId: d.musicYoutubeId, musicStart: d.musicStart };
+      }
+      return next;
+    },
+    recipientOf: (d) => d.recipientName,
+    withRecipient: (d, name) => ({ ...d, recipientName: name }),
+    keepFree: (d, password) => saveDraft({ data: d, password, completed: true }),
+    onDismiss: () => { publishInFlightRef.current = false; },
+    copy: {
+      sub: "One tap and we turn your page into a pop-up birthday storybook: your names, your letter, your photos and your song, already in place. Watch exactly how it looks before you decide.",
+      keep: "Your birthday page stays saved: you can still publish it from the premium preview.",
+      recipientLabel: "Whose birthday is it?",
+      recipientPlaceholder: "Their name, e.g. Riya",
+    },
+  });
 
   const headers = useCallback(
     () => ({
@@ -163,9 +209,10 @@ export function useValentineDayEditor(slug: DaySlug) {
     pendingPublishRef.current = null;
     publishInFlightRef.current = true;
 
+    const run = async () => {
+    publishInFlightRef.current = true;
     setPublishing(true);
     setEditMode("preview");
-    (async () => {
       try {
         const res = await fetch(BASE, { method: "POST", headers: headers(), body: JSON.stringify(toBody(data, password)) });
         const result = await res.json();
@@ -186,6 +233,7 @@ export function useValentineDayEditor(slug: DaySlug) {
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
           clearDraft();
+          up.notePublished(savedId);
           // Count the publish (and tell them) BEFORE saving the story to their
           // profile: that save is a model call that can take seconds, and an
           // event behind it is lost whenever they leave the page first.
@@ -207,7 +255,12 @@ export function useValentineDayEditor(slug: DaySlug) {
         publishInFlightRef.current = false;
         setPublishing(false);
       }
-    })();
+    };
+    // The premium offer first (when this day has one); adoption stands down while it is open.
+    setContent(data);
+    setIsPersonalized(true);
+    setEditMode("preview");
+    void up.intercept(data, password, () => void run()).then((opened) => { if (!opened) void run(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
@@ -342,6 +395,13 @@ export function useValentineDayEditor(slug: DaySlug) {
       return;
     }
 
+    if (await up.intercept(content, pagePassword, () => void publishSignedIn())) return;
+    await publishSignedIn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, pagePassword, isAuthenticated, accessToken, pushToast, slug, up.intercept]);
+
+  /** The signed-in publish: save (create or update), clear the paywall, publish. */
+  const publishSignedIn = async () => {
     setPublishing(true);
     try {
       let id = pageId;
@@ -360,6 +420,7 @@ export function useValentineDayEditor(slug: DaySlug) {
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
         clearDraft();
+        up.notePublished(id);
         // Count the publish (and tell them) BEFORE saving the story to their
         // profile: that save is a model call that can take seconds, and an
         // event behind it is lost whenever they leave the page first.
@@ -380,8 +441,16 @@ export function useValentineDayEditor(slug: DaySlug) {
     } finally {
       setPublishing(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill, slug]);
+  };
+
+  // Back from the premium preview's "Free": publish once the page is back, no offer.
+  const autoFreeRef = useRef(false);
+  useEffect(() => {
+    if (autoFreeRef.current || !up.publishFreeAsked || !upgradeTo) return;
+    if (!isPersonalized || shareUrl || publishing || !isAuthenticated || !accessToken) return;
+    autoFreeRef.current = true;
+    void publish();
+  }, [up.publishFreeAsked, upgradeTo, isPersonalized, shareUrl, publishing, isAuthenticated, accessToken, publish]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -420,6 +489,7 @@ export function useValentineDayEditor(slug: DaySlug) {
     handleEditClick, handleEditFromPreview, handleSave, discardEdits,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
+    upgrade: up.modal,
     pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
