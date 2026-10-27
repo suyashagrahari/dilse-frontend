@@ -67,7 +67,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
       <div ref={stage} className="gw-finale-stage" aria-hidden>
         <span className="gw-fin-tree gw-fin-tree-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.peonyL, { lazy: true })} />
+          <img {...gwImg(GW.peonyL, { lazy: true, hi: GW.peonyL2x, sizes: "300px" })} />
         </span>
         <span className="gw-fin-pav">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -79,7 +79,7 @@ export default function Finale({ seal, sealHi, closing, endLine, first, second, 
         </span>
         <span className="gw-fin-tree gw-fin-tree-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.peonyR, { lazy: true })} />
+          <img {...gwImg(GW.peonyR, { lazy: true, hi: GW.peonyR2x, sizes: "300px" })} />
         </span>
         {bloom && !reduce && <Petals mode="drift" count={10} seed={23} className="gw-fin-petals" />}
       </div>

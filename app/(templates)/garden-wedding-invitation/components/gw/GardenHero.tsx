@@ -7,14 +7,14 @@
 //   sky (k .45) → drifting clouds (k .35) → chhatri umbrellas + banana plants
 //   at the edges (k .18) → the hedge wall + the gazebo, the couple standing in
 //   it (k .08) → the peacock strutting along the hedge → lotus + rocks in the
-//   foreground (k −.06) → the cherry branch and lanterns hanging from the top
-//   (k −.12), petals drifting through all of it.
+//   foreground (k −.06) → a cherry branch reaching in from each top corner
+//   (mirrored, k −.12), petals drifting through all of it.
 // The names sit in the sky above the gazebo.
 //
 // Entrance (`open`): the clouds part, the gazebo rises, the couple appears in
-// it, the peacock walks in from the right and settles, the lanterns swing.
-// After that only gentle loops (lantern sway, cloud drift, peacock bob, petals),
-// paused whenever the hero is off screen. No parallax under reduced motion or
+// it, the peacock walks in from the right and settles. After that the scene
+// holds still (the owner wants nothing swinging); only the clouds drift and the
+// petals fall, paused whenever the hero is off screen. No parallax under reduced motion or
 // on low-end phones (`lite`). Transform/opacity only.
 
 import { useEffect, useRef, type ReactNode } from "react";
@@ -150,17 +150,13 @@ export default function GardenHero({ open, lite, s, lang, first, second, guest, 
       </div>
 
       <div className="gw-l gw-l-hang" aria-hidden>
-        <span className="gw-blossom">
+        <span className="gw-blossom gw-blossom-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...gwImg(GW.blossom)} />
         </span>
-        <span className="gw-hang gw-hang-l">
+        <span className="gw-blossom gw-blossom-r">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.lanterns)} />
-        </span>
-        <span className="gw-hang gw-hang-r">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...gwImg(GW.lanterns)} />
+          <img {...gwImg(GW.blossom)} />
         </span>
       </div>
 

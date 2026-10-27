@@ -66,14 +66,6 @@ export default function Story({ chapters }: { chapters: GwChapter[] }) {
 
   return (
     <div className="gw-story" ref={ref}>
-      <span className="gw-drift gw-drift-a" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...gwImg(GW.blossom, { lazy: true })} />
-      </span>
-      <span className="gw-drift gw-drift-b" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...gwImg(GW.rose, { lazy: true })} />
-      </span>
       <span className="gw-story-rail" aria-hidden>
         <i />
       </span>

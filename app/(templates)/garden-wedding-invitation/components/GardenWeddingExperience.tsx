@@ -230,14 +230,14 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
       <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="normal" className="gw-sec gw-sec-invite">
         <Reveal effect="rise" className="gw-invite">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img className="gw-invite-crown" {...gwImg(GW.lattice, { lazy: true })} />
-          <span className="gw-invite-rose" aria-hidden>
+          <img className="gw-invite-crown" {...gwImg(GW.archCrown, { lazy: true })} />
+          <span className="gw-invite-corner gw-invite-corner-l" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.rose, { lazy: true })} />
+            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
           </span>
-          <span className="gw-invite-bunch" aria-hidden>
+          <span className="gw-invite-corner gw-invite-corner-r" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.anthurium, { lazy: true })} />
+            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
           </span>
           <div className="gw-invite-in">
             <MessageBlock text={data.letter} hindi={m.hindiMessage} ornament={null} heading={<span lang={lang}>{s.shubh}</span>} signature={data.endLine ? undefined : couple} />
@@ -250,11 +250,11 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
         <Section id="families" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} title={<span lang={lang}>{s.families}</span>} ornament="divider-lotus" width="normal" className="gw-sec gw-sec-fam">
           <span className="gw-fam-tree gw-fam-tree-l" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.peonyL, { lazy: true })} />
+            <img {...gwImg(GW.peonyL, { lazy: true, hi: GW.peonyL2x, sizes: "300px" })} />
           </span>
           <span className="gw-fam-tree gw-fam-tree-r" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.peonyR, { lazy: true })} />
+            <img {...gwImg(GW.peonyR, { lazy: true, hi: GW.peonyR2x, sizes: "300px" })} />
           </span>
           {m.blessingsOf && (
             <Reveal className="gw-blessings-of">
@@ -360,10 +360,6 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
       {/* ── Blessings ───────────────────────────────────────────────────── */}
       {m.blessings && (
         <Section id="blessings" eyebrow={<span lang={lang}>{s.blessingsEyebrow}</span>} ornament={null} width="normal" className="gw-sec gw-sec-bless">
-          <span className="gw-bless-hang" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.lanterns, { lazy: true })} />
-          </span>
           <BlessingsWall mode={mode} title={s.blessings} intro={s.blessingsIntro} />
         </Section>
       )}

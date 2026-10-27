@@ -43,7 +43,7 @@ export default function Notes({ s, lang, things, contacts, upiId, upiName, coupl
         <Reveal className="gw-contacts">
           <span className="gw-contacts-art" aria-hidden>
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...gwImg(GW.anthurium, { lazy: true })} />
+            <img {...gwImg(GW.peonyCorner, { lazy: true })} />
           </span>
           <h3 className="gw-contacts-h" lang={lang}>
             {s.contacts}

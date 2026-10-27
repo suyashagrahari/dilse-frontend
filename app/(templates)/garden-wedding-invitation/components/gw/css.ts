@@ -16,7 +16,7 @@ export const GW_CSS = `
 .gw-root[data-wk-theme="powder"] { --gw-blush: #dbe6f3; }
 .gw-root[data-wk-theme="champagne"] { --gw-blush: #f4e3c4; }
 .gw-root img { -webkit-user-drag: none; user-select: none; }
-.gw-a > img, .gw-hang > img, .gw-blossom > img, .gw-cloud > img { display: block; width: 100%; height: auto; }
+.gw-a > img, .gw-blossom > img, .gw-cloud > img { display: block; width: 100%; height: auto; }
 
 /* ── Shared bits ──────────────────────────────────────────────────────── */
 .gw-mantra { margin: 0; font-family: var(--wk-font-deva); font-size: clamp(14px, 3.6vw, 17px); line-height: 1.6; color: var(--wk-gold-ink); letter-spacing: .02em; }
@@ -140,7 +140,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-l-hang { transform: translate3d(0, calc(var(--gw-sy) * -.12), 0); z-index: 7; }
 .gw-hero-petals { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
 .gw-hero-text { position: absolute; z-index: 9; top: max(64px, 8svh); left: 0; right: 0; padding: 0 16px; text-align: center; transform: translate3d(0, calc(var(--gw-sy) * .3), 0); }
-.gw-a, .gw-cloud, .gw-hang, .gw-blossom, .gw-gazebo, .gw-peacock { position: absolute; }
+.gw-a, .gw-cloud, .gw-blossom, .gw-gazebo, .gw-peacock { position: absolute; }
 /* clouds part when the gate opens, then drift */
 .gw-cloud { transition: transform 2.2s var(--gw-ease), opacity 1.6s var(--gw-ease); }
 .gw-cloud-a { top: 3%; left: -16%; width: min(66vw, 560px); transform: translateX(26vw) scale(1.25); }
@@ -158,8 +158,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-banana img { height: 100%; width: auto; transform-origin: 50% 100%; }
 .gw-banana-l { left: -30%; }
 .gw-banana-r { right: -32%; transition-delay: .1s; }
-.gw-hero.is-open .gw-banana img { animation: gw-sway 7s ease-in-out infinite alternate; }
-.gw-hero.is-open .gw-banana-r img { animation-duration: 8.5s; animation-delay: -3s; }
 .gw-chhatri { bottom: 16%; height: min(19svh, 300px); transform: translateY(60px); transition-delay: .35s; }
 .gw-chhatri img { height: 100%; width: auto; }
 .gw-chhatri-l { left: -2%; }
@@ -180,27 +178,24 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-peacock-walk { display: block; height: 100%; }
 .gw-peacock-walk img { display: block; height: 100%; width: auto; transform-origin: 50% 100%; }
 .gw-hero.is-open .gw-peacock-walk { animation: gw-strut .4s ease-in-out 1.4s 8 alternate; }
-.gw-hero.is-open .gw-peacock-walk img { animation: gw-preen 6s ease-in-out 4.8s infinite alternate; }
 /* front: lotus + rocks */
 .gw-lotus-f { left: -9%; bottom: -3%; width: min(40vw, 330px); transform: translateY(50px); transition-delay: .5s; }
 .gw-rocks-f { right: -10%; bottom: -1%; width: min(46vw, 380px); transform: translateY(50px); transition-delay: .6s; }
 /* hanging: cherry branch, lanterns */
-.gw-blossom { top: -3%; left: -14%; width: min(62vw, 520px); opacity: 0; transform: translate(-30px, -30px); transition: opacity 1.2s var(--gw-ease) .4s, transform 1.6s var(--gw-ease) .4s; }
+.gw-blossom { top: -3%; width: min(62vw, 520px); opacity: 0; transform: translate(-30px, -30px); transition: opacity 1.2s var(--gw-ease) .4s, transform 1.6s var(--gw-ease) .4s; }
+.gw-blossom-l { left: -14%; }
+/* The right branch is the left one mirrored (its entrance mirrors with it). */
+.gw-blossom-r { right: -14%; scale: -1 1; transition-delay: .5s; }
 .gw-blossom img { transform-origin: 0 0; }
-.gw-hang { top: -8px; opacity: 0; transform: translateY(-60px); transition: opacity 1s var(--gw-ease) .5s, transform 1.4s var(--gw-ease) .5s; }
-.gw-hang img { display: block; height: 100%; width: auto; transform-origin: 50% 0; }
-.gw-hang-l { left: 4%; height: min(17svh, 190px); display: none; }
-.gw-hang-r { right: -2%; height: min(19svh, 300px); }
-.gw-hero.is-open .gw-blossom, .gw-hero.is-open .gw-hang { opacity: 1; transform: none; }
-.gw-hero.is-open .gw-blossom img { animation: gw-sway-s 9s ease-in-out infinite alternate; }
-.gw-hero.is-open .gw-hang img { animation: gw-swing 5.5s ease-in-out infinite alternate; }
-.gw-hero.is-open .gw-hang-r img { animation-delay: -2.75s; }
+.gw-hero.is-open .gw-blossom { opacity: 1; transform: none; }
 .gw-hero.is-idle *, .gw-hero.is-idle .gw-petals i { animation-play-state: paused !important; }
 /* the words in the sky */
 .gw-ht { opacity: 0; transform: translateY(16px); transition: opacity 1s var(--gw-ease), transform 1.2s var(--gw-ease); }
 .gw-hero.is-open .gw-ht { opacity: 1; transform: none; }
 .gw-hero.is-open .gw-ht-1 { transition-delay: .55s; } .gw-hero.is-open .gw-ht-2 { transition-delay: .7s; } .gw-hero.is-open .gw-ht-3 { transition-delay: .85s; }
 .gw-hero.is-open .gw-ht-4 { transition-delay: 1.05s; } .gw-hero.is-open .gw-ht-5 { transition-delay: 1.15s; } .gw-hero.is-open .gw-ht-6 { transition-delay: 1.3s; }
+/* A warm haze behind the words so they read over any cloud. */
+.gw-hero-text::before { content: ""; position: absolute; z-index: -1; left: 50%; top: -6%; width: min(110vw, 980px); height: 118%; translate: -50% 0; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,251,245,.78), rgba(255,248,242,.45) 55%, rgba(255,248,242,0)); pointer-events: none; }
 .gw-hero-text .wk-eyebrow { margin: 4px auto 8px; max-width: 30ch; letter-spacing: .2em; line-height: 1.6; color: var(--wk-accent); }
 .gw-names { margin: 2px 0 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: .22em; font: 400 clamp(50px, 14.5vw, 112px)/1.02 var(--wk-font-script); color: #4a2230; text-shadow: 0 2px 18px rgba(255,255,255,.9), 0 0 2px rgba(255,255,255,.9); }
 .gw-root[data-wk-theme="powder"] .gw-names { color: #23324d; }
@@ -221,25 +216,26 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-sec-invite::before { background: radial-gradient(60% 50% at 50% 40%, color-mix(in srgb, var(--gw-blush) 40%, transparent), transparent 70%); }
 .gw-invite { --pad: clamp(20px, 5.5vw, 60px); position: relative; max-width: 900px; margin: 0 auto; padding: 0 var(--pad) clamp(30px, 5vw, 52px); border-radius: var(--gw-r); background: var(--wk-surface-solid); border: 1px solid color-mix(in srgb, var(--wk-gold) 45%, transparent); box-shadow: var(--wk-shadow); }
 .gw-invite-crown { display: block; width: calc(100% + 2 * var(--pad)); max-width: none; height: auto; margin: 0 calc(-1 * var(--pad)); border-radius: calc(var(--gw-r) - 1px) calc(var(--gw-r) - 1px) 0 0; }
-.gw-invite-in { position: relative; z-index: 1; margin-top: clamp(-30px, -3vw, -14px); }
+/* The heading sits inside the arch (a % margin is width-relative; the crown is .326 of its width tall). */
+.gw-invite-in { position: relative; z-index: 1; margin-top: calc(-0.16 * (100% + 2 * var(--pad))); }
+.gw-invite .wk-msg > .wk-msg-heading:first-child { margin-bottom: max(14px, calc(0.16 * (100% + 2 * var(--pad)) - 52px)); }
 .gw-invite .wk-msg-heading { color: var(--wk-accent); margin-bottom: 12px; word-spacing: .18em; }
 .gw-invite .wk-msg-text { font-size: clamp(17px, 4.4vw, 20px); line-height: 1.75; }
 /* The Hindi column is shorter than the English one: centre it against it instead of leaving it hanging at the top. */
 @media (min-width: 860px) { .gw-invite .wk-msg.is-two .wk-msg-text:last-child { align-self: center; } }
-.gw-invite-rose, .gw-invite-bunch { position: absolute; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1s var(--gw-ease) .3s, transform 1.4s var(--gw-ease) .3s; }
-.gw-invite-rose { left: clamp(-34px, -3vw, -14px); bottom: -34px; height: clamp(120px, 24vw, 250px); transform: translateY(30px) rotate(-14deg); }
-.gw-invite-bunch { right: clamp(-70px, -5vw, -22px); top: clamp(-70px, -5vw, -30px); width: clamp(84px, 14vw, 170px); transform: translateX(30px); }
-.gw-invite-rose img, .gw-invite-bunch img { display: block; width: auto; height: 100%; }
-.gw-invite-bunch img { width: 100%; height: auto; }
-.gw-invite.is-in .gw-invite-rose { opacity: 1; transform: rotate(-8deg); }
-.gw-invite.is-in .gw-invite-bunch { opacity: 1; transform: none; }
+/* A bunch of pink peonies tucked into each bottom corner of the card, mirrored. */
+.gw-invite-corner { position: absolute; z-index: 2; bottom: clamp(-46px, -4vw, -22px); height: clamp(120px, 20vw, 230px); pointer-events: none; opacity: 0; transition: opacity 1s var(--gw-ease) .3s, transform 1.4s var(--gw-ease) .3s; }
+.gw-invite-corner img { display: block; width: auto; height: 100%; }
+.gw-invite-corner-l { left: clamp(-56px, -5vw, -22px); rotate: -12deg; transform: translateY(24px); }
+.gw-invite-corner-r { right: clamp(-56px, -5vw, -22px); rotate: 12deg; scale: -1 1; transform: translateY(24px); }
+.gw-invite.is-in .gw-invite-corner { opacity: 1; transform: none; }
 
 /* ── Families ─────────────────────────────────────────────────────────── */
 .gw-sec-fam::before { background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gw-sky) 45%, transparent) 50%, transparent); }
-.gw-fam-tree { position: absolute; z-index: 0; bottom: 0; height: 78%; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent), linear-gradient(to right, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent), linear-gradient(to right, transparent, #000 30%, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; display: none; opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
+.gw-fam-tree { position: absolute; z-index: 0; bottom: 0; height: 100%; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 90%, transparent), linear-gradient(to right, #000 0, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 90%, transparent), linear-gradient(to right, #000 0, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; display: none; opacity: 0; transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-fam-tree img { display: block; height: 100%; width: auto; }
 .gw-fam-tree-l { left: -40px; transform: translateX(-40px); }
-.gw-fam-tree-r { right: -40px; transform: translateX(40px); }
+.gw-fam-tree-r { right: -40px; transform: translateX(40px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 90%, transparent), linear-gradient(to left, #000 0, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 90%, transparent), linear-gradient(to left, #000 0, #000 70%, transparent); }
 .gw-sec.is-seen .gw-fam-tree { opacity: 1; transform: none; }
 .gw-blessings-of { text-align: center; margin: 0 auto 26px; max-width: 560px; }
 .gw-blessings-names { margin: 0; font: italic 500 clamp(19px, 4.6vw, 24px)/1.45 var(--wk-font-display); }
@@ -294,10 +290,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-story { position: relative; }
 .gw-story-rail { position: absolute; top: 4px; bottom: 4px; left: 18px; width: 3px; }
 .gw-story-rail i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(var(--gw-sage), color-mix(in srgb, var(--gw-sage) 40%, #fff)); transform-origin: 50% 0; transform: scaleY(var(--gw-p, 0)); }
-.gw-drift { position: absolute; z-index: 0; pointer-events: none; opacity: .55; }
-.gw-drift img { display: block; width: 100%; height: auto; }
-.gw-drift-a { right: -70px; top: -50px; width: clamp(170px, 30vw, 360px); transform: translate3d(0, calc(var(--gw-p, 0) * -70px), 0) rotate(8deg); }
-.gw-drift-b { left: -60px; bottom: -10px; width: clamp(80px, 13vw, 150px); transform: translate3d(0, calc(var(--gw-p, 0) * 50px), 0) rotate(-10deg); }
 .gw-chapters { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(36px, 6vw, 64px); }
 .gw-ch { position: relative; display: grid; gap: 14px; padding-left: 50px; }
 .gw-ch-dot { position: absolute; left: 6px; top: 4px; color: var(--wk-gold); line-height: 0; }
@@ -390,7 +382,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-know { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: 1fr; }
 .gw-know-i { border-left: 3px solid var(--gw-sage); }
 .gw-contacts { position: relative; overflow: hidden; padding: 24px 18px 18px; border-radius: var(--gw-r); background: linear-gradient(160deg, var(--wk-surface-solid), color-mix(in srgb, var(--gw-blush) 30%, var(--wk-surface-solid))); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); }
-.gw-contacts-art { position: absolute; right: -26px; top: -30px; width: 130px; opacity: .9; pointer-events: none; }
+.gw-contacts-art { position: absolute; right: -18px; top: -22px; width: 112px; rotate: 160deg; opacity: .95; pointer-events: none; }
 .gw-contacts-art img { display: block; width: 100%; height: auto; }
 .gw-contacts-h { position: relative; margin: 0; font: 500 clamp(26px, 6vw, 32px)/1.15 var(--wk-font-display); padding-right: 80px; }
 .gw-contacts-p { position: relative; margin: 6px 0 16px; font: 400 15px/1.5 var(--wk-font-sans); color: var(--wk-muted); padding-right: 70px; }
@@ -414,7 +406,7 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-sec-rsvp::before { background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gw-blush) 26%, transparent) 40%, transparent); }
 .gw-upasthiti { margin: -6px 0 6px; text-align: center; font: 400 clamp(26px, 6.6vw, 34px)/1.3 var(--wk-font-script); color: var(--wk-accent); }
 .gw-rsvp { position: relative; }
-.gw-rsvp-band { position: relative; z-index: 2; display: block; width: calc(100% + 24px); max-width: none; height: auto; margin: 0 -12px -9%; pointer-events: none; }
+.gw-rsvp-band { position: relative; z-index: 2; display: block; width: calc(100% + 24px); max-width: none; height: auto; margin: 0 -12px -9%; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 98%), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent 98%), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
 .gw-rsvp-in { position: relative; z-index: 1; }
 .gw-rsvp-in .wk-rsvp { padding-top: clamp(44px, 9vw, 64px); }
 .gw-rsvp-peacock { position: absolute; z-index: 0; right: -330px; bottom: 60px; height: 560px; display: none; opacity: 0; transform: translateX(60px); transition: opacity 1.2s var(--gw-ease), transform 1.8s var(--gw-ease); }
@@ -422,9 +414,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-sec.is-seen .gw-rsvp-peacock { opacity: 1; transform: none; }
 
 /* ── Blessings ────────────────────────────────────────────────────────── */
-.gw-bless-hang { position: absolute; top: 0; right: -60px; height: 300px; display: none; }
-.gw-bless-hang img { display: block; height: 100%; width: auto; transform-origin: 50% 0; }
-.gw-sec.is-seen .gw-bless-hang img { animation: gw-swing 6s ease-in-out infinite alternate; }
 
 /* ── Finale ───────────────────────────────────────────────────────────── */
 .gw-finale { position: relative; overflow: hidden; isolation: isolate; padding: clamp(40px, 8vw, 80px) 16px clamp(90px, 14vw, 140px); text-align: center; background: linear-gradient(180deg, var(--wk-bg) 0%, color-mix(in srgb, #fbe2dc 70%, var(--wk-bg)) 30%, color-mix(in srgb, #f1d3dd 80%, var(--wk-bg)) 66%, color-mix(in srgb, #e3d4ea 70%, var(--wk-bg)) 100%); }
@@ -434,14 +423,16 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-sky-lanterns i { position: absolute; bottom: -50px; border-radius: 42% 42% 30% 30%; background: radial-gradient(circle at 50% 72%, #fff6d2, #ffc978 46%, #ef9566 86%); box-shadow: 0 0 22px 4px rgba(255,190,120,.55); opacity: 0; }
 .gw-finale.is-on .gw-sky-lanterns i { animation-name: gw-rise, gw-lsway; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; animation-direction: normal, alternate; }
 .gw-finale-stage { position: relative; height: clamp(280px, 62vw, 520px); max-width: 1000px; margin: 0 auto; }
+/* A soft lawn under the pavilion and the trees, so nothing stands on air. */
+.gw-finale-stage::before { content: ""; position: absolute; z-index: 0; left: -10%; right: -10%; bottom: -6%; height: 22%; border-radius: 50%; background: radial-gradient(closest-side, rgba(170,190,140,.42), rgba(200,214,170,.22) 60%, rgba(200,214,170,0)); pointer-events: none; }
 .gw-fin-pav { position: absolute; left: 50%; bottom: 0; width: min(92vw, 600px); aspect-ratio: 800 / 617; translate: -50% 0; opacity: 0; transform: translateY(40px) scale(.96); transition: opacity 1.2s var(--gw-ease), transform 1.6s var(--gw-ease); }
 .gw-fin-pav-img { display: block; width: 100%; height: 100%; }
 .gw-fin-couple { position: absolute; left: 50%; bottom: 15%; height: 56%; translate: -50% 0; opacity: 0; transform: translateY(10px); transition: opacity 1.2s var(--gw-ease) .7s, transform 1.4s var(--gw-ease) .7s; }
 .gw-fin-couple img { display: block; height: 100%; width: auto; }
 .gw-fin-tree { position: absolute; bottom: 0; height: 92%; mix-blend-mode: multiply; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%); mask-image: linear-gradient(to bottom, transparent, #000 18%); opacity: 0; transition: opacity 1.2s var(--gw-ease) .2s, transform 1.6s var(--gw-ease) .2s; }
 .gw-fin-tree img { display: block; height: 100%; width: auto; }
-.gw-fin-tree-l { left: -60px; transform: translateX(-50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to right, transparent, #000 36%, #000 64%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to right, transparent, #000 36%, #000 64%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-fin-tree-r { right: -60px; transform: translateX(50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to left, transparent, #000 36%, #000 64%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 80%, transparent), linear-gradient(to left, transparent, #000 36%, #000 64%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-fin-tree-l { left: -60px; transform: translateX(-50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to right, #000 0, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to right, #000 0, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.gw-fin-tree-r { right: -60px; transform: translateX(50px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to left, #000 0, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 90%, transparent), linear-gradient(to left, #000 0, #000 70%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
 .gw-finale.is-bloom .gw-fin-pav, .gw-finale.is-bloom .gw-fin-couple, .gw-finale.is-bloom .gw-fin-tree { opacity: 1; transform: none; }
 .gw-fin-petals { position: absolute; inset: -20% 0 0; pointer-events: none; }
 .gw-finale-in { position: relative; z-index: 2; max-width: 640px; margin: 18px auto 0; }
@@ -496,14 +487,14 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 
 @media (max-width: 599px) {
   .gw-hero-text { top: max(78px, 10svh); }
-  .gw-blossom { width: min(52vw, 440px); top: -5%; }
-  .gw-hang-r { height: min(15svh, 140px); right: -4%; }
+  .gw-blossom { width: min(48vw, 400px); top: -5%; }
+  .gw-blossom-l { left: -16%; } .gw-blossom-r { right: -16%; }
   .gw-hero-text .wk-eyebrow { max-width: 34ch; letter-spacing: .12em; }
 }
 /* Tablets: the blossom branch and the left lantern stay in the corner, off the names. */
 @media (min-width: 600px) and (max-width: 899px) {
-  .gw-blossom { width: min(38vw, 320px); left: -8%; top: -4%; }
-  .gw-hang-l { display: none; }
+  .gw-blossom { width: min(38vw, 320px); top: -4%; }
+  .gw-blossom-l { left: -8%; } .gw-blossom-r { right: -8%; }
   .gw-hero-text { top: max(84px, 9svh); }
 }
 @media (max-width: 380px) {
@@ -537,7 +528,8 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-venue-img { object-position: 50% 50%; }
   .gw-chhatri-r { display: block; }
   .gw-fam-tree { display: block; }
-  .gw-fam-tree-l { left: -150px; } .gw-fam-tree-r { right: -150px; }
+  /* Half-trees: their cut side belongs at the screen edge, so pin them there (the column is centred). */
+  .gw-fam-tree-l { left: calc(50% - 50vw); } .gw-fam-tree-r { right: calc(50% - 50vw); }
 }
 @media (min-width: 900px) {
   .gw-hero { height: max(100svh, 680px); }
@@ -545,20 +537,19 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-hero-text { top: max(48px, 5.5svh); }
   .gw-hero-text .wk-eyebrow { max-width: none; }
   .gw-names { font-size: clamp(64px, 11svh, 100px); }
-  .gw-peacock { right: 14%; bottom: 9%; height: min(30svh, 330px); }
+  .gw-peacock { right: 22%; bottom: 8%; height: min(30svh, 330px); }
   .gw-banana-l { left: -5%; } .gw-banana-r { right: -6%; }
   .gw-banana { height: min(66svh, 720px); }
-  .gw-chhatri-l { left: 15%; bottom: 15%; height: min(34svh, 380px); }
-  .gw-chhatri-r { right: 3%; bottom: 20%; height: min(30svh, 340px); }
+  /* Both umbrellas planted behind their hedge (the pole's foot hidden), mirrored. */
+  .gw-chhatri-l, .gw-chhatri-r { bottom: 15%; height: min(34svh, 380px); }
+  .gw-chhatri-l { left: 15%; }
+  .gw-chhatri-r { right: 15%; scale: -1 1; }
   .gw-hedge { width: min(25vw, 380px); bottom: 4%; }
   .gw-hedge-l { left: 6%; } .gw-hedge-r { right: 8%; }
   .gw-lotus-f { left: 2%; width: min(24vw, 360px); }
   .gw-rocks-f { right: 1%; width: min(26vw, 400px); }
-  .gw-blossom { left: -5%; width: min(40vw, 600px); }
-  /* A mirrored pair: the left lanterns are the right ones flipped, same size, same inset. */
-  .gw-hang-l, .gw-hang-r { height: min(30svh, 330px); }
-  .gw-hang-l { display: block; left: 7%; scale: -1 1; }
-  .gw-hang-r { right: 7%; }
+  .gw-blossom { width: min(34vw, 560px); top: -5%; }
+  .gw-blossom-l { left: -5%; } .gw-blossom-r { right: -5%; }
   .gw-cloud-a { left: 2%; width: min(40vw, 640px); } .gw-cloud-b { right: -4%; width: min(46vw, 760px); } .gw-cloud-c { left: 40%; top: 26%; width: min(22vw, 360px); }
   /* The peony trees frame the screen from its edges; the middle stays open sky for the card. */
   /* Floor to ceiling: the trees fill the whole height, only a whisper of fade at the very top. */
@@ -578,7 +569,6 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-day-count { grid-area: count; align-self: start; }
   .gw-fountain { grid-area: fountain; align-self: end; }
   .gw-fountain-core { width: min(30vw, 400px); }
-  .gw-drift { opacity: .95; }
   .gw-venue { max-width: 1000px; margin: 0 auto; }
   .gw-venue-cols { grid-template-columns: 1.15fr 1fr; align-items: start; }
   .gw-venue-text { text-align: left; }
@@ -587,22 +577,19 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-know:has(> .gw-know-i:first-child:nth-last-child(3)), .gw-know:has(> .gw-know-i:first-child:nth-last-child(6)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gw-know:has(> .gw-know-i:first-child:nth-last-child(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .gw-gal-leaf { display: block; }
-  .gw-rsvp-peacock, .gw-bless-hang { display: block; }
-  .gw-fin-tree-l { left: 0; } .gw-fin-tree-r { right: 0; }
+  .gw-rsvp-peacock { display: block; }
+  .gw-fin-tree-l { left: calc(50% - 50vw); } .gw-fin-tree-r { right: calc(50% - 50vw); }
 }
 @media (min-width: 1120px) {
   .gw-ev { flex-basis: calc((100% - 2 * var(--gw-ev-gap)) / 3); }
-  .gw-fam-tree-l { left: -200px; } .gw-fam-tree-r { right: -200px; }
 }
 /* Small laptops: the names run wide, so the lanterns sit closer to the edges and the blossom branch stays small. */
 @media (min-width: 900px) and (max-width: 1279px) {
-  .gw-hang-l { left: 3%; } .gw-hang-r { right: 3%; }
-  .gw-hang-l, .gw-hang-r { height: min(26svh, 260px); }
-  .gw-blossom { width: min(30vw, 600px); }
+  .gw-blossom { width: min(28vw, 600px); }
 }
 @media (min-width: 1500px) {
-  .gw-peacock { right: 18%; }
-  .gw-chhatri-l { left: 19%; }
+  .gw-peacock { right: 24%; }
+  .gw-chhatri-l { left: 19%; } .gw-chhatri-r { right: 19%; }
 }
 /* Short, wide windows (laptops at 1366×650): keep the names clear of the dome. */
 @media (min-width: 900px) and (max-height: 760px) {
@@ -613,9 +600,9 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* ── Reduced motion: everything in place, nothing loops ───────────────── */
 @media (prefers-reduced-motion: reduce) {
   .gw-root *, .gw-root *::before, .gw-root *::after { animation: none !important; }
-  .gw-hero .gw-a, .gw-hero .gw-cloud, .gw-hero .gw-gazebo, .gw-hero .gw-couple, .gw-hero .gw-peacock, .gw-hero .gw-blossom, .gw-hero .gw-hang, .gw-hero .gw-ht, .gw-hero .gw-cue,
-  .gw-fin-pav, .gw-fin-couple, .gw-fin-tree, .gw-fam-tree, .gw-gal-leaf, .gw-rsvp-peacock, .gw-invite-rose, .gw-invite-bunch { transition: opacity .4s linear !important; transform: none !important; }
-  .gw-l, .gw-hero-text, .gw-drift { transform: none !important; }
+  .gw-hero .gw-a, .gw-hero .gw-cloud, .gw-hero .gw-gazebo, .gw-hero .gw-couple, .gw-hero .gw-peacock, .gw-hero .gw-blossom, .gw-hero .gw-ht, .gw-hero .gw-cue,
+  .gw-fin-pav, .gw-fin-couple, .gw-fin-tree, .gw-fam-tree, .gw-gal-leaf, .gw-rsvp-peacock, .gw-invite-corner { transition: opacity .4s linear !important; transform: none !important; }
+  .gw-l, .gw-hero-text { transform: none !important; }
   .gw-petals { display: none; }
 }
 `;
