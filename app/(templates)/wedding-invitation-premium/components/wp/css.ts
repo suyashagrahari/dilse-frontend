@@ -49,10 +49,9 @@ export const WP_CSS = `
   box-shadow: 0 12px 24px -14px rgba(31,62,87,.7), inset 0 1px 0 rgba(255,255,255,.3); transition: transform .25s var(--wp-ease), box-shadow .25s; -webkit-tap-highlight-color: transparent; }
 .wp-btn:hover { transform: translateY(-1px); }
 .wp-btn:active { transform: scale(.97); }
-.wp-btn:focus-visible, .wp-round:focus-visible, .wp-open-btn:focus-visible, .wp-replay:focus-visible, .wp-ev-wa:focus-visible, .wp-ev-g:focus-visible { outline: 3px solid var(--wp-gold); outline-offset: 3px; }
+.wp-btn:focus-visible, .wp-round:focus-visible, .wp-open-btn:focus-visible, .wp-replay:focus-visible { outline: 3px solid var(--wp-gold); outline-offset: 3px; }
 .wp-btn.is-ghost { color: var(--wp-blue-ink); background: rgba(255,254,250,.86); border: 1.5px solid color-mix(in srgb, var(--wp-blue) 55%, transparent); box-shadow: none; }
 .wp-btn.is-sm { min-height: 40px; padding: 0 14px; font-size: 13px; }
-.wp-btn.is-lg { min-height: 54px; padding: 0 28px; font-size: 16px; }
 .wp-btn svg { flex: none; }
 .wp-round { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--wp-line); background: var(--wp-card); color: var(--wp-blue-d); cursor: pointer; text-decoration: none; transition: transform .2s var(--wp-ease); }
 .wp-round:active { transform: scale(.94); }
@@ -228,8 +227,6 @@ export const WP_CSS = `
 .wp-hero-when { margin: 0; font: 600 clamp(18px, 3.6vw, 22px)/1.3 var(--wk-font-display); color: var(--wp-blue-ink); }
 .wp-hero-muhurat { margin: 4px 0 0; font: italic 600 16.5px/1.4 var(--wk-font-display); color: var(--wp-pink-d); }
 .wp-hero-place { margin: 5px 0 0; font: 500 14px/1.5 var(--wk-font-sans); letter-spacing: .03em; color: var(--wp-blue-ink); }
-.wp-hero-actions { display: flex; flex-wrap: nowrap; gap: 8px; justify-content: center; margin-top: 16px; }
-.wp-hero-actions .wp-btn { min-height: 44px; padding: 0 16px; font-size: 13.5px; }
 .wp-hero-scroll { display: none; }
 /* phones: a taller scene unit so the terrace reads at full width */
 @media (max-width: 559px) {
@@ -262,7 +259,6 @@ export const WP_CSS = `
   .wp-hero-names { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .18em; font-size: clamp(60px, min(6.2vw, 10.5svh), 116px); }
   .wp-hero-names > i { margin: 0; font-size: .4em; }
   .wp-hero-line { max-width: 46ch; }
-  .wp-hero-actions .wp-btn { min-height: 46px; padding: 0 20px; font-size: 14.5px; }
   .wp-sc-couple { left: calc(var(--u) * 4); width: calc(var(--u) * 60); }
   .wp-hero { --gz-r: calc(var(--u) * 5); --gz-h: calc(var(--u) * 70); }
   /* two mirrored strips, each kept to its side of the screen and faded where they meet over the names */
@@ -278,7 +274,6 @@ export const WP_CSS = `
 }
 @media (min-width: 960px) and (max-height: 820px) {
   .wp-hero .wp-rule { margin: 8px auto; }
-  .wp-hero-actions { margin-top: 12px; }
 }
 
 /* ══ The invitation ══════════════════════════════════════ */
@@ -423,16 +418,12 @@ export const WP_CSS = `
 .wp-ev-swatch { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--wp-gold); }
 .wp-ev-k { font-weight: 700; color: var(--wp-blue-d); }
 .wp-ev-note { margin: 8px 0 0; padding: 10px 14px; border-radius: 14px; font: italic 400 16px/1.5 var(--wk-font-display); color: var(--wk-muted); background: color-mix(in srgb, var(--fn) 10%, transparent); }
-.wp-ev-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding-top: 16px; }
-.wp-ev-actions > * { justify-content: center; width: 100%; min-width: 0; white-space: nowrap; }
-.wp-ev-actions > * > span { overflow: hidden; text-overflow: ellipsis; }
-.wp-ev-wa { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 0; cursor: pointer; font: 700 14px/1 var(--wk-font-sans); color: #fff; background: #1FA855; }
-.wp-ev-g { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--wp-blue) 55%, transparent); font: 700 14px/1 var(--wk-font-sans); color: var(--wp-blue-ink); text-decoration: none; background: rgba(255,254,250,.86); }
+.wp-ev-actions { display: flex; justify-content: center; margin-top: auto; padding-top: 16px; }
+.wp-ev-actions > * { justify-content: center; min-width: min(100%, 200px); white-space: nowrap; }
 .wp-ev-dots { display: flex; justify-content: center; margin-top: 4px; }
 .wp-ev-dots button { display: grid; place-items: center; min-width: 24px; height: 28px; padding: 0 2px; border: 0; background: none; cursor: pointer; }
 .wp-ev-dots button::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--wp-blue-d) 28%, transparent); transition: width .3s var(--wp-ease), background-color .3s ease; }
 .wp-ev-dots button.is-on::after { width: 24px; background: var(--wp-blue-d); }
-.wp-ev-all { display: flex; justify-content: center; margin-top: 32px; }
 
 /* ══ Venue ═══════════════════════════════════════════════ */
 .wp-venue { display: grid; gap: 28px; align-items: center; }
@@ -462,7 +453,7 @@ export const WP_CSS = `
 /* ══ Gallery ═════════════════════════════════════════════ */
 .wp-sec-gallery .wk-masonry { max-width: 1080px; margin-left: auto; margin-right: auto; }
 
-/* ══ Good to know, contacts, live, film, shagun, share ═══ */
+/* ══ Good to know, contacts, live, film, shagun ══════════ */
 .wp-know { list-style: none; margin: 0 auto; padding: 0; display: grid; gap: 14px; max-width: 900px; }
 @media (min-width: 700px) { .wp-know { grid-template-columns: 1fr 1fr; } }
 .wp-know-i { padding: 18px 20px; border-radius: 20px; background: var(--wp-card); border: 1px solid var(--wp-line); }
@@ -496,7 +487,7 @@ export const WP_CSS = `
 .wp-shagun-id { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0 0 18px; }
 .wp-shagun-id b { font: 600 18px/1.3 var(--wk-font-display); }
 .wp-shagun-id code { padding: 6px 14px; border-radius: 999px; background: var(--wp-blue-soft); color: var(--wp-blue-ink); font: 600 14.5px/1.3 ui-monospace, monospace; word-break: break-all; }
-.wp-shagun-a, .wp-sharebar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.wp-shagun-a { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .wp-rsvp .wk-card, .wp-root #blessings .wk-card { background: var(--wp-card); }
 .wp-rsvp-wrap { display: grid; gap: 20px; max-width: 680px; margin: 0 auto; }
 .wp-rsvp-art { position: relative; display: grid; justify-items: center; text-align: center; gap: 4px; }

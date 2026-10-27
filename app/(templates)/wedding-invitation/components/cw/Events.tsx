@@ -9,12 +9,12 @@
 // gown and tux at the reception), the date on a calendar leaf and the gold
 // line-art swirl. Below: the name in script (in Hindi on the Hindi page when
 // it is a known function), the time, the venue, the dress code with its
-// swatch, the note, directions and add-to-calendar (.ics + Google). The main
-// ceremony is crowned with a rose bouquet. "Save all dates" closes it.
+// swatch, the note and directions. The main ceremony is crowned with a rose
+// bouquet.
 // Phones: a swipe carousel (snap, dots); tablets two across; desktops three.
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { DEFAULT_TZ_OFFSET, FN_TINT, Reveal, downloadWeddingIcs, formatEventTime, googleCalendarUrl, mapLink, type WeddingEvent } from "../../../_wedding";
+import { FN_TINT, Reveal, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
 import { A, FN_COUPLE, img } from "./assets";
 import { DATE_RE, MAIN_RE, fnTitle, hiTime, kindOf, type Lang } from "./model";
 
@@ -26,7 +26,6 @@ function Icon({ d }: { d: string }) {
   );
 }
 export const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
-export const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
 const CLOCK = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2";
 
 
@@ -43,15 +42,12 @@ function leaf(date: string, locale: string) {
 
 export interface EventsProps {
   events: readonly WeddingEvent[];
-  couple: string;
-  url?: string;
   locale: string;
   lang: Lang;
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; saved: string; swipe: string };
+  labels: { directions: string; dress: string; tba: string; swipe: string };
 }
 
-export default function Events({ events, couple, url, locale, lang, labels: l }: EventsProps) {
-  const [flash, setFlash] = useState<string | null>(null);
+export default function Events({ events, locale, lang, labels: l }: EventsProps) {
   const [at, setAt] = useState(0);
   const railRef = useRef<HTMLOListElement>(null);
   const list = events.filter((e) => e.title || e.venue || e.date);
@@ -82,11 +78,6 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
 
   if (!list.length) return null;
   const mainId = (list.find((e) => MAIN_RE.test(e.title)) ?? list[0]).id;
-  const save = (es: readonly WeddingEvent[], key: string, name: string) => {
-    const ok = downloadWeddingIcs(es, { couple, url, tz: DEFAULT_TZ_OFFSET }, name);
-    setFlash(ok ? key : `${key}:err`);
-    window.setTimeout(() => setFlash(null), 2200);
-  };
   const go = (i: number) => {
     const el = railRef.current;
     const k = el?.children[i] as HTMLElement | undefined;
@@ -103,7 +94,6 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
           const map = mapLink(e);
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
-          const gcal = e.date ? googleCalendarUrl(e, { couple, url, tz: DEFAULT_TZ_OFFSET }) : "";
           const isMain = e.id === mainId;
           const kind = isMain ? "wedding" : kindOf(e.title, i);
           const art = FN_COUPLE[kind];
@@ -166,24 +156,12 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
                     )}
                     {e.note && <p className="cw-ev-note">{e.note}</p>}
                   </div>
-                  {(map || e.date) && (
+                  {map && (
                     <div className="cw-ev-actions">
-                      {map && (
-                        <a className="cw-btn cw-btn-ghost cw-btn-sm" href={map} target="_blank" rel="noopener noreferrer">
-                          <Icon d={PIN} /> {l.directions}
-                        </a>
-                      )}
-                      {e.date && (
-                        <button type="button" className="cw-btn cw-btn-ghost cw-btn-sm" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                          <Icon d={CAL} /> {flash === key ? l.saved : l.calendar}
-                        </button>
-                      )}
+                      <a className="cw-btn cw-btn-ghost cw-btn-sm" href={map} target="_blank" rel="noopener noreferrer">
+                        <Icon d={PIN} /> {l.directions}
+                      </a>
                     </div>
-                  )}
-                  {gcal && (
-                    <a className="cw-ev-gcal" href={gcal} target="_blank" rel="noopener noreferrer" aria-label={`Google Calendar: ${e.title}`}>
-                      + Google Calendar
-                    </a>
                   )}
                 </div>
               </article>
@@ -197,13 +175,6 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
             <button key={e.id || i} type="button" className={i === at ? "is-on" : undefined} aria-label={fnTitle(e.title, lang)} aria-current={i === at || undefined} onClick={() => go(i)} />
           ))}
         </div>
-      )}
-      {list.filter((e) => e.date).length > 1 && (
-        <Reveal className="cw-ev-all">
-          <button type="button" className="cw-btn cw-btn-rose" onClick={() => save(list, "all", `wedding-${couple}`)}>
-            <Icon d={CAL} /> {flash === "all" ? l.saved : l.saveAll}
-          </button>
-        </Reveal>
       )}
     </div>
   );

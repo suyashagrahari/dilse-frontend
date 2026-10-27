@@ -11,8 +11,6 @@
 // after the doors open (.is-on), then the page is still. Phones: words on
 // top, the terrace below, all on the first screen.
 
-import type { WeddingEvent } from "../../../_wedding";
-import { HeroActions } from "./Actions";
 import { img } from "./art";
 import Lake from "./Lake";
 import type { Motif, Strings } from "./model";
@@ -30,10 +28,6 @@ export interface HeroProps {
   time: string;
   muhurat: string;
   place: string;
-  main?: WeddingEvent;
-  events: WeddingEvent[];
-  couple: string;
-  shareText: string;
 }
 
 export function MotifMark({ motif, className }: { motif: Motif; className?: string }) {
@@ -138,9 +132,6 @@ export default function Hero(p: HeroProps) {
             {p.place}
           </p>
         )}
-        <div className="wp-in" style={d(860)}>
-          <HeroActions main={p.main} all={p.events} couple={p.couple} s={s} shareText={p.shareText} />
-        </div>
       </div>
 
       <a className="wp-hero-scroll" href="#invitation" aria-label={s.scroll}>

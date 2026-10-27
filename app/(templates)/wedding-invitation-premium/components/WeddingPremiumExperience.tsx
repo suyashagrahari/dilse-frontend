@@ -9,8 +9,7 @@
 // English + Hindi under a cherry-blossom branch → the families → the date and
 // a flip countdown under hanging lanterns → our story → the functions → the
 // venue by the fountain → live stream → film → gallery → good to know + family
-// contacts → RSVP per function → blessings → shagun → share → the terrace at
-// evening.
+// contacts → RSVP per function → blessings → shagun → the terrace at evening.
 //
 // All art is the owner's, served from /public/wedding-v3 (never the CDN).
 // Every motion is transform/opacity, reduced-motion aware. Light themes only:
@@ -21,7 +20,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BLESSINGS_TEXT_HI, BlessingsWall, photoImgStyle, Countdown, MessageBlock, RSVPBlock, RSVP_TEXT_HI, Reveal, Section, WeddingMasonry, WeddingRoot, fnTitle, formatEventDate, formatEventTime, hiTime } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
-import { Contacts, Icon, LiveStream, PLAY, ShareBar, Shagun, pageUrl } from "./wp/Actions";
+import { Contacts, Icon, LiveStream, PLAY, Shagun } from "./wp/Actions";
 import Events from "./wp/Events";
 import Families from "./wp/Families";
 import Finale from "./wp/Finale";
@@ -33,7 +32,6 @@ import Venue from "./wp/Venue";
 import { img } from "./wp/art";
 import { WP_CSS } from "./wp/css";
 import { prefillRsvpName, useGuestName } from "./wp/guest";
-import type { InviteCardInput } from "./wp/inviteCard";
 import { T, readPremium, type Lang, type Strings } from "./wp/model";
 
 function Film({ id, label }: { id: string; label: string }) {
@@ -151,20 +149,6 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
   };
 
   const hasFamilies = !!(m.brideFam.names || m.groomFam.names || m.brideFam.note || m.groomFam.note || m.blessingsOf);
-  const shareText = lang === "hi" ? `✨ ${couple} के शुभ विवाह का निमंत्रण` : `✨ You're invited to the wedding of ${couple}`;
-  const card: InviteCardInput = {
-    first: m.first,
-    second: m.second,
-    dateLine: shortDate,
-    time: m.time ? formatEventTime(m.time, "en-IN") : "",
-    venue: main?.venue ?? "",
-    address: main?.address || m.city,
-    muhurat: m.muhurat,
-    together: T.en.together,
-    inviteLine: "request the pleasure of your company",
-    guest,
-    url: typeof window === "undefined" ? "" : pageUrl(),
-  };
 
   return (
     <WeddingRoot theme={m.theme} className={`wp-root${lang === "hi" ? " is-hi" : ""}${lite ? " is-lite" : ""}`} style={{ minHeight: "100dvh" }}>
@@ -197,10 +181,6 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         time={mainTime}
         muhurat={m.muhurat}
         place={place}
-        main={main}
-        events={m.events}
-        couple={couple}
-        shareText={shareText}
       />
 
       {/* ── The invitation ──────────────────────────────────────────────── */}
@@ -268,7 +248,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
       {m.events.length > 0 && (
         <Section id="events" ornament={null} width="wide" className="wp-sec wp-sec-events">
           <Head eyebrow={s.eventsEyebrow} title={s.events} lang={lang} />
-          <Events events={m.events} couple={couple} locale={locale} lang={lang} labels={{ directions: s.directions, calendar: s.calendar, calShort: s.calShort, gcal: s.gcal, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp, swipe: s.swipe, saved: s.saved }} />
+          <Events events={m.events} locale={locale} lang={lang} labels={{ directions: s.directions, dress: s.dress, tba: s.tba, swipe: s.swipe }} />
         </Section>
       )}
 
@@ -393,14 +373,6 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         </Section>
       )}
 
-      {/* ── Share ───────────────────────────────────────────────────────── */}
-      <Section id="share" ornament={null} width="normal" className="wp-sec wp-sec-share">
-        <Head eyebrow={s.shareEyebrow} title={s.share} lang={lang} />
-        <Reveal>
-          <ShareBar s={s} shareText={shareText} card={card} />
-        </Reveal>
-      </Section>
-
       <div ref={endRef} />
       <Finale
         seal={T.en.shubh}
@@ -412,9 +384,7 @@ export default function WeddingPremiumExperience({ data, mode, react }: Experien
         second={m.second}
         hashtag={m.hashtag}
         lang={lang}
-        whatsapp={s.whatsapp}
         replay={s.replay}
-        shareText={shareText}
         onReplay={replay}
       />
     </WeddingRoot>

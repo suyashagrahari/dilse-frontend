@@ -44,7 +44,7 @@ export interface ClassicModel {
   groom_: FamilySide;
   familyFirst: "bride" | "groom";
   blessingsOf: string;
-  /** The big day (countdown, hero, invite card): extras.date, else the main function's. */
+  /** The big day (countdown, hero): extras.date, else the main function's. */
   date: string;
   time: string;
   muhurat: string;
@@ -290,10 +290,9 @@ type Keys =
   | "open" | "opening" | "dear" | "invited" | "shubh" | "invitation" | "blessingsOf" | "families" | "brideSide" | "groomSide"
   | "countdown" | "story" | "storyEyebrow" | "events" | "eventsEyebrow" | "film" | "gallery" | "galleryEyebrow" | "gettingThere"
   | "rsvp" | "rsvpEyebrow" | "blessingsEyebrow" | "rsvpIntro" | "blessings" | "blessingsIntro" | "closing" | "done" | "today"
-  | "directions" | "calendar" | "saveAll" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
-  | "upasthiti" | "callUs" | "call" | "chat" | "shagun" | "shagunLine" | "pay" | "copy" | "copied"
-  | "live" | "liveSoon" | "copyLink" | "card" | "cardMaking" | "inviteSomeone" | "inviteName" | "inviteSend" | "qr" | "qrHint" | "close"
-  | "together" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "saved" | "music" | "replay" | "scroll" | "saveDate" | "at"
+  | "directions" | "dress" | "tba" | "play" | "and" | "getting" | "dateEyebrow" | "venueEyebrow"
+  | "upasthiti" | "callUs" | "call" | "chat" | "shagun" | "shagunLine" | "pay" | "copy" | "copied" | "live" | "liveSoon"
+  | "together" | "infoEyebrow" | "info" | "getDirections" | "showMap" | "music" | "replay" | "scroll" | "at"
   | "rsvpBtn" | "lang" | "fnOf" | "fnCount" | "swipe" | "venueMain";
 
 type StringsShape = { [K in Keys]: string } & { units: { d: string; h: string; m: string; s: string } };
@@ -330,8 +329,6 @@ export const T: Record<Lang, StringsShape> = {
     done: "Just married",
     today: "Today is the day!",
     directions: "Directions",
-    calendar: "Add to calendar",
-    saveAll: "Save all dates",
     dress: "Dress code",
     tba: "Time to be announced",
     play: "Play the film",
@@ -350,25 +347,14 @@ export const T: Record<Lang, StringsShape> = {
     copied: "Copied",
     live: "Watch live",
     liveSoon: "The livestream opens 30 minutes before the ceremony",
-    copyLink: "Copy link",
-    card: "Invite card",
-    cardMaking: "Making your card…",
-    inviteSomeone: "Send a personal invite",
-    inviteName: "Guest's name, e.g. Sharma family",
-    inviteSend: "Send on WhatsApp",
-    qr: "QR code",
-    qrHint: "Scan to open the invitation",
-    close: "Close",
     together: "Together with their families",
     infoEyebrow: "For our guests",
     info: "Good to know",
     getDirections: "Get directions",
     showMap: "Show map",
-    saved: "Saved ✓",
     music: "Tap to hear the music",
     replay: "Replay the opening",
     scroll: "Scroll",
-    saveDate: "Save the date",
     at: "at",
     rsvpBtn: "RSVP",
     lang: "Language",
@@ -408,8 +394,6 @@ export const T: Record<Lang, StringsShape> = {
     done: "विवाह संपन्न",
     today: "आज शुभ दिन है!",
     directions: "रास्ता",
-    calendar: "कैलेंडर में जोड़ें",
-    saveAll: "सभी तिथियाँ सहेजें",
     dress: "पोशाक",
     tba: "समय की सूचना जल्द",
     play: "फ़िल्म चलाएँ",
@@ -428,25 +412,14 @@ export const T: Record<Lang, StringsShape> = {
     copied: "कॉपी हो गया",
     live: "लाइव देखें",
     liveSoon: "समारोह से 30 मिनट पहले लाइव शुरू होगा",
-    copyLink: "लिंक कॉपी करें",
-    card: "निमंत्रण कार्ड",
-    cardMaking: "कार्ड बन रहा है…",
-    inviteSomeone: "नाम से निमंत्रण भेजें",
-    inviteName: "अतिथि का नाम, जैसे शर्मा परिवार",
-    inviteSend: "WhatsApp पर भेजें",
-    qr: "QR कोड",
-    qrHint: "निमंत्रण खोलने के लिए स्कैन करें",
-    close: "बंद करें",
     together: "अपने परिवारों के साथ",
     infoEyebrow: "अतिथियों के लिए",
     info: "ज़रूरी जानकारी",
     getDirections: "रास्ता देखें",
     showMap: "नक्शा दिखाएँ",
-    saved: "सहेजा गया ✓",
     music: "संगीत सुनने के लिए छुएँ",
     replay: "झरोखा फिर से खोलें",
     scroll: "नीचे देखें",
-    saveDate: "तिथि सहेजें",
     at: "",
     rsvpBtn: "स्वीकृति भेजें",
     lang: "भाषा",

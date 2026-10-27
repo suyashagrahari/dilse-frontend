@@ -7,14 +7,14 @@
 // with the couple dressed for it (template14) on a terracotta carpet, the date
 // on a gold calendar leaf and the number in the corner. Below: the name (in
 // Hindi on the Hindi page when it is a known function), time, venue, dress
-// code, note, directions and add-to-calendar (.ics + Google).
+// code, note and directions.
 // One horizontal rail on every screen, the active card centred with its
 // neighbours peeking in at the sides (smaller, softer); a swipe or a wheel
 // settles the nearest card in the centre (scroll-snap center). Arrows on wide
-// screens, dots everywhere; the whole section fits one screen. "Save all dates" sits under it.
+// screens, dots everywhere; the whole section fits one screen.
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { DEFAULT_TZ_OFFSET, FN_TINT, Reveal, downloadWeddingIcs, fnTitle, kindOf, formatEventDate, formatEventTime, googleCalendarUrl, hiTime, mapLink, type WeddingEvent } from "../../../_wedding";
+import { FN_TINT, Reveal, fnTitle, kindOf, formatEventDate, formatEventTime, hiTime, mapLink, type WeddingEvent } from "../../../_wedding";
 import { A, img, type WeddingAsset } from "../assets";
 import { MAIN_RE } from "./model";
 
@@ -38,20 +38,16 @@ function Icon({ d }: { d: string }) {
   );
 }
 const PIN = "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
-const CAL = "M7 3v3M17 3v3M4 8.5h16M5 5.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM8.5 13h3v3h-3z";
 const CLOCK = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2";
 
 export interface EventsProps {
   events: readonly WeddingEvent[];
-  couple: string;
-  url?: string;
   locale: string;
   lang: "en" | "hi";
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; saved: string; swipe: string };
+  labels: { directions: string; dress: string; tba: string; swipe: string };
 }
 
-export default function Events({ events, couple, url, locale, lang, labels: l }: EventsProps) {
-  const [flash, setFlash] = useState<string | null>(null);
+export default function Events({ events, locale, lang, labels: l }: EventsProps) {
   const [at, setAt] = useState(0);
   const [edge, setEdge] = useState<{ start: boolean; end: boolean }>({ start: true, end: false });
   const railRef = useRef<HTMLOListElement>(null);
@@ -91,11 +87,6 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
   }, [list.length]);
 
   if (!list.length) return null;
-  const save = (es: readonly WeddingEvent[], key: string, name: string) => {
-    const ok = downloadWeddingIcs(es, { couple, url, tz: DEFAULT_TZ_OFFSET }, name);
-    setFlash(ok ? key : `${key}:err`);
-    window.setTimeout(() => setFlash(null), 2200);
-  };
   /** Centre card i in the rail. */
   const go = (i: number) => {
     const el = railRef.current;
@@ -125,7 +116,6 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
           const art = coupleFor(e.title, i);
           const kind = MAIN_RE.test(e.title) ? "wedding" : kindOf(e.title, i);
           const day = e.date ? new Date(`${e.date}T12:00:00Z`) : null;
-          const gcal = e.date ? googleCalendarUrl(e, { couple, url, tz: DEFAULT_TZ_OFFSET }) : "";
           return (
             <Reveal as="li" key={key} className={`rw-ev is-${kind}`} delay={(i % 3) * 90} style={{ ["--fn" as string]: FN_TINT[kind] } as CSSProperties}>
               <article className={`rw-ev-card${i === at ? " is-active" : ""}`}>
@@ -168,26 +158,11 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
                     </p>
                   )}
                   {e.note && <p className="rw-ev-note">{e.note}</p>}
-                  {(map || e.date) && (
+                  {map && (
                     <div className="rw-ev-actions">
-                      {map && (
-                        <a className="rw-btn rw-btn-ghost" href={map} target="_blank" rel="noopener noreferrer">
-                          <Icon d={PIN} /> {l.directions}
-                        </a>
-                      )}
-                      {e.date && (
-                        // One pill, two calendars: the .ics file (Apple, Outlook) and Google.
-                        <span className="rw-ev-cal">
-                          <button type="button" className="rw-btn rw-btn-ghost" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                            <Icon d={CAL} /> {flash === key ? l.saved : l.calendar}
-                          </button>
-                          {gcal && (
-                            <a className="rw-btn rw-btn-ghost" href={gcal} target="_blank" rel="noopener noreferrer" aria-label={`Google Calendar: ${e.title}`} title="Google Calendar">
-                              Google
-                            </a>
-                          )}
-                        </span>
-                      )}
+                      <a className="rw-btn rw-btn-ghost" href={map} target="_blank" rel="noopener noreferrer">
+                        <Icon d={PIN} /> {l.directions}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -210,13 +185,6 @@ export default function Events({ events, couple, url, locale, lang, labels: l }:
             <button key={e.id || i} type="button" className={i === at ? "is-on" : undefined} aria-label={fnTitle(e.title, lang)} aria-current={i === at || undefined} onClick={() => go(i)} />
           ))}
         </div>
-      )}
-      {list.filter((e) => e.date).length > 1 && (
-        <Reveal className="rw-ev-all">
-          <button type="button" className="rw-btn rw-btn-gold" onClick={() => save(list, "all", `wedding-${couple}`)}>
-            <Icon d={CAL} /> {flash === "all" ? l.saved : l.saveAll}
-          </button>
-        </Reveal>
       )}
     </div>
   );

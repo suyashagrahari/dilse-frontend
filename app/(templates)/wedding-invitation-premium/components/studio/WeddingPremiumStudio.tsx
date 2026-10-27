@@ -533,7 +533,7 @@ export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, ai, pa
             );
           })}
         </div>
-        <p className="wps-sub">The big day · the countdown and the calendar invites use it</p>
+        <p className="wps-sub">The big day · the countdown counts down to it</p>
         <div className="wps-row3">
           <Field label="Wedding date" htmlFor="wps-date">
             <input id="wps-date" type="date" className="vs-input" value={s(x.date)} onChange={(e) => set("date", e.target.value)} />
@@ -560,7 +560,7 @@ export default function WeddingPremiumStudio({ mf, updateMf, updateExtra, ai, pa
 
       {/* ── 2 Functions ────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-details" aria-label="Functions">
-        <Head n={2} title="Functions" sub={`Up to ${WP_LIMITS.events}. Each gets its own map, timings, dress code and calendar button.`} />
+        <Head n={2} title="Functions" sub={`Up to ${WP_LIMITS.events}. Each gets its own map, timings and dress code.`} />
         <ol className="wps-evs">
           {events.map((e, i) => {
             const isOpen = openEv === i;

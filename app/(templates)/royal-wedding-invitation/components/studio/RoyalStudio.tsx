@@ -613,7 +613,7 @@ export default function RoyalStudio({ day, mf, updateMf, updateExtra, ai, passwo
 
       {/* ── 2 Functions ────────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-details" aria-label="Functions">
-        <Head n={2} icon="lamp" title="Functions" sub={`Up to ${RW_LIMITS.events}. Each gets its own illustrated couple (haldi, mehendi, sangeet, wedding, reception, engagement), a map, a dress-code swatch and a calendar button.`} />
+        <Head n={2} icon="lamp" title="Functions" sub={`Up to ${RW_LIMITS.events}. Each gets its own illustrated couple (haldi, mehendi, sangeet, wedding, reception, engagement), a map and a dress-code swatch.`} />
         <ol className="rws-evs">
           {events.map((e, i) => {
             const isOpen = openEv === i;
