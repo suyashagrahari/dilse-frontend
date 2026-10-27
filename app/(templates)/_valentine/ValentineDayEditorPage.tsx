@@ -24,6 +24,7 @@ import { FONTS } from "./theme";
 import type { DaySlug, ValentineReactions } from "./types";
 import { useValentineDayEditor } from "./useValentineDayEditor";
 import { answeredWhen } from "./kit/answer";
+import UpgradeBridge from "@/components/upgrade/UpgradeBridge";
 
 const noopReact = () => {};
 
@@ -114,6 +115,9 @@ function Inner({ slug }: { slug: DaySlug }) {
       {sf?.ownerPanel && e.pageId && e.shareUrl && e.editMode !== "manual" && <DayOwnerPanel day={day} pageId={e.pageId} />}
 
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
+
+      {/* Opened by a free template's "Try Premium" (lib/upgrade/offer.ts): Edit · Publish free instead. */}
+      <UpgradeBridge slug={slug} shareUrl={e.shareUrl} pageId={e.pageId} editing={e.editMode === "manual" || e.storyStarter} onEdit={e.handleEditFromPreview} token={accessToken} font={FONTS.ui} />
 
       {topBar ? (
         <PremiumTopBar

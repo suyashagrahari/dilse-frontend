@@ -17,6 +17,15 @@ import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 import { goBackFromTemplate } from "@/lib/backNav";
+import {
+  clearUpgradeContext,
+  convertToPremium,
+  fetchUpgradeOffer,
+  handDraftTo,
+  saveUpgradeContext,
+  trackUpgrade,
+  type UpgradeOffer,
+} from "@/lib/upgrade/offer";
 
 const DRAFT_KEY = "bouquet_draft";
 const BASE = `${API_URL}/bouquet-gf-pages`;
@@ -82,6 +91,22 @@ export function useBouquetEditor() {
 
   const publishInFlightRef = useRef(false);
 
+  // ── The premium offer (lib/upgrade/offer.ts) ────────────────────────────────
+  //
+  // Publishing opens "Send it in Premium?" first — for a signed-in visitor
+  // straight away, for a new one right after they log in. "Publish free" runs
+  // the publish this editor always ran; "Try Premium" converts the bouquet into
+  // a Digital Bouquet draft and opens it in preview. The offer is fetched ahead
+  // (once there is something to publish) so the card opens without a wait.
+  // `undefined` = not asked yet, `null` = no offer: publish as usual.
+  const [offer, setOffer] = useState<UpgradeOffer | null | undefined>(undefined);
+  /** The publish the offer is holding: what to publish and which path it came from. */
+  const [offerFor, setOfferFor] = useState<{ data: BouquetData; password: string; source: "direct" | "auth_deferred" } | null>(null);
+  const [offerRecipient, setOfferRecipient] = useState("");
+  /** Set once they chose the free one (here or from the premium page): no second ask. */
+  const skipOfferRef = useRef(searchParams.get("publishFree") === "1");
+  const offerSeenRef = useRef(false);
+
   const headers = useCallback(
     () => ({
       "Content-Type": "application/json",
@@ -127,18 +152,59 @@ export function useBouquetEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken, searchParams]);
 
+  useEffect(() => {
+    if (!isPersonalized || shareUrl || offer !== undefined || skipOfferRef.current) return;
+    let live = true;
+    void fetchUpgradeOffer(TEMPLATE, accessToken).then((o) => { if (live) setOffer(o); });
+    return () => { live = false; };
+  }, [isPersonalized, shareUrl, offer, accessToken]);
+
+  /** True when the offer was opened instead of publishing. */
+  const openOfferIfAny = useCallback(
+    async (data: BouquetData, password: string, source: "direct" | "auth_deferred"): Promise<boolean> => {
+      if (skipOfferRef.current) return false;
+      const o = offer === undefined ? await fetchUpgradeOffer(TEMPLATE, accessToken) : offer;
+      if (offer === undefined) setOffer(o);
+      if (!o) return false;
+      offerSeenRef.current = true;
+      setOfferRecipient(data.recipientName);
+      setOfferFor({ data, password, source });
+      trackUpgrade(TEMPLATE, "shown", { token: accessToken, pageId, to: o.to });
+      return true;
+    },
+    [offer, accessToken, pageId],
+  );
+
+  /** After a free publish that went through the offer: count it, forget the hand-off. */
+  const noteFreePublished = useCallback((id: string | null) => {
+    if (!offerSeenRef.current && !skipOfferRef.current) return;
+    trackUpgrade(TEMPLATE, "free_published", { token: accessToken, pageId: id });
+    clearUpgradeContext();
+  }, [accessToken]);
+
   // ── Auto-resume publish after auth ──
   useEffect(() => {
     if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
-    // We own the row from here; adoption stands down (see useDraft).
+    // We own the row from here; adoption stands down (see useDraft) — also
+    // while the premium offer is open, whose "Publish free" lands back here.
     publishInFlightRef.current = true;
+    setContent(data);
+    setIsPersonalized(true);
+    setEditMode("preview");
+    void openOfferIfAny(data, password, "auth_deferred").then((opened) => {
+      if (!opened) void publishAfterAuth(data, password);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
 
+  /** The publish an auth-interrupted Publish resumes with: create the row, clear the paywall, publish. */
+  const publishAfterAuth = async (data: BouquetData, password: string) => {
+    publishInFlightRef.current = true;
     setPublishing(true);
     setEditMode("preview");
     bumpPreview();
-    (async () => {
       try {
         const res = await fetch(BASE, { method: "POST", headers: headers(), body: JSON.stringify(bouquetDataToBody(data, password)) });
         const result = await res.json();
@@ -160,6 +226,7 @@ export function useBouquetEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          noteFreePublished(savedId);
           await persistStory();
           clearDraft();
           pushToast({ type: "publish", title: "Sent! 💐", message: "Tap Share to send it" });
@@ -172,9 +239,7 @@ export function useBouquetEditor() {
         publishInFlightRef.current = false;
         setPublishing(false);
       }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, accessToken]);
+  };
 
   // ── Auto-save WIP draft while editing ──
   useEffect(() => {
@@ -308,21 +373,9 @@ export function useBouquetEditor() {
     if (editMode === null || editMode === "preview") void draft.saveNow();
   }, [editMode, draft]);
 
-  const publish = useCallback(async () => {
-    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
-    if (!content.senderName.trim()) {
-      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_sender_name" });
-      pushToast({ type: "info", title: "Add your name first", message: "Open Edit and fill in your name" });
-      setEditMode("manual");
-      setMf({ ...content });
-      return;
-    }
-    if (!isAuthenticated || !accessToken) {
-      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
-      pendingPublishRef.current = { data: content, password: pagePassword };
-      setShowAuth(true);
-      return;
-    }
+
+  /** The signed-in publish: save (create or update), clear the paywall, publish. */
+  const publishDirect = useCallback(async () => {
     setPublishing(true);
     try {
       let id = pageId;
@@ -342,6 +395,7 @@ export function useBouquetEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        noteFreePublished(id);
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
@@ -359,7 +413,83 @@ export function useBouquetEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
+  }, [pageId, create, update, headers, pushToast, persistStory, noteFreePublished]);
+
+  const publish = useCallback(async () => {
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
+    if (!content.senderName.trim()) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_sender_name" });
+      pushToast({ type: "info", title: "Add your name first", message: "Open Edit and fill in your name" });
+      setEditMode("manual");
+      setMf({ ...content });
+      return;
+    }
+    if (!isAuthenticated || !accessToken) {
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
+    if (await openOfferIfAny(content, pagePassword, "direct")) return;
+    await publishDirect();
+  }, [content, pagePassword, isAuthenticated, accessToken, pushToast, openOfferIfAny, publishDirect]);
+
+  // ── The offer's three ways out ──────────────────────────────────────────────
+
+  /** "Publish free": the publish they asked for, never asked again this visit. */
+  const offerChooseFree = useCallback(() => {
+    const held = offerFor;
+    if (!held) return;
+    skipOfferRef.current = true;
+    trackUpgrade(TEMPLATE, "free_chosen", { token: accessToken, pageId, to: offer?.to });
+    setOfferFor(null);
+    if (held.source === "auth_deferred") void publishAfterAuth(held.data, held.password);
+    else void publishDirect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offerFor, accessToken, pageId, offer, publishDirect]);
+
+  /** Closed without choosing: nothing is published; Publish asks again. */
+  const offerDismiss = useCallback(() => {
+    trackUpgrade(TEMPLATE, "dismissed", { token: accessToken, pageId, to: offer?.to });
+    setOfferFor(null);
+    publishInFlightRef.current = false;
+  }, [accessToken, pageId, offer]);
+
+  /**
+   * "Try Premium": their bouquet → a Digital Bouquet draft, opened in preview.
+   * The free bouquet stays saved (as a completed draft, and as its row when it
+   * has one), so "Publish the free one instead" on the premium page finds it.
+   */
+  const offerTryPremium = useCallback(async () => {
+    const held = offerFor;
+    if (!held || !offer) return;
+    trackUpgrade(TEMPLATE, "try_clicked", { token: accessToken, pageId, to: offer.to });
+    const data = { ...held.data, recipientName: offerRecipient.trim().slice(0, 30) || held.data.recipientName };
+    const res = await convertToPremium<Record<string, unknown>>(TEMPLATE, bouquetDataToBody(data), accessToken, pageId);
+    saveDraft({ data, password: held.password, completed: true });
+    handDraftTo(res.to, res.draft);
+    saveUpgradeContext({
+      from: TEMPLATE,
+      to: res.to,
+      pageId,
+      backUrl: pageId ? `/${TEMPLATE}?edit=${pageId}&publishFree=1` : `/${TEMPLATE}?publishFree=1`,
+    });
+    publishInFlightRef.current = false;
+    router.push(`/${res.to}?upgrade=${TEMPLATE}`);
+  }, [offerFor, offer, offerRecipient, accessToken, pageId, router]);
+
+  // ── Back from the premium page: "Publish the free one instead" ──────────────
+  //
+  // `?publishFree=1` publishes as soon as the bouquet is back on screen (the
+  // completed draft, or the row `?edit=` loads), without the offer.
+  const autoFreeRef = useRef(false);
+  useEffect(() => {
+    if (autoFreeRef.current || searchParams.get("publishFree") !== "1") return;
+    if (!isPersonalized || shareUrl || publishing || !isAuthenticated || !accessToken) return;
+    autoFreeRef.current = true;
+    skipOfferRef.current = true;
+    void publish();
+  }, [searchParams, isPersonalized, shareUrl, publishing, isAuthenticated, accessToken, publish]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -401,6 +531,15 @@ export function useBouquetEditor() {
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
+    upgrade: offer && offerFor
+      ? {
+          offer,
+          recipient: offerFor.data.recipientName.trim() ? null : { value: offerRecipient, onChange: setOfferRecipient },
+          onTry: offerTryPremium,
+          onFree: offerChooseFree,
+          onClose: offerDismiss,
+        }
+      : null,
     pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",

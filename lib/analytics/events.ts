@@ -38,6 +38,13 @@ export const EVENTS = {
   /** Includes `reason` — e.g. PAYMENT_REQUIRED, or a network failure. */
   PUBLISH_FAILED: "publish_failed",
 
+  /**
+   * A step through a free → premium upgrade offer (`step`: shown, try_clicked,
+   * free_chosen, …). The full funnel is ALSO kept server-side for super admin →
+   * Upgrades (lib/upgrade/offer.ts); this copy is for GA4.
+   */
+  UPGRADE_STEP: "upgrade_step",
+
   // ── Auth (GA4 recommended names) ─────────────────────────────────────────
   LOGIN: "login",
   SIGN_UP: "sign_up",

@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BarChart3, Users, MessageSquare, Star, FileText, Mail, LayoutTemplate,
-  IndianRupee, KeyRound, Repeat, Crown, Megaphone, Heart, BadgePercent, Ghost, BadgeIndianRupee, FilePlus2, ListOrdered, Gem,
+  IndianRupee, KeyRound, Repeat, Crown, Megaphone, Heart, BadgePercent, Ghost, BadgeIndianRupee, FilePlus2, ListOrdered, Gem, Rocket,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { isSuperAdmin } from "@/lib/roles";
@@ -43,6 +43,7 @@ export const ADMIN_NAV_ITEMS = [
   { href: "/admin/template-order", label: "Template order", Icon: ListOrdered, superOnly: true },
   { href: "/admin/places", label: "Wedding & places", Icon: Gem, superOnly: true },
   { href: "/admin/premium", label: "Premium Studio", Icon: Crown, superOnly: true },
+  { href: "/admin/upgrades", label: "Upgrades", Icon: Rocket, superOnly: true },
   { href: "/admin/pricing", label: "Pricing", Icon: IndianRupee, superOnly: true },
   { href: "/admin/influencers", label: "Influencers", Icon: BadgePercent, superOnly: true },
   { href: "/admin/early-access", label: "Early access", Icon: KeyRound, superOnly: true },

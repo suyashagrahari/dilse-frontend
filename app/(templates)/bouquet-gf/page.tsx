@@ -9,6 +9,8 @@ import { useBouquetEditor } from "./hooks/useBouquetEditor";
 import BouquetTemplate from "./components/BouquetTemplate";
 import EditSheet from "./components/EditSheet";
 import { LIGHT, BQ, BRAND_GRADIENT } from "./components/theme";
+import PremiumUpgradeModal from "@/components/upgrade/PremiumUpgradeModal";
+import { templateMedia } from "@/lib/templateMedia";
 
 function BouquetPageInner() {
   const e = useBouquetEditor();
@@ -70,6 +72,20 @@ function BouquetPageInner() {
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
+      </AnimatePresence>
+
+      {/* "Send it in Premium?" — opened by Publish before the free publish runs. */}
+      <AnimatePresence>
+        {e.upgrade && (
+          <PremiumUpgradeModal
+            offer={e.upgrade.offer}
+            cover={templateMedia(e.upgrade.offer.to, "cover-poster.webp")}
+            recipient={e.upgrade.recipient && { ...e.upgrade.recipient, label: "Who are the flowers for?", placeholder: "Her name, e.g. Riya" }}
+            onTry={e.upgrade.onTry}
+            onFree={e.upgrade.onFree}
+            onClose={e.upgrade.onClose}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
