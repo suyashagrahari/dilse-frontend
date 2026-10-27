@@ -81,6 +81,8 @@ export const GW_ASSETS = {
     // Derived: the peony trees at 2× (lanczos + light unsharp) so they stay crisp at full height.
     "gw-peony-left-2x": { src: "/wedding-v3/template9/gw-peony-left-2x.webp", w: 600, h: 2058, sameOrigin: true },
     "gw-peony-right-2x": { src: "/wedding-v3/template9/gw-peony-right-2x.webp", w: 592, h: 2058, sameOrigin: true },
+    // From the owner's asset library (template21 pink peony flowers): a sharp bunch for the opening's corners.
+    "gw-peony-corner": { src: "/wedding-v3/template9/gw-peony-corner.webp", w: 680, h: 977, sameOrigin: true },
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
@@ -132,6 +134,7 @@ export const GW = {
   peonyR2x: T9["gw-peony-right-2x"],
   lattice: T9["gw-lattice-top"],
   archCrown: T9["gw-arch-crown"],
+  peonyCorner: T9["gw-peony-corner"],
   og: T1["gw-og"],
 } as const;
 

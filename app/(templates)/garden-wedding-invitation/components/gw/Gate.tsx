@@ -3,7 +3,8 @@
 // ─── The garden gate (the opening) ──────────────────────────────────────────
 //
 // A pastel sky, two cloud banks and a gate of flowering peony trees, lanterns
-// hanging as a mirrored pair at the top corners, lotus at the foot. In the middle a rounded ivory card
+// hanging as a mirrored pair at the top corners, a mirrored bunch of pink
+// peonies in each bottom corner, lotus at the foot. In the middle a rounded ivory card
 // under the gold lattice crown: "॥ श्री गणेशाय नमः ॥", the guest's own greeting
 // (?to=), the names, the date and a lotus seal to tap. The tap is also the
 // gesture that starts the music (DayMusic listens for the first tap).
@@ -124,14 +125,18 @@ export default function Gate({ first, second, dateLine, guest, s, lang, invocati
       <span className="gw-gleaf gw-gleaf-l" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="gw-gleaf-tree" {...gwImg(GW.peonyL, { high: true, hi: GW.peonyL2x, sizes: "300px" })} />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-gleaf-flower" {...gwImg(GW.anthurium)} />
       </span>
       <span className="gw-gleaf gw-gleaf-r" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="gw-gleaf-tree" {...gwImg(GW.peonyR, { high: true, hi: GW.peonyR2x, sizes: "300px" })} />
+      </span>
+      <span className="gw-gcorner gw-gcorner-l" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="gw-gleaf-flower" {...gwImg(GW.rose)} />
+        <img {...gwImg(GW.peonyCorner, { high: true })} />
+      </span>
+      <span className="gw-gcorner gw-gcorner-r" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img {...gwImg(GW.peonyCorner, { high: true })} />
       </span>
       <span className="gw-ghang gw-ghang-l" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

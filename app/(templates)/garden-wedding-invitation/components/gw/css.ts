@@ -63,9 +63,12 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-gleaf-tree { display: block; height: 100%; width: auto; }
 .gw-gleaf-l { left: -64px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); -webkit-mask-composite: source-in; mask-composite: intersect; }
 .gw-gleaf-r { right: -64px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 14%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.gw-gleaf-flower { position: absolute; bottom: -2%; width: auto; }
-.gw-gleaf-l .gw-gleaf-flower { left: 34%; height: 30%; }
-.gw-gleaf-r .gw-gleaf-flower { right: 42%; height: 36%; }
+/* Pink peonies in the bottom corners, over the trees' roots: sharp art, never masked, mirrored. */
+.gw-gcorner { position: absolute; z-index: 3; bottom: -5svh; height: min(34svh, 300px); pointer-events: none; }
+.gw-gcorner img { display: block; height: 100%; width: auto; transform-origin: 50% 100%; }
+.gw-gcorner-l { left: -16%; rotate: 14deg; }
+.gw-gcorner-r { right: -16%; rotate: -14deg; scale: -1 1; }
+.gw-gate.is-ready .gw-gcorner img { animation: gw-grow-in 1.5s var(--gw-ease) .15s both; }
 .gw-gate.is-ready .gw-gleaf-tree { animation: gw-grow-in 1.4s var(--gw-ease) both; transform-origin: 50% 100%; }
 .gw-ghang { position: absolute; z-index: 3; top: -6px; }
 .gw-ghang img { display: block; height: 100%; width: auto; transform-origin: 50% 0; }
@@ -116,6 +119,9 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-gate.is-opening .gw-gc-l { transform: translateX(-55vw) scale(1.45); }
 .gw-gate.is-opening .gw-gc-r { transform: translateX(55vw) scale(1.45); }
 .gw-gate.is-opening .gw-ghang { transform: translateY(-55svh); opacity: 0; transition: transform 1.35s cubic-bezier(.6,0,.3,1) .2s, opacity .9s ease .55s; }
+.gw-gate.is-opening .gw-gcorner { opacity: 0; transition: transform 1.4s cubic-bezier(.65,.05,.25,1) .05s, opacity .9s ease .45s; }
+.gw-gate.is-opening .gw-gcorner-l { transform: translate(-40vw, 18svh); }
+.gw-gate.is-opening .gw-gcorner-r { transform: translate(40vw, 18svh); }
 .gw-gate.is-opening .gw-gfoot { transform: translateY(32svh); opacity: 0; transition: transform 1.2s cubic-bezier(.6,0,.3,1) .05s, opacity .8s ease .25s; }
 .gw-gate.is-reduced .gw-gbloom { display: none; }
 .gw-gate.is-reduced.is-opening > *, .gw-gate.is-reduced.is-opening .gw-gcard { transition: opacity .4s linear !important; transform: none !important; opacity: 0 !important; }
@@ -560,6 +566,9 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
   .gw-gleaf-l { left: -24px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to right, transparent 0, #000 22%, #000 72%, transparent 100%); }
   .gw-gleaf-r { right: -24px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 5%), linear-gradient(to left, transparent 0, #000 22%, #000 72%, transparent 100%); }
   /* The lanterns hang in the open sky between the trees and the card, mirrored about the centre. */
+  .gw-gcorner { height: min(52svh, 560px); bottom: -6svh; }
+  .gw-gcorner-l { left: -2%; rotate: 10deg; }
+  .gw-gcorner-r { right: -2%; rotate: -10deg; }
   .gw-ghang-l, .gw-ghang-r { height: min(34svh, 320px); }
   .gw-ghang-l { left: max(4%, calc(50% - 220px - 70px - min(34svh, 320px) * .585)); }
   .gw-ghang-r { right: max(4%, calc(50% - 220px - 70px - min(34svh, 320px) * .585)); }
