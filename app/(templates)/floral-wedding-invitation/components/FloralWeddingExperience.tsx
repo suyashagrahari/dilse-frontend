@@ -20,7 +20,7 @@
 // (top-left) switches every heading and button to Hindi.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BlessingsWall, Countdown, DEFAULT_TZ_OFFSET, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, downloadWeddingIcs, formatEventTime, photoImgStyle, cdn } from "../../_wedding";
+import { BlessingsWall, Countdown, RSVPBlock, Reveal, Section, WeddingMasonry, WeddingRoot, formatEventTime, photoImgStyle, cdn } from "../../_wedding";
 import type { ExperienceProps } from "../../_valentine/types";
 import Envelope from "./fw/Envelope";
 import Hero from "./fw/Hero";
@@ -28,12 +28,11 @@ import Story from "./fw/Story";
 import FloralEvents from "./fw/FloralEvents";
 import Venue from "./fw/Venue";
 import Guests from "./fw/Guests";
-import ShareBar from "./fw/ShareBar";
 import Finale from "./fw/Finale";
 import Wipe from "./fw/Wipe";
 import { PAPER_OPACITY, pic } from "./fw/art";
 import { FW_CSS } from "./fw/css";
-import { shareInvite, shareableUrl, useGuestName } from "./fw/guest";
+import { useGuestName } from "./fw/guest";
 import { T, readFloral, type Lang } from "./fw/model";
 
 function Film({ id, label }: { id: string; label: string }) {
@@ -88,7 +87,6 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
   const couple = `${m.first} & ${m.second}`;
   const guest = useGuestName();
   const [open, setOpen] = useState(false);
-  const [savedMain, setSavedMain] = useState(false);
   // Low-end phones: drop the ambient petals and the parallax.
   const [lite] = useState(() => {
     if (typeof navigator === "undefined") return false;
@@ -101,8 +99,6 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
   const shortDate = parts ? `${parts.day} · ${parts.month} · ${parts.year}` : "";
   const mainTime = m.main?.time ? formatEventTime(m.main.time, locale) : "";
   const venueLine = [m.main?.venue, m.main?.address?.split(",").pop()?.trim()].filter((v, i, a) => v && a.indexOf(v) === i).join(" · ");
-  // Client-only component (ssr: false): the URL is known on the first render.
-  const [url] = useState(() => shareableUrl());
 
   // ?to= → the RSVP's name field (the kit block has no default-name prop yet):
   // set through the native setter so React's onChange sees it; never over a typed value.
@@ -162,16 +158,6 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
     react("opened");
   };
 
-  const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 🌸` : `You're invited to the wedding of ${couple} 🌸`;
-  const share = () => void shareInvite(shareText, url);
-  const saveMain = m.main?.date
-    ? () => {
-        if (downloadWeddingIcs([m.main!], { couple, url, tz: DEFAULT_TZ_OFFSET }, `${m.main!.title || "wedding"}-${couple}`)) {
-          setSavedMain(true);
-          window.setTimeout(() => setSavedMain(false), 2400);
-        }
-      }
-    : undefined;
 
   const brideSide = { ...m.bride_, title: s.brideSide, art: "peonyPink" as const, pic: m.bridePic };
   const groomSide = { ...m.groom_, title: s.groomSide, art: "peonyBeige" as const, pic: m.groomPic };
@@ -197,7 +183,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
         </button>
       </div>
 
-      <Hero open={open} s={s} lang={lang} first={m.first} second={m.second} guest={guest} dateLine={dateLine} time={mainTime} venue={venueLine} onSaveDate={saveMain} onShare={share} saved={savedMain} />
+      <Hero open={open} s={s} lang={lang} first={m.first} second={m.second} guest={guest} dateLine={dateLine} time={mainTime} venue={venueLine} />
 
       {/* ── The invitation card ─────────────────────────────────────────── */}
       <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="wide" className="fw-sec fw-sec-invite">
@@ -328,13 +314,6 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
             </p>
             <Countdown date={m.main.date} time={m.main.time || "00:00"} variant="flip" labels={s.units} doneText={s.done} />
           </Reveal>
-          {saveMain && (
-            <Reveal className="fw-center" delay={200}>
-              <button type="button" className="wk-btn wk-btn-ghost fw-btn" onClick={saveMain} lang={lang}>
-                {savedMain ? `${s.saved} ✓` : s.calendar}
-              </button>
-            </Reveal>
-          )}
         </Section>
       )}
 
@@ -348,7 +327,7 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
       {/* ── Functions ───────────────────────────────────────────────────── */}
       {m.events.length > 0 && (
         <Section id="events" eyebrow={<span lang={lang}>{s.eventsEyebrow}</span>} title={<span lang={lang}>{s.events}</span>} ornament={null} width="wide" className="fw-sec">
-          <FloralEvents events={m.events} couple={couple} url={url || undefined} locale={locale} labels={{ directions: s.directions, calendar: s.calendar, saveAll: s.saveAll, dress: s.dress, tba: s.tba, whatsapp: s.whatsapp, saved: s.saved }} />
+          <FloralEvents events={m.events} locale={locale} labels={{ directions: s.directions, dress: s.dress, tba: s.tba }} />
         </Section>
       )}
 
@@ -382,21 +361,34 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
         </Section>
       )}
 
-      {/* ── RSVP ────────────────────────────────────────────────────────── */}
-      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="narrow" className="fw-sec fw-sec-rsvp">
-        <span className="fw-rsvp-peony" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...pic("peonyPink", { lazy: true })} />
-        </span>
-        <div ref={rsvpRef} className="fw-rsvp">
-          {guest && (
-            <p className="fw-rsvp-dear" lang={lang}>
-              {s.dear} {guest},
-            </p>
-          )}
-          <Reveal className="fw-fold">
-            <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
+      {/* ── RSVP: an arched garden window with the couple beside the reply card ─ */}
+      <Section id="rsvp" eyebrow={<span lang={lang}>RSVP · {s.rsvpEyebrow}</span>} ornament={null} width="wide" className="fw-sec fw-sec-rsvp">
+        <div className="fw-rsvp-wrap">
+          <Reveal effect="zoom" className="fw-rsvp-art">
+            <span className="fw-rsvp-window" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-rw-wash" {...pic("cloudWash", { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-rw-drape" {...pic("drapeSm", { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-rw-pair" {...pic("coupleWedding", { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-rw-peony is-l" {...pic("peonyCorner", { lazy: true })} />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-rw-peony is-r" {...pic("peonyCorner", { lazy: true })} />
+            </span>
+            <p className="fw-rsvp-names">{couple}</p>
           </Reveal>
+          <div ref={rsvpRef} className="fw-rsvp">
+            {guest && (
+              <p className="fw-rsvp-dear" lang={lang}>
+                {s.dear} {guest},
+              </p>
+            )}
+            <Reveal className="fw-fold">
+              <RSVPBlock mode={mode} couple={couple} events={m.events} perEvent meal={m.rsvpMeal} maxGuests={m.maxGuests} deadline={m.rsvpBy || undefined} title={s.rsvp} intro={s.rsvpIntro} locale={locale} />
+            </Reveal>
+          </div>
         </div>
       </Section>
 
@@ -417,15 +409,6 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
         second={m.second}
         hashtag={m.hashtag}
         lang={lang}
-        share={
-          <ShareBar
-            s={s}
-            lang={lang}
-            shareText={shareText}
-            fileName={`${m.first}-${m.second}-invitation`}
-            card={{ first: m.first, second: m.second, dateLine, time: mainTime, venue: venueLine, invocation: m.invocation, labels: { together: s.togetherWith, married: s.gettingMarried, scan: s.scan, mantra: s.mantra } }}
-          />
-        }
       />
     </WeddingRoot>
   );

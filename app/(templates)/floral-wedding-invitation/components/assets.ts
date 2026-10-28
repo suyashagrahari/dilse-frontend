@@ -5,7 +5,7 @@
 // same-origin path and fw/art.ts `pic()` draws it through `cdn()`. Sizes are the intrinsic webp sizes
 // (use them for width/height so images never shift the layout).
 
-export interface WeddingAsset { src: string; w: number; h: number }
+export interface WeddingAsset { src: string; w: number; h: number; sameOrigin?: boolean }
 
 export const FW_ASSETS = {
   "template3": {
@@ -25,6 +25,16 @@ export const FW_ASSETS = {
     "card": { src: "/wedding-v3/template3/card.webp", w: 600, h: 840 },
     /** Derived (this template): the 1200×630 art plate under the link preview (opengraph-image.tsx; JPEG, satori reads no WebP). */
     "og-floral-base": { src: "/wedding-v3/template3/og-floral-base.jpg", w: 1200, h: 630 },
+    // From the owner's asset library (template14 couples, template21 peonies): one couple per function for
+    // the celebration cards and a sharp peony bunch for corners. Served from public/ until uploaded to the CDN.
+    "fw-couple-haldi": { src: "/wedding-v3/template3/fw-couple-haldi.webp", w: 326, h: 560, sameOrigin: true },
+    "fw-couple-mehendi": { src: "/wedding-v3/template3/fw-couple-mehendi.webp", w: 407, h: 560, sameOrigin: true },
+    "fw-couple-sangeet": { src: "/wedding-v3/template3/fw-couple-sangeet.webp", w: 524, h: 560, sameOrigin: true },
+    "fw-couple-reception": { src: "/wedding-v3/template3/fw-couple-reception.webp", w: 423, h: 560, sameOrigin: true },
+    "fw-couple-engagement": { src: "/wedding-v3/template3/fw-couple-engagement.webp", w: 351, h: 560, sameOrigin: true },
+    "fw-couple-wedding": { src: "/wedding-v3/template3/fw-couple-wedding.webp", w: 312, h: 560, sameOrigin: true },
+    "fw-peony-corner": { src: "/wedding-v3/template3/fw-peony-corner.webp", w: 680, h: 977, sameOrigin: true },
+    "fw-peony-corner-2x": { src: "/wedding-v3/template3/fw-peony-corner-2x.webp", w: 1000, h: 1437, sameOrigin: true },
   },
   "template8": {
     "00-background-colour": { src: "/wedding-v3/template8/00-background-colour.webp", w: 1013, h: 1800 },

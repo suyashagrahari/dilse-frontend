@@ -44,12 +44,23 @@ export const ART = {
   peacock: T2["12-peacock"],
   vine: T2["13-hanging-vine"],
   coupleStanding: T2["14-couple"],
+  coupleHaldi: T3["fw-couple-haldi"],
+  coupleMehendi: T3["fw-couple-mehendi"],
+  coupleSangeet: T3["fw-couple-sangeet"],
+  coupleReception: T3["fw-couple-reception"],
+  coupleEngagement: T3["fw-couple-engagement"],
+  coupleWedding: T3["fw-couple-wedding"],
+  peonyCorner: T3["fw-peony-corner"],
+  peonyCorner2x: T3["fw-peony-corner-2x"],
 } as const;
 
 export type ArtRole = keyof typeof ART;
 
 /** Smaller twin (same painting) for the 1× slot. */
-const SMALL: Partial<Record<ArtRole, ArtRole>> = { clouds: "cloudsSm", drape: "drapeSm", swirl: "swirlSm" };
+const SMALL: Partial<Record<ArtRole, ArtRole>> = { clouds: "cloudsSm", drape: "drapeSm", swirl: "swirlSm", peonyCorner2x: "peonyCorner" };
+
+/** CDN URL, or the public/ path for art not uploaded to the CDN yet (`sameOrigin`). */
+const url = (a: { src: string; sameOrigin?: boolean }) => (a.sameOrigin ? a.src : cdn(a.src));
 
 export interface PicOpts {
   /** Below the fold. */
@@ -66,8 +77,8 @@ export function pic(role: ArtRole, o: PicOpts = {}) {
   const a = ART[role];
   const small = SMALL[role] ? ART[SMALL[role]!] : null;
   return {
-    src: cdn(small && !o.high ? small.src : a.src),
-    ...(small ? { srcSet: `${cdn(small.src)} ${small.w}w, ${cdn(a.src)} ${a.w}w`, sizes: o.sizes ?? "100vw" } : {}),
+    src: url(small && !o.high ? small : a),
+    ...(small ? { srcSet: `${url(small)} ${small.w}w, ${url(a)} ${a.w}w`, sizes: o.sizes ?? "100vw" } : {}),
     width: a.w,
     height: a.h,
     alt: o.alt ?? "",

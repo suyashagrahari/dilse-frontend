@@ -1,11 +1,11 @@
 "use client";
 
-// ─── The venue: a garden folly in watercolour ───────────────────────────────
-// A blush gazebo and a stone fountain on a watercolour wash, a gold-leaf
-// branch and a green branch reaching in from the edges (they drift a few px
-// on scroll), then the venue's name, address, "Directions" and, on tap, the
-// map itself (no third-party frame until the guest asks for it), plus the
-// "getting there" note.
+// ─── The venue: the blush gazebo on an ivory card ───────────────────────────
+// Royal-style and quiet: the blush gazebo stands on the top edge of an ivory
+// card framed in a fine double gold line, a bunch of pink peonies tucked into
+// each bottom corner. Inside: the venue's name in script, its address,
+// "Directions" and, on tap, the map itself (no third-party frame until the
+// guest asks for it), then the "getting there" note under a gold rule.
 
 import { useState } from "react";
 import { Reveal, mapLink, type WeddingEvent } from "../../../_wedding";
@@ -18,29 +18,17 @@ export default function Venue({ event, directions, gettingThere, gettingThereLab
   const q = [event.venue, event.address].filter(Boolean).join(", ");
   return (
     <div className="fw-venue">
-      <Reveal effect="zoom" className="fw-venue-art">
-        <span className="fw-venue-wash" aria-hidden>
+      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+      <img className="fw-venue-gazebo" {...pic("gazebo", { lazy: true })} aria-hidden />
+      <Reveal effect="zoom" className="fw-venue-card">
+        <span className="fw-venue-corner is-l" aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...pic("cloudWash", { lazy: true })} />
+          <img {...pic("peonyCorner", { lazy: true })} />
         </span>
-        <span className="fw-venue-leaf is-gold" aria-hidden>
+        <span className="fw-venue-corner is-r" aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...pic("goldLeaf", { lazy: true })} />
+          <img {...pic("peonyCorner", { lazy: true })} />
         </span>
-        <span className="fw-venue-gazebo" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...pic("gazebo", { lazy: true })} />
-        </span>
-        <span className="fw-venue-fountain" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...pic("fountain", { lazy: true })} />
-        </span>
-        <span className="fw-venue-leaf is-green" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img {...pic("greenBranch", { lazy: true })} />
-        </span>
-      </Reveal>
-      <Reveal className="fw-venue-text" delay={140}>
         <h3 className="fw-venue-name">{event.venue}</h3>
         {event.address && <p className="fw-venue-addr">{event.address}</p>}
         <div className="fw-venue-actions">

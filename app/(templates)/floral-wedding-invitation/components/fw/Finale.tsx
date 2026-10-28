@@ -4,11 +4,11 @@
 // The floral drape again with the couple on their swing, a pampas cloud bank
 // and pampas in the corners. When the page is 45 % on screen a dusty-rose wax
 // seal is pressed onto it ("शुभ विवाह", scale 1.6 → 1 with a soft squash, then
-// a ring of light), the closing words, the names, the hashtag, and the share
-// bar (WhatsApp, copy, the downloadable card, QR). Reduced motion: the seal is
-// simply there.
+// a ring of light), the closing words, the names and the hashtag, inside a
+// fine gold frame, sized so the whole goodbye fits one screen. Reduced motion:
+// the seal is simply there.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal, useWeddingReducedMotion } from "../../../_wedding";
 import { pic } from "./art";
 
@@ -21,10 +21,9 @@ export interface FinaleProps {
   second: string;
   hashtag: string;
   lang: "en" | "hi";
-  share: ReactNode;
 }
 
-export default function Finale({ sealHi, seal, closing, endLine, first, second, hashtag, lang, share }: FinaleProps) {
+export default function Finale({ sealHi, seal, closing, endLine, first, second, hashtag, lang }: FinaleProps) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
   const [on, setOn] = useState(false);
@@ -52,6 +51,7 @@ export default function Finale({ sealHi, seal, closing, endLine, first, second, 
 
   return (
     <section ref={ref} className={`fw-finale${on ? " is-on" : ""}${pressed || reduce ? " is-pressed" : ""}`} aria-label={seal}>
+      <span className="fw-frame" aria-hidden />
       <div className="fw-fin-bank" aria-hidden>
         <span className="fw-hero-corner is-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -106,9 +106,6 @@ export default function Finale({ sealHi, seal, closing, endLine, first, second, 
             {hashtag}
           </Reveal>
         )}
-        <Reveal delay={340} className="fw-fin-share">
-          {share}
-        </Reveal>
       </div>
     </section>
   );

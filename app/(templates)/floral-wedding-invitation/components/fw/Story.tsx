@@ -54,14 +54,6 @@ export default function Story({ chapters }: { chapters: FwChapter[] }) {
 
   return (
     <div className="fw-story" ref={ref}>
-      <span className="fw-vine is-l" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...pic("vine", { lazy: true })} />
-      </span>
-      <span className="fw-vine is-r" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img {...pic("vine", { lazy: true })} />
-      </span>
       <span className="fw-thread" aria-hidden>
         <i />
       </span>

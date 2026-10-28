@@ -26,12 +26,9 @@ export interface HeroProps {
   dateLine: string;
   time: string;
   venue: string;
-  onSaveDate?: () => void;
-  onShare: () => void;
-  saved?: boolean;
 }
 
-export default function Hero({ open, s, lang, first, second, guest, dateLine, time, venue, onSaveDate, onShare, saved }: HeroProps) {
+export default function Hero({ open, s, lang, first, second, guest, dateLine, time, venue }: HeroProps) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
   const petals = useMemo(() => {
@@ -67,6 +64,7 @@ export default function Hero({ open, s, lang, first, second, guest, dateLine, ti
 
   return (
     <header ref={ref} className={`fw-hero${open ? " is-open" : ""}`}>
+      <span className="fw-frame" aria-hidden />
       <div className="fw-hero-bank" aria-hidden>
         <span className="fw-hero-corner is-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -130,19 +128,6 @@ export default function Hero({ open, s, lang, first, second, guest, dateLine, ti
             </p>
           )}
           {venue && <p className="fw-hero-venue fw-hi-8">{venue}</p>}
-          <div className="fw-hero-actions fw-hi-9">
-            <a className="wk-btn fw-btn" href="#rsvp" lang={lang}>
-              {s.rsvpNow}
-            </a>
-            {onSaveDate && (
-              <button type="button" className="wk-btn wk-btn-ghost fw-btn" onClick={onSaveDate} lang={lang}>
-                {saved ? `${s.saved} ✓` : s.saveDate}
-              </button>
-            )}
-            <button type="button" className="wk-btn wk-btn-ghost fw-btn fw-btn-icon" onClick={onShare} aria-label={s.shareInvite}>
-              <ShareIcon />
-            </button>
-          </div>
         </div>
       </div>
 

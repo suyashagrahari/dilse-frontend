@@ -2,31 +2,29 @@
 
 // ─── The functions: a suite of stationery cards ─────────────────────────────
 // Each function is its own card from the suite: an arched window washed in
-// watercolour with a vignette picked from its title (haldi = marigold pots,
-// mehendi = banana leaves, sangeet = the peacock, baraat = the umbrella
-// bearer, the pheras = the floral drape, reception = the couple, roka = a
-// peony bouquet…), then the date, time, venue, a dress-code swatch, a note and
-// three actions (directions, calendar, WhatsApp). Cards unfold on scroll
-// (rotateX from the top edge, staggered). One column on phones, two from
-// 720 px, three from 1280 px.
+// watercolour with the couple dressed for that function (haldi in yellow,
+// mehendi in orange, sangeet dancing, the pheras in the red lehenga, reception
+// in tux and gown, roka in ivory…), then the date, time, venue, a dress-code
+// swatch, a note and Directions. Cards unfold on scroll (rotateX from the top
+// edge, staggered). Phones: a swipeable row (scroll-snap, every card centred)
+// with dots under it. Two columns from 720 px, three from 1240 px.
 
-import { useState } from "react";
-import { DEFAULT_TZ_OFFSET, Reveal, downloadWeddingIcs, formatEventDate, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
+import { useEffect, useRef, useState } from "react";
+import { Reveal, formatEventDate, formatEventTime, mapLink, type WeddingEvent } from "../../../_wedding";
 import { pic, type ArtRole } from "./art";
-import { waLink } from "./guest";
 import { MAIN_RE } from "./model";
 
-const VIGNETTES: [RegExp, ArtRole][] = [
-  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, "marigoldPots"],
-  [/mehendi|mehndi|henna|मेहंदी/i, "banana"],
-  [/sangeet|garba|dandiya|music|dance|cocktail|संगीत/i, "peacock"],
-  [/baraat|barat|procession|ghudchadi|sehra|milni|बारात/i, "umbrella"],
-  [/reception|dinner|party|gala|banquet|स्वागत/i, "coupleStanding"],
-  [/tilak|roka|engagement|sagai|ring|सगाई/i, "peonyPink"],
-  [/puja|pooja|path|havan|chowki|पूजा/i, "garland"],
-  [MAIN_RE, "drapeSm"],
+const COUPLES: [RegExp, ArtRole][] = [
+  [/haldi|pithi|ubtan|tel ban|mayra|हल्दी/i, "coupleHaldi"],
+  [/mehendi|mehndi|henna|मेहंदी/i, "coupleMehendi"],
+  [/sangeet|garba|dandiya|music|dance|संगीत/i, "coupleSangeet"],
+  [/reception|dinner|party|gala|banquet|cocktail|स्वागत/i, "coupleReception"],
+  [/tilak|roka|engagement|sagai|ring|सगाई/i, "coupleEngagement"],
+  [/baraat|barat|procession|ghudchadi|sehra|milni|puja|pooja|path|havan|chowki|बारात|पूजा/i, "coupleWedding"],
+  [MAIN_RE, "coupleWedding"],
 ];
-const vignetteFor = (title: string): ArtRole => VIGNETTES.find(([re]) => re.test(title))?.[1] ?? "roses";
+const FALLBACKS: ArtRole[] = ["coupleEngagement", "coupleReception", "coupleWedding"];
+const coupleFor = (title: string, i: number): ArtRole => COUPLES.find(([re]) => re.test(title))?.[1] ?? FALLBACKS[i % FALLBACKS.length];
 
 export function Icon({ d }: { d: string }) {
   return (
@@ -51,24 +49,47 @@ export function WaGlyph() {
 
 export interface FloralEventsProps {
   events: readonly WeddingEvent[];
-  couple: string;
-  url?: string;
   locale: string;
-  labels: { directions: string; calendar: string; saveAll: string; dress: string; tba: string; whatsapp: string; saved: string };
+  labels: { directions: string; dress: string; tba: string };
 }
 
-export default function FloralEvents({ events, couple, url, locale, labels: l }: FloralEventsProps) {
-  const [flash, setFlash] = useState<string | null>(null);
+export default function FloralEvents({ events, locale, labels: l }: FloralEventsProps) {
   const list = events.filter((e) => e.title || e.venue || e.date);
-  if (!list.length) return null;
-  const save = (es: readonly WeddingEvent[], key: string, name: string) => {
-    const ok = downloadWeddingIcs(es, { couple, url, tz: DEFAULT_TZ_OFFSET }, name);
-    setFlash(ok ? key : `${key}:err`);
-    window.setTimeout(() => setFlash(null), 2200);
+  const row = useRef<HTMLOListElement>(null);
+  const [at, setAt] = useState(0);
+
+  // Which card the phone row is resting on (the dots follow it). Wider screens wrap, so this stays 0.
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      const first = el.firstElementChild as HTMLElement | null;
+      if (!first) return;
+      const step = first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || "0");
+      setAt(Math.max(0, Math.min(el.children.length - 1, Math.round(el.scrollLeft / step))));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(read);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const go = (i: number) => {
+    const el = row.current;
+    const card = el?.children[i] as HTMLElement | undefined;
+    if (el && card) el.scrollTo({ left: card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2, behavior: "smooth" });
   };
+
+  if (!list.length) return null;
   return (
     <div className="fw-evs">
-      <ol className="fw-ev-list">
+      <ol ref={row} className="fw-ev-list">
         {list.map((e, i) => {
           const date = formatEventDate(e.date, locale);
           const time = formatEventTime(e.time, locale);
@@ -76,8 +97,7 @@ export default function FloralEvents({ events, couple, url, locale, labels: l }:
           const map = mapLink(e);
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
-          const art = vignetteFor(e.title);
-          const waText = [`${e.title} · ${couple}`, [date, time].filter(Boolean).join(", "), e.venue, url].filter(Boolean).join("\n");
+          const art = coupleFor(e.title, i);
           return (
             <Reveal as="li" key={key} effect="rise" delay={(i % 3) * 110} className="fw-ev fw-fold">
               <article className="fw-ev-card">
@@ -115,33 +135,25 @@ export default function FloralEvents({ events, couple, url, locale, labels: l }:
                     </p>
                   )}
                   {e.note && <p className="fw-ev-note">{e.note}</p>}
-                  <div className="fw-ev-actions">
-                    {map && (
-                      <a className="fw-chip" href={map} target="_blank" rel="noopener noreferrer">
+                  {map && (
+                    <div className="fw-ev-actions">
+                      <a className="fw-chip fw-ev-dir" href={map} target="_blank" rel="noopener noreferrer">
                         <Icon d={PIN} /> {l.directions}
                       </a>
-                    )}
-                    {e.date && (
-                      <button type="button" className="fw-chip" onClick={() => save([e], key, `${e.title || "event"}-${couple}`)}>
-                        <Icon d={CAL} /> {flash === key ? `${l.saved} ✓` : l.calendar}
-                      </button>
-                    )}
-                    <a className="fw-chip fw-chip-icon" href={waLink(waText)} target="_blank" rel="noopener noreferrer" aria-label={`${l.whatsapp}: ${e.title}`}>
-                      <WaGlyph />
-                    </a>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </article>
             </Reveal>
           );
         })}
       </ol>
-      {list.filter((e) => e.date).length > 1 && (
-        <Reveal className="fw-ev-all">
-          <button type="button" className="wk-btn fw-btn" onClick={() => save(list, "all", `wedding-${couple}`)}>
-            <Icon d={CAL} /> {flash === "all" ? `${l.saved} ✓` : l.saveAll}
-          </button>
-        </Reveal>
+      {list.length > 1 && (
+        <div className="fw-ev-dots">
+          {list.map((e, i) => (
+            <button key={e.id || i} type="button" aria-label={e.title || String(i + 1)} aria-current={i === at ? "true" : undefined} className={i === at ? "is-on" : ""} onClick={() => go(i)} />
+          ))}
+        </div>
       )}
     </div>
   );

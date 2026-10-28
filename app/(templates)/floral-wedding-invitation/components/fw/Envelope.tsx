@@ -11,7 +11,8 @@
 //   1.10 s  the folded card rises out of the envelope
 //   1.95 s  its top fold opens (paper-fold, rotateX) on the names
 //   2.95 s  the envelope sinks away, the card lifts toward the guest and
-//           dissolves into the hero (already decoded underneath), petals fall
+//           dissolves into the hero (already decoded underneath), petals fall;
+//           a soft light blooms from the seal through all of it
 // Transform/opacity only. Reduced motion: a 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -101,6 +102,7 @@ export default function Envelope({ first, second, dateLine, guest, s, lang, onOp
   const b = initialOf(second);
   return (
     <div ref={rootRef} className={`fw-env is-${phase}${ready ? " is-ready" : ""}${reduce ? " is-reduced" : ""}`} data-fw-env={phase}>
+      <span className="fw-frame" aria-hidden />
       <div className="fw-env-bg" aria-hidden>
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         <img className="fw-env-clouds" {...pic("clouds", { high: true })} />
