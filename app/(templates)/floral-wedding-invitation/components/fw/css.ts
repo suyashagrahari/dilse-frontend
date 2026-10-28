@@ -81,31 +81,31 @@ export const FW_CSS = `
 .fw-env-dear { margin: 0; font: 400 clamp(30px, 8.4vw, 46px)/1.1 var(--wk-font-script); color: var(--fw-script); }
 .fw-env-dear b { font-weight: 400; }
 .fw-env-stage { perspective: 1400px; }
-.fw-envelope { --seal: clamp(66px, 17vw, 92px); position: relative; width: min(84vw, 460px); aspect-ratio: 1.42; transform-style: preserve-3d; transition: transform 1.1s cubic-bezier(.5,0,.3,1); }
+/* Flat on purpose (no preserve-3d): each hinge brings its own perspective(), so z-index keeps the paper in order. */
+.fw-envelope { --seal: clamp(66px, 17vw, 92px); position: relative; width: min(84vw, 460px); aspect-ratio: 1.42; transition: transform 1.15s cubic-bezier(.45,.05,.25,1); }
 @media (min-width: 768px) { .fw-envelope { width: min(60vw, 540px); } }
 .fw-env-back { position: absolute; inset: 0; border-radius: 6px; background: linear-gradient(180deg, var(--fw-env-2), var(--fw-env)); box-shadow: 0 34px 60px -32px rgba(80,50,30,.5), 0 4px 14px -6px rgba(80,50,30,.25); }
-.fw-card { position: absolute; left: 5%; right: 5%; bottom: 5%; height: 88%; z-index: 2; transform-style: preserve-3d; transition: transform 1s cubic-bezier(.3,.7,.2,1), opacity .8s ease; }
+.fw-card { position: absolute; left: 5%; right: 5%; bottom: 5%; height: 88%; z-index: 2; transition: transform 1.1s cubic-bezier(.45,.05,.25,1), opacity 1s ease; }
 .fw-card-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6% 6%; text-align: center; border-radius: 3px; background: #fffaf2; box-shadow: 0 10px 24px -14px rgba(60,40,20,.4); }
 .fw-card-face::before { content: ""; position: absolute; inset: 7px; border: 1px solid rgba(184,146,74,.5); border-radius: 2px; pointer-events: none; }
 .fw-card-k { font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
 .fw-card-n { font: 400 clamp(30px, 8.6vw, 50px)/1.05 var(--wk-font-script); color: var(--fw-script); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fw-card-amp { font: italic 500 clamp(14px, 3.6vw, 18px)/1 var(--wk-font-display); color: var(--wk-gold-ink); }
 .fw-card-d { margin-top: 6px; font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .22em; color: var(--wk-muted); }
-.fw-card-fold { position: absolute; left: 0; right: 0; top: 0; height: 52%; z-index: 3; transform-origin: 50% 0; transform-style: preserve-3d; transition: transform 1s cubic-bezier(.45,.05,.2,1); }
-.fw-card-fold > span { position: absolute; inset: 0; border-radius: 3px 3px 0 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+/* The card's folded top: one piece of paper; it lifts on its top hinge and fades as it passes edge-on, revealing the names. */
+.fw-card-fold { position: absolute; left: 0; right: 0; top: 0; height: 52%; z-index: 3; transform-origin: 50% 0; transform: perspective(900px) rotateX(0deg); transition: transform 1s cubic-bezier(.45,.05,.2,1), opacity .45s ease .4s; }
+.fw-card-fold > span { position: absolute; inset: 0; border-radius: 3px 3px 0 0; }
 .fw-card-fold-front { display: grid; place-items: center; background: linear-gradient(180deg, #fbf4ea, #f5eadb); box-shadow: 0 6px 12px -8px rgba(60,40,20,.35); }
 .fw-card-fold-front img { width: 30%; height: auto; }
-.fw-card-fold-back { transform: rotateX(180deg); background: var(--fw-liner) ${u("mandala")} center / 64px auto repeat; box-shadow: inset 0 0 0 7px #fffaf2, inset 0 0 0 8px rgba(184,146,74,.45); }
-.fw-env-pocket { position: absolute; inset: 0; z-index: 4; border-radius: 6px; clip-path: polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%); background: linear-gradient(180deg, var(--fw-env), var(--fw-env-2)); }
-.fw-env-pocket::before { content: ""; position: absolute; inset: 0; clip-path: polygon(0 100%, 50% 52%, 100% 100%); background: linear-gradient(0deg, rgba(255,255,255,.22), rgba(120,80,50,.08)); }
-.fw-env-pocket::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(120,80,50,.07), transparent 28%, transparent 72%, rgba(120,80,50,.07)); }
+.fw-env-pocket { position: absolute; inset: 0; z-index: 4; border-radius: 6px; overflow: hidden; }
+.fw-env-pocket-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .fw-env-to { position: absolute; left: 8%; right: 8%; bottom: 7%; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .fw-env-to b { font: 400 clamp(22px, 6vw, 32px)/1.1 var(--wk-font-script); color: var(--fw-script); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fw-env-flap { position: absolute; left: 0; right: 0; top: 0; height: 58%; z-index: 5; transform-origin: 50% 0; transform-style: preserve-3d; transition: transform .85s cubic-bezier(.5,0,.25,1); }
-.fw-env-flap i { position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.fw-env-flap-out { background: linear-gradient(180deg, var(--fw-env), var(--fw-env-2) 92%); }
-.fw-env-flap-out::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 70%, rgba(120,80,50,.1)); }
-.fw-env-flap-in { transform: rotateX(180deg); background: var(--fw-liner) ${u("mandala")} center top / 58px auto repeat; }
+/* The flap: one piece of paper hinged on the envelope's top edge (its clip is in its own coordinates, so the
+   tip ends up above the hinge once it has turned). The symmetric ease puts it edge-on at exactly half the time;
+   there fw-flap-face swaps the outside for the lining and drops it behind the card. */
+.fw-env-flap { position: absolute; left: 0; right: 0; top: 0; height: 58%; z-index: 5; transform-origin: 50% 0; clip-path: polygon(0 0, 100% 0, 50% 100%); background: linear-gradient(180deg, var(--fw-env), var(--fw-env-2) 92%); transform: perspective(1100px) rotateX(0deg); transition: transform 1s cubic-bezier(.45,.05,.55,.95), opacity .8s ease; }
+@keyframes fw-flap-face { 0%, 49.9% { z-index: 5; background: linear-gradient(180deg, var(--fw-env), var(--fw-env-2) 92%); } 50%, 100% { z-index: 1; background: linear-gradient(0deg, rgba(176,100,107,.26), rgba(176,100,107,.1) 70%), ${u("mandala")} center bottom / 58px auto repeat, var(--fw-liner); } }
 .fw-seal { position: absolute; left: 50%; top: 58%; width: var(--seal); height: var(--seal); margin: calc(var(--seal) / -2) 0 0 calc(var(--seal) / -2); z-index: 6; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .fw-env.is-ready.is-closed .fw-seal { animation: fw-pulse 2.4s ease-in-out 1.2s infinite; }
 .fw-seal:focus-visible { outline: 2px solid var(--wk-gold); outline-offset: 6px; }
@@ -126,18 +126,25 @@ export const FW_CSS = `
 .fw-env:not(.is-closed) .fw-seal-half.is-l { transform: translate3d(-34%, 60%, 0) rotate(-34deg); opacity: 0; }
 .fw-env:not(.is-closed) .fw-seal-half.is-r { transform: translate3d(34%, 64%, 0) rotate(30deg); opacity: 0; }
 .fw-env:not(.is-closed) .fw-env-foot, .fw-env:not(.is-closed) .fw-env-head { opacity: 0; transform: translate3d(0, 10px, 0); transition-delay: 0s; transition-duration: .5s; }
-.fw-env.is-flap .fw-env-flap, .fw-env.is-rise .fw-env-flap, .fw-env.is-unfold .fw-env-flap, .fw-env.is-leave .fw-env-flap { transform: rotateX(-180deg); }
-.fw-env.is-rise .fw-env-flap, .fw-env.is-unfold .fw-env-flap, .fw-env.is-leave .fw-env-flap { z-index: 1; }
-.fw-env.is-rise .fw-card, .fw-env.is-unfold .fw-card { transform: translate3d(0, -62%, 0); }
-.fw-env.is-unfold .fw-card-fold, .fw-env.is-leave .fw-card-fold { transform: rotateX(-180deg); }
-.fw-env.is-leave { opacity: 0; pointer-events: none; transition: opacity 1.1s cubic-bezier(.4,0,.2,1); }
+.fw-env.is-flap .fw-env-flap, .fw-env.is-rise .fw-env-flap, .fw-env.is-out .fw-env-flap, .fw-env.is-unfold .fw-env-flap, .fw-env.is-leave .fw-env-flap { transform: perspective(1100px) rotateX(-180deg); animation: fw-flap-face 1s linear forwards; }
+/* rise: the card slides right out of the pocket while the envelope settles lower */
+.fw-env.is-rise .fw-envelope { transform: translate3d(0, 12vh, 0); }
+.fw-env.is-rise .fw-card { transform: translate3d(0, -100%, 0); }
+/* out: clear of the pocket, the card comes in front and to the middle; the envelope slips away below */
+.fw-env.is-out .fw-card, .fw-env.is-unfold .fw-card, .fw-env.is-leave .fw-card { z-index: 7; }
+.fw-env.is-out .fw-envelope, .fw-env.is-unfold .fw-envelope, .fw-env.is-leave .fw-envelope { transform: translate3d(0, 34vh, 0); }
+.fw-env.is-out .fw-card, .fw-env.is-unfold .fw-card { transform: translate3d(0, -34vh, 0) scale(1.16); }
+.fw-env-back, .fw-env-pocket { transition: opacity .9s ease .15s; }
+.fw-env.is-out :is(.fw-env-back, .fw-env-pocket, .fw-env-flap), .fw-env.is-unfold :is(.fw-env-back, .fw-env-pocket, .fw-env-flap), .fw-env.is-leave :is(.fw-env-back, .fw-env-pocket, .fw-env-flap) { opacity: 0; }
+/* unfold: the folded top opens on the names */
+.fw-env.is-unfold .fw-card-fold, .fw-env.is-leave .fw-card-fold { transform: perspective(900px) rotateX(-110deg); opacity: 0; }
+.fw-env.is-leave { opacity: 0; pointer-events: none; transition: opacity 1.2s cubic-bezier(.4,0,.2,1) .1s; }
 /* A soft light blooms from the seal as it breaks and carries the eye into the card. */
 .fw-env::after { content: ""; position: absolute; z-index: 1; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.1); background: radial-gradient(closest-side, rgba(255,250,244,.95), rgba(252,238,228,.6) 40%, rgba(252,238,228,0) 72%); }
 .fw-env:not(.is-closed)::after { animation: fw-bloom 2.4s cubic-bezier(.22,1,.36,1) .1s forwards; }
 @keyframes fw-bloom { 0% { opacity: 0; transform: scale(.1); } 30% { opacity: .7; } 100% { opacity: 0; transform: scale(1.1); } }
 .fw-env.is-reduced::after { display: none; }
-.fw-env.is-leave .fw-envelope { transform: translate3d(0, 22vh, 0); }
-.fw-env.is-leave .fw-card { transform: translate3d(0, calc(-62% - 30vh), 0) scale(1.2); opacity: 0; }
+.fw-env.is-leave .fw-card { transform: translate3d(0, -40vh, 0) scale(1.34); opacity: 0; }
 .fw-env.is-leave .fw-env-clouds { transform: translate3d(-50%, 12%, 0); }
 .fw-env.is-reduced, .fw-env.is-reduced * { transition-duration: .01ms !important; transition-delay: 0s !important; animation: none !important; }
 .fw-env.is-reduced.is-leave { transition: opacity .4s ease !important; }

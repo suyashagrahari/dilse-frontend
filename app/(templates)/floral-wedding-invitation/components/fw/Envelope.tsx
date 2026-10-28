@@ -5,15 +5,22 @@
 // cloud bank along the bottom, a gold line-art swirl that draws itself, and a
 // nude envelope addressed to the guest ("Dear Sharma family" from ?to=, else
 // the couple's names) sealed with dusty-rose wax and their initials.
-// One tap (also the gesture that starts the music):
+// One tap (also the gesture that starts the music), paced like a real letter:
 //   0.00 s  the seal cracks: its two halves fall apart
-//   0.45 s  the flap swings up (rotateX, 3D)
-//   1.10 s  the folded card rises out of the envelope
-//   1.95 s  its top fold opens (paper-fold, rotateX) on the names
-//   2.95 s  the envelope sinks away, the card lifts toward the guest and
-//           dissolves into the hero (already decoded underneath), petals fall;
-//           a soft light blooms from the seal through all of it
-// Transform/opacity only. Reduced motion: a 400 ms crossfade.
+//   0.40 s  the flap swings open on its top hinge (rotateX with perspective);
+//           edge-on at the halfway point it tucks behind the card
+//   1.30 s  the card slides up and right out of the pocket while the envelope
+//           settles lower
+//   2.45 s  out of the pocket, the card comes forward to the middle of the
+//           screen and grows a little; the envelope slips away below
+//   3.40 s  its folded top opens (paper-fold) on the names
+//   4.45 s  the card lifts toward the guest and dissolves into the hero
+//           (already decoded underneath), petals fall
+// No 3D context and no two-faced cards: each hinge is one piece of paper with
+// its own perspective(), so the layers keep their paper order (z-index). The
+// flap turns its outside to its lining at the exact halfway point, edge-on
+// (a symmetric ease puts 90° at 50% of the time), and drops behind the card
+// there; the card's folded top lifts and fades as it passes edge-on. Transform/opacity only. Reduced motion: a 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
@@ -31,7 +38,7 @@ export interface EnvelopeProps {
   onOpened: () => void;
 }
 
-type Phase = "closed" | "crack" | "flap" | "rise" | "unfold" | "leave" | "gone";
+type Phase = "closed" | "crack" | "flap" | "rise" | "out" | "unfold" | "leave" | "gone";
 
 export default function Envelope({ first, second, dateLine, guest, s, lang, onOpened }: EnvelopeProps) {
   const reduce = useWeddingReducedMotion();
@@ -86,14 +93,15 @@ export default function Envelope({ first, second, dateLine, guest, s, lang, onOp
     // the seal cracks, so the reveal's first frames don't jank.
     const hero = Array.from(document.querySelectorAll<HTMLImageElement>(".fw-hero img"));
     const ready = decodeAll(hero, 1800);
-    later(450, () => setPhase("flap"));
-    later(1100, () => setPhase("rise"));
-    later(1950, () => setPhase("unfold"));
-    void Promise.all([ready, new Promise((r) => window.setTimeout(r, 2950))]).then(() => {
+    later(400, () => setPhase("flap"));
+    later(1300, () => setPhase("rise"));
+    later(2450, () => setPhase("out"));
+    later(3400, () => setPhase("unfold"));
+    void Promise.all([ready, new Promise((r) => window.setTimeout(r, 4450))]).then(() => {
       if (!live.current) return;
       setPhase("leave");
       onOpened();
-      later(1100, () => setPhase("gone"));
+      later(1200, () => setPhase("gone"));
     });
   };
 
@@ -145,10 +153,32 @@ export default function Envelope({ first, second, dateLine, guest, s, lang, onOp
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                 <img {...pic("peonyPink")} />
               </span>
-              <span className="fw-card-fold-back" />
             </div>
           </div>
           <div className="fw-env-pocket" aria-hidden>
+            {/* The pocket is drawn, not clipped: a clip-path is dropped when the turning flap promotes its
+                neighbours to their own compositor layers, and the pocket then covered the card. */}
+            <svg className="fw-env-pocket-art" viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+              <defs>
+                <linearGradient id="fw-pk" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" style={{ stopColor: "var(--fw-env)" }} />
+                  <stop offset="1" style={{ stopColor: "var(--fw-env-2)" }} />
+                </linearGradient>
+                <linearGradient id="fw-pk-lo" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stopColor="#fff" stopOpacity=".22" />
+                  <stop offset="1" stopColor="#785032" stopOpacity=".08" />
+                </linearGradient>
+                <linearGradient id="fw-pk-side" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stopColor="#785032" stopOpacity=".07" />
+                  <stop offset=".28" stopColor="#785032" stopOpacity="0" />
+                  <stop offset=".72" stopColor="#785032" stopOpacity="0" />
+                  <stop offset="1" stopColor="#785032" stopOpacity=".07" />
+                </linearGradient>
+              </defs>
+              <path d="M0 0 L50 55 L100 0 L100 100 L0 100 Z" fill="url(#fw-pk)" />
+              <path d="M0 0 L50 55 L100 0 L100 100 L0 100 Z" fill="url(#fw-pk-side)" />
+              <path d="M0 100 L50 52 L100 100 Z" fill="url(#fw-pk-lo)" />
+            </svg>
             <span className="fw-env-to">
               {/* Addressed to the guest (the "Dear …," greeting sits above the envelope; a second "Dear" here crowded the seal). */}
               {guest ? (
@@ -160,10 +190,7 @@ export default function Envelope({ first, second, dateLine, guest, s, lang, onOp
               )}
             </span>
           </div>
-          <div className="fw-env-flap" aria-hidden>
-            <i className="fw-env-flap-out" />
-            <i className="fw-env-flap-in" />
-          </div>
+          <div className="fw-env-flap" aria-hidden />
           <button type="button" className="fw-seal" onClick={open} aria-label={`${s.open}: ${first} ${s.and} ${second}`}>
             <span className="fw-seal-half is-l" aria-hidden>
               <i />
