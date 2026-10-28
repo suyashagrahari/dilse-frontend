@@ -95,10 +95,11 @@ export const FW_CSS = `
 .fw-card-face::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; background: linear-gradient(105deg, transparent 30%, rgba(255,236,190,.0) 38%, rgba(255,232,180,.55) 48%, rgba(255,255,255,.75) 50%, rgba(255,232,180,.55) 52%, transparent 62%) -160% 0 / 250% 100% no-repeat; mix-blend-mode: soft-light; }
 .fw-env:is(.is-unfold, .is-leave) .fw-card-face::after { animation: fw-sheen 1.5s cubic-bezier(.4,0,.2,1) forwards; }
 @keyframes fw-sheen { to { background-position: 160% 0; } }
-.fw-card-k { font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
-.fw-card-n { font: 400 clamp(30px, 8.6vw, 50px)/1.05 var(--wk-font-script); color: var(--fw-script); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fw-card-amp { font: italic 500 clamp(14px, 3.6vw, 18px)/1 var(--wk-font-display); color: var(--wk-gold-ink); }
-.fw-card-d { margin-top: 6px; font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .22em; color: var(--wk-muted); }
+.fw-card-k { margin-bottom: .5em; font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
+/* Script names keep their swashes: no clipping, a roomy line box, and long names wrap instead of being cut. */
+.fw-card-n { font: 400 clamp(28px, 8vw, 48px)/1.3 var(--wk-font-script); color: var(--fw-script); max-width: 100%; padding: 0 .12em; overflow: visible; overflow-wrap: anywhere; }
+.fw-card-amp { margin: -.15em 0; font: italic 500 clamp(14px, 3.6vw, 18px)/1 var(--wk-font-display); color: var(--wk-gold-ink); }
+.fw-card-d { margin-top: .7em; font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .22em; color: var(--wk-muted); }
 .fw-env-pocket { position: absolute; inset: 0; z-index: 4; border-radius: 6px; overflow: hidden; }
 .fw-env-pocket-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .fw-env-to { position: absolute; left: 8%; right: 8%; bottom: 7%; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
