@@ -207,18 +207,17 @@ export const FW_CSS = `
 @media (min-width: 900px) { .fw-hero-clouds img, .fw-fin-clouds img { margin-bottom: -22%; } .fw-env-clouds { bottom: -18vw; } .fw-hero-corner { width: clamp(150px, 15vw, 230px); } }
 .fw-hero-copy::before { content: ""; position: absolute; z-index: -1; inset: -40px -60px; background: radial-gradient(ellipse at 50% 50%, rgba(255,250,243,.9) 0%, rgba(255,250,243,.6) 45%, transparent 72%); pointer-events: none; }
 .fw-hero-grid { position: relative; z-index: 3; width: 100%; max-width: 1240px; margin: 0 auto; display: grid; gap: clamp(10px, 2.6vh, 28px); justify-items: center; text-align: center; }
-.fw-hero-art { position: relative; width: min(78vw, 38svh, 440px); aspect-ratio: 1372 / 1600; }
+.fw-hero-art { position: relative; width: min(92vw, 52svh, 600px); aspect-ratio: 800 / 789; }
 .fw-hero-par { position: absolute; inset: 0; transform: translate3d(0, calc(var(--fw-hy, 0px) * .1), 0); }
-.fw-hero-glow { position: absolute; inset: 14% 4% 2%; border-radius: 50% 50% 18% 18%; background: radial-gradient(ellipse at 50% 58%, rgba(255,246,240,.98), rgba(246,214,206,.5) 46%, transparent 72%); opacity: 0; transition: opacity 1.6s ease .1s; }
-.fw-hero-drape, .fw-fin-drape { position: absolute; inset: 0; }
-.fw-hero-drape img, .fw-fin-drape img { display: block; width: 100%; height: 100%; -webkit-mask-image: linear-gradient(180deg, #000 84%, transparent 99%); mask-image: linear-gradient(180deg, #000 84%, transparent 99%); }
-.fw-hero-drape img { opacity: 0; transform: scale(.94) translate3d(0, 14px, 0); transform-origin: 50% 100%; transition: opacity 1.3s ease, transform 1.6s var(--fw-ease); }
-.fw-hero-swing, .fw-fin-swing { position: absolute; left: 13%; right: 13%; bottom: 3%; }
+.fw-hero-swing, .fw-fin-swing { position: absolute; left: 0; right: 0; bottom: 0; -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent); mask-image: linear-gradient(180deg, #000 82%, transparent); }
+/* No wooden frame: the swing stands in a fine double gold arch with a soft blush glow inside. */
+.fw-hero-arch { position: absolute; z-index: -1; left: 7%; right: 7%; top: -6%; bottom: 4%; border-radius: 999px 999px 0 0; border: 1px solid rgba(184,140,72,.55); border-bottom: 0; background: radial-gradient(70% 60% at 50% 62%, rgba(250,226,220,.75), rgba(250,232,226,.25) 60%, transparent 80%); -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); opacity: 0; transition: opacity 1.4s ease .2s; }
+.fw-hero-arch::before { content: ""; position: absolute; inset: 9px 9px 0; border-radius: inherit; border: 1px solid rgba(184,140,72,.3); border-bottom: 0; }
+.fw-hero.is-open .fw-hero-arch, .fw-finale.is-pressed .fw-hero-arch { opacity: 1; }
 .fw-hero-swing { opacity: 0; transform: translate3d(0, -26px, 0); transition: opacity 1.2s ease .45s, transform 1.6s var(--fw-ease) .45s; }
 .fw-hero-swing-in { display: block; transform-origin: 50% 6%; animation: fw-swing 5.2s ease-in-out infinite; }
 .fw-hero-swing-in img { display: block; width: 100%; height: auto; }
-.fw-hero.is-open .fw-hero-glow { opacity: 1; }
-.fw-hero.is-open .fw-hero-drape img, .fw-hero.is-open .fw-hero-swing { opacity: 1; transform: none; }
+.fw-hero.is-open .fw-hero-swing { opacity: 1; transform: none; }
 /* The swing rests on a soft shadow of ground, not on air. */
 .fw-hero-par::after { content: ""; position: absolute; z-index: -1; left: 6%; right: 6%; bottom: -2%; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, rgba(150,110,80,.22), rgba(150,110,80,0)); }
 /* Beige peonies in the top corners, as on the card. */
@@ -233,9 +232,7 @@ export const FW_CSS = `
   .fw-hero-grid { min-height: calc(100svh - 76px); grid-template-rows: auto 1fr; gap: 0; }
   .fw-hero-copy { order: 1; padding-top: clamp(18px, 4svh, 40px); }
   .fw-hero-copy::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 0; width: min(86vw, 420px); height: calc(100% + 30px); translate: -50% 0; border: 1px solid rgba(184,146,74,.4); border-bottom: 0; border-radius: 999px 999px 0 0; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); pointer-events: none; }
-  .fw-hero-art { order: 2; align-self: end; width: min(92vw, 52svh, 600px); aspect-ratio: 800 / 789; margin-bottom: -2px; }
-  .fw-hero-drape, .fw-hero-glow { display: none; }
-  .fw-hero-swing { left: 0; right: 0; bottom: 0; -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent); mask-image: linear-gradient(180deg, #000 82%, transparent); }
+  .fw-hero-art { order: 2; align-self: end; margin-bottom: -2px; }
   .fw-hero-swirl { display: none; }
   .fw-hero-names { font-size: clamp(54px, 16vw, 88px); }
   .fw-hero-par::after { bottom: 2%; }
@@ -268,7 +265,7 @@ export const FW_CSS = `
 @media (min-width: 1024px) {
   .fw-hero { padding-top: 80px; }
   .fw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; justify-items: stretch; text-align: left; gap: clamp(32px, 4vw, 72px); }
-  .fw-hero-art { justify-self: center; width: min(40vw, 74svh * .86, 560px); }
+  .fw-hero-art { justify-self: center; width: min(44vw, 70svh, 640px); }
   .fw-hero-names { align-items: flex-start; margin-top: 18px; }
   .fw-hero-amp { padding-left: .6em; }
   .fw-hero-actions { justify-content: flex-start; }
@@ -528,7 +525,7 @@ export const FW_CSS = `
 .fw-finale { position: relative; z-index: 1; overflow: hidden; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(56px, 8svh, 90px) 16px clamp(70px, 12svh, 130px); text-align: center; }
 .fw-fin-clouds { transform: translate3d(-50%, 0, 0); }
 .fw-fin-in { position: relative; z-index: 3; max-width: 640px; margin: 0 auto; }
-.fw-fin-stage { position: relative; width: min(66vw, 36svh, 330px); aspect-ratio: 1372 / 1600; margin: 0 auto 70px; }
+.fw-fin-stage { position: relative; width: min(88vw, 46svh, 480px); aspect-ratio: 800 / 789; margin: 0 auto 70px; }
 .fw-fin-swing .fw-hero-swing-in { animation-duration: 6s; }
 .fw-fin-swing img { display: block; width: 100%; height: auto; }
 .fw-wax { position: absolute; left: 50%; bottom: -58px; z-index: 3; width: 104px; height: 104px; margin: 0 0 0 -52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; opacity: 0; transform: scale(1.7) rotate(-8deg); transition: transform .6s cubic-bezier(.3,1.5,.5,1), opacity .3s ease; }
@@ -566,7 +563,7 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fw-root.is-lite .fw-hero-par, .fw-root.is-lite .fw-hero-clouds { transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .fw-root *, .fw-root *::before, .fw-root *::after { animation: none !important; }
-  .fw-wipe-clip, .fw-wipe-clip img, .fw-hero [class*="fw-hi-"], .fw-hero-drape img, .fw-hero-swing, .fw-hero-rocks, .fw-hero-glow, .fw-ev-img, .fw-wax { transition: none !important; transform: none !important; opacity: 1 !important; }
+  .fw-wipe-clip, .fw-wipe-clip img, .fw-hero [class*="fw-hi-"], .fw-hero-swing, .fw-hero-glow, .fw-ev-img, .fw-wax { transition: none !important; transform: none !important; opacity: 1 !important; }
   .fw-wax-ring, .fw-breeze, .fw-petals { display: none; }
   .fw-lang { transition: none; }
   .fw-hero-par, .fw-hero-clouds { transform: none !important; }

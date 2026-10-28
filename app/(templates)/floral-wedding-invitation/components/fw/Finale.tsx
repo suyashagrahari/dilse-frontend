@@ -1,7 +1,7 @@
 "use client";
 
 // ─── The finale: the last page of the suite, sealed ─────────────────────────
-// The floral drape again with the couple on their swing, a pampas cloud bank
+// The couple on their swing again in the gold arch, a pampas cloud bank
 // and pampas in the corners. When the page is 45 % on screen a dusty-rose wax
 // seal is pressed onto it ("शुभ विवाह", scale 1.6 → 1 with a soft squash, then
 // a ring of light), the closing words, the names and the hashtag, inside a
@@ -68,10 +68,7 @@ export default function Finale({ sealHi, seal, closing, endLine, first, second, 
       </div>
       <div className="fw-fin-in">
         <div className="fw-fin-stage">
-          <span className="fw-fin-drape" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img {...pic("drape", { lazy: true, sizes: "(min-width: 768px) 380px, 70vw" })} />
-          </span>
+          <span className="fw-hero-arch" aria-hidden />
           <span className="fw-fin-swing" aria-hidden>
             <span className="fw-hero-swing-in">
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

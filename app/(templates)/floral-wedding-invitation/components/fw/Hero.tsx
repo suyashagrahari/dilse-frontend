@@ -1,11 +1,11 @@
 "use client";
 
-// ─── The hero: the couple on a swing under a floral drape ───────────────────
-// Back to front: a blush glow, the floral drape arch, the couple on their
-// swing (swaying from the drape's beam), garden rocks at its foot, pampas
-// grass in both corners and a pampas cloud bank along the bottom, petals on
-// the breeze. The copy (guest greeting, names in script, date, venue and the
-// three actions: RSVP, save the date, share) sits under the arch on phones
+// ─── The hero: the couple on their swing in a gold arch ─────────────────────
+// Back to front: beige peonies in the top corners, a fine double gold arch with
+// a blush glow inside, the couple on their swing (fading into the ground),
+// pampas grass in both corners and a pampas cloud bank along the bottom,
+// petals on the breeze. The copy (guest greeting, names in script, date and
+// venue) sits above the swing under a line-art arch on phones, as on the card,
 // and beside it from 1024 px. The entrance is staged by `open`; one
 // rAF-throttled scroll listener writes --fw-hy for a two-depth parallax exit;
 // the loops pause while the hero is off screen.
@@ -91,11 +91,7 @@ export default function Hero({ open, s, lang, first, second, guest, dateLine, ti
       <div className="fw-hero-grid">
         <div className="fw-hero-art" aria-hidden>
           <div className="fw-hero-par">
-            <span className="fw-hero-glow" />
-            <span className="fw-hero-drape">
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...pic("drape", { high: true, sizes: "(min-width: 1024px) 560px, 86vw" })} />
-            </span>
+            <span className="fw-hero-arch" />
             <span className="fw-hero-swing">
               <span className="fw-hero-swing-in">
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
