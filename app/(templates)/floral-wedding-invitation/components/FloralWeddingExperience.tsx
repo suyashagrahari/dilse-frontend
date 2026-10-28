@@ -266,11 +266,18 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
           )}
           {hasFamilies && (
             <div className="fw-fams">
+              <span className="fw-fams-amp" aria-hidden>
+                &amp;
+              </span>
               {sides.map((side, i) => (
-                <Reveal key={i} className="fw-fam fw-fold" delay={i * 140}>
+                <Reveal key={i} className={`fw-fam fw-fold is-${i ? "r" : "l"}`} delay={i * 140}>
+                  {/* A gold-foil monogram crest on the arch: the initial of their child. */}
+                  <span className="fw-fam-crest" aria-hidden>
+                    <b>{(side === brideSide ? m.first : m.second).trim().charAt(0).toUpperCase()}</b>
+                  </span>
                   <span className={`fw-fam-flower is-${i ? "r" : "l"}`} aria-hidden>
                     {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                    <img {...pic(side.art, { lazy: true })} />
+                    <img {...pic("peonyCorner", { lazy: true })} />
                   </span>
                   {side.pic && (
                     <span className="fw-fam-photo">
@@ -299,6 +306,11 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
         <Section id="date" eyebrow={<span lang={lang}>{s.dateEyebrow}</span>} ornament={null} width="normal" className="fw-sec fw-sec-date">
           <Reveal effect="zoom" className="fw-datecard">
             <span className="fw-datecard-tile" aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            <img className="fw-datecard-bloom" {...pic("peonyCorner", { lazy: true })} aria-hidden />
+            <span className="fw-datecard-wax" aria-hidden>
+              <b lang="hi">शुभ</b>
+            </span>
             <p className="fw-datecard-wd">{parts.weekday}</p>
             <div className="fw-datecard-row">
               <span className="fw-datecard-m">{parts.month}</span>

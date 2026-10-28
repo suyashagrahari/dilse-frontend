@@ -331,34 +331,57 @@ export const FW_CSS = `
 
 /* ── families ──────────────────────────────────────────────────────────── */
 .fw-blessed { text-align: center; margin: -6px auto 30px; max-width: 560px; }
-.fw-blessed-names { margin: 0; font: italic 500 clamp(18px, 4.6vw, 22px)/1.45 var(--wk-font-display); color: var(--wk-ink); }
-.fw-fams { display: grid; gap: 46px; padding-top: 30px; }
-@media (min-width: 720px) { .fw-fams { grid-template-columns: 1fr 1fr; gap: 30px; } }
-.fw-fam { --fw-posy: clamp(84px, 13vw, 116px); position: relative; padding: calc(var(--fw-posy) * .45 + 16px) 24px 32px; text-align: center; border-radius: var(--fw-r); background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); }
-.fw-fam::before { content: ""; position: absolute; inset: 8px; border-radius: calc(var(--fw-r) - 6px); border: 1px solid rgba(184,146,74,.35); pointer-events: none; }
+.fw-blessed-names { margin: 6px 0 0; font: italic 500 clamp(19px, 4.8vw, 24px)/1.45 var(--wk-font-display); color: var(--wk-ink); }
+/* Luxe place cards: tall arched cards in ivory, a double gold rim, a gold-foil monogram crest on the arch, a peony at
+   the foot; a gold "&" medallion joins the two families. */
+.fw-fams { position: relative; display: grid; gap: 64px; padding-top: 44px; max-width: 860px; margin: 0 auto; }
+@media (min-width: 720px) { .fw-fams { grid-template-columns: 1fr 1fr; gap: 56px; } }
+.fw-fams-amp { position: absolute; z-index: 3; left: 50%; top: calc(44px + 50%); width: 54px; height: 54px; translate: -50% -50%; display: grid; place-items: center; border-radius: 50%; background: #fffaf3; box-shadow: 0 0 0 1px rgba(184,140,72,.6), 0 0 0 5px #fffaf3, 0 0 0 6px rgba(184,140,72,.35), 0 12px 24px -12px rgba(80,50,30,.4); font: italic 500 26px/1 var(--wk-font-display); }
+.fw-fams-amp { color: #a5752f; }
+/* Phones: the medallion sits in the flow between the two stacked cards. */
+@media (max-width: 719px) { .fw-fams { gap: 18px; } .fw-fams-amp { position: relative; left: auto; top: auto; translate: none; justify-self: center; order: 1; margin: 6px 0 26px; } .fw-fams > .fw-fam.is-r { order: 2; } }
+.fw-fam { --fw-posy: clamp(80px, 11vw, 104px); position: relative; padding: 78px clamp(34px, 7%, 54px) 50px; text-align: center; border-radius: 999px 999px 22px 22px; background: radial-gradient(90% 60% at 50% 0%, rgba(246,226,214,.55), transparent 70%), linear-gradient(180deg, #fffcf6, #fbf3e7); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 34px 60px -40px rgba(80,50,30,.45); }
+.fw-fam::before { content: ""; position: absolute; inset: 9px; border-radius: 999px 999px 15px 15px; border: 1px solid rgba(184,140,72,.32); pointer-events: none; }
+.fw-fam-crest { position: absolute; left: 50%; top: 0; width: 64px; height: 64px; translate: -50% -42%; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #fff8ec, #f3e3c8 70%); box-shadow: 0 0 0 1px rgba(184,140,72,.7), 0 0 0 4px #fffaf3, 0 0 0 5px rgba(184,140,72,.4), 0 10px 20px -10px rgba(80,50,30,.45); }
+.fw-fam-crest b { font: 400 34px/1 var(--wk-font-script); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 .1em; }
 /* The posy sits on the card's top corner, clear of the eyebrow: the card's top padding grows with it. */
-.fw-fam-flower { position: absolute; top: calc(var(--fw-posy) * -.55); width: var(--fw-posy); }
+.fw-fam-flower { position: absolute; z-index: 2; top: auto; bottom: -34px; width: var(--fw-posy); }
 .fw-fam-flower img { display: block; width: 100%; height: auto; }
-.fw-fam-flower.is-l { left: calc(var(--fw-posy) * -.2); transform: rotate(-10deg); }
-.fw-fam-flower.is-r { right: calc(var(--fw-posy) * -.2); transform: rotate(10deg); }
+.fw-fam-flower.is-l { left: calc(var(--fw-posy) * -.42); transform: rotate(-8deg); }
+.fw-fam-flower.is-r { right: calc(var(--fw-posy) * -.42); transform: rotate(8deg) scaleX(-1); }
 .fw-fam-photo { display: block; width: 112px; height: 136px; margin: 0 auto 16px; border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 3px #fff, 0 0 0 4px rgba(184,146,74,.6); }
 .fw-fam-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.fw-fam-names { margin: 4px 0 0; font: 600 clamp(20px, 5vw, 24px)/1.35 var(--wk-font-display); color: var(--wk-ink); }
+.fw-fam-names { margin: 10px 0 0; font: 400 clamp(26px, 6.4vw, 32px)/1.3 var(--wk-font-script); color: var(--fw-script); }
+.fw-fam .wk-eyebrow::after { content: ""; display: block; width: 80px; height: 7px; margin: 10px auto 0; background: radial-gradient(circle, #c49a52 0 2px, transparent 2.4px) center / 7px 7px no-repeat, linear-gradient(90deg, transparent, rgba(196,154,82,.8) 30%, transparent 44%, transparent 56%, rgba(196,154,82,.8) 70%, transparent) center / 100% 1px no-repeat; }
 .fw-fam-note { margin: 10px 0 0; font: 500 12px/1.3 var(--wk-font-caps); letter-spacing: .24em; text-transform: uppercase; color: var(--wk-muted); }
 
 /* ── save the date ─────────────────────────────────────────────────────── */
-.fw-datecard { position: relative; max-width: 540px; margin: 0 auto; padding: clamp(34px, 7vw, 48px) 22px clamp(28px, 6vw, 40px); text-align: center; overflow: hidden; border-radius: var(--fw-r); background: #fffaf3; border: 1px solid var(--wk-border); box-shadow: 0 30px 60px -40px rgba(80,50,30,.55); }
+/* A letterpress save-the-date: deep ivory stock, a double gold rim, the day pressed in gold foil, a dusty-rose wax
+   seal on the top edge and a pink peony bunch at the foot. */
+.fw-datecard { position: relative; max-width: 540px; margin: 28px auto 0; padding: clamp(46px, 8vw, 60px) 22px clamp(34px, 6vw, 46px); text-align: center; overflow: visible; border-radius: 18px; background: linear-gradient(180deg, #fffcf6, #f9f0e2); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 7px #fffaf3, 0 0 0 8px rgba(184,140,72,.35), 0 40px 70px -44px rgba(80,50,30,.55); }
 .fw-root[data-wk-theme="powder"] .fw-datecard { background: #fdfcfa; }
 .fw-datecard::after { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(184,146,74,.45); border-radius: calc(var(--fw-r) - 7px); pointer-events: none; }
-.fw-datecard-tile { position: absolute; inset: 0; background: ${u("mandala")} center / 110px auto repeat; opacity: .32; }
+.fw-datecard-tile { position: absolute; inset: 0; border-radius: inherit; background: ${u("mandala")} center / 110px auto repeat; opacity: .22; }
+.fw-datecard-bloom { position: absolute !important; z-index: 2; right: clamp(-74px, -6vw, -30px); bottom: -64px; width: clamp(84px, 20vw, 120px); height: auto; rotate: -10deg; scale: -1 1; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(80,50,30,.2)); }
+.fw-datecard-wax { position: absolute !important; z-index: 3; left: 50%; top: 0; width: 64px; height: 64px; translate: -50% -50%; display: grid; place-items: center; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%; background: radial-gradient(circle at 36% 30%, #e2a6ab, var(--fw-wax1) 44%, var(--fw-wax2)); box-shadow: inset 0 -5px 9px rgba(60,10,20,.28), inset 0 4px 7px rgba(255,255,255,.3), 0 10px 18px -8px rgba(80,20,30,.55); }
+.fw-datecard-wax::after { content: ""; position: absolute; inset: 12%; border-radius: 50%; border: 1.5px solid rgba(255,235,230,.3); }
+.fw-datecard-wax b { font: 400 17px/1 var(--wk-font-deva); color: rgba(255,244,240,.95); text-shadow: 0 -1px 0 rgba(60,10,20,.3); }
 .fw-datecard > *:not(.fw-datecard-tile) { position: relative; }
 .fw-datecard-wd { margin: 0; font: 500 13px/1 var(--wk-font-caps); letter-spacing: .32em; text-transform: uppercase; color: var(--wk-gold-ink); }
 .fw-datecard-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: clamp(10px, 3vw, 22px); margin: 12px 0 10px; }
 .fw-datecard-m, .fw-datecard-y { padding: 9px 0; border-top: 1px solid rgba(184,146,74,.6); border-bottom: 1px solid rgba(184,146,74,.6); font: 500 clamp(12px, 3.4vw, 15px)/1 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--wk-ink); }
-.fw-datecard-d { font: 500 clamp(76px, 22vw, 116px)/.9 var(--wk-font-display); color: var(--fw-script); }
+.fw-datecard-d { padding: 0 .06em; font: 500 clamp(84px, 24vw, 132px)/.95 var(--wk-font-display); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(255,255,255,.8)) drop-shadow(0 -1px 0 rgba(120,80,30,.18)); }
 .fw-datecard-t { margin: 8px 0 0; font: italic 500 clamp(17px, 4.4vw, 20px)/1.4 var(--wk-font-display); color: var(--wk-ink); }
 .fw-datecard-v { margin: 8px 0 0; font: 500 12px/1.4 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--wk-muted); }
 .fw-count { margin-top: clamp(30px, 6vw, 44px); text-align: center; }
+.fw-count .wk-flip-half { background: linear-gradient(180deg, #fffcf6, #f7eddd); border-color: rgba(184,140,72,.45); }
+.fw-count .wk-flip-up { border-radius: 999px 999px 0 0; }
+.fw-count .wk-flip-down { border-radius: 0 0 12px 12px; box-shadow: 0 18px 30px -22px rgba(80,50,30,.5); }
+.fw-count .wk-flip { height: clamp(78px, 19vw, 112px); }
+.fw-count .wk-flip::after { opacity: .35; }
+.fw-count .wk-flip-half i { background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fw-count .wk-cd-sep { color: #b98a3e; opacity: .9; }
+.fw-count .wk-cd-label { color: var(--wk-gold-ink); }
 /* The days card can hold three digits ("120"): the kit's flip is sized for two. */
 .fw-count .wk-cd-unit:first-child .wk-flip, .fw-count .wk-cd-unit:first-child .wk-roll { min-width: clamp(74px, 20vw, 118px); }
 @media (min-width: 1024px) {
