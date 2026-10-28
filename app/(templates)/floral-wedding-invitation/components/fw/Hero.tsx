@@ -66,6 +66,14 @@ export default function Hero({ open, s, lang, first, second, guest, dateLine, ti
     <header ref={ref} className={`fw-hero${open ? " is-open" : ""}`}>
       <span className="fw-frame" aria-hidden />
       <div className="fw-hero-bank" aria-hidden>
+        <span className="fw-hero-peony is-l">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...pic("peonyBeige", { high: true })} />
+        </span>
+        <span className="fw-hero-peony is-r">
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...pic("peonyBeige", { high: true })} />
+        </span>
         <span className="fw-hero-corner is-l">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img {...pic("pampasCorner")} />
@@ -93,10 +101,6 @@ export default function Hero({ open, s, lang, first, second, guest, dateLine, ti
                 {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                 <img {...pic("swing", { high: true })} />
               </span>
-            </span>
-            <span className="fw-hero-rocks">
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-              <img {...pic("rocks")} />
             </span>
           </div>
         </div>

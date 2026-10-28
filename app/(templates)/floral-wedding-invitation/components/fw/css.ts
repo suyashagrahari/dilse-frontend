@@ -216,10 +216,30 @@ export const FW_CSS = `
 .fw-hero-swing { opacity: 0; transform: translate3d(0, -26px, 0); transition: opacity 1.2s ease .45s, transform 1.6s var(--fw-ease) .45s; }
 .fw-hero-swing-in { display: block; transform-origin: 50% 6%; animation: fw-swing 5.2s ease-in-out infinite; }
 .fw-hero-swing-in img { display: block; width: 100%; height: auto; }
-.fw-hero-rocks { position: absolute; right: -6%; bottom: -3%; width: 46%; opacity: 0; transform: translate3d(24px, 0, 0); transition: opacity 1.1s ease .8s, transform 1.4s var(--fw-ease) .8s; }
-.fw-hero-rocks img { display: block; width: 100%; height: auto; }
 .fw-hero.is-open .fw-hero-glow { opacity: 1; }
-.fw-hero.is-open .fw-hero-drape img, .fw-hero.is-open .fw-hero-swing, .fw-hero.is-open .fw-hero-rocks { opacity: 1; transform: none; }
+.fw-hero.is-open .fw-hero-drape img, .fw-hero.is-open .fw-hero-swing { opacity: 1; transform: none; }
+/* The swing rests on a soft shadow of ground, not on air. */
+.fw-hero-par::after { content: ""; position: absolute; z-index: -1; left: 6%; right: 6%; bottom: -2%; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, rgba(150,110,80,.22), rgba(150,110,80,0)); }
+/* Beige peonies in the top corners, as on the card. */
+.fw-hero-peony { position: absolute; top: -4%; z-index: 2; width: clamp(130px, 36vw, 300px); opacity: 0; transform: translate3d(0, -20px, 0); transition: opacity 1.4s ease .3s, transform 1.8s var(--fw-ease) .3s; }
+.fw-hero-peony img { display: block; width: 100%; height: auto; }
+.fw-hero-peony.is-l { left: -9%; rotate: 150deg; }
+.fw-hero-peony.is-r { right: -9%; rotate: -150deg; scale: -1 1; }
+.fw-hero.is-open .fw-hero-peony { opacity: .95; transform: none; }
+/* Phones and tablets (as on the card): the names on top under a faint line-art arch, the couple on their swing below. */
+@media (max-width: 1023px) {
+  .fw-hero { align-items: stretch; padding: 76px 16px 0; }
+  .fw-hero-grid { min-height: calc(100svh - 76px); grid-template-rows: auto 1fr; gap: 0; }
+  .fw-hero-copy { order: 1; padding-top: clamp(18px, 4svh, 40px); }
+  .fw-hero-copy::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 0; width: min(86vw, 420px); height: calc(100% + 30px); translate: -50% 0; border: 1px solid rgba(184,146,74,.4); border-bottom: 0; border-radius: 999px 999px 0 0; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); pointer-events: none; }
+  .fw-hero-art { order: 2; align-self: end; width: min(92vw, 52svh, 600px); aspect-ratio: 800 / 789; margin-bottom: -2px; }
+  .fw-hero-drape, .fw-hero-glow { display: none; }
+  .fw-hero-swing { left: 0; right: 0; bottom: 0; -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent); mask-image: linear-gradient(180deg, #000 82%, transparent); }
+  .fw-hero-swirl { display: none; }
+  .fw-hero-names { font-size: clamp(54px, 16vw, 88px); }
+  .fw-hero-par::after { bottom: 2%; }
+  .fw-cue { display: none; }
+}
 .fw-hero-copy { position: relative; width: 100%; max-width: 560px; }
 .fw-hero-swirl { position: absolute; z-index: -1; top: -30px; right: -10%; width: clamp(150px, 44vw, 330px); opacity: .55; }
 .fw-hero-dear { margin: 0 0 4px; font: 400 clamp(26px, 7vw, 36px)/1.1 var(--wk-font-script); color: var(--fw-script); }
@@ -253,7 +273,6 @@ export const FW_CSS = `
   .fw-hero-actions { justify-content: flex-start; }
   .fw-hero-date { justify-content: flex-start; padding-left: 0; padding-right: 0; }
   .fw-hero-swirl { top: -70px; right: -6%; }
-  .fw-hero-rocks { right: -16%; }
 }
 
 /* ── section chrome ────────────────────────────────────────────────────── */
