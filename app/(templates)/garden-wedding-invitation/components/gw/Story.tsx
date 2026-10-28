@@ -9,7 +9,6 @@
 
 import { useEffect, useRef } from "react";
 import { cdn, photoImgStyle, Reveal, useWeddingReducedMotion } from "../../../_wedding";
-import { GW, gwImg } from "../assets";
 import type { GwChapter } from "./model";
 
 function Bud() {
