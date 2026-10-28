@@ -180,8 +180,8 @@ export const FW_CSS = `
 /* ── language toggle ───────────────────────────────────────────────────── */
 .fw-lang { position: fixed; top: calc(12px + var(--vw-top-space, 0px)); left: 12px; z-index: 90; display: flex; padding: 3px; border-radius: 999px; background: rgba(255,252,246,.88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid var(--wk-border); box-shadow: 0 8px 20px -14px rgba(80,50,30,.5); }
 .fw-lang { transition: transform .4s var(--fw-ease), opacity .3s; }
-/* Music + language sit in the top bar's row, just left of the Back/Create pill (149 px wide, 10 px from the edge). */
-.fw-lang { top: 8px; left: auto; right: 167px; }
+/* Music + language sit in the top-left corner, in the same row as the Back/Create pill. */
+.fw-lang { top: 8px; left: 60px; right: auto; }
 .fw-lang.is-tucked { transform: translateY(calc(-100% - 16px)); opacity: 0; pointer-events: none; }
 .fw-lang:focus-within { transform: none; opacity: 1; pointer-events: auto; }
 .fw-lang button { min-width: 44px; min-height: 42px; padding: 0 10px; border: 0; border-radius: 999px; background: none; font: 600 13px/1 var(--wk-font-sans); color: var(--wk-ink); cursor: pointer; transition: background-color .25s, color .25s; }
@@ -533,7 +533,7 @@ export const FW_CSS = `
 .fw-qr-h { margin: 0; font: italic 500 17px/1.4 var(--wk-font-display); color: var(--wk-ink); }
 
 /* ── the engine's music button (rendered outside .fw-root): stationery palette, top-left ── */
-body .vm-icon { top: 13px !important; right: 271px !important; left: auto !important; bottom: auto !important; box-shadow: 0 8px 20px -12px rgba(80,50,30,.55), 0 0 0 1px rgba(184,146,74,.55); }
+body .vm-icon { top: 13px !important; left: 12px !important; right: auto !important; bottom: auto !important; box-shadow: 0 8px 20px -12px rgba(80,50,30,.55), 0 0 0 1px rgba(184,146,74,.55); }
 body .vm-icon-btn { color: #8c4a52; background: radial-gradient(circle at 50% 38%, #fffaf3, #f1e2d0 78%); }
 body .vm-icon-btn:focus-visible { outline-color: #b8924a; }
 body .vm-icon-ring { background: conic-gradient(from 0deg, #b8924a, transparent 30%, #d9a3a6 52%, transparent 78%, #b8924a); }
