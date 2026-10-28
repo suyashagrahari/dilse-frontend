@@ -44,7 +44,7 @@ import GardenEvents from "./gw/GardenEvents";
 import GardenHero from "./gw/GardenHero";
 import Gate from "./gw/Gate";
 import Notes from "./gw/Notes";
-import ShareBar, { ICON, Icon } from "./gw/ShareBar";
+import { ICON, Icon } from "./gw/ShareBar";
 import Story from "./gw/Story";
 import Venue from "./gw/Venue";
 import { GW_CSS } from "./gw/css";
@@ -182,7 +182,6 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
   const bride = { ...m.bride_, title: s.brideSide };
   const groom = { ...m.groom_, title: s.groomSide };
   const hasFamilies = bride.names.length > 0 || groom.names.length > 0;
-  const shareText = lang === "hi" ? `${couple} के शुभ विवाह का निमंत्रण 🌸` : `You're invited to the wedding of ${couple} 🌸`;
   const venueLine = [main?.venue, main?.address?.split(",").pop()?.trim()].filter(Boolean).join(" · ");
   const live = m.liveUrl ? { url: m.liveUrl, open: liveOpen, label: s.live, soon: s.liveSoon } : undefined;
 
@@ -214,7 +213,6 @@ export default function GardenWeddingExperience({ data, mode, react }: Experienc
         time={mainTime}
         muhurat={m.muhurat}
         venue={venueLine}
-        actions={<ShareBar variant="hero" s={s} lang={lang} shareText={shareText} couple={couple} main={main} events={m.events} />}
       />
 
       {/* ── The invitation ──────────────────────────────────────────────── */}
