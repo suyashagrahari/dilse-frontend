@@ -1,11 +1,11 @@
 import { Flower2, CalendarHeart, Image as ImageIcon, Mail, Sparkles } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { WEDDING_ART_CDN } from "../_wedding/media";
 
 // Gallery card. The cover is three phones from the current design (the garden
 // gate, the gazebo hero, a celebration card) on the garden sky, 1080×1350.
-// It is served from public/ until it is uploaded to the media CDN; then switch
-// to `${WEDDING_ART_CDN}/template9/gw-cover-garden.webp` with its @360w/@540w/
-// @720w variants so the gallery's coverSrcSet() takes them from CloudFront.
+// Served from the media CDN with its @360w/@540w/@720w variants next to it, so
+// the gallery's coverSrcSet() takes them straight from CloudFront.
 export const config: TemplatePageConfig = {
   slug: "garden-wedding-invitation",
   type: "garden-wedding-invitation",
@@ -13,7 +13,7 @@ export const config: TemplatePageConfig = {
   title: "Mughal Garden Wedding Invitation ✦ — Gazebos, Peacocks & Every Function",
   description:
     "A watercolour Mughal garden wedding invitation: clouds part over pink gazebos and chhatris, a peacock walks the hedge wall, lanterns sway and lotus fountains play while guests read your story, up to eight functions with maps and dress codes, 40 photos, RSVP per function and a blessings wall. Soft pastels; the AI writes it.",
-  coverImage: "/wedding-v3/template9/gw-cover-garden.webp",
+  coverImage: `${WEDDING_ART_CDN}/template9/gw-cover-garden.webp`,
   emoji: "🦚",
   color: "from-pink-200 to-emerald-200",
   previewText: "the garden is ready for you 🦚",

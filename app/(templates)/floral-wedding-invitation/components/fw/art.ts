@@ -59,8 +59,7 @@ export type ArtRole = keyof typeof ART;
 /** Smaller twin (same painting) for the 1× slot. */
 const SMALL: Partial<Record<ArtRole, ArtRole>> = { clouds: "cloudsSm", drape: "drapeSm", swirl: "swirlSm", peonyCorner2x: "peonyCorner" };
 
-/** CDN URL, or the public/ path for art not uploaded to the CDN yet (`sameOrigin`). */
-const url = (a: { src: string; sameOrigin?: boolean }) => (a.sameOrigin ? a.src : cdn(a.src));
+const url = (a: { src: string }) => cdn(a.src);
 
 export interface PicOpts {
   /** Below the fold. */

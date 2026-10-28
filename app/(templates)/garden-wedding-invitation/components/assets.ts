@@ -10,7 +10,7 @@
 
 import { cdn } from "../../_wedding/media";
 
-export interface WeddingAsset { src: string; w: number; h: number; sameOrigin?: boolean }
+export interface WeddingAsset { src: string; w: number; h: number }
 
 export const GW_ASSETS = {
   "template1": {
@@ -77,20 +77,20 @@ export const GW_ASSETS = {
     // Derived: the lattice band and arch crown above the panel's baked-in text.
     "gw-lattice-top": { src: "/wedding-v3/template9/gw-lattice-top.webp", w: 1091, h: 150 },
     // Derived: the whole lattice arch, its inside cut away so the card shows through.
-    "gw-arch-crown": { src: "/wedding-v3/template9/gw-arch-crown.webp", w: 1091, h: 356, sameOrigin: true },
+    "gw-arch-crown": { src: "/wedding-v3/template9/gw-arch-crown.webp", w: 1091, h: 356 },
     // Derived: the peony trees at 2× (lanczos + light unsharp) so they stay crisp at full height.
-    "gw-peony-left-2x": { src: "/wedding-v3/template9/gw-peony-left-2x.webp", w: 600, h: 2058, sameOrigin: true },
-    "gw-peony-right-2x": { src: "/wedding-v3/template9/gw-peony-right-2x.webp", w: 592, h: 2058, sameOrigin: true },
+    "gw-peony-left-2x": { src: "/wedding-v3/template9/gw-peony-left-2x.webp", w: 600, h: 2058 },
+    "gw-peony-right-2x": { src: "/wedding-v3/template9/gw-peony-right-2x.webp", w: 592, h: 2058 },
     // From the owner's asset library (template21 pink peony flowers): a sharp bunch for the opening's corners.
-    "gw-peony-corner": { src: "/wedding-v3/template9/gw-peony-corner.webp", w: 680, h: 977, sameOrigin: true },
-    "gw-peony-corner-2x": { src: "/wedding-v3/template9/gw-peony-corner-2x.webp", w: 1000, h: 1437, sameOrigin: true },
+    "gw-peony-corner": { src: "/wedding-v3/template9/gw-peony-corner.webp", w: 680, h: 977 },
+    "gw-peony-corner-2x": { src: "/wedding-v3/template9/gw-peony-corner-2x.webp", w: 1000, h: 1437 },
     // From the owner's asset library (template14): one couple per function, for the celebration cards.
-    "gw-couple-sangeet": { src: "/wedding-v3/template9/gw-couple-sangeet.webp", w: 524, h: 560, sameOrigin: true },
-    "gw-couple-reception": { src: "/wedding-v3/template9/gw-couple-reception.webp", w: 423, h: 560, sameOrigin: true },
-    "gw-couple-mehendi": { src: "/wedding-v3/template9/gw-couple-mehendi.webp", w: 407, h: 560, sameOrigin: true },
-    "gw-couple-engagement": { src: "/wedding-v3/template9/gw-couple-engagement.webp", w: 351, h: 560, sameOrigin: true },
-    "gw-couple-haldi": { src: "/wedding-v3/template9/gw-couple-haldi.webp", w: 326, h: 560, sameOrigin: true },
-    "gw-couple-wedding": { src: "/wedding-v3/template9/gw-couple-wedding.webp", w: 312, h: 560, sameOrigin: true },
+    "gw-couple-sangeet": { src: "/wedding-v3/template9/gw-couple-sangeet.webp", w: 524, h: 560 },
+    "gw-couple-reception": { src: "/wedding-v3/template9/gw-couple-reception.webp", w: 423, h: 560 },
+    "gw-couple-mehendi": { src: "/wedding-v3/template9/gw-couple-mehendi.webp", w: 407, h: 560 },
+    "gw-couple-engagement": { src: "/wedding-v3/template9/gw-couple-engagement.webp", w: 351, h: 560 },
+    "gw-couple-haldi": { src: "/wedding-v3/template9/gw-couple-haldi.webp", w: 326, h: 560 },
+    "gw-couple-wedding": { src: "/wedding-v3/template9/gw-couple-wedding.webp", w: 312, h: 560 },
   },
 } as const satisfies Record<string, Record<string, WeddingAsset>>;
 
@@ -161,13 +161,11 @@ export const GW = {
  * <img> props for one asset: intrinsic width/height (no layout shift), async
  * decode, lazy below the fold, high priority for the opening scene, and an
  * optional 2× source (the 800 / 1600 gazebo pair). From the CDN: never a mask or canvas source.
- * `sameOrigin` files (the opening's derived art) are not on the CDN yet and come from public/.
  */
 export function gwImg(a: WeddingAsset, o: { lazy?: boolean; high?: boolean; alt?: string; hi?: WeddingAsset; sizes?: string } = {}) {
-  const url = (x: WeddingAsset) => (x.sameOrigin ? x.src : cdn(x.src));
   return {
-    src: url(a),
-    ...(o.hi ? { srcSet: `${url(a)} ${a.w}w, ${url(o.hi)} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
+    src: cdn(a.src),
+    ...(o.hi ? { srcSet: `${cdn(a.src)} ${a.w}w, ${cdn(o.hi.src)} ${o.hi.w}w`, sizes: o.sizes ?? "(min-width: 1024px) 46vw, 100vw" } : {}),
     width: a.w,
     height: a.h,
     alt: o.alt ?? "",
