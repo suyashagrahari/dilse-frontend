@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { COMING_SOON_REDIRECTS } from "./lib/site-routes";
+import { COMING_SOON_REDIRECTS, RETIRED_BLOG_REDIRECTS } from "./lib/site-routes";
 
 const nextConfig: NextConfig = {
   // ── Standalone output for Docker deployment ─────────────────────────────
@@ -218,6 +218,31 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         has: [{ type: "host" as const, value: "www.subhsandesh.in" }],
         destination: "https://subhsandesh.in/:path*",
+        permanent: true,
+      },
+      // ── Retired blog URLs → the live post that replaced them ───────────
+      // Google still crawls these. A missing post renders inside the blog's
+      // streamed loading boundary, so it answers 200 instead of 404 and Search
+      // Console filed each as Soft 404. See RETIRED_BLOG_REDIRECTS.
+      ...Object.entries(RETIRED_BLOG_REDIRECTS).map(([from, to]) => ({
+        source: `/blog/${from}`,
+        destination: `/blog/${to}`,
+        permanent: true,
+      })),
+      // ── Malformed backlinks ────────────────────────────────────────────
+      // Some external posts link as markdown with a single slash,
+      // `[https:/subhsandesh.in/blog/x](https:/subhsandesh.in/blog/x)`, which a
+      // browser resolves to a path on our host. Google logged 11 of these as
+      // 404s; with so few backlinks, each one is worth landing on its post.
+      {
+        source: "/\\[https\\:/subhsandesh.in/blog/:slug([a-z0-9-]+)\\]:rest(.*)",
+        destination: "/blog/:slug",
+        permanent: true,
+      },
+      // The same link with its brackets percent-encoded, as crawlers send it.
+      {
+        source: "/%5Bhttps\\:/subhsandesh.in/blog/:slug([a-z0-9-]+)%5D:rest(.*)",
+        destination: "/blog/:slug",
         permanent: true,
       },
       // ── Coming-soon templates → their live counterpart ─────────────────

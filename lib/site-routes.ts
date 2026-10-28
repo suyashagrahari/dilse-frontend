@@ -22,6 +22,31 @@
  */
 
 /**
+ * Blog slugs Google still crawls that no longer exist, and the live post each
+ * one 308s to (consumed by `next.config.ts`). Keys and values are slugs under
+ * /blog/. Most keys are the full-length form of a slug Strapi cut at 60
+ * characters; the value is that truncated live twin. Collected from Search
+ * Console's Soft 404 and Not found (404) reports on 2026-10-28.
+ */
+export const RETIRED_BLOG_REDIRECTS: Record<string, string> = {
+  "will-you-remember-me-interactive-digital-page-link-builder-free-access-online": "will-you-remember-me-interactive-digital-page-link-builder-f",
+  "aesthetic-beige-tone-virtual-letter-template-with-floating-hearts": "aesthetic-beige-tone-virtual-letter-template-with-floating-h",
+  "emotional-text-message-formats-for-serious-relationship-fights": "emotional-text-message-formats-for-serious-relationship-figh",
+  "how-to-schedule-automated-midnight-love-emails-on-birthday-link": "how-to-schedule-automated-midnight-love-emails-on-birthday-l",
+  "how-to-secure-your-private-couple-memory-website-with-pin-lock": "how-to-secure-your-private-couple-memory-website-with-pin-lo",
+  "custom-dynamic-text-sliders-tool-for-drafting-anniversary-milestones": "custom-dynamic-text-sliders-tool-for-drafting-anniversary-mi",
+  "custom-dynamic-text-sliders-tool-for-drafting-multiple-romance-arguments-text": "custom-dynamic-text-sliders-tool-for-drafting-multiple-roman",
+  "romantic-continuous-loop-playlist-widget-for-single-page-couple-profiles-online": "romantic-continuous-loop-playlist-widget-for-single-page-cou",
+  "personalized-digital-romantic-vouchers-generator-app-web-link-platform": "personalized-digital-romantic-vouchers-generator-app-web-lin",
+  "custom-audio-block-overlay-container-with-play-pause-triggers": "custom-audio-block-overlay-container-with-play-pause-trigger",
+  "password-protected-custom-subdomains-for-couple-journals-free": "password-protected-custom-subdomains-for-couple-journals-fre",
+  // Retired outright; nearest live topic.
+  "website-to-impress-girlfriend": "romantic-website-for-girlfriend",
+  "i-miss-you-so-much-in-spanish": "i-miss-you-in-spanish",
+  "digital-gift-ideas-for-best-friend": "digital-gift-for-best-friend",
+};
+
+/**
  * Template routes that exist on disk but are still gated as "Coming Soon", and
  * the live template each one redirects to. Consumed by `next.config.ts` to
  * build the redirects, and by `app/sitemap.ts` to exclude the sources.

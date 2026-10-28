@@ -153,7 +153,7 @@ interface StrapiListResponse<T> {
 
 const REVALIDATE_SECONDS = 3600; // fallback ISR; webhook handles instant updates
 
-async function strapiFetch<T>(path: string): Promise<T | null> {
+async function strapiFetch<T>(path: string, { strict = false } = {}): Promise<T | null> {
   if (!STRAPI_URL) return null;
   try {
     const res = await fetch(`${STRAPI_URL}/api${path}`, {
@@ -162,12 +162,14 @@ async function strapiFetch<T>(path: string): Promise<T | null> {
     });
     if (!res.ok) {
       console.error(`[strapi] ${path} → ${res.status}`);
+      if (strict) throw new Error(`Strapi ${res.status} for ${path}`);
       return null;
     }
     return (await res.json()) as T;
   } catch (err) {
     // CMS unreachable → degrade gracefully (empty blog) instead of crashing the build.
     console.error(`[strapi] fetch failed for ${path}:`, err);
+    if (strict) throw err;
     return null;
   }
 }
@@ -261,25 +263,54 @@ export async function getArticles(opts: {
   };
 }
 
+/**
+ * null only when Strapi answered and has no such post. A failed request throws:
+ * returning null for it rendered a live post as "Post not found" with a 200,
+ * and ISR cached that for an hour, so a CMS blip during a crawl looked to
+ * Google like a soft 404. Throwing keeps the last good page (or a 5xx, which
+ * Google retries) instead.
+ */
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
   const res = await strapiFetch<StrapiListResponse<Article>>(
-    `/articles?filters[slug][$eq]=${encodeURIComponent(slug)}&${DETAIL_POPULATE}&pagination[pageSize]=1`
+    `/articles?filters[slug][$eq]=${encodeURIComponent(slug)}&${DETAIL_POPULATE}&pagination[pageSize]=1`,
+    { strict: true }
   );
   return res?.data?.[0] ?? null;
 }
 
-export async function getRelatedArticles(article: Article, limit = 3): Promise<Article[]> {
-  const params = [
+/**
+ * The posts published just before and just after this one in its category.
+ *
+ * This used to return the newest posts in the category, so every post in a
+ * category linked to the same three and nothing linked to the rest: 1,753 of
+ * 1,928 posts had no inbound link from another post, and Google left most of
+ * them at "Discovered - currently not indexed". Chronological neighbours give
+ * every post in the archive links from the posts around it.
+ */
+export async function getRelatedArticles(article: Article, limit = 6): Promise<Article[]> {
+  const half = Math.ceil(limit / 2);
+  const base = [
     LIST_POPULATE,
-    "sort[0]=publishedAt:desc",
-    `pagination[pageSize]=${limit}`,
     `filters[slug][$ne]=${encodeURIComponent(article.slug)}`,
+    ...(article.category?.slug
+      ? [`filters[category][slug][$eq]=${encodeURIComponent(article.category.slug)}`]
+      : []),
   ];
-  if (article.category?.slug) {
-    params.push(`filters[category][slug][$eq]=${encodeURIComponent(article.category.slug)}`);
-  }
-  const res = await strapiFetch<StrapiListResponse<Article>>(`/articles?${params.join("&")}`);
-  return res?.data ?? [];
+  const at = encodeURIComponent(article.publishedAt);
+  const [older, newer] = await Promise.all([
+    strapiFetch<StrapiListResponse<Article>>(
+      `/articles?${[...base, `filters[publishedAt][$lt]=${at}`, "sort[0]=publishedAt:desc", `pagination[pageSize]=${limit}`].join("&")}`
+    ),
+    strapiFetch<StrapiListResponse<Article>>(
+      `/articles?${[...base, `filters[publishedAt][$gt]=${at}`, "sort[0]=publishedAt:asc", `pagination[pageSize]=${limit}`].join("&")}`
+    ),
+  ]);
+  const before = older?.data ?? [];
+  const after = newer?.data ?? [];
+  // Take `half` from each side; at either end of the archive, fill from the other.
+  const fromAfter = after.slice(0, Math.max(half, limit - before.length));
+  const fromBefore = before.slice(0, limit - fromAfter.length);
+  return [...fromAfter.reverse(), ...fromBefore];
 }
 
 export async function getCategories(): Promise<Category[]> {

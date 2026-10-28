@@ -38,6 +38,36 @@ export async function generateStaticParams() {
   return slugs.slice(0, BLOG_SSG_COUNT).map(({ slug }) => ({ slug }));
 }
 
+/**
+ * The canonical to emit for a post: its own URL, unless Strapi names a
+ * different, live post on this site (the `-2` duplicates point at their
+ * original, which is correct).
+ *
+ * The stored value was trusted verbatim, and it was wrong on 30 posts:
+ *  - 11 held markdown, `[https://…/blog/x](https://…/blog/x)`, which the browser
+ *    resolved to `https://subhsandesh.in/[https:/…](…)`, a 404. Google was told
+ *    the real copy of each post was a page that does not exist.
+ *  - 13 had a slug the model cut at 60 characters while the canonical kept the
+ *    full-length slug, which never existed.
+ * Either way the post pointed its canonical away from itself at a dead URL, so
+ * Google had no indexable copy.
+ */
+async function resolveCanonical(stored: string | null | undefined, slug: string): Promise<string> {
+  const self = `${SITE_URL}/blog/${slug}`;
+  // Unwrap `[url](url)` markdown; anything else that is not a plain URL is ignored.
+  const raw = (stored || "").trim().replace(/^\[([^\]]+)\]\([^)]*\)$/, "$1");
+  let target: URL;
+  try {
+    target = new URL(raw);
+  } catch {
+    return self;
+  }
+  const m = target.pathname.replace(/\/+$/, "").match(/^\/blog\/([a-z0-9-]+)$/);
+  if (target.origin !== new URL(SITE_URL).origin || !m) return self;
+  if (m[1] === slug) return self;
+  return (await getArticleBySlug(m[1])) ? `${SITE_URL}/blog/${m[1]}` : self;
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
@@ -46,7 +76,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const seo = article.seo;
   const title = seo?.metaTitle || article.title;
   const description = seo?.metaDescription || article.excerpt || `Read ${article.title} on the ${SITE_NAME} blog.`;
-  const canonical = seo?.canonicalURL || `${SITE_URL}/blog/${article.slug}`;
+  const canonical = await resolveCanonical(seo?.canonicalURL, article.slug);
   const ogImage = articleOgImage(article) || DEFAULT_OG_IMAGE;
 
   const meta = buildMeta({

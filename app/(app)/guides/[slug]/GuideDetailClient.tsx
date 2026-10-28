@@ -123,7 +123,82 @@ export default function GuideDetailClient({
         >
           {guide.title}
         </h1>
-        <p className="mt-4 max-w-2xl" style={{ fontSize: "clamp(15px,1.5vw,17px)", lineHeight: 1.65, color: MUTED }}>
+
+        {/* ── Video ──────────────────────────────────────────────────────────
+         *
+         * Directly under the H1, before the summary and buttons. Search Console
+         * reported every guide as "Video isn't on a watch page": with the player
+         * below the hero it started under the fold, so Google read the page as
+         * an article that happens to contain a video. On a watch page the video
+         * is the first large thing on screen, and the VideoObject in page.tsx
+         * (same name as the H1, contentUrl = this mp4) then has a page that
+         * matches it. */}
+        {guide.video && (
+          <section className="mt-6 md:mt-7" aria-label={`Video: ${guide.title}`}>
+            <GuideVideoPlayer
+              slug={guide.slug}
+              video={guide.video}
+              sources={media}
+              title={guide.title}
+              onReadSection={jumpToSection}
+            />
+            <p className="mt-3.5" style={{ fontSize: 12.5, color: MUTED, lineHeight: 1.6 }}>
+              {guide.video.silent && "This recording has no voiceover — every action is labelled on screen as it happens. "}
+              Click a chapter to jump the video there. To read that step instead, use the
+              ↓ beside it — the written walkthrough is below.
+            </p>
+
+            {/* ── The same recording, elsewhere ──────────────────────────────
+             *
+             * The player above is our own mp4 and stays the primary — it is the
+             * one with the chapter rail wired to the written steps, and it is what
+             * the VideoObject's `contentUrl` points at, so it has to be the thing
+             * on the page. These are for people who would rather watch where they
+             * already are, and for the ones who want to send the video on: a
+             * YouTube or Instagram link travels through a chat far better than a
+             * link to an article that happens to contain a video.
+             *
+             * Rendered only when the recording was actually posted to each place,
+             * so a guide with no social copies shows nothing rather than a dead
+             * row of icons. */}
+            {(youtubeUrl || instagramUrl) && (
+              <div className="mt-4 flex flex-wrap items-center gap-2.5">
+                <span
+                  style={{
+                    fontSize: 10.5, fontWeight: 800, letterSpacing: "0.16em",
+                    textTransform: "uppercase", color: MUTED,
+                  }}
+                >
+                  Also on
+                </span>
+                {youtubeUrl && (
+                  <a
+                    href={youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={SOCIAL_PILL}
+                  >
+                    <Youtube size={14} /> YouTube
+                    <ExternalLink size={11} style={{ opacity: 0.55 }} />
+                  </a>
+                )}
+                {instagramUrl && (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={SOCIAL_PILL}
+                  >
+                    <Instagram size={14} /> Instagram
+                    <ExternalLink size={11} style={{ opacity: 0.55 }} />
+                  </a>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        <p className="mt-6 max-w-2xl" style={{ fontSize: "clamp(15px,1.5vw,17px)", lineHeight: 1.65, color: MUTED }}>
           {guide.summary}
         </p>
 
@@ -165,75 +240,6 @@ export default function GuideDetailClient({
           </a>
         </div>
       </header>
-
-      {/* ── Video ──────────────────────────────────────────────────────────── */}
-      {guide.video && (
-        <section className="mt-9 md:mt-12" aria-labelledby="watch-heading">
-          <SectionLabel id="watch-heading" kicker="Watch" title="The whole build, end to end" />
-          <div className="mt-5">
-            <GuideVideoPlayer
-              slug={guide.slug}
-              video={guide.video}
-              sources={media}
-              title={guide.title}
-              onReadSection={jumpToSection}
-            />
-          </div>
-          <p className="mt-3.5" style={{ fontSize: 12.5, color: MUTED, lineHeight: 1.6 }}>
-            {guide.video.silent && "This recording has no voiceover — every action is labelled on screen as it happens. "}
-            Click a chapter to jump the video there. To read that step instead, use the
-            ↓ beside it — the written walkthrough is below.
-          </p>
-
-          {/* ── The same recording, elsewhere ────────────────────────────────
-           *
-           * The player above is our own mp4 and stays the primary — it is the
-           * one with the chapter rail wired to the written steps, and it is what
-           * the VideoObject's `contentUrl` points at, so it has to be the thing
-           * on the page. These are for people who would rather watch where they
-           * already are, and for the ones who want to send the video on: a
-           * YouTube or Instagram link travels through a chat far better than a
-           * link to an article that happens to contain a video.
-           *
-           * Rendered only when the recording was actually posted to each place,
-           * so a guide with no social copies shows nothing rather than a dead
-           * row of icons. */}
-          {(youtubeUrl || instagramUrl) && (
-            <div className="mt-4 flex flex-wrap items-center gap-2.5">
-              <span
-                style={{
-                  fontSize: 10.5, fontWeight: 800, letterSpacing: "0.16em",
-                  textTransform: "uppercase", color: MUTED,
-                }}
-              >
-                Also on
-              </span>
-              {youtubeUrl && (
-                <a
-                  href={youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={SOCIAL_PILL}
-                >
-                  <Youtube size={14} /> YouTube
-                  <ExternalLink size={11} style={{ opacity: 0.55 }} />
-                </a>
-              )}
-              {instagramUrl && (
-                <a
-                  href={instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={SOCIAL_PILL}
-                >
-                  <Instagram size={14} /> Instagram
-                  <ExternalLink size={11} style={{ opacity: 0.55 }} />
-                </a>
-              )}
-            </div>
-          )}
-        </section>
-      )}
 
       {/* ── Steps ──────────────────────────────────────────────────────────── */}
       <section id="steps" className="mt-12 md:mt-16" aria-labelledby="steps-heading">
