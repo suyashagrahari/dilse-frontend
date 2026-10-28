@@ -401,14 +401,18 @@ export const FW_CSS = `
 .fw-thread i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(180deg, rgba(184,146,74,.2), var(--wk-gold) 12%, var(--wk-gold) 88%, rgba(184,146,74,.2)); transform-origin: 50% 0; transform: scaleY(var(--fw-p, 0)); }
 .fw-chapters { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(40px, 8vw, 80px); }
 .fw-ch { position: relative; display: grid; gap: 18px; padding-left: 50px; }
-.fw-ch-knot { position: absolute; left: 13px; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fbe6e1, #e6b9b3); box-shadow: 0 0 0 2px var(--wk-gold), 0 0 0 6px rgba(255,250,243,.9); }
+.fw-ch-knot { position: absolute; left: 13px; top: 6px; width: 16px; height: 16px; rotate: 45deg; background: linear-gradient(135deg, #f3dca4, #b98a3e); box-shadow: 0 0 0 4px #fffaf3, 0 0 0 5px rgba(184,140,72,.55); }
 .fw-ch-print { position: relative; display: block; max-width: 400px; padding: 10px 10px 40px; border-radius: var(--fw-r); background: #fffdf8; box-shadow: 0 22px 40px -26px rgba(60,40,20,.55), 0 2px 6px -3px rgba(60,40,20,.2); transform: rotate(var(--tilt, -2deg)); }
 .fw-ch-pic { position: relative; display: block; aspect-ratio: 4 / 3.2; overflow: hidden; border-radius: var(--fw-r-in); background: var(--wk-placeholder); }
 .fw-ch-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .fw-ch-stamp { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font: 400 24px/1 var(--wk-font-script); color: var(--fw-script); }
+.fw-ch-text { position: relative; padding: 26px 26px 28px; border-radius: var(--fw-r); background: linear-gradient(180deg, #fffcf6, #f9f1e4); box-shadow: 0 0 0 1px rgba(184,140,72,.5), 0 0 0 6px #fffaf3, 0 0 0 7px rgba(184,140,72,.28), 0 26px 46px -34px rgba(60,40,20,.5); }
+.fw-ch-text::before { content: ""; position: absolute; inset: 10px; border: 1px solid rgba(184,140,72,.25); border-radius: calc(var(--fw-r) - 6px); pointer-events: none; }
+/* A chapter without a photo: its year in large gold-foil numerals on the empty side (desktop). */
 .fw-ch-deco { display: none; }
-@media (min-width: 860px) { .fw-ch-deco { display: block; justify-self: end; width: min(220px, 60%); opacity: .9; } .fw-ch.is-alt .fw-ch-deco { order: 2; justify-self: start; } .fw-ch-deco img { display: block; width: 100%; height: auto; } }
-.fw-ch-text { padding: 22px 22px 24px; border-radius: var(--fw-r); background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: 0 18px 36px -30px rgba(60,40,20,.5); }
+.fw-ch-year { display: block; font: 500 clamp(80px, 9vw, 132px)/1 var(--wk-font-display); letter-spacing: .02em; background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: .9; }
+.fw-ch-year::after { content: ""; display: block; width: 120px; height: 9px; margin: 12px 0 0 auto; background: radial-gradient(circle, #c49a52 0 2.2px, transparent 2.6px) center / 9px 9px no-repeat, linear-gradient(90deg, transparent, rgba(196,154,82,.85) 30%, rgba(196,154,82,.85) 44%, transparent 47%, transparent 53%, rgba(196,154,82,.85) 56%, rgba(196,154,82,.85) 70%, transparent) center / 100% 1px no-repeat; }
+@media (min-width: 860px) { .fw-ch-deco { display: block; justify-self: end; text-align: right; } .fw-ch.is-alt .fw-ch-deco { order: 2; justify-self: start; text-align: left; } .fw-ch.is-alt .fw-ch-year::after { margin-left: 0; } }
 .fw-ch-when { margin: 0; font: 500 12px/1 var(--wk-font-caps); letter-spacing: .28em; color: var(--wk-gold-ink); }
 .fw-ch-title { margin: 8px 0 6px; font: 400 clamp(32px, 8vw, 42px)/1.1 var(--wk-font-script); color: var(--fw-script); }
 .fw-ch-line { margin: 0; font: 500 clamp(17px, 4.2vw, 19px)/1.6 var(--wk-font-display); color: var(--wk-ink); }
@@ -470,16 +474,14 @@ export const FW_CSS = `
 .fw-ev-actions .fw-chip-icon { padding: 0; }
 
 /* ── venue ─────────────────────────────────────────────────────────────── */
-/* Royal-style: the blush gazebo stands on the card's top edge; ivory card, double gold hairline, peony corners. */
 .fw-venue { position: relative; display: grid; justify-items: center; }
-.fw-venue-gazebo { position: relative; z-index: 0; width: auto; height: clamp(220px, 50vw, 320px); margin-bottom: -26px; filter: drop-shadow(0 16px 18px rgba(120,60,60,.14)); }
-.fw-venue-card { position: relative; z-index: 1; width: 100%; max-width: 680px; padding: clamp(34px, 6vw, 52px) clamp(22px, 5vw, 52px) clamp(30px, 5vw, 44px); text-align: center; border-radius: var(--fw-r); background: #fffaf3; box-shadow: 0 0 0 1px rgba(184,140,72,.5), 0 34px 70px -40px rgba(80,50,30,.4); }
-.fw-venue-card::before { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(184,140,72,.35); border-radius: calc(var(--fw-r) - 6px); pointer-events: none; }
-.fw-venue-corner { position: absolute; z-index: 2; bottom: clamp(-40px, -4vw, -20px); height: clamp(100px, 20vw, 170px); pointer-events: none; }
-.fw-venue-corner img { display: block; height: 100%; width: auto; }
-.fw-venue-corner.is-l { left: clamp(-48px, -5vw, -18px); rotate: -12deg; }
-.fw-venue-corner.is-r { right: clamp(-48px, -5vw, -18px); rotate: 12deg; scale: -1 1; }
-.fw-venue-name { margin: 0; font: 400 clamp(40px, 10vw, 56px)/1.1 var(--wk-font-script); color: var(--fw-script); }
+/* No art: an arched ivory card, a double gold rim, a drawn gold pavilion crest, the name in gold foil between rules. */
+.fw-venue-card { position: relative; z-index: 1; width: 100%; max-width: 700px; margin-top: 40px; padding: clamp(66px, 9vw, 84px) clamp(24px, 6vw, 64px) clamp(36px, 6vw, 52px); text-align: center; border-radius: 999px 999px 22px 22px; background: radial-gradient(70% 45% at 50% 0%, rgba(246,226,214,.6), transparent 70%), linear-gradient(180deg, #fffcf6, #f9f0e2); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 8px #fffaf3, 0 0 0 9px rgba(184,140,72,.35), 0 40px 70px -44px rgba(80,50,30,.5); }
+.fw-venue-card::before { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(184,140,72,.3); border-radius: 999px 999px 14px 14px; pointer-events: none; }
+.fw-venue-crest { position: absolute; left: 50%; top: 0; width: 76px; height: 76px; translate: -50% -46%; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #fff8ec, #f3e3c8 72%); box-shadow: 0 0 0 1px rgba(184,140,72,.7), 0 0 0 5px #fffaf3, 0 0 0 6px rgba(184,140,72,.4), 0 12px 22px -10px rgba(80,50,30,.45); }
+.fw-venue-crest svg { width: 46px; height: 46px; fill: none; stroke: #a5752f; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.fw-venue-rule { display: block; width: min(260px, 70%); height: 9px; margin: 8px auto; background: radial-gradient(circle, #c49a52 0 2.2px, transparent 2.6px) center / 9px 9px no-repeat, linear-gradient(90deg, transparent, rgba(196,154,82,.85) 30%, rgba(196,154,82,.85) 44%, transparent 47%, transparent 53%, rgba(196,154,82,.85) 56%, rgba(196,154,82,.85) 70%, transparent) center / 100% 1px no-repeat; }
+.fw-venue-name { margin: 6px 0; padding: 0 .1em; font: 400 clamp(40px, 9vw, 60px)/1.25 var(--wk-font-script); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .fw-venue-addr { margin: 8px 0 0; font: 500 clamp(17px, 4.3vw, 19px)/1.5 var(--wk-font-display); color: var(--wk-muted); }
 .fw-venue-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
 .fw-venue-map { margin-top: 18px; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--fw-r); border: 1px solid var(--wk-border); animation: fw-fade .5s ease; }
@@ -546,6 +548,16 @@ export const FW_CSS = `
   .fw-rsvp-window { width: min(100%, 420px); }
 }
 .fw-rsvp { position: relative; z-index: 1; min-width: 0; }
+@media (max-width: 899px) { .fw-rsvp { margin-top: 34px; } }
+/* The reply card: letterpress ivory, a double gold rim, a wax seal on its top edge, gold-foil title, rose accents. */
+.fw-rsvp .wk-rsvp { position: relative; overflow: visible; padding-top: clamp(54px, 7vw, 66px); border: 0; border-radius: 20px; background: radial-gradient(80% 30% at 50% 0%, rgba(246,226,214,.55), transparent 70%), linear-gradient(180deg, #fffcf6, #f9f0e2); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 8px #fffaf3, 0 0 0 9px rgba(184,140,72,.35), 0 40px 70px -44px rgba(80,50,30,.5); }
+.fw-rsvp .wk-rsvp::before { content: "RSVP"; position: absolute; left: 50%; top: 0; width: 70px; height: 70px; translate: -50% -50%; display: grid; place-items: center; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%; background: radial-gradient(circle at 36% 30%, #e2a6ab, var(--fw-wax1) 44%, var(--fw-wax2)); box-shadow: inset 0 -5px 9px rgba(60,10,20,.28), inset 0 4px 7px rgba(255,255,255,.3), 0 10px 18px -8px rgba(80,20,30,.55); font: 500 12px/1 var(--wk-font-caps); letter-spacing: .14em; color: rgba(255,244,240,.95); }
+.fw-rsvp .wk-rsvp-title { font: 400 clamp(40px, 8vw, 56px)/1.2 var(--wk-font-script); padding: 0 .1em; background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fw-rsvp .wk-rsvp-intro { font-family: var(--wk-font-display); font-style: italic; font-size: 17px; }
+.fw-rsvp .wk-field-l { font: 500 11.5px/1.3 var(--wk-font-caps); letter-spacing: .2em; text-transform: uppercase; color: var(--wk-gold-ink); }
+.fw-rsvp .wk-input, .fw-rsvp .wk-stepper, .fw-rsvp .wk-seg-o, .fw-rsvp .wk-chip:not(.is-on) { background: #fffdf8; border-color: rgba(184,140,72,.4); }
+.fw-rsvp .wk-chip.is-on { background: linear-gradient(180deg, #a85d66, var(--fw-wax2)); border-color: transparent; color: #fff7f3; }
+.fw-rsvp .wk-rsvp .wk-btn:not(.wk-btn-ghost) { background: linear-gradient(180deg, #a85d66, var(--fw-wax2)); color: #fff7f3; box-shadow: 0 14px 28px -16px rgba(110,40,58,.7), inset 0 1px 0 rgba(255,255,255,.25); }
 .fw-rsvp-dear { margin: 0 0 6px; text-align: center; font: 400 30px/1.2 var(--wk-font-script); color: var(--fw-script); }
 
 /* ── finale ────────────────────────────────────────────────────────────── */
@@ -563,10 +575,11 @@ export const FW_CSS = `
 .fw-wax small { font: 500 7px/1 var(--wk-font-caps); letter-spacing: .12em; text-transform: uppercase; }
 .fw-wax-ring { position: absolute; inset: -14px; border-radius: 50%; border: 2px solid rgba(201,160,90,.7); opacity: 0; }
 .fw-finale.is-pressed .fw-wax-ring { animation: fw-ring 1.3s ease-out .45s forwards; }
-.fw-fin-names { margin: 6px 0 4px; font: 400 clamp(44px, min(12vw, 8svh), 82px)/1.05 var(--wk-font-script); color: var(--fw-script); }
+.fw-fin-rule { display: block; width: min(320px, 72%); height: 9px; margin: 10px auto 2px; background: radial-gradient(circle, #c49a52 0 2.2px, transparent 2.6px) center / 9px 9px no-repeat, linear-gradient(90deg, transparent, rgba(196,154,82,.85) 30%, rgba(196,154,82,.85) 44%, transparent 47%, transparent 53%, rgba(196,154,82,.85) 56%, rgba(196,154,82,.85) 70%, transparent) center / 100% 1px no-repeat; }
+.fw-fin-names { margin: 2px 0 4px; padding: 0 .1em; font: 400 clamp(46px, min(12vw, 8.4svh), 88px)/1.2 var(--wk-font-script); color: var(--fw-script); }
 .fw-fin-names span { font: italic 500 .45em/1 var(--wk-font-display); color: var(--wk-gold-ink); }
 .fw-fin-line { margin: 4px 0 0; font: italic 500 clamp(17px, 4.4vw, 20px)/1.5 var(--wk-font-display); color: var(--wk-muted); }
-.fw-hashtag { margin: 12px 0 0; font: 500 13px/1 var(--wk-font-caps); letter-spacing: .2em; color: var(--wk-gold-ink); }
+.fw-hashtag { display: inline-block; padding: 9px 18px; border-radius: 999px; background: rgba(255,251,245,.8); box-shadow: 0 0 0 1px rgba(184,140,72,.5), 0 0 0 4px rgba(255,250,243,.8), 0 0 0 5px rgba(184,140,72,.25); margin: 14px 0 0; font: 500 13px/1 var(--wk-font-caps); letter-spacing: .2em; color: var(--wk-gold-ink); }
 .fw-share { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .fw-share-main { min-width: min(100%, 280px); }
 .fw-share-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }

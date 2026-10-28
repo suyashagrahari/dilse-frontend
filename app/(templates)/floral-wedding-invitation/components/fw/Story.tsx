@@ -5,11 +5,11 @@
 // rAF-throttled listener writes --fw-p 0→1 on the section, the thread's
 // scaleY reads it). Each chapter is a photo tucked into the album at a slight
 // tilt, and a page of handwriting beside it; they alternate sides from 860 px.
+// A chapter without a photo gets its year in large gold-foil numerals instead.
 // A vine hangs over the top corner and sways. Transform/opacity only.
 
 import { useEffect, useRef } from "react";
 import { cdn, photoImgStyle, Reveal, useWeddingReducedMotion } from "../../../_wedding";
-import { pic } from "./art";
 import type { FwChapter } from "./model";
 
 export default function Story({ chapters }: { chapters: FwChapter[] }) {
@@ -63,8 +63,9 @@ export default function Story({ chapters }: { chapters: FwChapter[] }) {
             <span className="fw-ch-knot" aria-hidden />
             {!c.photo && (
               <Reveal className="fw-ch-deco" effect="fade" delay={200}>
-                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                <img {...pic(i % 2 ? "peonyBeige" : "peonyPink", { lazy: true })} />
+                <span className="fw-ch-year" aria-hidden>
+                  {c.when || String(i + 1).padStart(2, "0")}
+                </span>
               </Reveal>
             )}
             {c.photo && (

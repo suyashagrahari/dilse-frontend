@@ -90,6 +90,7 @@ export default function Finale({ sealHi, seal, closing, endLine, first, second, 
             <span lang={lang}>{closing}</span>
           </Reveal>
         )}
+        <span className="fw-fin-rule" aria-hidden />
         <Reveal as="p" className="fw-fin-names" delay={200}>
           {first} <span>&amp;</span> {second}
         </Reveal>
