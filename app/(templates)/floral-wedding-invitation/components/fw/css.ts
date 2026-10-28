@@ -48,7 +48,6 @@ export const FW_CSS = `
 /* ── ambient loops ─────────────────────────────────────────────────────── */
 @keyframes fw-sway { from { transform: rotate(-2.2deg); } to { transform: rotate(2.4deg); } }
 @keyframes fw-sway-s { from { transform: rotate(-1deg); } to { transform: rotate(1.1deg); } }
-@keyframes fw-swing { 0%, 100% { transform: rotate(-1.1deg); } 50% { transform: rotate(1.1deg); } }
 @keyframes fw-drift { 0% { transform: translate3d(0, -6vh, 0) rotate(0deg); opacity: 0; } 8% { opacity: .95; } 88% { opacity: .9; } 100% { transform: translate3d(var(--dx, 40px), 108vh, 0) rotate(420deg); opacity: 0; } }
 @keyframes fw-fall { 0% { transform: translate3d(0, -8vh, 0) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate3d(var(--dx, 0px), 112vh, 0) rotate(var(--rot, 300deg)); opacity: .2; } }
 @keyframes fw-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
@@ -215,7 +214,8 @@ export const FW_CSS = `
 .fw-hero-arch::before { content: ""; position: absolute; inset: 9px 9px 0; border-radius: inherit; border: 1px solid rgba(184,140,72,.3); border-bottom: 0; }
 .fw-hero.is-open .fw-hero-arch, .fw-finale.is-pressed .fw-hero-arch { opacity: 1; }
 .fw-hero-swing { opacity: 0; transform: translate3d(0, -26px, 0); transition: opacity 1.2s ease .45s, transform 1.6s var(--fw-ease) .45s; }
-.fw-hero-swing-in { display: block; transform-origin: 50% 6%; animation: fw-swing 5.2s ease-in-out infinite; }
+/* The swing stays still (no sway). */
+.fw-hero-swing-in { display: block; }
 .fw-hero-swing-in img { display: block; width: 100%; height: auto; }
 .fw-hero.is-open .fw-hero-swing { opacity: 1; transform: none; }
 /* The swing rests on a soft shadow of ground, not on air. */
@@ -264,8 +264,9 @@ export const FW_CSS = `
 .fw-hero.is-idle *, .fw-finale:not(.is-on) *, .fw-story.is-idle * { animation-play-state: paused !important; }
 @media (min-width: 1024px) {
   .fw-hero { padding-top: 80px; }
-  .fw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; justify-items: stretch; text-align: left; gap: clamp(32px, 4vw, 72px); }
-  .fw-hero-art { justify-self: center; width: min(44vw, 70svh, 640px); }
+  /* The swing and the names as one centred group. */
+  .fw-hero-grid { grid-template-columns: auto fit-content(560px); justify-content: center; align-items: center; justify-items: stretch; text-align: left; gap: clamp(40px, 5vw, 96px); }
+  .fw-hero-art { justify-self: center; width: min(38vw, 66svh, 600px); }
   .fw-hero-names { align-items: flex-start; margin-top: 18px; }
   .fw-hero-amp { padding-left: .6em; }
   .fw-hero-actions { justify-content: flex-start; }
@@ -526,7 +527,6 @@ export const FW_CSS = `
 .fw-fin-clouds { transform: translate3d(-50%, 0, 0); }
 .fw-fin-in { position: relative; z-index: 3; max-width: 640px; margin: 0 auto; }
 .fw-fin-stage { position: relative; width: min(88vw, 46svh, 480px); aspect-ratio: 800 / 789; margin: 0 auto 70px; }
-.fw-fin-swing .fw-hero-swing-in { animation-duration: 6s; }
 .fw-fin-swing img { display: block; width: 100%; height: auto; }
 .fw-wax { position: absolute; left: 50%; bottom: -58px; z-index: 3; width: 104px; height: 104px; margin: 0 0 0 -52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; opacity: 0; transform: scale(1.7) rotate(-8deg); transition: transform .6s cubic-bezier(.3,1.5,.5,1), opacity .3s ease; }
 .fw-finale.is-pressed .fw-wax { opacity: 1; transform: none; }

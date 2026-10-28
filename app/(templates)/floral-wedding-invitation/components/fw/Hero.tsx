@@ -7,7 +7,8 @@
 // petals on the breeze. The copy (guest greeting, names in script, date and
 // venue) sits above the swing under a line-art arch on phones, as on the card,
 // and beside it from 1024 px. The entrance is staged by `open`; one
-// rAF-throttled scroll listener writes --fw-hy for a two-depth parallax exit;
+// rAF-throttled scroll listener writes --fw-hy for a two-depth parallax exit
+// (the swing itself stays still: no sway);
 // the loops pause while the hero is off screen.
 
 import { useEffect, useMemo, useRef } from "react";
