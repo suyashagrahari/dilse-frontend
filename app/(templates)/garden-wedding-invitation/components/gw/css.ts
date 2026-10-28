@@ -307,8 +307,8 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 /* Flex, not grid: an odd last row (5 functions in 3 columns) centres instead of hanging left. */
 .gw-ev-list { --gw-ev-gap: clamp(16px, 2vw, 24px); list-style: none; margin: 0 auto; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--gw-ev-gap); max-width: 560px; }
 .gw-ev { display: flex; flex: 1 1 100%; min-width: 0; }
-.gw-ev-card { position: relative; display: flex; flex-direction: column; width: 100%; border-radius: var(--gw-r); overflow: hidden; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: var(--wk-shadow); transition: transform .35s var(--gw-ease); }
-.gw-ev.is-main .gw-ev-card { border-color: color-mix(in srgb, var(--wk-gold) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--wk-gold) 18%, transparent), var(--wk-shadow); }
+.gw-ev-card { position: relative; display: flex; flex-direction: column; width: 100%; border-radius: var(--gw-r); overflow: hidden; background: var(--wk-surface-solid); border: 1px solid var(--wk-border); box-shadow: none; transition: transform .35s var(--gw-ease); }
+.gw-ev.is-main .gw-ev-card { border-color: color-mix(in srgb, var(--wk-gold) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--wk-gold) 18%, transparent); }
 @media (hover: hover) { .gw-ev-card:hover { transform: translateY(-4px); } .gw-ev-card:hover .gw-ev-img { transform: scale(1.05); } }
 .gw-ev-art { position: relative; height: clamp(210px, 56vw, 250px); margin: 10px 10px 0; overflow: hidden; border-radius: calc(var(--gw-r) - 6px); isolation: isolate; }
 .gw-ev-wash { position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 95% at 50% 105%, color-mix(in srgb, var(--gw-sw, var(--gw-blush)) 42%, #fff) 0%, color-mix(in srgb, var(--gw-sky) 55%, #fff) 72%); }
@@ -331,9 +331,10 @@ body:has(.gw-root) .vm-icon-btn:focus-visible { outline-color: #a94e63 !importan
 .gw-ev-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--wk-accent) 28%, transparent); cursor: pointer; transition: width .3s var(--gw-ease), background-color .3s; }
 .gw-ev-dots button.is-on { width: 24px; background: var(--wk-accent); }
 @media (max-width: 599px) {
-  .gw-ev-list { flex-wrap: nowrap; justify-content: flex-start; max-width: none; margin: 0 -16px; padding: 6px 16px 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  /* Each card is centred on screen, the first and last included (the side padding is half the free width). */
+  .gw-ev-list { flex-wrap: nowrap; justify-content: flex-start; max-width: none; margin: 0 -16px; padding: 6px 8vw 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .gw-ev-list::-webkit-scrollbar { display: none; }
-  .gw-ev { flex: 0 0 86%; scroll-snap-align: center; display: flex; }
+  .gw-ev { flex: 0 0 84vw; scroll-snap-align: center; display: flex; }
   .gw-ev > .gw-ev-card { height: 100%; }
 }
 @media (min-width: 600px) { .gw-ev-dots { display: none; } }
