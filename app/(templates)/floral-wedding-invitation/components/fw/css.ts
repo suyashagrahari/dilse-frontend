@@ -91,15 +91,14 @@ export const FW_CSS = `
 .fw-card-bloom { position: absolute; z-index: 0; bottom: -6%; height: 44%; width: auto; pointer-events: none; }
 .fw-card-bloom.is-l { left: -5%; rotate: 8deg; } .fw-card-bloom.is-r { right: -5%; rotate: -8deg; scale: -1 1; }
 .fw-card-face > span { position: relative; z-index: 1; }
+/* The showcase: once the card rests in the middle, a slow band of gold light sweeps across it. */
+.fw-card-face::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; background: linear-gradient(105deg, transparent 30%, rgba(255,236,190,.0) 38%, rgba(255,232,180,.55) 48%, rgba(255,255,255,.75) 50%, rgba(255,232,180,.55) 52%, transparent 62%) -160% 0 / 250% 100% no-repeat; mix-blend-mode: soft-light; }
+.fw-env:is(.is-unfold, .is-leave) .fw-card-face::after { animation: fw-sheen 1.5s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes fw-sheen { to { background-position: 160% 0; } }
 .fw-card-k { font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .3em; text-transform: uppercase; color: var(--wk-gold-ink); }
 .fw-card-n { font: 400 clamp(30px, 8.6vw, 50px)/1.05 var(--wk-font-script); color: var(--fw-script); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fw-card-amp { font: italic 500 clamp(14px, 3.6vw, 18px)/1 var(--wk-font-display); color: var(--wk-gold-ink); }
 .fw-card-d { margin-top: 6px; font: 500 clamp(9px, 2.4vw, 11px)/1 var(--wk-font-caps); letter-spacing: .22em; color: var(--wk-muted); }
-/* The card's folded top: one piece of paper; it lifts on its top hinge and fades as it passes edge-on, revealing the names. */
-.fw-card-fold { position: absolute; left: 0; right: 0; top: 0; height: 52%; z-index: 3; transform-origin: 50% 0; transform: perspective(900px) rotateX(0deg); transition: transform 1s cubic-bezier(.45,.05,.2,1), opacity .45s ease .4s; }
-.fw-card-fold > span { position: absolute; inset: 0; border-radius: 3px 3px 0 0; }
-.fw-card-fold-front { display: grid; place-items: center; background: linear-gradient(180deg, #fbf4ea, #f5eadb); box-shadow: 0 6px 12px -8px rgba(60,40,20,.35); }
-.fw-card-fold-front img { width: 30%; height: auto; }
 .fw-env-pocket { position: absolute; inset: 0; z-index: 4; border-radius: 6px; overflow: hidden; }
 .fw-env-pocket-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .fw-env-to { position: absolute; left: 8%; right: 8%; bottom: 7%; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
@@ -164,7 +163,6 @@ export const FW_CSS = `
 .fw-env-back, .fw-env-pocket { transition: opacity .9s ease .15s; }
 .fw-env:is(.is-out, .is-unfold, .is-leave) :is(.fw-env-back, .fw-env-pocket, .fw-env-flap, .fw-env-sprig, .fw-seal-half.is-b) { opacity: 0; }
 /* unfold: the folded top opens on the names */
-.fw-env.is-unfold .fw-card-fold, .fw-env.is-leave .fw-card-fold { transform: perspective(900px) rotateX(-110deg); opacity: 0; }
 .fw-env.is-leave { opacity: 0; pointer-events: none; transition: opacity 1.2s cubic-bezier(.4,0,.2,1) .1s; }
 /* A soft light blooms from the seal as it breaks and carries the eye into the card. */
 .fw-env::after { content: ""; position: absolute; z-index: 1; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.1); background: radial-gradient(closest-side, rgba(255,250,244,.95), rgba(252,238,228,.6) 40%, rgba(252,238,228,0) 72%); }
@@ -182,9 +180,9 @@ export const FW_CSS = `
 /* ── language toggle ───────────────────────────────────────────────────── */
 .fw-lang { position: fixed; top: calc(12px + var(--vw-top-space, 0px)); left: 12px; z-index: 90; display: flex; padding: 3px; border-radius: 999px; background: rgba(255,252,246,.88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid var(--wk-border); box-shadow: 0 8px 20px -14px rgba(80,50,30,.5); }
 .fw-lang { transition: transform .4s var(--fw-ease), opacity .3s; }
-/* With music on, the engine's round music button takes the top-left corner and the pill sits beside it. */
-body:has(.vm-icon) .fw-lang { left: 60px; }
-.fw-lang.is-tucked { transform: translateY(calc(-100% - 16px - var(--vw-top-space, 0px))); opacity: 0; pointer-events: none; }
+/* Music + language sit in the top bar's row, just left of the Back/Create pill (149 px wide, 10 px from the edge). */
+.fw-lang { top: 8px; left: auto; right: 167px; }
+.fw-lang.is-tucked { transform: translateY(calc(-100% - 16px)); opacity: 0; pointer-events: none; }
 .fw-lang:focus-within { transform: none; opacity: 1; pointer-events: auto; }
 .fw-lang button { min-width: 44px; min-height: 42px; padding: 0 10px; border: 0; border-radius: 999px; background: none; font: 600 13px/1 var(--wk-font-sans); color: var(--wk-ink); cursor: pointer; transition: background-color .25s, color .25s; }
 .fw-lang button[aria-pressed="true"] { background: var(--fw-script); color: #fff8f4; }
@@ -535,7 +533,7 @@ body:has(.vm-icon) .fw-lang { left: 60px; }
 .fw-qr-h { margin: 0; font: italic 500 17px/1.4 var(--wk-font-display); color: var(--wk-ink); }
 
 /* ── the engine's music button (rendered outside .fw-root): stationery palette, top-left ── */
-body .vm-icon { top: calc(16px + var(--vw-top-space, 0px)); bottom: auto; box-shadow: 0 8px 20px -12px rgba(80,50,30,.55), 0 0 0 1px rgba(184,146,74,.55); }
+body .vm-icon { top: 13px !important; right: 271px !important; left: auto !important; bottom: auto !important; box-shadow: 0 8px 20px -12px rgba(80,50,30,.55), 0 0 0 1px rgba(184,146,74,.55); }
 body .vm-icon-btn { color: #8c4a52; background: radial-gradient(circle at 50% 38%, #fffaf3, #f1e2d0 78%); }
 body .vm-icon-btn:focus-visible { outline-color: #b8924a; }
 body .vm-icon-ring { background: conic-gradient(from 0deg, #b8924a, transparent 30%, #d9a3a6 52%, transparent 78%, #b8924a); }

@@ -5,7 +5,9 @@
 // cloud bank along the bottom, a gold line-art swirl that draws itself, and a
 // nude envelope of handmade paper with gold-foil edges, addressed to the guest
 // ("Dear Sharma family" from ?to=, else the couple's names), a dried peony
-// sprig tucked under a dusty-rose wax seal with their initials.
+// sprig tucked under a dusty-rose wax seal with their initials. Inside, the
+// invitation card itself (no fold): Shubh Vivah, the names and the date on
+// textured paper in a double gold border, peonies at its lower corners.
 // One tap (also the gesture that starts the music), paced like a real letter:
 //   0.00 s  the seal wobbles and cracks along a jagged line, a few crumbs of
 //           wax fall; its top half stays stuck to the flap (it turns away with
@@ -16,14 +18,14 @@
 //           settles lower
 //   2.45 s  out of the pocket, the card comes forward to the middle of the
 //           screen and grows a little; the envelope slips away below
-//   3.40 s  its folded top opens (paper-fold) on the names
+//   3.40 s  it rests there, a slow band of gold light sweeping across it
 //   4.45 s  the card lifts toward the guest and dissolves into the hero
 //           (already decoded underneath), petals fall
 // No 3D context and no two-faced cards: each hinge is one piece of paper with
 // its own perspective(), so the layers keep their paper order (z-index). The
 // flap turns its outside to its lining at the exact halfway point, edge-on
 // (a symmetric ease puts 90° at 50% of the time), and drops behind the card
-// there; the card's folded top lifts and fades as it passes edge-on. Transform/opacity only. Reduced motion: a 400 ms crossfade.
+// there. Transform/opacity only. Reduced motion: a 400 ms crossfade.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { initialOf, useWeddingReducedMotion } from "../../../_wedding";
@@ -154,12 +156,6 @@ export default function Envelope({ first, second, dateLine, guest, s, lang, onOp
               <span className="fw-card-amp">&amp;</span>
               <span className="fw-card-n">{second}</span>
               {dateLine && <span className="fw-card-d">{dateLine}</span>}
-            </div>
-            <div className="fw-card-fold">
-              <span className="fw-card-fold-front">
-                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                <img {...pic("peonyPink")} />
-              </span>
             </div>
           </div>
           <div className="fw-env-pocket" aria-hidden>
