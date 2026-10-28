@@ -31,6 +31,10 @@ export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwa
   "garden-wedding-invitation",
   "floral-wedding-invitation",
   "lotus-wedding-invitation",
+  // Three faith weddings on one engine (app/(templates)/_faith): Anand Karaj, Nikah, Holy Matrimony.
+  "sikh-wedding-invitation",
+  "muslim-wedding-invitation",
+  "christian-wedding-invitation",
 ] as const;
 
 /**
@@ -133,6 +137,9 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "garden-wedding-invitation": { name: "Mughal Garden Wedding", emoji: "🦚", date: 0, month: "" },
   "floral-wedding-invitation": { name: "Pampas & Peony Wedding", emoji: "🌸", date: 0, month: "" },
   "lotus-wedding-invitation": { name: "Lotus Temple Wedding", emoji: "🪷", date: 0, month: "" },
+  "sikh-wedding-invitation": { name: "Anand Karaj Wedding", emoji: "🌼", date: 0, month: "" },
+  "muslim-wedding-invitation": { name: "Nikah Wedding", emoji: "🌙", date: 0, month: "" },
+  "christian-wedding-invitation": { name: "Holy Matrimony Wedding", emoji: "🕊️", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

@@ -80,6 +80,9 @@ import { config as royalWeddingCfg } from "@/app/(templates)/royal-wedding-invit
 import { config as palaceDoorWeddingCfg } from "@/app/(templates)/palace-door-wedding-invitation/config";
 import { config as gardenWeddingCfg } from "@/app/(templates)/garden-wedding-invitation/config";
 import { config as floralWeddingCfg } from "@/app/(templates)/floral-wedding-invitation/config";
+import { config as sikhWeddingCfg } from "@/app/(templates)/sikh-wedding-invitation/config";
+import { config as muslimWeddingCfg } from "@/app/(templates)/muslim-wedding-invitation/config";
+import { config as christianWeddingInvCfg } from "@/app/(templates)/christian-wedding-invitation/config";
 import { config as lotusWeddingCfg } from "@/app/(templates)/lotus-wedding-invitation/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
@@ -176,6 +179,9 @@ const allConfigs = [
   palaceDoorWeddingCfg,
   gardenWeddingCfg,
   floralWeddingCfg,
+  sikhWeddingCfg,
+  muslimWeddingCfg,
+  christianWeddingInvCfg,
   lotusWeddingCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
@@ -316,6 +322,9 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "palace-door-wedding-invitation",
   "garden-wedding-invitation",
   "floral-wedding-invitation",
+  "sikh-wedding-invitation",
+  "muslim-wedding-invitation",
+  "christian-wedding-invitation",
   "lotus-wedding-invitation",
 ]);
 

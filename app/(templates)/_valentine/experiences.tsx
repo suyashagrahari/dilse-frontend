@@ -38,6 +38,9 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "garden-wedding-invitation": dynamic(() => import("../garden-wedding-invitation/components/GardenWeddingExperience"), { ssr: false, loading: Loading }),
   "floral-wedding-invitation": dynamic(() => import("../floral-wedding-invitation/components/FloralWeddingExperience"), { ssr: false, loading: Loading }),
   "lotus-wedding-invitation": dynamic(() => import("../lotus-wedding-invitation/components/LotusWeddingExperience"), { ssr: false, loading: Loading }),
+  "sikh-wedding-invitation": dynamic(() => import("../sikh-wedding-invitation/components/SikhWeddingExperience"), { ssr: false, loading: Loading }),
+  "muslim-wedding-invitation": dynamic(() => import("../muslim-wedding-invitation/components/MuslimWeddingExperience"), { ssr: false, loading: Loading }),
+  "christian-wedding-invitation": dynamic(() => import("../christian-wedding-invitation/components/ChristianWeddingExperience"), { ssr: false, loading: Loading }),
   "sorry-premium": dynamic(() => import("../sorry-premium/components/SorryPremiumExperience"), { ssr: false, loading: Loading }),
   // ✦ Premium twins
   "happy-rose-day-premium": dynamic(() => import("../happy-rose-day-premium/components/RoseDayPremiumExperience"), { ssr: false, loading: Loading }),

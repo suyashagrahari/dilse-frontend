@@ -54,6 +54,9 @@ const ACCENTS: Record<string, string> = {
   "palace-door-wedding-invitation": "#8A5A1C",
   "garden-wedding-invitation": "#B0466A",
   "floral-wedding-invitation": "#9E5A62",
+  "sikh-wedding-invitation": "#B07A1F",
+  "muslim-wedding-invitation": "#4F6B4C",
+  "christian-wedding-invitation": "#6F7F69",
   "lotus-wedding-invitation": "#A3405C",
   "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its

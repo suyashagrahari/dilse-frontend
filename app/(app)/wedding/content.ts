@@ -36,6 +36,7 @@ export const WEDDING_FILTERS: { id: WeddingFilter; label: string; emoji: string 
 const FILTER_OF: Record<string, WeddingFilter> = {
   "christian-wedding": "christian",
   "christian-wedding-2": "christian",
+  "christian-wedding-invitation": "christian",
   reception: "reception",
   "court-marriage": "court",
   "kundli-milan": "rishta",

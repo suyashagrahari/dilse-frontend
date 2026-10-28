@@ -7,6 +7,8 @@
 //   deva     Tiro Devanagari Hindi — every stack falls back to it, so Hindi
 //            text (names, shlokas, the invitation) renders in a matching
 //            serif instead of the system's default Devanagari.
+//   guru     Tiro Gurmukhi      — Punjabi (the Anand Karaj invitation), Tiro's sister face
+//   urdu     Noto Nastaliq Urdu — Urdu (the Nikah invitation), set right-to-left
 //
 // All `display: "swap"` + `preload: false`: a template-scoped face must paint
 // on a first, uncached visit (see _valentine/fonts.ts for the reasoning), and
@@ -72,5 +74,27 @@ export const wkDeva = localFont({
   preload: false,
 });
 
+export const wkGuru = localFont({
+  src: [
+    { path: "../../../assets/fonts/tiro-gurmukhi-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/tiro-gurmukhi-400-italic.woff2", weight: "400", style: "italic" },
+  ],
+  variable: "--font-wk-guru",
+  adjustFontFallback: false,
+  display: "swap",
+  preload: false,
+});
+
+export const wkUrdu = localFont({
+  src: [
+    { path: "../../../assets/fonts/noto-nastaliq-urdu-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../assets/fonts/noto-nastaliq-urdu-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-wk-urdu",
+  adjustFontFallback: false,
+  display: "swap",
+  preload: false,
+});
+
 /** className that defines every --font-wk-* variable. WeddingRoot mounts it; editors that render kit pieces outside one should too. */
-export const WEDDING_FONT_VARS = [wkDisplay, wkCaps, wkScript, wkSans, wkDeva].map((f) => f.variable).join(" ");
+export const WEDDING_FONT_VARS = [wkDisplay, wkCaps, wkScript, wkSans, wkDeva, wkGuru, wkUrdu].map((f) => f.variable).join(" ");

@@ -4020,6 +4020,220 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Anand Karaj Wedding Invitation ☬ (wedding tier, Royal's limits). Art: cdn faith-sikh.
+  "sikh-wedding-invitation": {
+    title: "Sikh Wedding Invitation — Anand Karaj Invitation Card Online with RSVP",
+    description:
+      "A Sikh wedding invitation online in ivory and gold: Ik Onkar and the Fateh in gold foil, a line of Gurbani, then every function from the Roka and Akhand Path to the Jaggo, the Anand Karaj and the Doli, with maps and dress codes, English and Punjabi (Gurmukhi), 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🌼",
+
+    keywords: [
+      "sikh wedding invitation",
+      "sikh wedding invitation online",
+      "anand karaj invitation card",
+      "anand karaj invitation online",
+      "punjabi wedding card online",
+      "punjabi wedding invitation",
+      "sikh wedding card",
+      "gurmukhi wedding invitation",
+      "punjabi wedding invitation in gurmukhi",
+      "ik onkar wedding card",
+      "gurdwara wedding invitation",
+      "laavan invitation",
+      "jaggo invitation",
+      "sikh wedding e invite",
+      "sikh wedding website with rsvp",
+      "whatsapp sikh wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is an Anand Karaj invitation?",
+        answer:
+          "It is the invitation to a Sikh wedding. The Anand Karaj, the 'blissful union', takes place at the Gurdwara in the presence of Sri Guru Granth Sahib Ji, usually in the morning, when the couple walk around the Guru four times as the four Laavan are recited. The card traditionally opens with Ik Onkar and often carries a line of Gurbani and the Fateh: Waheguru ji ka Khalsa, Waheguru ji ki Fateh.",
+      },
+      {
+        question: "Which functions can I add to a Sikh wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Roka and Kurmai, a Sri Akhand Path Sahib or Sukhmani Sahib Path, the Maiyan, the Mehndi, the Jaggo, the Chooda and Kalire, the Anand Karaj with the Milni before it and Langar after, the Doli and the Reception. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can the invitation be in Punjabi?",
+        answer:
+          "Yes. The invitation text can be written in Punjabi in Gurmukhi script and shown beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Punjabi.",
+      },
+      {
+        question: "What should guests know before the Anand Karaj at the Gurdwara?",
+        answer:
+          "Everyone covers their head inside the Gurdwara (rumals are usually provided), removes their shoes and sits on the floor in the Darbar Sahib, and alcohol and tobacco are not allowed on the premises. The invitation's dress-code and things-to-know sections are the place to tell guests, so nobody arrives unprepared.",
+      },
+      {
+        question: "How do I make a Punjabi wedding card online?",
+        answer:
+          "Open the Anand Karaj Wedding Invitation on SubhSandesh and press Create. Describe your wedding and the AI writes your names, families, functions and the English and Punjabi invitation. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link on WhatsApp.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Sikh Wedding (Anand Karaj) Invitation Online",
+      description: "Create an Anand Karaj invitation with every function, English and Punjabi text, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Anand Karaj Invitation", text: "Go to the Anand Karaj Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and an English and Punjabi (Gurmukhi) invitation." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, from the Roka and Akhand Path to the Anand Karaj and the Reception, with each date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos, set each one's size and focal point, and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  // Nikah Wedding Invitation ☪ (wedding tier, Royal's limits). Art: cdn faith-nikah.
+  "muslim-wedding-invitation": {
+    title: "Nikah Invitation — Muslim Wedding Card Online in English & Urdu with RSVP",
+    description:
+      "A Muslim wedding invitation online under a sage-and-gold Mughal arch: the Bismillah in gold, Qur'an 30:21, then every function from the Mangni and Mehndi to the Nikah, the Rukhsati and the Walima, with maps and dress codes, English and Urdu side by side, 40 photos, RSVP per function and a duas wall, on one private link.",
+    category: "Wedding",
+    emoji: "🌙",
+
+    keywords: [
+      "nikah invitation",
+      "nikah invitation card",
+      "nikah invitation online",
+      "muslim wedding card online",
+      "muslim wedding invitation",
+      "muslim wedding invitation online",
+      "urdu wedding invitation",
+      "urdu wedding card",
+      "islamic wedding invitation",
+      "bismillah wedding card",
+      "walima invitation",
+      "nikah and walima invitation",
+      "mehndi invitation muslim",
+      "nikah e invite",
+      "muslim wedding website with rsvp",
+      "whatsapp nikah invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is a Nikah invitation?",
+        answer:
+          "It is the invitation to a Muslim wedding. The Nikah is the marriage contract itself: in front of witnesses and usually a Qazi, the bride and groom give their consent (ijab-o-qabool) and the Mehr is agreed. Invitations traditionally open with the Bismillah and often carry Surah Ar-Rum 30:21, the verse about spouses, affection and mercy.",
+      },
+      {
+        question: "Which functions can I add to a Nikah invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Mangni, the Manjha or Ubtan, the Mehndi, a Dholki, the Nikah, the Rukhsati and the Walima, the reception the groom's family hosts after the Nikah. Guests RSVP to each one separately, so you know your numbers for the Walima.",
+      },
+      {
+        question: "Can the invitation be in Urdu?",
+        answer:
+          "Yes. The invitation text can be written in Urdu, in its own Nastaliq script and set right to left, beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Urdu.",
+      },
+      {
+        question: "Can I set the Nikah time after a prayer?",
+        answer:
+          "Yes. Many Nikahs are held after Asr or Maghrib, so each function carries a note as well as its time: set the time and write 'The Nikah after Asr' beneath it, with the venue and a map link. Guests can add every function to their calendar in one tap.",
+      },
+      {
+        question: "How do I make a Muslim wedding card online?",
+        answer:
+          "Open the Nikah Wedding Invitation on SubhSandesh and press Create. Describe your wedding and the AI writes your names, families, functions and the English and Urdu invitation. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link on WhatsApp.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Nikah Invitation Online",
+      description: "Create a Muslim wedding invitation with the Nikah, the Walima and every function, English and Urdu text, RSVP and a duas wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Nikah Invitation", text: "Go to the Nikah Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and an English and Urdu invitation." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, from the Mangni and Mehndi to the Nikah and the Walima, with each date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos, set each one's size and focal point, and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  // Holy Matrimony Wedding Invitation ✝ (wedding tier, Royal's limits). Art: cdn faith-christian.
+  "christian-wedding-invitation": {
+    title: "Christian Wedding Invitation — Church Wedding & Holy Matrimony Invite Online with RSVP",
+    description:
+      "A Christian wedding invitation online in ivory, sage and gold: a chapel arch crowned with white lilies, the cross in gold and a Bible verse, then the engagement, the bridal shower, the Holy Matrimony at church and the reception, with maps and dress codes, 40 photos, RSVP per event and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🕊️",
+
+    keywords: [
+      "christian wedding invitation",
+      "christian wedding invitation online",
+      "church wedding invitation online",
+      "church wedding invitation",
+      "holy matrimony invitation",
+      "holy matrimony invitation card",
+      "christian wedding card",
+      "catholic wedding invitation",
+      "nuptial mass invitation",
+      "wedding invitation with bible verse",
+      "christian wedding invitation wording",
+      "request the honour of your presence invitation",
+      "roce invitation",
+      "christian wedding e invite",
+      "christian wedding website with rsvp",
+      "whatsapp church wedding invitation link",
+    ],
+
+    faqs: [
+      {
+        question: "What is a Holy Matrimony invitation?",
+        answer:
+          "It is the invitation to a Christian church wedding, where the couple exchange vows before God, often within a Nuptial Mass. The classic wording reads 'By the grace of God, together with their families, … request the honour of your presence at the Holy Matrimony of …', and many couples add a Bible verse such as Mark 10:9 or 1 Corinthians 13.",
+      },
+      {
+        question: "Which events can I add to a church wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the engagement or ring ceremony, a Roce for Mangalorean and Goan families, the bridal shower, the rehearsal dinner, the Holy Matrimony at church and the reception with dinner, toasts and the first dance. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can I choose the Bible verse on the invitation?",
+        answer:
+          "Yes. The card carries 'Therefore what God has joined together, let no one separate' (Mark 10:9) by default, and you can replace it with any verse and its reference, such as 1 Corinthians 13:4–7, Ecclesiastes 4:12 or Ruth 1:16.",
+      },
+      {
+        question: "How do I make a Christian wedding invitation online?",
+        answer:
+          "Open the Holy Matrimony Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, events and invitation wording. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Christian Church Wedding Invitation Online",
+      description: "Create a Holy Matrimony invitation with a Bible verse, every event, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Holy Matrimony Invitation", text: "Go to the Holy Matrimony Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, events, dress codes and the invitation wording." },
+        { name: "Set Up Every Event", text: "Keep or add up to eight events, from the engagement to the church ceremony and the reception, with each date, time, venue and map link." },
+        { name: "Choose Your Verse and Photos", text: "Keep the default Bible verse or write your own, then add up to 40 photos and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
   // Lotus Temple Wedding Invitation 🪷 (wedding tier, Royal's limits). Art: public/wedding-v3.
   "lotus-wedding-invitation": {
     title: "Lotus Temple Wedding Invitation — South Indian E-Invite with Muhurtham & RSVP",

@@ -43,6 +43,8 @@ const STUDIOS: Record<StudioId, ComponentType<StudioProps>> = {
   gardenWedding: dynamic(() => import("../../garden-wedding-invitation/components/studio/GardenStudio"), { ssr: false, loading: Loading }),
   floralWedding: dynamic(() => import("../../floral-wedding-invitation/components/studio/FloralStudio"), { ssr: false, loading: Loading }),
   lotusWedding: dynamic(() => import("../../lotus-wedding-invitation/components/studio/LotusStudio"), { ssr: false, loading: Loading }),
+  // One studio for the three faith weddings; it reads the faith from day.slug.
+  faithWedding: dynamic(() => import("../../_faith/studio/FaithStudio"), { ssr: false, loading: Loading }),
 };
 
 export function DayStudio(props: StudioProps) {

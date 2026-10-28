@@ -227,7 +227,8 @@ export type StudioId =
   | "palaceDoorWedding"
   | "gardenWedding"
   | "floralWedding"
-  | "lotusWedding";
+  | "lotusWedding"
+  | "faithWedding";
 
 /** The plain form's own sections (EditSheet), in the order it draws them. */
 export type FormSectionId = "names" | "details" | "letter" | "photos" | "stickers" | "music" | "premium" | "finish";

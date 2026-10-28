@@ -140,6 +140,9 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "palace-door-wedding-invitation": { emoji: "🚪", label: "Palace door wedding invitation" },
   "garden-wedding-invitation": { emoji: "🦚", label: "Garden wedding invitation" },
   "floral-wedding-invitation": { emoji: "🌸", label: "Floral wedding invitation" },
+  "sikh-wedding-invitation": { emoji: "🌼", label: "Anand Karaj wedding invitation" },
+  "muslim-wedding-invitation": { emoji: "🌙", label: "Nikah wedding invitation" },
+  "christian-wedding-invitation": { emoji: "🕊️", label: "Holy Matrimony wedding invitation" },
   "lotus-wedding-invitation": { emoji: "🪷", label: "Lotus wedding invitation" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
@@ -241,6 +244,18 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "floral-wedding-invitation": (r, s) => ({
     title: `🌸 ${r} & ${s} are getting married`,
     description: `Pampas, peonies and every function, all on one page. Open it 🤍`,
+  }),
+  "sikh-wedding-invitation": (r, s) => ({
+    title: `🌼 ${r} & ${s}'s Anand Karaj: you're invited`,
+    description: `Ik Onkar in gold, the four Laavan and every function inside. Open it 🤍`,
+  }),
+  "muslim-wedding-invitation": (r, s) => ({
+    title: `🌙 ${r} & ${s}'s Nikah: you're invited`,
+    description: `The Bismillah in gold, the Nikah and the Walima, all on one page. Open it 🤍`,
+  }),
+  "christian-wedding-invitation": (r, s) => ({
+    title: `🕊️ ${r} & ${s} request the honour of your presence`,
+    description: `Their Holy Matrimony, the reception and every detail inside. Open it 🤍`,
   }),
   "lotus-wedding-invitation": (r, s) => ({
     title: `🪷 The lamps are lit: ${r} & ${s}'s wedding`,
