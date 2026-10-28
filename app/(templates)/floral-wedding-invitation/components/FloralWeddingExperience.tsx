@@ -195,10 +195,10 @@ export default function FloralWeddingExperience({ data, mode, react }: Experienc
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={cdn(m.couple.url)} alt={couple} loading="lazy" decoding="async" style={photoImgStyle(m.couple)} />
               </span>
-              <span className="fw-portrait-drape" aria-hidden>
-                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                <img {...pic("drape", { lazy: true, sizes: "(min-width: 1024px) 420px, 80vw" })} />
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-portrait-bloom is-t" {...pic("peonyBeige", { lazy: true })} aria-hidden />
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img className="fw-portrait-bloom is-b" {...pic("peonyCorner", { lazy: true })} aria-hidden />
             </Reveal>
           )}
           <Reveal className="fw-sheet fw-fold">

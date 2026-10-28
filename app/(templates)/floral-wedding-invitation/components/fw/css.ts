@@ -287,11 +287,14 @@ export const FW_CSS = `
 .fw-root > .fw-sec-invite { padding-left: clamp(18px, 3vw, 40px); padding-right: clamp(18px, 3vw, 40px); }
 .fw-invite { position: relative; display: grid; gap: clamp(26px, 6vw, 40px); justify-items: center; }
 .fw-mandala { position: absolute; inset: 10% -16px; z-index: 0; background: ${u("mandala")} center / 120px auto repeat; opacity: .5; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 100%); }
-.fw-portrait { position: relative; z-index: 1; width: min(76vw, 400px); aspect-ratio: 1372 / 1600; }
-.fw-portrait-pic { position: absolute; left: 15%; right: 13%; top: 13%; bottom: 2.5%; overflow: hidden; border-radius: var(--fw-r); background: var(--wk-placeholder); box-shadow: 0 20px 40px -26px rgba(80,50,30,.55); }
+/* The couple's photo in an arched window: a fine double gold rim on ivory, beige peonies over the top-left
+   shoulder and a pink peony bunch at the bottom-right foot (the same art as the card and the RSVP). */
+.fw-portrait { position: relative; z-index: 1; width: min(76vw, 380px); aspect-ratio: 4 / 5.2; }
+.fw-portrait-pic { position: absolute; inset: 0; overflow: hidden; border-radius: 999px 999px 22px 22px; background: var(--wk-placeholder); box-shadow: 0 0 0 1px rgba(184,140,72,.6), 0 0 0 8px #fffaf3, 0 0 0 9px rgba(184,140,72,.4), 0 34px 60px -30px rgba(80,50,30,.45); }
 .fw-portrait-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.fw-portrait-drape { position: absolute; inset: 0; pointer-events: none; }
-.fw-portrait-drape img { display: block; width: 100%; height: 100%; }
+.fw-portrait-bloom { position: absolute; z-index: 2; height: auto; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(80,50,30,.18)); }
+.fw-portrait-bloom.is-t { top: -9%; left: -16%; width: 52%; rotate: -14deg; }
+.fw-portrait-bloom.is-b { bottom: -10%; right: -14%; width: 44%; rotate: -8deg; scale: -1 1; }
 .fw-sheet { position: relative; z-index: 1; width: 100%; max-width: 660px; padding: clamp(40px, 8vw, 66px) clamp(22px, 6vw, 58px) clamp(36px, 7vw, 56px); text-align: center; border-radius: var(--fw-r); background: #fffaf3; box-shadow: 0 34px 64px -40px rgba(80,50,30,.55), 0 2px 8px -4px rgba(80,50,30,.18); }
 .fw-root[data-wk-theme="powder"] .fw-sheet { background: #fdfcfa; }
 .fw-sheet::before, .fw-sheet::after { content: ""; position: absolute; pointer-events: none; border-radius: calc(var(--fw-r) - 8px); }
