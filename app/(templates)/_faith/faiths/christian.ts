@@ -1,9 +1,10 @@
 // ─── Holy Matrimony: the Christian wedding's profile ────────────────────────
-// Ivory, sage and gold. The hero is a carved stone chapel arch crowned with a
-// garland of white lilies, an ivory light inside it; the cross in gold with its
-// rays, the names and the Holy Matrimony line; white roses rise from the lower
-// corners and lilies lie along the foot. Doves in the RSVP window. English
-// only. Default scripture: Mark 10:9.
+// Ivory, sage and gold. The hero is Monet's Church at Varengeville at sunset
+// (1882, public domain), full screen: the chapel on its cliff, the pines and
+// the sea. The invitation is an ivory card under a pointed Gothic arch, edged
+// with a sage band of gold quatrefoils and pearls and crowned with white
+// lilies; the cross in gold with its rays, the names and the Holy Matrimony
+// line. Doves in the RSVP window. English only. Default scripture: Mark 10:9.
 
 import { christianWeddingDay } from "../../_valentine/days/christian-wedding-invitation";
 import { FAITH_ASSETS } from "../assets";
@@ -76,58 +77,50 @@ const en: Strings = {
   seal: "✝",
 };
 
-const ARCH_MASK = 'url("/wedding-v3/faith-christian/ch-chapel-arch.webp")';
+const PANEL_MASK = 'url("/wedding-v3/faith-christian/ch-panel-600.webp")';
 
 const css = `
 .fh-root.is-christian { --fw-script: #4e5d49; --fw-wax1: #c9b28a; --fw-wax2: #9a7f52; --fw-env: #f1f1ea; --fw-env-2: #e4e6da; --fw-liner: #f8f9f4; }
 .fh-root.is-christian[data-wk-theme="blush"] { --fw-script: #7c4a52; --fw-env: #f4e6e2; --fw-env-2: #eAd4cd; --fw-liner: #fbf3f0; }
 .fh-root.is-christian[data-wk-theme="powder"] { --fw-script: #46587a; --fw-env: #e7ebf1; --fw-env-2: #d6dde7; --fw-liner: #f3f5f9; }
 .fh-root.is-christian .fw-sheet, .fh-root.is-christian .fw-datecard { background: linear-gradient(180deg, #fffffb, #f7f8f2); }
-/* Full screen: a soft sky over ivory and sage, a pale stone floor; the chapel arch stands at full height. */
-.fh-hero.is-christian { --fh-top: 5svh; --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .5625)); --fh-wall-bg: #f3f4ee; --fh-wall: radial-gradient(75% 60% at 50% 36%, rgba(255,254,248,.96), rgba(255,254,248,.55) 60%, rgba(255,254,248,.35) 100%), linear-gradient(180deg, rgba(250,248,238,.7), rgba(236,239,226,.75)), url("${cdn(A["ch-cloud"].src)}") center / cover no-repeat, #f3f2ea; --fh-floor: linear-gradient(180deg, rgba(240,241,233,0), #ebece2 35%, #dfe2d4); --fh-floor-h: 12svh; }
-@media (max-width: 1023px) {
-  /* the chapel stands the full height of the phone; its outer stonework runs off the edges */
-  .fh-hero.is-christian { --fh-top: 0px; --fh-w: max(calc(100svh * .5625), 100vw); }
-  .fh-hero.is-christian .fh-card { --fh-in-x: 22%; --fh-in-t: 20%; }
-  .fh-hero.is-christian .fh-crown { top: -1%; }
-  .fh-hero.is-christian .fh-sub { font-size: 4.5cqw; }
-}
-/* wide screens: a cloister. The great arch stands the full height of the screen; two chapel arches fill the
-   room either side of it, from just past the screen's edge to 9% behind it (on very wide screens they grow and
-   their feet sink behind the lilies), their straight top and outer edges melting into the sky. */
-@media (min-width: 1024px) {
-  .fh-hero.is-christian { --fh-top: 0px; --fh-w: min(100vw, calc(102svh * .5625)); --fh-fw: calc((100vw - var(--fh-w)) / 2 + var(--fh-w) * .09 + 2vw); }
-  .fh-hero.is-christian .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.5) 3%, #000 8%); mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.5) 3%, #000 8%); }
-  .fh-hero.is-christian .fh-flank { display: block; width: var(--fh-fw); height: min(calc(var(--fh-fw) / .5625), 100svh); max-width: none; object-fit: cover; object-position: 50% 0; bottom: 0; opacity: 0; filter: drop-shadow(0 18px 26px rgba(80,90,60,.12));
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 5%, rgba(0,0,0,.8) 10%, #000 15%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
-    mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 5%, rgba(0,0,0,.8) 10%, #000 15%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
-    -webkit-mask-composite: source-in; mask-composite: intersect; }
-  .fh-hero.is-christian.is-open .fh-flank { opacity: 1; }
-  .fh-hero.is-christian .fh-flank.is-l { --fh-fl-dir: 90deg; right: calc(50% + var(--fh-w) * .41); }
-  .fh-hero.is-christian .fh-flank.is-r { --fh-fl-dir: 270deg; left: calc(50% + var(--fh-w) * .41); }
-}
-.fh-root .fh-fin.is-christian { --fh-seal-b: 16%; }
-.fh-root .fh-fin.is-christian .fh-card { --fh-in-b: 30%; }
-/* the chapel arch: an ivory light inside the carved stone, lilies over its crown */
-.fh-hero.is-christian .fh-card { --fh-ar: 900 / 1600; --fh-arn: .5625; --fh-in-t: 19%; --fh-in-b: 12%; --fh-in-x: 18%; --fh-reserve: 150px; --fh-mask: ${ARCH_MASK}; }
-.fh-hero.is-christian .fh-card::before { content: ""; position: absolute; z-index: 0; left: 13%; right: 13%; top: 7%; bottom: 1%; border-radius: 999px 999px 0 0; background: radial-gradient(85% 62% at 50% 44%, #fffffb, rgba(252,252,246,.97) 55%, rgba(246,247,239,.93) 88%); box-shadow: inset 0 0 40px rgba(255,255,255,.6); }
-.fh-hero.is-christian .fh-card-bg { z-index: 1; }
+/* Full screen: the chapel on the cliff at Varengeville in Monet's sunset light, slowly settling as the invitation
+   opens; the card stands to the right of the chapel on wide screens and rises from the foot on phones. */
+.fh-hero.is-christian { --fh-top: 0px; --fh-wall-bg: #dfe3cf; --fh-wall: linear-gradient(270deg, rgba(40,48,30,.26), rgba(40,48,30,.06) 40%, transparent 60%), linear-gradient(180deg, rgba(60,60,30,.14), transparent 24%, transparent 76%, rgba(40,48,30,.24)), url("${cdn(A["ch-varengeville"].src)}") 30% 32% / cover no-repeat, #dfe3cf; }
+.fh-hero.is-christian .fh-wall { transform: scale(1.08); transform-origin: 25% 30%; transition: opacity 1.4s ease, transform 12s cubic-bezier(.2,.6,.2,1); }
+.fh-hero.is-christian.is-open .fh-wall { transform: none; }
+.fh-hero.is-christian .fh-floor, .fh-hero.is-christian .fh-base, .fh-hero.is-christian .fh-corner, .fh-hero.is-christian .fh-flank { display: none; }
+/* the card: the cross, the names and the Holy Matrimony line in its ivory field, lilies over its point */
+.fh-hero.is-christian .fh-card { --fh-ar: 1000 / 1400; --fh-arn: .714; --fh-in-t: 23%; --fh-in-b: 10%; --fh-in-x: 13.5%; --fh-reserve: 0px; --fh-mask: ${PANEL_MASK}; }
+.fh-hero.is-christian .fh-card-bg { filter: drop-shadow(0 34px 46px rgba(30,40,20,.36)) drop-shadow(0 6px 12px rgba(30,40,20,.2)); }
 .fh-hero.is-christian .fh-copy { z-index: 3; }
-.fh-hero.is-christian .fh-crown { z-index: 2; left: -12%; width: 124%; top: -4.5%; opacity: 0; transform: translate3d(0, -12px, 0); transition: opacity 1.4s ease .5s, transform 1.8s var(--fw-ease) .5s; }
+.fh-hero.is-christian .fh-crown { z-index: 2; left: 10%; width: 80%; top: -13.5%; opacity: 0; transform: translate3d(0, -12px, 0); transition: opacity 1.4s ease .5s, transform 1.8s var(--fw-ease) .5s; filter: drop-shadow(0 6px 10px rgba(40,50,30,.18)); }
 .fh-hero.is-christian.is-open .fh-crown { opacity: 1; transform: none; }
-.fh-hero.is-christian .fh-names { --fh-names: 14cqw; }
+.fh-hero.is-christian .fh-names { --fh-names: 13.5cqw; margin-top: 1cqw; }
 .fh-hero.is-christian .fh-amp { font-size: 6.6cqw; }
-.fh-hero.is-christian .fh-eyebrow { font-size: 3.4cqw; }
-.fh-hero.is-christian .fh-sub { font-size: 4.9cqw; }
-.fh-hero.is-christian .fh-date { font-size: 3cqw; letter-spacing: .12em; }
-.fh-hero.is-christian .fh-venue { font-size: 4.3cqw; }
-.fh-hero.is-christian .fh-inv.is-christian { width: 17cqw; height: 17cqw; }
-.fh-root.is-christian .fh-base { width: min(130%, 1100px); bottom: -2%; -webkit-mask-image: none; mask-image: none; }
-/* wide screens: the card stands a little higher and the lilies lie in front of its foot, as on an altar */
+.fh-hero.is-christian .fh-eyebrow { font-size: 3.3cqw; letter-spacing: .16em; margin-top: 3cqw; white-space: nowrap; }
+.fh-hero.is-christian .fh-sub { font-size: 5cqw; margin-top: 2cqw; }
+.fh-hero.is-christian .fh-date { font-size: 3.4cqw; letter-spacing: .1em; white-space: nowrap; margin-top: 4.2cqw; padding: 2.6cqw 2cqw; }
+.fh-hero.is-christian .fh-venue { font-size: 4.3cqw; margin-top: 3cqw; }
+.fh-hero.is-christian .fh-inv.is-christian { width: 16cqw; height: 16cqw; }
+.fh-root .fh-fin.is-christian { --fh-seal-b: 8%; }
+.fh-root .fh-fin.is-christian .fh-card { --fh-in-t: 25%; --fh-in-b: 25%; }
+.fh-root .fh-fin.is-christian .fh-names { --fh-names: 12.5cqw; }
+/* Wide screens: the card stands in the right of the room, clear of the chapel on its cliff. */
 @media (min-width: 1024px) {
-  .fh-root.is-christian .fh-base { z-index: 4; width: min(84vw, 1000px); bottom: -15%; }
+  .fh-hero.is-christian { --fh-w: min(44vw, calc(86svh * .714)); }
+  .fh-hero.is-christian .fh-stage { justify-content: flex-end; align-items: flex-end; padding-bottom: 3svh; padding-right: max(4.5vw, calc(26vw - var(--fh-w) / 2)); }
 }
-.fh-root.is-christian .fh-hero.is-open .fh-base, .fh-hero.is-christian.is-open .fh-base { opacity: .95; }
+/* Phones: the chapel, the pines and the evening sky fill the upper screen; the card rises from the foot. */
+@media (max-width: 1023px) {
+  .fh-root .fh-hero.is-christian { --fh-w: min(92vw, calc(62svh * .714)); --fh-wall: linear-gradient(180deg, rgba(60,60,30,.22), transparent 16%), linear-gradient(180deg, transparent calc(100vw * 1.117 - 34vw), #c9cfa9 calc(100vw * 1.117)), url("${cdn(A["ch-varengeville-tall"].src)}") 50% 0 / 100% auto no-repeat, linear-gradient(180deg, #c9cfa9, #b9c193); }
+  .fh-root .fh-hero.is-christian .fh-wall { transform-origin: 30% 25%; }
+  .fh-root .fh-hero.is-christian .fh-stage { align-items: flex-end; padding-bottom: max(14px, 2.5svh); }
+  .fh-root .fh-hero.is-christian .fh-card { --fh-in-t: 23%; --fh-in-b: 9%; --fh-in-x: 12.5%; }
+  .fh-root .fh-fin.is-christian .fh-card { --fh-in-t: 24.5%; --fh-in-b: 35%; }
+  .fh-root .fh-fin.is-christian { --fh-seal-b: 5%; }
+  .fh-root .fh-fin.is-christian .fh-names { --fh-names: 10.5cqw; }
+}
 .fh-root.is-christian .fh-corner { width: clamp(130px, 32vw, 300px); }
 .fh-root.is-christian .fh-corner.is-r { scale: -1 1; }
 .fh-root.is-christian .fw-env-corner.is-l { transform: none; } .fh-root.is-christian .fw-env-corner.is-r { transform: scaleX(-1); }
@@ -137,7 +130,7 @@ const css = `
 .fh-root.is-christian .fw-env-sprig { rotate: -24deg; height: calc(var(--seal) * .62); margin: calc(var(--seal) * -.1) 0 0 calc(var(--seal) * -1.5); }
 .fh-root.is-christian .fw-rw-wash { opacity: .6; }
 .fh-root.is-christian .fh-rw-figure { width: 76%; bottom: 30% !important; }
-.fh-root.is-christian .fw-sheet-roses { width: clamp(110px, 28vw, 190px); }
+.fh-root.is-christian .fw-sheet-roses { width: clamp(88px, 22vw, 160px); }
 .fh-root.is-christian .fw-portrait-bloom.is-t { rotate: -8deg; } .fh-root.is-christian .fw-portrait-bloom.is-b { scale: 1; rotate: 0deg; }
 .fh-root.is-christian .fw-datecard-wax b, .fh-root.is-christian .fw-wax b { font: 400 26px/1 var(--wk-font-display); }
 `;
@@ -153,17 +146,15 @@ export const CHRISTIAN: FaithProfile = {
     swirlSm: S.swirlSm,
     bloom: A["ch-bloom"],
     bloomAlt: A["ch-bloom"],
-    sheetCorner: A["ch-corner-tl"],
+    sheetCorner: A["ch-bloom"],
     corner: A["ch-corner"],
     cornerR: A["ch-corner"],
     sprig: A["ch-lily-spray"],
     rsvpWash: A["ch-wash"],
     rsvpFigure: A["ch-doves"],
-    heroBg: A["ch-chapel-arch"],
-    heroBgSm: A["ch-chapel-arch"],
+    heroBg: A["ch-panel"],
+    heroBgSm: A["ch-panel-600"],
     heroCrown: A["ch-lily-arc"],
-    heroFlank: A["ch-chapel-arch"],
-    heroBank: A["ch-lily-spray"],
     envTop: A["ch-lily-arc"],
     envBank: A["ch-lily-spray"],
   },

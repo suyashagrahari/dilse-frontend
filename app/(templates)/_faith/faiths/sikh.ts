@@ -178,7 +178,7 @@ const css = `
 .fh-root.is-sikh .fw-env-sprig { rotate: -18deg; height: calc(var(--seal) * .8); margin: calc(var(--seal) * -.2) 0 0 calc(var(--seal) * -1.25); }
 .fh-root.is-sikh .fw-rw-wash { opacity: .7; }
 .fh-root.is-sikh .fh-rw-figure { width: 94%; bottom: 14% !important; }
-.fh-root.is-sikh .fw-sheet-roses { width: clamp(96px, 22vw, 160px); }
+.fh-root.is-sikh .fw-sheet-roses { width: clamp(84px, 20vw, 150px); }
 .fh-root.is-sikh .fw-datecard-wax b { font: 400 28px/1 var(--font-wk-guru), serif; }
 .fh-root.is-sikh .fw-wax b { font: 400 34px/1 var(--font-wk-guru), serif; }
 /* Wide screens: the card stands in the left of the room, clear of the temple, which keeps the right. */

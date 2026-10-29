@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Holy Matrimony Wedding Invitation ✝ — Christian Church Wedding",
   description:
     "A Christian wedding invitation in ivory, sage and gold: guests break a wax seal on an envelope addressed to them, and the card opens onto a carved chapel arch crowned with white lilies, the cross in gold and a Bible verse. Then the engagement, the bridal shower, the Holy Matrimony and the reception, with maps and dress codes, 40 photos, RSVP per event, who to call and a blessings wall. The AI writes it.",
-  coverImage: `${WEDDING_ART_CDN}/faith-christian/cover3.webp`,
+  coverImage: `${WEDDING_ART_CDN}/faith-christian/cover4.webp`,
   emoji: "🕊️",
   color: "from-stone-100 to-emerald-100",
   previewText: "a church wedding invitation, just for you 🕊️",

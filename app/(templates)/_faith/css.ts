@@ -307,10 +307,10 @@ export const FAITH_CSS = `
 .fw-sheet::after { inset: 15px; border: 1px solid rgba(184,146,74,.25); }
 .fw-sheet > * { position: relative; z-index: 1; }
 .fw-sheet .fw-sheet-roses, .fw-sheet .fw-sheet-swirl { position: absolute; z-index: 2; pointer-events: none; }
-.fw-sheet-roses { width: clamp(104px, 27vw, 186px); }
+.fw-sheet-roses { width: clamp(84px, 21vw, 160px); }
 .fw-sheet-roses img { display: block; width: 100%; height: auto; }
-.fw-sheet-roses.is-tl { top: clamp(-40px, -6vw, -26px); left: clamp(-34px, -5vw, -18px); }
-.fw-sheet-roses.is-br { bottom: clamp(-36px, -5vw, -22px); right: clamp(-30px, -5vw, -16px); transform: rotate(180deg); }
+.fw-sheet-roses.is-tl { top: clamp(-52px, -8vw, -34px); left: clamp(-44px, -7vw, -26px); }
+.fw-sheet-roses.is-br { bottom: clamp(-50px, -8vw, -32px); right: clamp(-42px, -7vw, -24px); transform: rotate(180deg); } /* kept off the sheet's last line */
 .fw-sheet .fw-sheet-swirl { z-index: 0; left: -2%; bottom: 4%; width: 42%; opacity: .35; }
 .fw-ganesha { margin: 0 auto 14px; }
 .fw-ganesha img { display: block; width: clamp(46px, 11vw, 60px); height: auto; margin: 0 auto 6px; }
