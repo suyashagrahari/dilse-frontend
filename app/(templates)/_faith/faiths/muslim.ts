@@ -180,13 +180,15 @@ const css = `
 @media (min-width: 1024px) {
   .fh-hero.is-muslim .fh-top { display: none; }
   /* the two jharokhas are shown whole: as wide as the room beside the great arch allows (tucked 9% behind it) */
-  .fh-hero.is-muslim { --fh-fw: min(calc((100vw - var(--fh-w)) / 2 + var(--fh-w) * .09 - 18px), calc(var(--fh-flank-h) * .716)); }
-  .fh-hero.is-muslim .fh-flank { display: block; width: var(--fh-fw); height: auto; bottom: 1.5svh; filter: drop-shadow(0 18px 26px rgba(70,80,50,.16)); }
+  /* An even arcade: the two jharokhas stand as tall as the great arch (tucked 9% behind it); their outer
+     halves run off the screen's edges. The urns stand centred in the room beside the great arch. */
+  .fh-hero.is-muslim { --fh-gap: calc(50vw - var(--fh-w) / 2); --fh-urn-h: min(38svh, calc(var(--fh-gap) * 1.05)); }
+  .fh-hero.is-muslim .fh-flank { display: block; height: calc(var(--fh-w) / .806); width: auto; max-width: none; bottom: 0; filter: drop-shadow(0 18px 26px rgba(70,80,50,.16)); -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 94%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 94%, transparent 100%); }
   .fh-hero.is-muslim .fh-flank.is-l { right: calc(50% + var(--fh-w) * .41); }
   .fh-hero.is-muslim .fh-flank.is-r { left: calc(50% + var(--fh-w) * .41); }
-  .fh-hero.is-muslim .fh-side { z-index: 2; height: min(34svh, calc(var(--fh-fw) * .62)); width: auto; bottom: 1.5svh; }
-  .fh-hero.is-muslim .fh-side.is-l { left: auto; right: calc(50% + var(--fh-w) * .41 + var(--fh-fw) / 2 - min(34svh, calc(var(--fh-fw) * .62)) * .333); }
-  .fh-hero.is-muslim .fh-side.is-r { right: auto; left: calc(50% + var(--fh-w) * .41 + var(--fh-fw) / 2 - min(34svh, calc(var(--fh-fw) * .62)) * .333); }
+  .fh-hero.is-muslim .fh-side { z-index: 2; height: var(--fh-urn-h); width: auto; bottom: 1.5svh; }
+  .fh-hero.is-muslim .fh-side.is-l { left: auto; right: calc(50% + var(--fh-w) / 2 + var(--fh-gap) / 2 - var(--fh-urn-h) * .333); }
+  .fh-hero.is-muslim .fh-side.is-r { right: auto; left: calc(50% + var(--fh-w) / 2 + var(--fh-gap) / 2 - var(--fh-urn-h) * .333); }
   .fh-hero.is-muslim .fh-corner { width: clamp(150px, 13vw, 240px); }
 }
 /* the last page: the goodbye sits higher in the arch, the seal is pressed just above the couple */

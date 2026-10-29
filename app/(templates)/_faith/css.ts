@@ -619,6 +619,8 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
    stands on it at (nearly) full height; on phones it is wider than the screen (its outer panels run off the
    edges) so the doorway itself fills the view. --fh-w (set per faith) is the arch's width. */
 .fh-hero { --fh-top: 62px; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0; isolation: isolate; background: var(--fh-wall-bg, #f7f1e3); }
+/* (the floral hero's own paddings must not apply here: the stage is exactly one screen) */
+.fw-root .fw-hero.fh-hero { padding: 0; }
 .fh-wall { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--fh-wall, none); opacity: 0; transition: opacity 1.4s ease; }
 .fh-floor { position: absolute; left: 0; right: 0; bottom: 0; z-index: 0; height: var(--fh-floor-h, 12svh); pointer-events: none; background: var(--fh-floor, linear-gradient(180deg, rgba(255,255,255,0), rgba(214,196,160,.35))); opacity: 0; transition: opacity 1.4s ease .2s; }
 .fh-hero.is-open .fh-wall, .fh-hero.is-open .fh-floor { opacity: 1; }

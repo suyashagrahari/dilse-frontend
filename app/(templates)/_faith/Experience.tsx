@@ -168,7 +168,15 @@ export default function FaithWeddingExperience({ data, mode, react, faith }: Exp
     return () => io.disconnect();
   }, [open, react]);
 
+  // The invitation always opens at the very top: no restored scroll position (a reload mid-page) may leave
+  // the hero shifted by its parallax.
+  useEffect(() => {
+    try {
+      if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    } catch {}
+  }, []);
   const onOpened = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
     setOpen(true);
     react("opened");
   };
