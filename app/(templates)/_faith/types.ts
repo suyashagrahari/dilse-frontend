@@ -28,7 +28,7 @@ export type CoreRole =
   /** the hero: a full arched card the copy sits inside */
   | "heroBg" | "heroBgSm";
 /** Art only some faiths have. */
-export type OptRole = "heroFigure" | "heroFigureSm" | "heroTop" | "heroSide" | "heroBank" | "invocation" | "envTop" | "envBank" | "heroCrown" | "heroFlank" | "heroBgTall";
+export type OptRole = "heroFigure" | "heroFigureSm" | "heroTop" | "heroSide" | "heroBank" | "invocation" | "envTop" | "envBank" | "heroCrown" | "heroFlank" | "heroBgTall" | "medallion";
 export type ArtRole = CoreRole | OptRole;
 export type FaithArt = Record<CoreRole, WeddingAsset> & Partial<Record<OptRole, WeddingAsset>>;
 

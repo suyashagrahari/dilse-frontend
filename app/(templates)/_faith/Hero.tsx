@@ -170,8 +170,46 @@ export function Scene({ lazy }: { lazy?: boolean }) {
   );
 }
 
+/** One family, shown in a niche of the flanking arches (wide screens). */
+export interface FamilyNiche {
+  title: string;
+  name: string;
+  family: string;
+}
+
+/** The two families in the side arches of the arcade: a gold medallion with their child's initial, the side, the
+ *  name in script and the parents. Wide screens only, and only where the faith has tall flanking arches and a
+ *  medallion (the Nikah's jharokhas; the chapel's side arches are too small to hold them). */
+export function FamilyNiches({ sides, lang }: { sides: readonly FamilyNiche[]; lang: Lang }) {
+  const art = useArt();
+  if (!art.heroFlank || !art.medallion || sides.length !== 2) return null;
+  return (
+    <>
+      {sides.map((x, i) => (
+        <div key={i} className={`fh-niche is-${i ? "r" : "l"}`}>
+          <span className="fh-niche-medal" aria-hidden>
+            {art.medallion && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cdn(art.medallion.src)} width={art.medallion.w} height={art.medallion.h} alt="" loading="lazy" decoding="async" draggable={false} />
+            )}
+            <b>{x.name.trim().charAt(0).toUpperCase()}</b>
+          </span>
+          <p className="fh-niche-k" lang={lang}>
+            {x.title}
+          </p>
+          <p className="fh-niche-n">{x.name}</p>
+          <span className="fh-niche-rule" aria-hidden />
+          {x.family && <p className="fh-niche-f">{x.family}</p>}
+        </div>
+      ))}
+    </>
+  );
+}
+
 export interface HeroProps extends Omit<HeroSceneProps, "lazy" | "as"> {
   open: boolean;
+  /** The two families for the side arches (bride's and groom's, in the printed order). */
+  sides?: readonly FamilyNiche[];
 }
 
 export default function Hero(p: HeroProps) {
@@ -212,6 +250,7 @@ export default function Hero(p: HeroProps) {
   return (
     <header ref={ref} className={`fw-hero fh-hero is-${faith}${open ? " is-open" : ""}`}>
       <Scene />
+      {p.sides && <FamilyNiches sides={p.sides} lang={p.lang} />}
 
       <div className="fh-stage">
         <div className="fh-par">

@@ -208,7 +208,20 @@ export default function FaithWeddingExperience({ data, mode, react, faith }: Exp
           </div>
         )}
 
-        <Hero open={open} faith={faith.id} s={s} lang={lang} first={m.first} second={m.second} guest={guest} dateLine={dateLine} time={mainTime} venue={venueLine} invocation={m.invocation} />
+        <Hero
+          open={open}
+          faith={faith.id}
+          s={s}
+          lang={lang}
+          first={m.first}
+          second={m.second}
+          guest={guest}
+          dateLine={dateLine}
+          time={mainTime}
+          venue={venueLine}
+          invocation={m.invocation}
+          sides={sides.map((x) => ({ title: x.title, name: x === brideSide ? m.bride : m.groom, family: x.names[0] ?? "" }))}
+        />
 
         {/* ── The invitation card ─────────────────────────────────────────── */}
         <Section id="invitation" eyebrow={<span lang={lang}>{s.invitation}</span>} ornament={null} width="wide" className="fw-sec fw-sec-invite">

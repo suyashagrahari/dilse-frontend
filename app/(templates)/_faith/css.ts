@@ -624,6 +624,26 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-wall { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--fh-wall, none); opacity: 0; transition: opacity 1.4s ease; }
 .fh-floor { position: absolute; left: 0; right: 0; bottom: 0; z-index: 0; height: var(--fh-floor-h, 12svh); pointer-events: none; background: var(--fh-floor, linear-gradient(180deg, rgba(255,255,255,0), rgba(214,196,160,.35))); opacity: 0; transition: opacity 1.4s ease .2s; }
 .fh-hero.is-open .fh-wall, .fh-hero.is-open .fh-floor { opacity: 1; }
+/* The family niches in the side arches: a gold medallion with the child's initial, the side, the name, the parents. */
+.fh-hero { --fh-gap: calc(50vw - var(--fh-w) / 2); }
+.fh-niche { display: none; }
+@media (min-width: 1024px) {
+  .fh-niche { position: absolute; z-index: 3; top: var(--fh-niche-top, 21svh); width: min(calc(var(--fh-gap) * .66), 300px); display: flex; flex-direction: column; align-items: center; text-align: center; container-type: inline-size; opacity: 0; transform: translate3d(0, 16px, 0); transition: opacity 1.4s ease 1.1s, transform 1.6s var(--fw-ease) 1.1s; }
+  .fh-niche.is-l { right: calc(50% + var(--fh-w) / 2 + var(--fh-gap) / 2); translate: 50% 0; }
+  .fh-niche.is-r { left: calc(50% + var(--fh-w) / 2 + var(--fh-gap) / 2); translate: -50% 0; }
+  .fh-hero.is-open .fh-niche { opacity: 1; transform: none; }
+  .fh-niche-medal { position: relative; display: grid; place-items: center; width: 62cqw; aspect-ratio: 1; }
+  .fh-niche-medal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .9; animation: fh-turn 120s linear infinite; }
+  .fh-niche-medal::before { content: ""; position: absolute; inset: 25%; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #fffdf6, #f6ecd6 78%); box-shadow: 0 0 0 1px rgba(184,140,72,.75), 0 0 0 5px rgba(255,252,244,.95), 0 0 0 6px rgba(184,140,72,.4), 0 14px 26px -12px rgba(80,60,30,.4); }
+  .fh-niche-medal b { position: relative; font: 400 23cqw/1 var(--wk-font-script); padding: 0 .12em; filter: drop-shadow(0 1px 0 rgba(255,255,255,.8)); background: linear-gradient(100deg, #6e4512 0%, #b88a3e 32%, #7d5420 54%, #c9a258 76%, #6e4512 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .fh-niche-k { margin: 5cqw 0 0; font: 500 max(10px, 4.4cqw)/1.4 var(--wk-font-caps); letter-spacing: .24em; text-transform: uppercase; color: var(--wk-gold-ink); }
+  .fh-niche-k[lang="ur"], .fh-niche-k[lang="pa"] { letter-spacing: 0; font-size: max(13px, 6cqw); }
+  .fh-niche-n { margin: 1.5cqw 0 0; max-width: 100%; overflow-wrap: anywhere; font: 400 clamp(30px, 16cqw, 54px)/1.15 var(--wk-font-script); color: var(--fw-script); padding: 0 .1em; }
+  .fh-niche-rule { display: block; width: 62%; height: 9px; margin: 2.5cqw auto 0; background: radial-gradient(circle, #c49a52 0 2px, transparent 2.5px) center / 9px 9px no-repeat, linear-gradient(90deg, transparent, rgba(196,154,82,.8) 30%, transparent 46%, transparent 54%, rgba(196,154,82,.8) 70%, transparent) center / 100% 1px no-repeat; }
+  .fh-niche-f { margin: 2.5cqw 0 0; font: italic 500 clamp(14px, 6.4cqw, 19px)/1.45 var(--wk-font-display); color: var(--wk-muted); }
+}
+@media (min-width: 1024px) and (max-width: 1180px) { .fh-niche { display: none; } }
+@keyframes fh-turn { to { transform: rotate(360deg); } }
 .fh-flank { position: absolute; z-index: 1; bottom: 0; height: var(--fh-flank-h, 70svh); width: auto; opacity: 0; transition: opacity 1.6s ease .5s, transform 1.8s var(--fw-ease) .5s; transform: translate3d(0, 20px, 0); display: none; }
 .fh-hero.is-open .fh-flank { opacity: 1; transform: none; }
 .fh-bank { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
