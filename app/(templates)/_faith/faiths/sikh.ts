@@ -148,7 +148,7 @@ const css = `
 .fh-root.is-sikh[data-wk-theme="powder"] { --fw-script: #4a5a7c; --fw-env: #e7e8ee; --fw-env-2: #d6d9e3; --fw-liner: #f3f4f8; }
 /* Full screen: an ivory wall with a gold quatrefoil lattice, a warm floor, the Golden Temple in gold along the
    horizon and peonies garlanding the top; the arch over Sri Guru Granth Sahib Ji stands at full height. */
-.fh-hero.is-sikh { --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .714)); --fh-wall-bg: #f8efdc; --fh-wall: ${LATTICE} center top / 64px 64px repeat, radial-gradient(120% 90% at 50% 30%, #fffaf0 0%, #f7ecd4 55%, #efdcb6 100%); --fh-floor: linear-gradient(180deg, rgba(250,242,224,0), #f4e6c8 35%, #ead7ae); --fh-floor-h: 12svh; }
+.fh-hero.is-sikh { --fh-top: 0px; --fh-w: min(100vw, calc(103svh * .714)); --fh-wall-bg: #f8efdc; --fh-wall: ${LATTICE} center top / 64px 64px repeat, radial-gradient(120% 90% at 50% 30%, #fffaf0 0%, #f7ecd4 55%, #efdcb6 100%); --fh-floor: linear-gradient(180deg, rgba(250,242,224,0), #f4e6c8 35%, #ead7ae); --fh-floor-h: 12svh; }
 /* the arch's straight edges melt into the wall (top on every screen, the sides too on wide ones) */
 .fh-hero.is-sikh .fh-card-bg { filter: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%), linear-gradient(180deg, transparent 0, #000 7%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%), linear-gradient(180deg, transparent 0, #000 7%); mask-composite: intersect; }
 @media (max-width: 1023px) { .fh-hero.is-sikh { --fh-top: 64px; --fh-w: min(114vw, calc((100svh - var(--fh-top)) * .714)); } .fh-hero.is-sikh .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%); mask-image: linear-gradient(180deg, transparent 0, #000 6%); } }
@@ -189,7 +189,8 @@ const css = `
 }
 /* Phones: the arch with lengthened sides stands the full height of the screen (the hero and the last page). */
 @media (max-width: 1023px) {
-  .fh-root .fh-hero.is-sikh { --fh-top: 0px; --fh-w: max(calc(100svh * .431), 92vw); }
+  .fh-root .fh-hero.is-sikh { --fh-top: 0px; --fh-w: 100vw; }
+  .fh-root .fh-hero.is-sikh .fh-card { aspect-ratio: auto; height: 100svh; }
   .fh-root .fh-hero.is-sikh .fh-top { display: none; }
   .fh-root .fh-hero.is-sikh .fh-card { --fh-ar: 1200 / 2783; --fh-in-t: 9%; --fh-in-b: 21%; --fh-in-x: 15%; --fh-mask: url("/wedding-v3/faith-sikh/sk-arch-tall.webp"); }
   .fh-root .fh-hero.is-sikh .fh-card-bg { -webkit-mask-image: none; mask-image: none; }

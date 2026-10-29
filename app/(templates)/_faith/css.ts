@@ -634,7 +634,7 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-side { display: none; }
 .fh-base { position: absolute; z-index: 1; left: 50%; bottom: 0; width: min(110%, 980px); height: auto; translate: -50% 0; opacity: 0; transition: opacity 2.2s ease .5s; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%); mask-image: linear-gradient(180deg, transparent 0%, #000 45%); }
 .fh-hero.is-open .fh-base { opacity: var(--fh-base-o, .45); }
-.fh-stage { position: relative; z-index: 3; width: 100%; min-height: 100svh; display: flex; justify-content: center; align-items: flex-end; padding-top: var(--fh-top); overflow: visible; }
+.fh-stage { position: relative; z-index: 3; width: 100%; min-height: 100svh; height: 100svh; display: flex; justify-content: center; align-items: flex-end; padding-top: var(--fh-top); overflow: visible; }
 .fh-par { transform: translate3d(0, calc(var(--fw-hy, 0px) * .08), 0); }
 /* The card: its width keeps it inside one screen; every size inside is in card units (cqw), so nothing is cut. */
 .fh-card { position: relative; flex: none; width: var(--fh-w, min(100vw, calc((100svh - var(--fh-top)) * var(--fh-arn, .714)))); aspect-ratio: var(--fh-ar, 1200 / 1680); container-type: inline-size; opacity: 0; transform: translate3d(0, 28px, 0) scale(.965); transition: opacity 1.3s ease, transform 1.7s var(--fw-ease); }

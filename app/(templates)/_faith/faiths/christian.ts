@@ -84,7 +84,7 @@ const css = `
 .fh-root.is-christian[data-wk-theme="powder"] { --fw-script: #46587a; --fw-env: #e7ebf1; --fw-env-2: #d6dde7; --fw-liner: #f3f5f9; }
 .fh-root.is-christian .fw-sheet, .fh-root.is-christian .fw-datecard { background: linear-gradient(180deg, #fffffb, #f7f8f2); }
 /* Full screen: a soft sky over ivory and sage, a pale stone floor; the chapel arch stands at full height. */
-.fh-hero.is-christian { --fh-top: 64px; --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .5625)); --fh-wall-bg: #f3f4ee; --fh-wall: radial-gradient(75% 60% at 50% 36%, rgba(255,254,248,.96), rgba(255,254,248,.55) 60%, rgba(255,254,248,.35) 100%), linear-gradient(180deg, rgba(250,248,238,.7), rgba(236,239,226,.75)), url("${cdn(A["ch-cloud"].src)}") center / cover no-repeat, #f3f2ea; --fh-floor: linear-gradient(180deg, rgba(240,241,233,0), #ebece2 35%, #dfe2d4); --fh-floor-h: 12svh; }
+.fh-hero.is-christian { --fh-top: 5svh; --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .5625)); --fh-wall-bg: #f3f4ee; --fh-wall: radial-gradient(75% 60% at 50% 36%, rgba(255,254,248,.96), rgba(255,254,248,.55) 60%, rgba(255,254,248,.35) 100%), linear-gradient(180deg, rgba(250,248,238,.7), rgba(236,239,226,.75)), url("${cdn(A["ch-cloud"].src)}") center / cover no-repeat, #f3f2ea; --fh-floor: linear-gradient(180deg, rgba(240,241,233,0), #ebece2 35%, #dfe2d4); --fh-floor-h: 12svh; }
 @media (max-width: 1023px) {
   /* the chapel stands the full height of the phone; its outer stonework runs off the edges */
   .fh-hero.is-christian { --fh-top: 0px; --fh-w: max(calc(100svh * .5625), 100vw); }

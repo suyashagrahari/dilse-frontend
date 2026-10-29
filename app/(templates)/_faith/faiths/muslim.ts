@@ -151,7 +151,7 @@ const css = `
 .fh-root.is-muslim .fw-sheet, .fh-root.is-muslim .fw-datecard { background: linear-gradient(180deg, #fffef8, #f7f7ec); }
 /* Full screen: a sage palace wall of gold jaali, a cream floor, lanterns overhead; the Mughal arch stands on the
    floor at full height, flanked on wide screens by two cream jharokha arches with urns of roses in them. */
-.fh-hero.is-muslim { --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .806)); --fh-wall-bg: #dce3cf; --fh-wall: ${JAALI} center top / 72px 72px repeat, radial-gradient(120% 90% at 50% 35%, #eff2e6 0%, #dde4d0 55%, #c8d3b7 100%); --fh-floor: linear-gradient(180deg, rgba(246,243,231,0), #f1ecda 30%, #e6dec6); --fh-floor-h: 13svh; --fh-flank-h: 76svh; }
+.fh-hero.is-muslim { --fh-top: 0px; --fh-w: min(100vw, calc(104svh * .806)); --fh-wall-bg: #dce3cf; --fh-wall: ${JAALI} center top / 72px 72px repeat, radial-gradient(120% 90% at 50% 35%, #eff2e6 0%, #dde4d0 55%, #c8d3b7 100%); --fh-floor: linear-gradient(180deg, rgba(246,243,231,0), #f1ecda 30%, #e6dec6); --fh-floor-h: 13svh; --fh-flank-h: 76svh; }
 .fh-hero.is-muslim .fh-top { width: max(100%, 980px); top: -2%; opacity: 0; }
 /* the panels' straight top and bottom edges melt softly into the wall and the floor */
 .fh-hero.is-muslim .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 97%, rgba(0,0,0,.6) 100%); mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 97%, rgba(0,0,0,.6) 100%); }
@@ -159,7 +159,9 @@ const css = `
 .fh-hero.is-muslim.is-open .fh-top { opacity: .95; }
 /* Phones: the arch with lengthened pillars stands the full height of the screen (the hero and the last page). */
 @media (max-width: 1023px) {
-  .fh-root .fh-hero.is-muslim { --fh-top: 0px; --fh-w: max(calc(100svh * .433), 92vw); }
+  /* exactly edge to edge and top to bottom (the tall arch is stretched a few % at most; the pillars don't show it) */
+  .fh-root .fh-hero.is-muslim { --fh-top: 0px; --fh-w: 100vw; }
+  .fh-root .fh-hero.is-muslim .fh-card { aspect-ratio: auto; height: 100svh; }
   .fh-root .fh-hero.is-muslim .fh-top { display: none; }
   .fh-root .fh-hero.is-muslim .fh-card { --fh-ar: 928 / 2143; --fh-in-t: 6%; --fh-in-b: 29%; --fh-in-x: 16.5%; --fh-mask: url("/wedding-v3/faith-nikah/mn-arch-tall.webp"); }
   .fh-root .fh-hero.is-muslim .fh-names { --fh-names: 15.5cqw; margin-top: 2.4cqw; flex-direction: column; align-items: center; line-height: 1.08; }
