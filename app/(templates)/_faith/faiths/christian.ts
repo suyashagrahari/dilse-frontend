@@ -7,6 +7,7 @@
 
 import { christianWeddingDay } from "../../_valentine/days/christian-wedding-invitation";
 import { FAITH_ASSETS } from "../assets";
+import { cdn } from "../../_wedding/media";
 import { ICONS } from "../icons";
 import type { FaithProfile, Strings } from "../types";
 
@@ -82,6 +83,21 @@ const css = `
 .fh-root.is-christian[data-wk-theme="blush"] { --fw-script: #7c4a52; --fw-env: #f4e6e2; --fw-env-2: #eAd4cd; --fw-liner: #fbf3f0; }
 .fh-root.is-christian[data-wk-theme="powder"] { --fw-script: #46587a; --fw-env: #e7ebf1; --fw-env-2: #d6dde7; --fw-liner: #f3f5f9; }
 .fh-root.is-christian .fw-sheet, .fh-root.is-christian .fw-datecard { background: linear-gradient(180deg, #fffffb, #f7f8f2); }
+/* Full screen: a soft sky over ivory and sage, a pale stone floor; the chapel arch stands at full height. */
+.fh-hero.is-christian { --fh-top: 64px; --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .5625)); --fh-wall-bg: #f3f4ee; --fh-wall: radial-gradient(75% 60% at 50% 36%, rgba(255,254,248,.96), rgba(255,254,248,.55) 60%, rgba(255,254,248,.35) 100%), linear-gradient(180deg, rgba(250,248,238,.7), rgba(236,239,226,.75)), url("${cdn(A["ch-cloud"].src)}") center / cover no-repeat, #f3f2ea; --fh-floor: linear-gradient(180deg, rgba(240,241,233,0), #ebece2 35%, #dfe2d4); --fh-floor-h: 12svh; }
+@media (max-width: 1023px) {
+  .fh-hero.is-christian { --fh-top: 74px; --fh-w: min(104vw, calc((100svh - var(--fh-top)) * .5625)); }
+  .fh-hero.is-christian .fh-card { --fh-in-x: 20%; }
+  .fh-hero.is-christian .fh-sub { font-size: 4.5cqw; }
+}
+/* wide screens: a cloister: two smaller chapel arches either side of the great one */
+@media (min-width: 1024px) {
+  .fh-hero.is-christian { --fh-flank-h: 68svh; }
+  .fh-hero.is-christian .fh-flank { display: block; opacity: 0; }
+  .fh-hero.is-christian.is-open .fh-flank { opacity: .9; }
+  .fh-hero.is-christian .fh-flank.is-l { right: calc(50% + var(--fh-w) * .56); }
+  .fh-hero.is-christian .fh-flank.is-r { left: calc(50% + var(--fh-w) * .56); }
+}
 /* the chapel arch: an ivory light inside the carved stone, lilies over its crown */
 .fh-hero.is-christian .fh-card { --fh-ar: 900 / 1600; --fh-arn: .5625; --fh-in-t: 19%; --fh-in-b: 12%; --fh-in-x: 18%; --fh-reserve: 150px; --fh-mask: ${ARCH_MASK}; }
 .fh-hero.is-christian .fh-card::before { content: ""; position: absolute; z-index: 0; left: 13%; right: 13%; top: 7%; bottom: 1%; border-radius: 999px 999px 0 0; background: radial-gradient(85% 62% at 50% 44%, #fffffb, rgba(252,252,246,.97) 55%, rgba(246,247,239,.93) 88%); box-shadow: inset 0 0 40px rgba(255,255,255,.6); }
@@ -99,8 +115,6 @@ const css = `
 .fh-root.is-christian .fh-base { width: min(130%, 1100px); bottom: -2%; -webkit-mask-image: none; mask-image: none; }
 /* wide screens: the card stands a little higher and the lilies lie in front of its foot, as on an altar */
 @media (min-width: 1024px) {
-  .fh-hero.is-christian { justify-content: flex-start; padding-top: 70px; }
-  .fh-hero.is-christian .fh-card { --fh-reserve: 220px; }
   .fh-root.is-christian .fh-base { z-index: 4; width: min(84vw, 1000px); bottom: -15%; }
 }
 .fh-root.is-christian .fh-hero.is-open .fh-base, .fh-hero.is-christian.is-open .fh-base { opacity: .95; }
@@ -138,6 +152,7 @@ export const CHRISTIAN: FaithProfile = {
     heroBg: A["ch-chapel-arch"],
     heroBgSm: A["ch-chapel-arch"],
     heroCrown: A["ch-lily-arc"],
+    heroFlank: A["ch-chapel-arch"],
     heroBank: A["ch-lily-spray"],
     envTop: A["ch-lily-arc"],
     envBank: A["ch-lily-spray"],
@@ -148,11 +163,11 @@ export const CHRISTIAN: FaithProfile = {
   verse: { text: "Therefore what God has joined together, let no one separate.", ref: "Mark 10:9" },
   invocationLabel: "The cross on the invitation",
   eventArt: [
-    { re: /holy|matrimony|nuptial|mass|church|ceremony|wedding/i, icon: ICONS.church },
-    { re: /reception|dinner|toast|banquet|party/i, icon: ICONS.glasses },
-    { re: /engagement|betrothal|ring|proposal/i, icon: ICONS.ring },
-    { re: /shower|tea|brunch|hen|bachelorette/i, icon: ICONS.cake },
-    { re: /rehearsal/i, icon: ICONS.candles },
+    { re: /holy|matrimony|nuptial|mass|church|ceremony|wedding/i, icon: ICONS.church, art: A["ch-lily-arc"], fit: "scene" },
+    { re: /reception|dinner|toast|banquet|party/i, icon: ICONS.glasses, art: A["ch-lily-spray"], fit: "scene" },
+    { re: /engagement|betrothal|ring|proposal/i, icon: ICONS.ring, art: A["ch-doves"], fit: "scene" },
+    { re: /shower|tea|brunch|hen|bachelorette/i, icon: ICONS.cake, art: A["ch-bloom"], fit: "scene" },
+    { re: /rehearsal/i, icon: ICONS.candles, art: A["ch-corner"], fit: "scene" },
     { re: /roce|haldi|sangeet|mehndi|music/i, icon: ICONS.dove },
     { re: /./, icon: ICONS.dove },
   ],

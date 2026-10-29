@@ -55,6 +55,18 @@ export const FAITH_ASSETS = {
     "ch-bloom": { src: "/wedding-v3/faith-christian/ch-bloom.webp", w: 520, h: 391 },
     "ch-flourish": { src: "/wedding-v3/faith-christian/ch-flourish.webp", w: 800, h: 214 },
   },
+  /** Celebration art (Desktop/wedding-assets/template26-mehndi-celebrations): the Nikah's and the Anand Karaj's function cards. */
+  "faith-shared": {
+    "fs-bride-pink": { src: "/wedding-v3/faith-shared/fs-bride-pink.webp", w: 417, h: 760 },
+    "fs-bride-orange": { src: "/wedding-v3/faith-shared/fs-bride-orange.webp", w: 493, h: 760 },
+    "fs-bride-green": { src: "/wedding-v3/faith-shared/fs-bride-green.webp", w: 469, h: 760 },
+    "fs-mehndi-stage": { src: "/wedding-v3/faith-shared/fs-mehndi-stage.webp", w: 900, h: 387 },
+    "fs-dholak": { src: "/wedding-v3/faith-shared/fs-dholak.webp", w: 640, h: 483 },
+    "fs-basket": { src: "/wedding-v3/faith-shared/fs-basket.webp", w: 640, h: 420 },
+    "fs-sofa": { src: "/wedding-v3/faith-shared/fs-sofa.webp", w: 760, h: 489 },
+    "fs-chair-stage": { src: "/wedding-v3/faith-shared/fs-chair-stage.webp", w: 760, h: 443 },
+    "fs-curtain": { src: "/wedding-v3/faith-shared/fs-curtain.webp", w: 501, h: 760 },
+  },
   "shared": {
     "paper": { src: "/wedding-v3/template3/02-paper-background-2.webp", w: 1800, h: 1013 },
     "paperSoft": { src: "/wedding-v3/template3/04-paper-background-3.webp", w: 1600, h: 900 },

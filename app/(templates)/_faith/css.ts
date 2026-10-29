@@ -615,7 +615,15 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 }
 
 /* ══ Faith weddings: the hero card, the invocation, the verse, the medallions ══ */
-.fh-hero { flex-direction: column; justify-content: center; align-items: center; padding: clamp(66px, 9vh, 96px) 12px clamp(34px, 6vh, 70px); }
+/* Full screen on every device: the faith's wall fills the viewport, a floor runs along the foot and the arch
+   stands on it at (nearly) full height; on phones it is wider than the screen (its outer panels run off the
+   edges) so the doorway itself fills the view. --fh-w (set per faith) is the arch's width. */
+.fh-hero { --fh-top: 62px; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0; isolation: isolate; background: var(--fh-wall-bg, #f7f1e3); }
+.fh-wall { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--fh-wall, none); opacity: 0; transition: opacity 1.4s ease; }
+.fh-floor { position: absolute; left: 0; right: 0; bottom: 0; z-index: 0; height: var(--fh-floor-h, 12svh); pointer-events: none; background: var(--fh-floor, linear-gradient(180deg, rgba(255,255,255,0), rgba(214,196,160,.35))); opacity: 0; transition: opacity 1.4s ease .2s; }
+.fh-hero.is-open .fh-wall, .fh-hero.is-open .fh-floor { opacity: 1; }
+.fh-flank { position: absolute; z-index: 1; bottom: 0; height: var(--fh-flank-h, 70svh); width: auto; opacity: 0; transition: opacity 1.6s ease .5s, transform 1.8s var(--fw-ease) .5s; transform: translate3d(0, 20px, 0); display: none; }
+.fh-hero.is-open .fh-flank { opacity: 1; transform: none; }
 .fh-bank { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .fh-bank img[hidden], .fw-env-bg img[hidden], .fw-fin-bank img[hidden] { display: none; }
 .fh-top { position: absolute; left: 50%; top: 0; width: max(100%, 760px); height: auto; translate: -50% 0; opacity: 0; transition: opacity 1.8s ease .2s; }
@@ -626,12 +634,12 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-side { display: none; }
 .fh-base { position: absolute; z-index: 1; left: 50%; bottom: 0; width: min(110%, 980px); height: auto; translate: -50% 0; opacity: 0; transition: opacity 2.2s ease .5s; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%); mask-image: linear-gradient(180deg, transparent 0%, #000 45%); }
 .fh-hero.is-open .fh-base { opacity: var(--fh-base-o, .45); }
-.fh-stage { position: relative; z-index: 3; width: 100%; display: flex; justify-content: center; }
+.fh-stage { position: relative; z-index: 3; width: 100%; min-height: 100svh; display: flex; justify-content: center; align-items: flex-end; padding-top: var(--fh-top); overflow: visible; }
 .fh-par { transform: translate3d(0, calc(var(--fw-hy, 0px) * .08), 0); }
 /* The card: its width keeps it inside one screen; every size inside is in card units (cqw), so nothing is cut. */
-.fh-card { position: relative; width: var(--fh-w, min(94vw, 560px, calc((100svh - var(--fh-reserve, 150px)) * var(--fh-arn, .714)))); aspect-ratio: var(--fh-ar, 1200 / 1680); container-type: inline-size; opacity: 0; transform: translate3d(0, 28px, 0) scale(.965); transition: opacity 1.3s ease, transform 1.7s var(--fw-ease); }
+.fh-card { position: relative; flex: none; width: var(--fh-w, min(100vw, calc((100svh - var(--fh-top)) * var(--fh-arn, .714)))); aspect-ratio: var(--fh-ar, 1200 / 1680); container-type: inline-size; opacity: 0; transform: translate3d(0, 28px, 0) scale(.965); transition: opacity 1.3s ease, transform 1.7s var(--fw-ease); }
 .fh-hero.is-open .fh-card { opacity: 1; transform: none; }
-.fh-card-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; filter: drop-shadow(0 28px 36px rgba(80,55,20,.16)); }
+.fh-card-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; filter: drop-shadow(0 18px 30px rgba(60,50,20,.18)); }
 .fh-crown { position: absolute; z-index: 2; pointer-events: none; height: auto; }
 .fh-figure { position: absolute; z-index: 2; height: auto; pointer-events: none; }
 .fh-glow { display: none; }
@@ -673,9 +681,6 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-hero .fw-cue { bottom: 6px; }
 @media (max-width: 1023px) {
   .fh-hero .fw-cue { display: none; }
-  /* phones and tablets: the card sits under the top art; the faith's scene fills the foot */
-  .fh-hero { justify-content: flex-start; padding-top: var(--fh-pt, 84px); padding-bottom: 0; }
-  .fh-card { --fh-w: min(96vw, 620px, calc((100svh - var(--fh-reserve, 150px)) * var(--fh-arn, .714))); }
 }
 @media (min-width: 1024px) {
   .fh-hero { padding-top: 76px; }
@@ -705,11 +710,17 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fw-ev-medal { position: absolute; z-index: 1; left: 50%; top: 50%; width: 48%; aspect-ratio: 1; translate: -50% -50%; display: grid; place-items: center; border-radius: 50%; color: #9c6c28; background: radial-gradient(circle at 36% 30%, #fffbf2, #f4e5c6 76%); box-shadow: 0 0 0 1px rgba(184,140,72,.75), 0 0 0 5px rgba(255,251,242,.92), 0 0 0 6px rgba(184,140,72,.42), 0 18px 32px -14px rgba(80,55,20,.45); opacity: 0; transform: scale(.82); transition: opacity 1.1s ease .2s, transform 1.4s var(--fw-ease) .2s; }
 .fw-ev.is-in .fw-ev-medal { opacity: 1; transform: none; }
 .fw-ev-medal svg { width: 56%; height: 56%; overflow: visible; }
+.fw-ev-art.has-art .fw-ev-medal { left: auto; top: auto; right: 8px; bottom: 8px; width: 24%; translate: none; z-index: 2; }
+.fw-ev-art.has-art .fw-ev-medal svg { width: 52%; height: 52%; }
+.fw-ev-art.has-art .fw-ev-medal::after { display: none; }
+.fw-ev-art.has-art .fw-ev-img { z-index: 1; left: 8%; width: 84%; bottom: 2%; height: 92%; filter: drop-shadow(0 12px 14px rgba(70,50,30,.22)); }
+.fw-ev-art.has-art.is-scene .fw-ev-img { left: 4%; width: 92%; height: 70%; bottom: 10%; object-position: 50% 100%; }
 .fw-ev-medal::after { content: ""; position: absolute; inset: 10%; border-radius: 50%; border: 1px dashed rgba(184,140,72,.45); }
 /* the RSVP window's figure, and the finale's card */
 .fh-rw-figure { height: auto !important; width: 86%; bottom: 9% !important; }
 .fw-fin-stage { width: auto; aspect-ratio: auto; display: flex; justify-content: center; margin-bottom: 76px; }
 .fh-fin-card .fh-card { --fh-w: min(90vw, 470px, calc((100svh - 150px) * var(--fh-arn, .714))); }
+.fh-fin-card .fh-card-bg { border-radius: 14px; }
 .fh-fin-card .fh-names { font-size: var(--fh-names, 12.6cqw); }
 .fh-fin-card .fw-fin-rule { width: 60%; margin: 2cqw auto 0; }
 .fh-fin-card .fw-hashtag { margin-top: 2.6cqw; font-size: max(10px, 2.6cqw); }

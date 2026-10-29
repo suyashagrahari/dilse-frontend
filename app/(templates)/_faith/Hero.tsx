@@ -75,7 +75,7 @@ export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time,
   const Names = as;
   const high = !lazy;
   return (
-    <div className={`fh-card${faith === "christian" ? "" : " is-framed"}`}>
+    <div className="fh-card">
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
       <img className="fh-card-bg" {...pic("heroBg", { high, lazy, sizes: "(min-width: 1024px) 560px, 94vw" })} />
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -170,7 +170,13 @@ export default function Hero(p: HeroProps) {
   return (
     <header ref={ref} className={`fw-hero fh-hero is-${faith}${open ? " is-open" : ""}`}>
       <span className="fw-frame" aria-hidden />
+      <span className="fh-wall" aria-hidden />
+      <span className="fh-floor" aria-hidden />
       <div className="fh-bank" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroFlank && <img className="fh-flank is-l" {...pic("heroFlank", { sizes: "40vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroFlank && <img className="fh-flank is-r" {...pic("heroFlank", { sizes: "40vw" })} />}
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         {art.heroTop && <img className="fh-top" {...pic("heroTop", { high: true, sizes: "100vw" })} />}
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

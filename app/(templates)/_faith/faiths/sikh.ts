@@ -11,6 +11,9 @@ import { ICONS } from "../icons";
 import type { FaithProfile, Strings } from "../types";
 
 const A = FAITH_ASSETS["faith-sikh"];
+const C = FAITH_ASSETS["faith-shared"];
+/** The ivory wall: a fine gold lattice of quatrefoils (drawn, tileable). */
+const LATTICE = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><g fill="none" stroke="#c49a52" stroke-width=".8" opacity=".42"><path d="M32 6c6 0 10 4 10 10s-4 10-10 10-10-4-10-10 4-10 10-10zM32 38c6 0 10 4 10 10s-4 10-10 10-10-4-10-10 4-10 10-10zM6 32c0-6 4-10 10-10s10 4 10 10-4 10-10 10S6 38 6 32zM38 32c0-6 4-10 10-10s10 4 10 10-4 10-10 10-10-4-10-10z"/><path d="M0 0 64 64M64 0 0 64" opacity=".5"/></g><circle cx="32" cy="32" r="2" fill="#c49a52" opacity=".5"/></svg>')}")`;
 const S = FAITH_ASSETS.shared;
 
 const en: Strings = {
@@ -143,6 +146,12 @@ const css = `
 .fh-root.is-sikh { --fw-script: #7c4515; --fw-wax1: #c98f34; --fw-wax2: #93601a; --fw-env: #f3e6cc; --fw-env-2: #e8d3ab; --fw-liner: #fbf2de; }
 .fh-root.is-sikh[data-wk-theme="blush"] { --fw-script: #8a3f3a; --fw-env: #f5e2d6; --fw-env-2: #ebcdbb; --fw-liner: #fcf0e8; }
 .fh-root.is-sikh[data-wk-theme="powder"] { --fw-script: #4a5a7c; --fw-env: #e7e8ee; --fw-env-2: #d6d9e3; --fw-liner: #f3f4f8; }
+/* Full screen: an ivory wall with a gold quatrefoil lattice, a warm floor, the Golden Temple in gold along the
+   horizon and peonies garlanding the top; the arch over Sri Guru Granth Sahib Ji stands at full height. */
+.fh-hero.is-sikh { --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .714)); --fh-wall-bg: #f8efdc; --fh-wall: ${LATTICE} center top / 64px 64px repeat, radial-gradient(120% 90% at 50% 30%, #fffaf0 0%, #f7ecd4 55%, #efdcb6 100%); --fh-floor: linear-gradient(180deg, rgba(250,242,224,0), #f4e6c8 35%, #ead7ae); --fh-floor-h: 12svh; }
+/* the arch's straight edges melt into the wall (top on every screen, the sides too on wide ones) */
+.fh-hero.is-sikh .fh-card-bg { filter: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%), linear-gradient(180deg, transparent 0, #000 7%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%), linear-gradient(180deg, transparent 0, #000 7%); mask-composite: intersect; }
+@media (max-width: 1023px) { .fh-hero.is-sikh { --fh-top: 64px; --fh-w: min(114vw, calc((100svh - var(--fh-top)) * .714)); } .fh-hero.is-sikh .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%); mask-image: linear-gradient(180deg, transparent 0, #000 6%); } }
 /* the arch: Ik Onkar, the Fateh and the names live in its ivory field, above the gutka stand */
 .fh-hero.is-sikh .fh-card { --fh-ar: 1200 / 1680; --fh-arn: .714; --fh-in-t: 12.5%; --fh-in-b: 36.5%; --fh-in-x: 15%; --fh-reserve: 140px; --fh-mask: ${ARCH_MASK}; }
 .fh-hero.is-sikh .fh-names { --fh-names: 10.4cqw; }
@@ -172,7 +181,8 @@ const css = `
 .fh-root.is-sikh .fw-wax b { font: 400 34px/1 var(--font-wk-guru), serif; }
 @media (min-width: 1024px) {
   .fh-hero.is-sikh .fh-card { --fh-reserve: 130px; }
-  .fh-hero.is-sikh .fh-top { width: min(76vw, 1080px); top: -3%; -webkit-mask-image: radial-gradient(62% 120% at 50% 0%, #000 58%, transparent 100%); mask-image: radial-gradient(62% 120% at 50% 0%, #000 58%, transparent 100%); }
+  .fh-hero.is-sikh .fh-top { display: none; }
+  .fh-hero.is-sikh .fh-corner { width: clamp(170px, 16vw, 280px); }
   .fh-hero.is-sikh .fh-base { width: min(96vw, 1400px); --fh-base-o: .38; }
 }
 `;
@@ -219,17 +229,17 @@ export const SIKH: FaithProfile = {
   },
   invocationLabel: "Ik Onkar and the Fateh on the invitation",
   eventArt: [
-    { re: /anand|ਅਨੰਦ|laav|lavan|wedding/i, icon: ICONS.khanda },
-    { re: /path|paath|sukhmani|kirtan|ardas|gurdwara/i, icon: ICONS.book },
-    { re: /roka|kurmai|shagan|engagement|chunni|thaka|sagai|ring/i, icon: ICONS.ring },
-    { re: /maiyan|maiya|vatna|haldi|batna/i, icon: ICONS.bowl },
-    { re: /mehndi|mehendi|henna/i, icon: ICONS.henna },
-    { re: /jaggo|jago/i, icon: ICONS.diya },
-    { re: /sangeet|ladies|dholki|gidha|bhangra|music/i, icon: ICONS.dhol },
-    { re: /chooda|choora|kalire|kaleera/i, icon: ICONS.bangles },
-    { re: /doli|vidaai|vidai/i, icon: ICONS.doli },
-    { re: /reception|dinner|party|cocktail/i, icon: ICONS.glasses },
-    { re: /./, icon: ICONS.heart },
+    { re: /anand|ਅਨੰਦ|laav|lavan|wedding/i, icon: ICONS.khanda, art: A["sk-temple-gold"], fit: "scene" },
+    { re: /path|paath|sukhmani|kirtan|ardas|gurdwara/i, icon: ICONS.book, art: A["sk-temple-saffron"], fit: "scene" },
+    { re: /roka|kurmai|shagan|engagement|chunni|thaka|sagai|ring/i, icon: ICONS.ring, art: C["fs-bride-pink"] },
+    { re: /maiyan|maiya|vatna|haldi|batna/i, icon: ICONS.bowl, art: C["fs-basket"], fit: "scene" },
+    { re: /mehndi|mehendi|henna/i, icon: ICONS.henna, art: C["fs-mehndi-stage"], fit: "scene" },
+    { re: /jaggo|jago/i, icon: ICONS.diya, art: C["fs-curtain"] },
+    { re: /sangeet|ladies|dholki|gidha|bhangra|music/i, icon: ICONS.dhol, art: C["fs-dholak"], fit: "scene" },
+    { re: /chooda|choora|kalire|kaleera/i, icon: ICONS.bangles, art: C["fs-bride-orange"] },
+    { re: /doli|vidaai|vidai/i, icon: ICONS.doli, art: C["fs-bride-green"] },
+    { re: /reception|dinner|party|cocktail/i, icon: ICONS.glasses, art: C["fs-chair-stage"], fit: "scene" },
+    { re: /./, icon: ICONS.heart, art: C["fs-sofa"], fit: "scene" },
   ],
   css,
   wax: { light: "#e8c27c", mid: "#c98f34", deep: "#93601a" },

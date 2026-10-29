@@ -28,7 +28,7 @@ export type CoreRole =
   /** the hero: a full arched card the copy sits inside */
   | "heroBg" | "heroBgSm";
 /** Art only some faiths have. */
-export type OptRole = "heroFigure" | "heroFigureSm" | "heroTop" | "heroSide" | "heroBank" | "invocation" | "envTop" | "envBank" | "heroCrown";
+export type OptRole = "heroFigure" | "heroFigureSm" | "heroTop" | "heroSide" | "heroBank" | "invocation" | "envTop" | "envBank" | "heroCrown" | "heroFlank";
 export type ArtRole = CoreRole | OptRole;
 export type FaithArt = Record<CoreRole, WeddingAsset> & Partial<Record<OptRole, WeddingAsset>>;
 
@@ -66,6 +66,10 @@ export interface FaithEventArt {
   re: RegExp;
   /** a gold line icon (24×24 viewBox paths) */
   icon: string;
+  /** an illustration for the card's arched window (the icon then rides on a small medallion) */
+  art?: WeddingAsset;
+  /** how the illustration sits: a standing figure, or a wide scene / object */
+  fit?: "figure" | "scene";
 }
 
 export interface FaithProfile {

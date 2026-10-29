@@ -2,15 +2,16 @@
 
 // ─── The functions: a suite of stationery cards ─────────────────────────────
 // Each function is its own card from the suite: an arched window washed in the
-// faith's watercolour with a gold-foil medallion holding that function's line
-// icon (the Laavan's Khanda, the Nikah's crescent, the chapel, the dhol for the
-// Jaggo, the lantern for the Rukhsati…), then the date, time, venue, a
+// faith's watercolour with that function's illustration (the bride in her
+// sharara for the Mangni, the Mehndi stage, the dholak, the couple at the
+// Nikah…) and a small gold-foil medallion with its line icon; functions with
+// no illustration get the medallion large. Then the date, time, venue, a
 // dress-code swatch, a note and Directions. Cards unfold on scroll (rotateX
 // from the top edge, staggered). Phones: a swipeable row (scroll-snap, every
 // card centred) with dots under it. Two columns from 720 px, three from 1240 px.
 
 import { useEffect, useRef, useState } from "react";
-import { Reveal, formatEventDate, formatEventTime, mapLink, type WeddingEvent } from "../_wedding";
+import { Reveal, cdn, formatEventDate, formatEventTime, mapLink, type WeddingEvent } from "../_wedding";
 import { usePic } from "./art";
 import type { FaithEventArt } from "./types";
 
@@ -87,14 +88,20 @@ export default function FaithEvents({ events, locale, labels: l, icons }: FaithE
           const map = mapLink(e);
           const key = e.id || String(i);
           const swatch = e.dressColor && /^#[0-9a-f]{3,8}$/i.test(e.dressColor) ? e.dressColor : null;
-          const icon = (icons.find((x) => x.re.test(e.title)) ?? icons[i % icons.length]).icon;
+          const match = icons.find((x) => x.re.test(e.title)) ?? icons[i % icons.length];
+          const icon = match.icon;
+          const art = match.art;
           return (
             <Reveal as="li" key={key} effect="rise" delay={(i % 3) * 110} className="fw-ev fw-fold">
               <article className="fw-ev-card">
-                <div className="fw-ev-art" aria-hidden>
+                <div className={`fw-ev-art${art ? ` has-art is-${match.fit ?? "figure"}` : ""}`} aria-hidden>
                   <span className="fw-ev-win">
                     {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
                     <img className="fw-ev-wash" {...pic("rsvpWash", { lazy: true, sizes: "300px" })} />
+                    {art && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="fw-ev-img" src={cdn(art.src)} width={art.w} height={art.h} alt="" loading="lazy" decoding="async" draggable={false} />
+                    )}
                     <span className="fw-ev-medal">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" strokeLinejoin="round" focusable="false">
                         <path d={icon} />

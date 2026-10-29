@@ -12,6 +12,9 @@ import { ICONS } from "../icons";
 import type { FaithProfile, Strings } from "../types";
 
 const A = FAITH_ASSETS["faith-nikah"];
+const C = FAITH_ASSETS["faith-shared"];
+/** The palace wall: an eight-pointed-star jaali in gold on sage, drawn (tileable, crisp at any size). */
+const JAALI = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72"><g fill="none" stroke="#b8924a" stroke-width=".9" opacity=".55"><rect x="22" y="22" width="28" height="28"/><rect x="22" y="22" width="28" height="28" transform="rotate(45 36 36)"/><path d="M0 0 22 22M72 0 50 22M0 72 22 50M72 72 50 50M36 0v16.2M36 72V55.8M0 36h16.2M72 36H55.8"/><circle cx="36" cy="36" r="5"/></g><g fill="#b8924a" opacity=".45"><circle cx="0" cy="0" r="2"/><circle cx="72" cy="0" r="2"/><circle cx="0" cy="72" r="2"/><circle cx="72" cy="72" r="2"/></g></svg>')}")`;
 const S = FAITH_ASSETS.shared;
 
 const en: Strings = {
@@ -146,6 +149,28 @@ const css = `
 .fh-root.is-muslim[data-wk-theme="blush"] { --fw-script: #7a4250; --fw-env: #f3e3de; --fw-env-2: #e9cfc7; --fw-liner: #fbf1ee; }
 .fh-root.is-muslim[data-wk-theme="powder"] { --fw-script: #46587a; --fw-env: #e5e9ef; --fw-env-2: #d3dae4; --fw-liner: #f2f4f8; }
 .fh-root.is-muslim .fw-sheet, .fh-root.is-muslim .fw-datecard { background: linear-gradient(180deg, #fffef8, #f7f7ec); }
+/* Full screen: a sage palace wall of gold jaali, a cream floor, lanterns overhead; the Mughal arch stands on the
+   floor at full height, flanked on wide screens by two cream jharokha arches with urns of roses in them. */
+.fh-hero.is-muslim { --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .806)); --fh-wall-bg: #dce3cf; --fh-wall: ${JAALI} center top / 72px 72px repeat, radial-gradient(120% 90% at 50% 35%, #eff2e6 0%, #dde4d0 55%, #c8d3b7 100%); --fh-floor: linear-gradient(180deg, rgba(246,243,231,0), #f1ecda 30%, #e6dec6); --fh-floor-h: 13svh; --fh-flank-h: 76svh; }
+.fh-hero.is-muslim .fh-top { width: max(100%, 980px); top: -2%; opacity: 0; }
+/* the panels' straight top edges melt into the jaali wall */
+.fh-hero.is-muslim .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 7%); mask-image: linear-gradient(180deg, transparent 0, #000 7%); }
+.fh-hero.is-muslim .fh-flank { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%); mask-image: linear-gradient(180deg, transparent 0, #000 16%); }
+.fh-hero.is-muslim.is-open .fh-top { opacity: .95; }
+@media (max-width: 1023px) {
+  .fh-hero.is-muslim { --fh-top: 46px; --fh-w: min(124vw, calc((100svh - var(--fh-top)) * .806)); }
+  .fh-hero.is-muslim .fh-top { width: max(150vw, 600px); top: -1%; }
+}
+@media (min-width: 1024px) {
+  .fh-hero.is-muslim .fh-top { display: none; }
+  .fh-hero.is-muslim .fh-flank { display: block; }
+  .fh-hero.is-muslim .fh-flank.is-l { right: calc(50% + var(--fh-w) * .41); }
+  .fh-hero.is-muslim .fh-flank.is-r { left: calc(50% + var(--fh-w) * .41); }
+  .fh-hero.is-muslim .fh-side { z-index: 2; height: 34svh; width: auto; }
+  .fh-hero.is-muslim .fh-side.is-l { left: auto; right: calc(50% + var(--fh-w) * .41 + 15.5svh); }
+  .fh-hero.is-muslim .fh-side.is-r { right: auto; left: calc(50% + var(--fh-w) * .41 + 15.5svh); }
+  .fh-hero.is-muslim .fh-corner { width: clamp(150px, 13vw, 240px); }
+}
 /* the Mughal arch: the Bismillah and the names in its field, the couple seated at its foot */
 .fh-hero.is-muslim .fh-card { --fh-ar: 928 / 1152; --fh-arn: .806; --fh-in-t: 8%; --fh-in-b: 38%; --fh-in-x: 16.5%; --fh-reserve: 136px; --fh-mask: ${ARCH_MASK}; }
 .fh-hero.is-muslim .fh-names { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: .22em; --fh-names: 10.6cqw; }
@@ -166,13 +191,8 @@ const css = `
 .fh-root.is-muslim .fh-corner.is-r { scale: -1 1; }
 .fh-root.is-muslim .fw-env-corner.is-l { transform: none; } .fh-root.is-muslim .fw-env-corner.is-r { transform: scaleX(-1); }
 .fh-root.is-muslim .fh-side { width: clamp(150px, 13vw, 230px); }
-/* phones: the urns of roses and lanterns stand at the foot instead of the corner sprays */
-@media (max-width: 1023px) {
-  .fh-hero.is-muslim .fh-corner { display: none; }
-  .fh-hero.is-muslim .fh-side { display: block; position: absolute; z-index: 1; bottom: 0; width: min(36vw, 230px); height: auto; opacity: 0; transition: opacity 1.6s ease .6s; }
-  .fh-hero.is-muslim .fh-side.is-l { left: -3vw; } .fh-hero.is-muslim .fh-side.is-r { right: -3vw; transform: scaleX(-1); }
-  .fh-hero.is-muslim.is-open .fh-side { opacity: 1; }
-}
+@media (max-width: 1023px) { .fh-hero.is-muslim .fh-corner { display: none; } }
+
 .fh-root.is-muslim .fw-card-bloom { height: 40%; }
 .fh-root.is-muslim .fw-env-sprig { rotate: -30deg; height: calc(var(--seal) * 1.05); }
 .fh-root.is-muslim .fw-rw-wash { opacity: 1; object-fit: cover; object-position: 50% 0; }
@@ -207,6 +227,8 @@ export const MUSLIM: FaithProfile = {
     heroFigure: A["mn-couple-seated"],
     heroFigureSm: A["mn-couple-seated-600"],
     heroSide: A["mn-urn"],
+    heroFlank: A["mn-jharokha"],
+    heroTop: A["mn-lanterns"],
     invocation: A["mn-bismillah"],
     envTop: A["mn-lanterns"],
   },
@@ -228,15 +250,15 @@ export const MUSLIM: FaithProfile = {
   },
   invocationLabel: "The Bismillah on the invitation",
   eventArt: [
-    { re: /nikah|nikkah|نکاح/i, icon: ICONS.crescent },
-    { re: /walima|valima|reception|dawat|dinner/i, icon: ICONS.feast },
-    { re: /rukhsati|rukhsat|vidaai|farewell|baraat|barat/i, icon: ICONS.lantern },
-    { re: /mangni|engagement|ring|istikhara|rishta/i, icon: ICONS.ring },
-    { re: /manjha|manja|ubtan|haldi|mayun|mayoun/i, icon: ICONS.bowl },
-    { re: /mehndi|mehendi|henna/i, icon: ICONS.henna },
-    { re: /dholki|dholak|qawwali|sangeet|music/i, icon: ICONS.dhol },
-    { re: /masjid|mosque|milad|quran|khatam|dua/i, icon: ICONS.mosque },
-    { re: /./, icon: ICONS.lantern },
+    { re: /nikah|nikkah|نکاح/i, icon: ICONS.crescent, art: A["mn-couple-seated-600"], fit: "scene" },
+    { re: /walima|valima|reception|dawat|dinner/i, icon: ICONS.feast, art: A["mn-couple-standing"] },
+    { re: /rukhsati|rukhsat|vidaai|farewell|baraat|barat/i, icon: ICONS.lantern, art: C["fs-bride-green"] },
+    { re: /mangni|engagement|ring|istikhara|rishta/i, icon: ICONS.ring, art: C["fs-bride-pink"] },
+    { re: /manjha|manja|ubtan|haldi|mayun|mayoun/i, icon: ICONS.bowl, art: C["fs-bride-orange"] },
+    { re: /mehndi|mehendi|henna/i, icon: ICONS.henna, art: C["fs-mehndi-stage"], fit: "scene" },
+    { re: /dholki|dholak|qawwali|sangeet|music/i, icon: ICONS.dhol, art: C["fs-dholak"], fit: "scene" },
+    { re: /masjid|mosque|milad|quran|khatam|dua/i, icon: ICONS.mosque, art: A["mn-urn"] },
+    { re: /./, icon: ICONS.lantern, art: C["fs-sofa"], fit: "scene" },
   ],
   css,
   wax: { light: "#a9bfa3", mid: "#6f8c69", deep: "#435e40" },
