@@ -669,7 +669,7 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-card.is-framed .fh-card-bg { border-radius: clamp(10px, 2.4cqw, 18px); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 clamp(4px, 1.2cqw, 7px) rgba(255,251,243,.95), 0 0 0 calc(clamp(4px, 1.2cqw, 7px) + 1px) rgba(184,140,72,.32), 0 44px 70px -42px rgba(80,55,20,.5); filter: none; }
 .fh-copy { position: absolute; z-index: 2; top: var(--fh-in-t, 10%); bottom: var(--fh-in-b, 34%); left: var(--fh-in-x, 15%); right: var(--fh-in-x, 15%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .fh-inv { display: block; flex: none; }
-.fh-inv.is-sikh { font: 400 16cqw/1.05 var(--font-wk-guru), serif; padding: 0 .08em; background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 32%, #a5752f 52%, #f0d48c 72%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(255,255,255,.75)); }
+.fh-inv.is-sikh { font: 400 16cqw/1.05 var(--font-wk-guru), serif; padding: .2em .1em .04em; margin-top: -.2em; /* room for the curl over the glyph: the foil is clipped to the box */ background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 32%, #a5752f 52%, #f0d48c 72%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(255,255,255,.75)); }
 .fh-inv.is-muslim { width: 27cqw; height: auto; filter: drop-shadow(0 1px 0 rgba(255,255,255,.6)); }
 .fh-inv.is-christian { width: 13cqw; height: 13cqw; }
 .fh-inv.is-christian svg { display: block; width: 100%; height: 100%; overflow: visible; }

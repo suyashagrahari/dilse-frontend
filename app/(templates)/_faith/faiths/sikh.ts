@@ -174,13 +174,11 @@ const css = `
 .fh-root.is-sikh .fw-env-clouds { width: min(118vw, 760px); opacity: 0; -webkit-mask-image: linear-gradient(180deg, transparent, #000 35%); mask-image: linear-gradient(180deg, transparent, #000 35%); }
 .fh-root.is-sikh .fw-env.is-ready .fw-env-clouds { opacity: .55; }
 .fh-root.is-sikh .fh-env-top { width: max(100%, 900px); }
-.fh-root.is-sikh .fw-card-bloom { height: 20%; bottom: -7%; }
 .fh-root.is-sikh .fh-base { width: min(118%, 900px); --fh-base-o: .55; }
 .fh-root.is-sikh .fw-env-sprig { rotate: -18deg; height: calc(var(--seal) * .8); margin: calc(var(--seal) * -.2) 0 0 calc(var(--seal) * -1.25); }
 .fh-root.is-sikh .fw-rw-wash { opacity: .7; }
 .fh-root.is-sikh .fh-rw-figure { width: 94%; bottom: 14% !important; }
-.fh-root.is-sikh .fw-sheet-roses { width: clamp(120px, 30vw, 210px); }
-.fh-root.is-sikh .fw-portrait-bloom.is-t { rotate: -20deg; } .fh-root.is-sikh .fw-portrait-bloom.is-b { rotate: 160deg; scale: 1; }
+.fh-root.is-sikh .fw-sheet-roses { width: clamp(96px, 22vw, 160px); }
 .fh-root.is-sikh .fw-datecard-wax b { font: 400 28px/1 var(--font-wk-guru), serif; }
 .fh-root.is-sikh .fw-wax b { font: 400 34px/1 var(--font-wk-guru), serif; }
 /* Wide screens: the card stands in the left of the room, clear of the temple, which keeps the right. */
@@ -195,6 +193,9 @@ const css = `
   .fh-root .fh-hero.is-sikh .fh-stage { align-items: flex-end; padding-bottom: max(14px, 2.5svh); }
   .fh-root .fh-hero.is-sikh .fh-card { --fh-in-t: 16.5%; --fh-in-b: 8.5%; --fh-in-x: 12.5%; }
   .fh-root .fh-hero.is-sikh .fh-greet { font-size: 2.55cqw; letter-spacing: .03em; }
+  /* the last page: the goodbye keeps above the seal */
+  .fh-root .fh-fin.is-sikh .fh-card { --fh-in-b: 34%; }
+  .fh-root .fh-fin.is-sikh { --fh-seal-b: 10%; }
 }
 `;
 
@@ -207,12 +208,12 @@ export const SIKH: FaithProfile = {
     paperSoft: S.paperSoft,
     swirl: S.swirl,
     swirlSm: S.swirlSm,
-    bloom: A["sk-bloom"],
-    bloomAlt: A["sk-bloom"],
-    sheetCorner: A["sk-peony-r"],
+    bloom: A["sk-bouquet"],
+    bloomAlt: A["sk-bouquet"],
+    sheetCorner: A["sk-bouquet"],
     corner: A["sk-peony-l"],
     cornerR: A["sk-peony-r"],
-    sprig: A["sk-bloom"],
+    sprig: A["sk-bouquet"],
     rsvpWash: A["sk-wash"],
     rsvpFigure: A["sk-temple-gold"],
     heroBg: A["sk-panel"],

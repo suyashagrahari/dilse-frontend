@@ -41,7 +41,7 @@ export const FAITH_ASSETS = {
     "sk-peony-r": { src: "/wedding-v3/faith-sikh/sk-peony-r.webp", w: 880, h: 879 },
     "sk-peony-garland": { src: "/wedding-v3/faith-sikh/sk-peony-garland.webp", w: 1400, h: 358 },
     "sk-wash": { src: "/wedding-v3/faith-sikh/sk-wash.webp", w: 900, h: 1260 },
-    "sk-bloom": { src: "/wedding-v3/faith-sikh/sk-bloom.webp", w: 640, h: 355 },
+    "sk-bouquet": { src: "/wedding-v3/faith-sikh/sk-bouquet.webp", w: 560, h: 615 },
     "sk-sprigs": { src: "/wedding-v3/faith-sikh/sk-sprigs.webp", w: 900, h: 676 },
   },
   "faith-christian": {
