@@ -182,7 +182,13 @@ const css = `
   /* the two jharokhas are shown whole and small, standing on the floor: as wide as the room beside the great
      arch allows (tucked 9% behind it), with an urn of roses in each */
   .fh-hero.is-muslim { --fh-fw: min(calc((100vw - var(--fh-w)) / 2 + var(--fh-w) * .09 - 18px), calc(var(--fh-flank-h) * .716)); --fh-urn-h: min(34svh, calc(var(--fh-fw) * .62)); }
-  .fh-hero.is-muslim .fh-flank { display: block; width: var(--fh-fw); height: auto; bottom: 1.5svh; filter: drop-shadow(0 18px 26px rgba(70,80,50,.16)); }
+  .fh-hero.is-muslim .fh-flank { display: block; width: var(--fh-fw); height: auto; bottom: 1.5svh; filter: drop-shadow(0 18px 26px rgba(70,80,50,.16));
+    /* no hard edges: the panel's straight top and its outer side melt softly into the jaali wall */
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 6%, rgba(0,0,0,.8) 12%, #000 18%, #000 96%, transparent 100%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
+    mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 6%, rgba(0,0,0,.8) 12%, #000 18%, #000 96%, transparent 100%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .fh-hero.is-muslim .fh-flank.is-l { --fh-fl-dir: 90deg; }
+  .fh-hero.is-muslim .fh-flank.is-r { --fh-fl-dir: 270deg; }
   .fh-hero.is-muslim .fh-flank.is-l { right: calc(50% + var(--fh-w) * .41); }
   .fh-hero.is-muslim .fh-flank.is-r { left: calc(50% + var(--fh-w) * .41); }
   .fh-hero.is-muslim .fh-side { z-index: 2; height: var(--fh-urn-h); width: auto; bottom: 1.5svh; }
