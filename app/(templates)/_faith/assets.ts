@@ -30,11 +30,11 @@ export const FAITH_ASSETS = {
     "mn-gold-medallion": { src: "/wedding-v3/faith-nikah/mn-gold-medallion.webp", w: 640, h: 640 },
   },
   "faith-sikh": {
-    "sk-arch": { src: "/wedding-v3/faith-sikh/sk-arch.webp", w: 1200, h: 1680 },
     /** Derived: the arch with its sides lengthened (a feathered repeat of the plain band below the lanterns), for phones' full height. */
-    "sk-arch-tall": { src: "/wedding-v3/faith-sikh/sk-arch-tall.webp", w: 1200, h: 2783 },
-    "sk-arch-720": { src: "/wedding-v3/faith-sikh/sk-arch-720.webp", w: 720, h: 1008 },
-    "sk-jharokha": { src: "/wedding-v3/faith-sikh/sk-jharokha.webp", w: 1061, h: 1482 },
+    "sk-panel": { src: "/wedding-v3/faith-sikh/sk-panel.webp", w: 1000, h: 1400 },
+    "sk-panel-600": { src: "/wedding-v3/faith-sikh/sk-panel-600.webp", w: 600, h: 840 },
+    "sk-amritsar": { src: "/wedding-v3/faith-sikh/sk-amritsar.webp", w: 2000, h: 1315 },
+    "sk-amritsar-tall": { src: "/wedding-v3/faith-sikh/sk-amritsar-tall.webp", w: 900, h: 1005 },
     "sk-temple-saffron": { src: "/wedding-v3/faith-sikh/sk-temple-saffron.webp", w: 1200, h: 810 },
     "sk-temple-gold": { src: "/wedding-v3/faith-sikh/sk-temple-gold.webp", w: 1041, h: 553 },
     "sk-peony-l": { src: "/wedding-v3/faith-sikh/sk-peony-l.webp", w: 880, h: 1070 },

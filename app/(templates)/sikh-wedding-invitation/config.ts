@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Anand Karaj Wedding Invitation ☬ — Sikh Wedding, Every Function",
   description:
     "A Sikh wedding invitation in ivory and gold: guests break a wax seal on an envelope addressed to them, and the card opens onto the arch over Sri Guru Granth Sahib Ji with Ik Onkar in gold foil. Then every function from the Roka and Akhand Path to the Jaggo, the four Laavan and the Doli, with maps and dress codes, English and Punjabi (Gurmukhi) side by side, 40 photos, RSVP per function, who to call, a blessings wall. The AI writes it.",
-  coverImage: `${WEDDING_ART_CDN}/faith-sikh/cover3.webp`,
+  coverImage: `${WEDDING_ART_CDN}/faith-sikh/cover4.webp`,
   emoji: "🌼",
   color: "from-amber-100 to-yellow-200",
   previewText: "an Anand Karaj invitation, just for you 🌼",
