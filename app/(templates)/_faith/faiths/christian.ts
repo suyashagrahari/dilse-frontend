@@ -92,13 +92,19 @@ const css = `
   .fh-hero.is-christian .fh-crown { top: -1%; }
   .fh-hero.is-christian .fh-sub { font-size: 4.5cqw; }
 }
-/* wide screens: a cloister: two smaller chapel arches either side of the great one */
+/* wide screens: a cloister. The great arch stands the full height of the screen; two chapel arches fill the
+   room either side of it, from just past the screen's edge to 9% behind it (on very wide screens they grow and
+   their feet sink behind the lilies), their straight top and outer edges melting into the sky. */
 @media (min-width: 1024px) {
-  .fh-hero.is-christian { --fh-flank-h: 68svh; }
-  .fh-hero.is-christian .fh-flank { display: block; opacity: 0; }
-  .fh-hero.is-christian.is-open .fh-flank { opacity: .9; }
-  .fh-hero.is-christian .fh-flank.is-l { right: calc(50% + var(--fh-w) * .56); }
-  .fh-hero.is-christian .fh-flank.is-r { left: calc(50% + var(--fh-w) * .56); }
+  .fh-hero.is-christian { --fh-top: 0px; --fh-w: min(100vw, calc(102svh * .5625)); --fh-fw: calc((100vw - var(--fh-w)) / 2 + var(--fh-w) * .09 + 2vw); }
+  .fh-hero.is-christian .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.5) 3%, #000 8%); mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.5) 3%, #000 8%); }
+  .fh-hero.is-christian .fh-flank { display: block; width: var(--fh-fw); height: min(calc(var(--fh-fw) / .5625), 100svh); max-width: none; object-fit: cover; object-position: 50% 0; bottom: 0; opacity: 0; filter: drop-shadow(0 18px 26px rgba(80,90,60,.12));
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 5%, rgba(0,0,0,.8) 10%, #000 15%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
+    mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 5%, rgba(0,0,0,.8) 10%, #000 15%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .fh-hero.is-christian.is-open .fh-flank { opacity: 1; }
+  .fh-hero.is-christian .fh-flank.is-l { --fh-fl-dir: 90deg; right: calc(50% + var(--fh-w) * .41); }
+  .fh-hero.is-christian .fh-flank.is-r { --fh-fl-dir: 270deg; left: calc(50% + var(--fh-w) * .41); }
 }
 .fh-root .fh-fin.is-christian { --fh-seal-b: 16%; }
 .fh-root .fh-fin.is-christian .fh-card { --fh-in-b: 30%; }

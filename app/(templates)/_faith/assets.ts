@@ -34,6 +34,7 @@ export const FAITH_ASSETS = {
     /** Derived: the arch with its sides lengthened (a feathered repeat of the plain band below the lanterns), for phones' full height. */
     "sk-arch-tall": { src: "/wedding-v3/faith-sikh/sk-arch-tall.webp", w: 1200, h: 2783 },
     "sk-arch-720": { src: "/wedding-v3/faith-sikh/sk-arch-720.webp", w: 720, h: 1008 },
+    "sk-jharokha": { src: "/wedding-v3/faith-sikh/sk-jharokha.webp", w: 1061, h: 1482 },
     "sk-temple-saffron": { src: "/wedding-v3/faith-sikh/sk-temple-saffron.webp", w: 1200, h: 810 },
     "sk-temple-gold": { src: "/wedding-v3/faith-sikh/sk-temple-gold.webp", w: 1041, h: 553 },
     "sk-peony-l": { src: "/wedding-v3/faith-sikh/sk-peony-l.webp", w: 880, h: 1070 },

@@ -185,7 +185,18 @@ const css = `
   .fh-hero.is-sikh .fh-card { --fh-reserve: 130px; }
   .fh-hero.is-sikh .fh-top { display: none; }
   .fh-hero.is-sikh .fh-corner { width: clamp(170px, 16vw, 280px); }
-  .fh-hero.is-sikh .fh-base { width: min(96vw, 1400px); --fh-base-o: .38; }
+  /* An arcade: two ivory jharokhas fill the room either side of the great arch (from just past the screen's
+     edge to 9% behind it, no taller than the screen), Harmandir Sahib in gold and its reflection in the Sarovar
+     seen through each; their straight top and outer edges melt into the lattice wall. The temple along the
+     horizon gives way to them. */
+  .fh-hero.is-sikh { --fh-fw: min(calc((100vw - var(--fh-w)) / 2 + var(--fh-w) * .09 + 2vw), calc(94svh * .716)); }
+  .fh-hero.is-sikh .fh-base { display: none; }
+  .fh-hero.is-sikh .fh-flank { display: block; width: var(--fh-fw); height: auto; bottom: 1.5svh; filter: drop-shadow(0 18px 26px rgba(110,80,30,.14));
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 6%, rgba(0,0,0,.8) 12%, #000 18%, #000 96%, transparent 100%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
+    mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.35) 6%, rgba(0,0,0,.8) 12%, #000 18%, #000 96%, transparent 100%), linear-gradient(var(--fh-fl-dir), transparent 0, rgba(0,0,0,.5) 5%, #000 13%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .fh-hero.is-sikh .fh-flank.is-l { --fh-fl-dir: 90deg; right: calc(50% + var(--fh-w) * .41); }
+  .fh-hero.is-sikh .fh-flank.is-r { --fh-fl-dir: 270deg; left: calc(50% + var(--fh-w) * .41); }
 }
 /* Phones: the arch with lengthened sides stands the full height of the screen (the hero and the last page). */
 @media (max-width: 1023px) {
@@ -230,6 +241,7 @@ export const SIKH: FaithProfile = {
     envTop: A["sk-peony-garland"],
     envBank: A["sk-temple-gold"],
     heroBank: A["sk-temple-gold"],
+    heroFlank: A["sk-jharokha"],
   },
   T: { en, pa },
   local: {
