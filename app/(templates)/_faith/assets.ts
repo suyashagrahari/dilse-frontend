@@ -14,6 +14,8 @@ export interface WeddingAsset { src: string; w: number; h: number }
 export const FAITH_ASSETS = {
   "faith-nikah": {
     "mn-arch": { src: "/wedding-v3/faith-nikah/mn-arch.webp", w: 928, h: 1152 },
+    /** Derived: the same arch with its pillar columns lengthened (a feathered repeat of the plain column band), for phones' full height. */
+    "mn-arch-tall": { src: "/wedding-v3/faith-nikah/mn-arch-tall.webp", w: 928, h: 2143 },
     "mn-rose-corner": { src: "/wedding-v3/faith-nikah/mn-rose-corner.webp", w: 380, h: 520 },
     "mn-rose-side": { src: "/wedding-v3/faith-nikah/mn-rose-side.webp", w: 200, h: 520 },
     "mn-couple-seated": { src: "/wedding-v3/faith-nikah/mn-couple-seated.webp", w: 1200, h: 918 },
@@ -29,6 +31,8 @@ export const FAITH_ASSETS = {
   },
   "faith-sikh": {
     "sk-arch": { src: "/wedding-v3/faith-sikh/sk-arch.webp", w: 1200, h: 1680 },
+    /** Derived: the arch with its sides lengthened (a feathered repeat of the plain band below the lanterns), for phones' full height. */
+    "sk-arch-tall": { src: "/wedding-v3/faith-sikh/sk-arch-tall.webp", w: 1200, h: 2783 },
     "sk-arch-720": { src: "/wedding-v3/faith-sikh/sk-arch-720.webp", w: 720, h: 1008 },
     "sk-temple-saffron": { src: "/wedding-v3/faith-sikh/sk-temple-saffron.webp", w: 1200, h: 810 },
     "sk-temple-gold": { src: "/wedding-v3/faith-sikh/sk-temple-gold.webp", w: 1041, h: 553 },

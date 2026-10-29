@@ -152,6 +152,8 @@ const css = `
 /* the arch's straight edges melt into the wall (top on every screen, the sides too on wide ones) */
 .fh-hero.is-sikh .fh-card-bg { filter: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%), linear-gradient(180deg, transparent 0, #000 7%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%), linear-gradient(180deg, transparent 0, #000 7%); mask-composite: intersect; }
 @media (max-width: 1023px) { .fh-hero.is-sikh { --fh-top: 64px; --fh-w: min(114vw, calc((100svh - var(--fh-top)) * .714)); } .fh-hero.is-sikh .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%); mask-image: linear-gradient(180deg, transparent 0, #000 6%); } }
+.fh-root .fh-fin.is-sikh { --fh-seal-b: 35%; }
+.fh-root .fh-fin.is-sikh .fh-card { --fh-in-b: 53%; }
 /* the arch: Ik Onkar, the Fateh and the names live in its ivory field, above the gutka stand */
 .fh-hero.is-sikh .fh-card { --fh-ar: 1200 / 1680; --fh-arn: .714; --fh-in-t: 12.5%; --fh-in-b: 36.5%; --fh-in-x: 15%; --fh-reserve: 140px; --fh-mask: ${ARCH_MASK}; }
 .fh-hero.is-sikh .fh-names { --fh-names: 10.4cqw; }
@@ -185,6 +187,22 @@ const css = `
   .fh-hero.is-sikh .fh-corner { width: clamp(170px, 16vw, 280px); }
   .fh-hero.is-sikh .fh-base { width: min(96vw, 1400px); --fh-base-o: .38; }
 }
+/* Phones: the arch with lengthened sides stands the full height of the screen (the hero and the last page). */
+@media (max-width: 1023px) {
+  .fh-root .fh-hero.is-sikh { --fh-top: 0px; --fh-w: max(calc(100svh * .431), 92vw); }
+  .fh-root .fh-hero.is-sikh .fh-top { display: none; }
+  .fh-root .fh-hero.is-sikh .fh-card { --fh-ar: 1200 / 2783; --fh-in-t: 9%; --fh-in-b: 21%; --fh-in-x: 15%; --fh-mask: url("/wedding-v3/faith-sikh/sk-arch-tall.webp"); }
+  .fh-root .fh-hero.is-sikh .fh-card-bg { -webkit-mask-image: none; mask-image: none; }
+  .fh-root .fh-hero.is-sikh .fh-inv.is-sikh { font-size: 19cqw; }
+  .fh-root .fh-hero.is-sikh .fh-greet { font-size: 2.5cqw; letter-spacing: .03em; margin-top: 2cqw; white-space: nowrap; }
+  .fh-root .fh-hero.is-sikh .fh-eyebrow { font-size: 3.1cqw; letter-spacing: .1em; margin-top: 3.4cqw; white-space: nowrap; }
+  .fh-root .fh-hero.is-sikh .fh-names { --fh-names: 15cqw; margin-top: 2.4cqw; }
+  .fh-root .fh-hero.is-sikh .fh-sub { font-size: 5cqw; margin-top: 2.4cqw; }
+  .fh-root .fh-hero.is-sikh .fh-date { font-size: 3.5cqw; letter-spacing: .09em; margin-top: 4.5cqw; padding: 2.6cqw 2cqw; white-space: nowrap; }
+  .fh-root .fh-hero.is-sikh .fh-venue { font-size: 4.2cqw; margin-top: 2.6cqw; }
+  .fh-root .fh-fin.is-sikh { --fh-seal-b: 27%; }
+  .fh-root .fh-fin.is-sikh .fh-card { --fh-in-b: 40%; }
+}
 `;
 
 export const SIKH: FaithProfile = {
@@ -206,6 +224,7 @@ export const SIKH: FaithProfile = {
     rsvpFigure: A["sk-temple-gold"],
     heroBg: A["sk-arch"],
     heroBgSm: A["sk-arch-720"],
+    heroBgTall: A["sk-arch-tall"],
     heroTop: A["sk-peony-garland"],
     envTop: A["sk-peony-garland"],
     envBank: A["sk-temple-gold"],

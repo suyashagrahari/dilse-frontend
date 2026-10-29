@@ -18,7 +18,7 @@
 // listener writes --fw-hy for a gentle parallax exit; loops pause off screen.
 
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
-import { useWeddingReducedMotion } from "../_wedding";
+import { cdn, useWeddingReducedMotion } from "../_wedding";
 import { seeded, useArt, usePic } from "./art";
 import type { FaithId, Lang, Strings } from "./types";
 
@@ -72,12 +72,22 @@ export interface HeroSceneProps {
 /** The arched card with its copy (the hero; the finale wears a quieter copy of it). */
 export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time, venue, invocation, lazy, as = "h1", copy }: HeroSceneProps) {
   const pic = usePic();
+  const art = useArt();
   const Names = as;
   const high = !lazy;
   return (
     <div className="fh-card">
-      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      <img className="fh-card-bg" {...pic("heroBg", { high, lazy, sizes: "(min-width: 1024px) 560px, 94vw" })} />
+      {art.heroBgTall ? (
+        // Phones get the arch with lengthened pillars, so the doorway runs the full height of the screen.
+        <picture>
+          <source media="(max-width: 1023px)" srcSet={cdn(art.heroBgTall.src)} width={art.heroBgTall.w} height={art.heroBgTall.h} />
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <img className="fh-card-bg" {...pic("heroBg", { high, lazy, sizes: "(min-width: 1024px) 700px, 100vw" })} />
+        </picture>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+        <img className="fh-card-bg" {...pic("heroBg", { high, lazy, sizes: "(min-width: 1024px) 560px, 94vw" })} />
+      )}
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
       {faith === "christian" && <img className="fh-crown" {...pic("heroCrown", { high, lazy, sizes: "(min-width: 1024px) 620px, 100vw" })} />}
       <span className="fh-glow is-l" aria-hidden />
@@ -126,14 +136,46 @@ export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time,
   );
 }
 
+/** The faith's full-screen world behind the arch: the wall, the floor, the flanking arches, urns, garlands
+ *  and corner florals (the hero, and the last page, which wears the same scene). */
+export function Scene({ lazy }: { lazy?: boolean }) {
+  const pic = usePic();
+  const art = useArt();
+  const L = lazy ? { lazy: true } : {};
+  return (
+    <>
+      <span className="fw-frame" aria-hidden />
+      <span className="fh-wall" aria-hidden />
+      <span className="fh-floor" aria-hidden />
+      <div className="fh-bank" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroFlank && <img className="fh-flank is-l" {...pic("heroFlank", { ...L, sizes: "40vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroFlank && <img className="fh-flank is-r" {...pic("heroFlank", { ...L, sizes: "40vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroTop && <img className="fh-top" {...pic("heroTop", { ...(lazy ? L : { high: true }), sizes: "100vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroSide && <img className="fh-side is-l" {...pic("heroSide", { ...L, sizes: "22vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroSide && <img className="fh-side is-r" {...pic("heroSide", { ...L, sizes: "22vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroBank && <img className="fh-base" {...pic("heroBank", { ...L, sizes: "100vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="fh-corner is-l" {...pic("corner", { ...L, sizes: "30vw" })} />
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img className="fh-corner is-r" {...pic("cornerR", { ...L, sizes: "30vw" })} />
+      </div>
+
+    </>
+  );
+}
+
 export interface HeroProps extends Omit<HeroSceneProps, "lazy" | "as"> {
   open: boolean;
 }
 
 export default function Hero(p: HeroProps) {
   const { open, faith, s } = p;
-  const pic = usePic();
-  const art = useArt();
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
   const motes = useMemo(() => {
@@ -169,27 +211,7 @@ export default function Hero(p: HeroProps) {
 
   return (
     <header ref={ref} className={`fw-hero fh-hero is-${faith}${open ? " is-open" : ""}`}>
-      <span className="fw-frame" aria-hidden />
-      <span className="fh-wall" aria-hidden />
-      <span className="fh-floor" aria-hidden />
-      <div className="fh-bank" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroFlank && <img className="fh-flank is-l" {...pic("heroFlank", { sizes: "40vw" })} />}
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroFlank && <img className="fh-flank is-r" {...pic("heroFlank", { sizes: "40vw" })} />}
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroTop && <img className="fh-top" {...pic("heroTop", { high: true, sizes: "100vw" })} />}
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroSide && <img className="fh-side is-l" {...pic("heroSide", { sizes: "22vw" })} />}
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroSide && <img className="fh-side is-r" {...pic("heroSide", { sizes: "22vw" })} />}
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroBank && <img className="fh-base" {...pic("heroBank", { sizes: "100vw" })} />}
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="fh-corner is-l" {...pic("corner", { sizes: "30vw" })} />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="fh-corner is-r" {...pic("cornerR", { sizes: "30vw" })} />
-      </div>
+      <Scene />
 
       <div className="fh-stage">
         <div className="fh-par">

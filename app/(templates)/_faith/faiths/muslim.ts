@@ -153,24 +153,43 @@ const css = `
    floor at full height, flanked on wide screens by two cream jharokha arches with urns of roses in them. */
 .fh-hero.is-muslim { --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .806)); --fh-wall-bg: #dce3cf; --fh-wall: ${JAALI} center top / 72px 72px repeat, radial-gradient(120% 90% at 50% 35%, #eff2e6 0%, #dde4d0 55%, #c8d3b7 100%); --fh-floor: linear-gradient(180deg, rgba(246,243,231,0), #f1ecda 30%, #e6dec6); --fh-floor-h: 13svh; --fh-flank-h: 76svh; }
 .fh-hero.is-muslim .fh-top { width: max(100%, 980px); top: -2%; opacity: 0; }
-/* the panels' straight top edges melt into the jaali wall */
-.fh-hero.is-muslim .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 7%); mask-image: linear-gradient(180deg, transparent 0, #000 7%); }
-.fh-hero.is-muslim .fh-flank { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%); mask-image: linear-gradient(180deg, transparent 0, #000 16%); }
+/* the panels' straight top and bottom edges melt softly into the wall and the floor */
+.fh-hero.is-muslim .fh-card-bg { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 97%, rgba(0,0,0,.6) 100%); mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 97%, rgba(0,0,0,.6) 100%); }
+.fh-hero.is-muslim .fh-flank { -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 7%, #000 93%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 7%, #000 93%, transparent 100%); }
 .fh-hero.is-muslim.is-open .fh-top { opacity: .95; }
+/* Phones: the arch with lengthened pillars stands the full height of the screen (the hero and the last page). */
 @media (max-width: 1023px) {
-  .fh-hero.is-muslim { --fh-top: 46px; --fh-w: min(124vw, calc((100svh - var(--fh-top)) * .806)); }
-  .fh-hero.is-muslim .fh-top { width: max(150vw, 600px); top: -1%; }
+  .fh-root .fh-hero.is-muslim { --fh-top: 0px; --fh-w: max(calc(100svh * .433), 92vw); }
+  .fh-root .fh-hero.is-muslim .fh-top { display: none; }
+  .fh-root .fh-hero.is-muslim .fh-card { --fh-ar: 928 / 2143; --fh-in-t: 6%; --fh-in-b: 29%; --fh-in-x: 16.5%; --fh-mask: url("/wedding-v3/faith-nikah/mn-arch-tall.webp"); }
+  .fh-root .fh-hero.is-muslim .fh-names { --fh-names: 15.5cqw; margin-top: 2.4cqw; flex-direction: column; align-items: center; line-height: 1.08; }
+  .fh-root .fh-hero.is-muslim .fh-amp { font-size: 7cqw; margin: -.1em 0; }
+  .fh-root .fh-hero.is-muslim .fh-inv.is-muslim { width: 36cqw; }
+  .fh-root .fh-hero.is-muslim .fh-eyebrow { font-size: 3.3cqw; margin-top: 4cqw; letter-spacing: .14em; }
+  .fh-root .fh-hero.is-muslim .fh-sub { font-size: 5cqw; max-width: 64cqw; margin-top: 2.4cqw; }
+  .fh-root .fh-hero.is-muslim .fh-date { font-size: 3.5cqw; letter-spacing: .09em; margin-top: 4.5cqw; padding: 2.6cqw 2cqw; white-space: nowrap; }
+  .fh-root .fh-hero.is-muslim .fh-venue { font-size: 4.2cqw; margin-top: 2.8cqw; }
+  .fh-root .fh-hero.is-muslim .fh-figure { width: 76%; bottom: .5%; }
+  .fh-root .fh-hero.is-muslim .fh-glow { top: 11.4%; width: 20%; }
+  .fh-root .fh-hero.is-muslim .fh-card-bg { -webkit-mask-image: none; mask-image: none; }
+  .fh-root .fh-fin.is-muslim { --fh-seal-b: 23%; }
+  .fh-root .fh-fin.is-muslim .fh-card { --fh-in-b: 37%; }
 }
 @media (min-width: 1024px) {
   .fh-hero.is-muslim .fh-top { display: none; }
-  .fh-hero.is-muslim .fh-flank { display: block; }
+  /* the two jharokhas are shown whole: as wide as the room beside the great arch allows (tucked 9% behind it) */
+  .fh-hero.is-muslim { --fh-fw: min(calc((100vw - var(--fh-w)) / 2 + var(--fh-w) * .09 - 18px), calc(var(--fh-flank-h) * .716)); }
+  .fh-hero.is-muslim .fh-flank { display: block; width: var(--fh-fw); height: auto; bottom: 1.5svh; filter: drop-shadow(0 18px 26px rgba(70,80,50,.16)); }
   .fh-hero.is-muslim .fh-flank.is-l { right: calc(50% + var(--fh-w) * .41); }
   .fh-hero.is-muslim .fh-flank.is-r { left: calc(50% + var(--fh-w) * .41); }
-  .fh-hero.is-muslim .fh-side { z-index: 2; height: 34svh; width: auto; }
-  .fh-hero.is-muslim .fh-side.is-l { left: auto; right: calc(50% + var(--fh-w) * .41 + 15.5svh); }
-  .fh-hero.is-muslim .fh-side.is-r { right: auto; left: calc(50% + var(--fh-w) * .41 + 15.5svh); }
+  .fh-hero.is-muslim .fh-side { z-index: 2; height: min(34svh, calc(var(--fh-fw) * .62)); width: auto; bottom: 1.5svh; }
+  .fh-hero.is-muslim .fh-side.is-l { left: auto; right: calc(50% + var(--fh-w) * .41 + var(--fh-fw) / 2 - min(34svh, calc(var(--fh-fw) * .62)) * .333); }
+  .fh-hero.is-muslim .fh-side.is-r { right: auto; left: calc(50% + var(--fh-w) * .41 + var(--fh-fw) / 2 - min(34svh, calc(var(--fh-fw) * .62)) * .333); }
   .fh-hero.is-muslim .fh-corner { width: clamp(150px, 13vw, 240px); }
 }
+/* the last page: the goodbye sits higher in the arch, the seal is pressed just above the couple */
+.fh-root .fh-fin.is-muslim { --fh-seal-b: 33%; }
+.fh-root .fh-fin.is-muslim .fh-card { --fh-in-b: 46%; }
 /* the Mughal arch: the Bismillah and the names in its field, the couple seated at its foot */
 .fh-hero.is-muslim .fh-card { --fh-ar: 928 / 1152; --fh-arn: .806; --fh-in-t: 8%; --fh-in-b: 38%; --fh-in-x: 16.5%; --fh-reserve: 136px; --fh-mask: ${ARCH_MASK}; }
 .fh-hero.is-muslim .fh-names { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: .22em; --fh-names: 10.6cqw; }
@@ -224,6 +243,7 @@ export const MUSLIM: FaithProfile = {
     rsvpFigure: A["mn-couple-seated-600"],
     heroBg: A["mn-arch"],
     heroBgSm: A["mn-arch"],
+    heroBgTall: A["mn-arch-tall"],
     heroFigure: A["mn-couple-seated"],
     heroFigureSm: A["mn-couple-seated-600"],
     heroSide: A["mn-urn"],

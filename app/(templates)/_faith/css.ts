@@ -718,9 +718,10 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fw-ev-medal::after { content: ""; position: absolute; inset: 10%; border-radius: 50%; border: 1px dashed rgba(184,140,72,.45); }
 /* the RSVP window's figure, and the finale's card */
 .fh-rw-figure { height: auto !important; width: 86%; bottom: 9% !important; }
-.fw-fin-stage { width: auto; aspect-ratio: auto; display: flex; justify-content: center; margin-bottom: 76px; }
-.fh-fin-card .fh-card { --fh-w: min(90vw, 470px, calc((100svh - 150px) * var(--fh-arn, .714))); }
-.fh-fin-card .fh-card-bg { border-radius: 14px; }
+/* The last page wears the hero's whole scene, full screen; the seal is pressed onto the arch (--fh-seal-b per faith). */
+.fw-finale.fh-fin { padding: 0; justify-content: flex-end; text-align: center; }
+.fh-fin .fw-fin-stage { position: relative; width: auto; aspect-ratio: auto; display: flex; justify-content: center; margin: 0; }
+.fh-fin .fw-wax { bottom: var(--fh-seal-b, 22%); }
 .fh-fin-card .fh-names { font-size: var(--fh-names, 12.6cqw); }
 .fh-fin-card .fw-fin-rule { width: 60%; margin: 2cqw auto 0; }
 .fh-fin-card .fw-hashtag { margin-top: 2.6cqw; font-size: max(10px, 2.6cqw); }

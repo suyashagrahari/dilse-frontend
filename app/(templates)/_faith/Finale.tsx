@@ -1,17 +1,17 @@
 "use client";
 
 // ─── The finale: the last page of the suite, sealed ─────────────────────────
-// The hero's arched card again (quieter: no guest line), the faith's corners
-// at the foot. When the page is 45 % on screen a wax seal is pressed onto the
-// card (the faith's word — ਅਨੰਦ ਕਾਰਜ · نکاح · ✝ — scale 1.6 → 1 with a soft
+// The hero's whole scene again, full screen (the faith's wall, floor and
+// flanking arches), the arch at full height with the goodbye inside it (no
+// guest line). When the page is 45 % on screen a wax seal is pressed onto the
+// arch (the faith's word — ਅਨੰਦ ਕਾਰਜ · نکاح · ✝ — scale 1.6 → 1 with a soft
 // squash, then a ring of light), then the closing words, the names and the
 // hashtag, sized so the whole goodbye fits one screen. Reduced motion: the
 // seal is simply there.
 
 import { useEffect, useRef, useState } from "react";
 import { Reveal, useWeddingReducedMotion } from "../_wedding";
-import { usePic } from "./art";
-import { HeroCard } from "./Hero";
+import { HeroCard, Scene } from "./Hero";
 import type { FaithId, Lang, Strings } from "./types";
 
 export interface FinaleProps {
@@ -30,7 +30,6 @@ export interface FinaleProps {
 
 export default function Finale({ faith, s, sealWord, seal, endLine, first, second, hashtag, lang, invocation }: FinaleProps) {
   const closing = s.closing;
-  const pic = usePic();
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
   const [on, setOn] = useState(false);
@@ -57,17 +56,11 @@ export default function Finale({ faith, s, sealWord, seal, endLine, first, secon
   }, []);
 
   return (
-    <section ref={ref} className={`fw-finale${on ? " is-on" : ""}${pressed || reduce ? " is-pressed" : ""}`} aria-label={seal}>
-      <span className="fw-frame" aria-hidden />
-      <div className="fw-fin-bank" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="fh-corner is-l" {...pic("corner", { lazy: true, sizes: "30vw" })} />
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img className="fh-corner is-r" {...pic("cornerR", { lazy: true, sizes: "30vw" })} />
-      </div>
-      <div className="fw-fin-in">
-        <div className="fw-fin-stage">
-          <div className={`fh-fin-card fh-hero is-${faith} is-open`}>
+    <section ref={ref} className={`fw-finale fw-hero fh-hero fh-fin is-${faith} is-open${on ? " is-on" : ""}${pressed || reduce ? " is-pressed" : ""}`} aria-label={seal}>
+      <Scene lazy />
+      <div className="fh-stage">
+        <div className="fw-fin-stage fh-par">
+          <div className="fh-fin-card">
             <HeroCard
               faith={faith}
               s={s}

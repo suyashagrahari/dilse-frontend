@@ -86,8 +86,10 @@ const css = `
 /* Full screen: a soft sky over ivory and sage, a pale stone floor; the chapel arch stands at full height. */
 .fh-hero.is-christian { --fh-top: 64px; --fh-w: min(100vw, calc((100svh - var(--fh-top)) * .5625)); --fh-wall-bg: #f3f4ee; --fh-wall: radial-gradient(75% 60% at 50% 36%, rgba(255,254,248,.96), rgba(255,254,248,.55) 60%, rgba(255,254,248,.35) 100%), linear-gradient(180deg, rgba(250,248,238,.7), rgba(236,239,226,.75)), url("${cdn(A["ch-cloud"].src)}") center / cover no-repeat, #f3f2ea; --fh-floor: linear-gradient(180deg, rgba(240,241,233,0), #ebece2 35%, #dfe2d4); --fh-floor-h: 12svh; }
 @media (max-width: 1023px) {
-  .fh-hero.is-christian { --fh-top: 74px; --fh-w: min(104vw, calc((100svh - var(--fh-top)) * .5625)); }
-  .fh-hero.is-christian .fh-card { --fh-in-x: 20%; }
+  /* the chapel stands the full height of the phone; its outer stonework runs off the edges */
+  .fh-hero.is-christian { --fh-top: 0px; --fh-w: max(calc(100svh * .5625), 100vw); }
+  .fh-hero.is-christian .fh-card { --fh-in-x: 22%; --fh-in-t: 20%; }
+  .fh-hero.is-christian .fh-crown { top: -1%; }
   .fh-hero.is-christian .fh-sub { font-size: 4.5cqw; }
 }
 /* wide screens: a cloister: two smaller chapel arches either side of the great one */
@@ -98,6 +100,8 @@ const css = `
   .fh-hero.is-christian .fh-flank.is-l { right: calc(50% + var(--fh-w) * .56); }
   .fh-hero.is-christian .fh-flank.is-r { left: calc(50% + var(--fh-w) * .56); }
 }
+.fh-root .fh-fin.is-christian { --fh-seal-b: 16%; }
+.fh-root .fh-fin.is-christian .fh-card { --fh-in-b: 30%; }
 /* the chapel arch: an ivory light inside the carved stone, lilies over its crown */
 .fh-hero.is-christian .fh-card { --fh-ar: 900 / 1600; --fh-arn: .5625; --fh-in-t: 19%; --fh-in-b: 12%; --fh-in-x: 18%; --fh-reserve: 150px; --fh-mask: ${ARCH_MASK}; }
 .fh-hero.is-christian .fh-card::before { content: ""; position: absolute; z-index: 0; left: 13%; right: 13%; top: 7%; bottom: 1%; border-radius: 999px 999px 0 0; background: radial-gradient(85% 62% at 50% 44%, #fffffb, rgba(252,252,246,.97) 55%, rgba(246,247,239,.93) 88%); box-shadow: inset 0 0 40px rgba(255,255,255,.6); }

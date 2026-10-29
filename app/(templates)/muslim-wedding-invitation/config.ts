@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Nikah Wedding Invitation ☪ — Muslim Wedding, Every Function",
   description:
     "A Muslim wedding invitation under a sage-and-gold Mughal arch: guests break a wax seal on an envelope addressed to them, gold lanterns glow and the Bismillah opens the card, the couple seated at its foot. Then every function from the Mangni and Manjha to the Mehndi, the Nikah, the Rukhsati and the Walima, with maps and dress codes, English and Urdu side by side, 40 photos, RSVP per function and a duas wall. The AI writes it.",
-  coverImage: `${WEDDING_ART_CDN}/faith-nikah/cover2.webp`,
+  coverImage: `${WEDDING_ART_CDN}/faith-nikah/cover3.webp`,
   emoji: "🌙",
   color: "from-emerald-100 to-stone-200",
   previewText: "a Nikah invitation, just for you 🌙",
