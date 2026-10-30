@@ -4234,6 +4234,256 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  "tamil-wedding-invitation": {
+    title: "Tamil Wedding Invitation — Kalyanam Invitation Card Online in Tamil with RSVP",
+    description:
+      "A Tamil wedding invitation online in temple maroon and gold: Shri Ganesha and a Kanjeevaram temple border, a Thirukkural couplet, then every function from the Nichayathartham and Panda Kaal Muhurtham to the Mappillai Azhaippu, Kashi Yatra, Oonjal and the Muhurtham, with maps and dress codes, English and Tamil, 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🪔",
+
+    keywords: ["tamil wedding invitation", "tamil wedding invitation online", "tamil wedding card", "tamil kalyanam invitation", "tamil marriage invitation", "tamil wedding invitation in tamil", "muhurtham invitation", "tamil brahmin wedding invitation", "tamil wedding e invite", "whatsapp tamil wedding invitation", "tamil wedding card online free", "tamil wedding website with rsvp"],
+
+    faqs: [
+      {
+        question: "What is a Tamil Kalyanam invitation?",
+        answer:
+          "It is the invitation to a Tamil wedding (Kalyanam or Thirumanam). Traditional cards open with Pillaiyar suzhi (உ) or Shri Ganesha, name the Tamil year, month and star, and invite guests to the Muhurtham, when the groom ties the thali as the nadaswaram plays the Ketti Melam.",
+      },
+      {
+        question: "Which functions can I add to a Tamil wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Nichayathartham, the Panda Kaal Muhurtham, the Naandi and Vratham, the Mappillai Azhaippu (Janavasam), the reception, the Kashi Yatra, the Maalai Maatral and Oonjal, the Muhurtham and the Nalangu. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can the invitation be in Tamil?",
+        answer:
+          "Yes. The invitation text can be written in Tamil script and shown beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Tamil.",
+      },
+      {
+        question: "How do I make a Tamil wedding invitation online?",
+        answer:
+          "Open the Tamil Kalyanam Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, functions and invitation wording. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Tamil Wedding Invitation Online",
+      description: "Create a Tamil Kalyanam invitation in English and Tamil, with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Tamil Kalyanam Invitation", text: "Go to the Tamil Kalyanam Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and the invitation wording in English and Tamil." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, each with its date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  "telugu-wedding-invitation": {
+    title: "Telugu Wedding Invitation — Pelli Invitation Card Online in Telugu with RSVP",
+    description:
+      "A Telugu wedding invitation online in kumkum red and turmeric gold: Srirastu Subhamastu, Shri Ganesha and a Golconda Kalamkari, then every function from the Nischitartham and Pellikuthuru to the Kasi Yatra, the Jeelakarra Bellam muhurtham, the Talambralu and the Appagintalu, with maps and dress codes, English and Telugu, 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🌺",
+
+    keywords: ["telugu wedding invitation", "telugu wedding invitation online", "telugu wedding card", "telugu pelli invitation", "pelli patrika online", "telugu marriage invitation", "telugu wedding invitation in telugu", "shubhalekha online", "telugu wedding e invite", "whatsapp telugu wedding invitation", "telugu wedding card online free", "telugu wedding website with rsvp"],
+
+    faqs: [
+      {
+        question: "What is a Telugu Pelli invitation?",
+        answer:
+          "It is the invitation (the shubhalekha) to a Telugu wedding. Traditional cards open with Srirastu Subhamastu Avighnamastu, invite guests to the subha muhurtham when the couple place jeelakarra bellam on each other's heads behind the terasala, and often fall late at night.",
+      },
+      {
+        question: "Which functions can I add to a Telugu wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Nischitartham, the Pellikuthuru and Pellikoduku, the Mehendi and Sangeet, the Snathakam and Kasi Yatra, the Edurukolu, the Kalyanam, the Appagintalu, the reception and the Satyanarayana Vratham. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can the invitation be in Telugu?",
+        answer:
+          "Yes. The invitation text can be written in Telugu script and shown beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Telugu.",
+      },
+      {
+        question: "How do I make a Telugu wedding invitation online?",
+        answer:
+          "Open the Telugu Pelli Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, functions and invitation wording. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Telugu Wedding Invitation Online",
+      description: "Create a Telugu Pelli invitation in English and Telugu, with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Telugu Pelli Invitation", text: "Go to the Telugu Pelli Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and the invitation wording in English and Telugu." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, each with its date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  "kannada-wedding-invitation": {
+    title: "Kannada Wedding Invitation — Maduve Invitation Card Online in Kannada with RSVP",
+    description:
+      "A Kannada wedding invitation online in Mysore-silk magenta and gold: Shri Ganesha, a Mysore silk border and Srirangapatna across the Kaveri, then every function from the Nishchitartha and Arishina Shastra to the Varapooje, the Kashi Yatre and the Dhare Muhurtha, with maps and dress codes, English and Kannada, 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🌸",
+
+    keywords: ["kannada wedding invitation", "kannada wedding invitation online", "kannada wedding card", "kannada maduve invitation", "maduve patrike online", "kannada marriage invitation", "kannada wedding invitation in kannada", "dhare muhurtha invitation", "kannada wedding e invite", "whatsapp kannada wedding invitation", "kannada wedding card online free", "kannada wedding website with rsvp"],
+
+    faqs: [
+      {
+        question: "What is a Kannada Maduve invitation?",
+        answer:
+          "It is the invitation (the lagna patrike) to a Kannada wedding. Cards open with Shri Ganesha, name the bride as Chi. Sau. and invite guests to the Dhare Muhurtha, when the bride's parents pour the dhare water and the groom ties the mangalya.",
+      },
+      {
+        question: "Which functions can I add to a Kannada wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Nishchitartha, the Chappara Pooje and Arishina Shastra, the Devara Samaradhane and Naandi, the Madarangi, the Varapooje and Aarathakshate, the Kashi Yatre, the Dhare Muhurtha and the Griha Pravesha. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can the invitation be in Kannada?",
+        answer:
+          "Yes. The invitation text can be written in Kannada script and shown beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Kannada.",
+      },
+      {
+        question: "How do I make a Kannada wedding invitation online?",
+        answer:
+          "Open the Kannada Maduve Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, functions and invitation wording. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Kannada Wedding Invitation Online",
+      description: "Create a Kannada Maduve invitation in English and Kannada, with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Kannada Maduve Invitation", text: "Go to the Kannada Maduve Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and the invitation wording in English and Kannada." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, each with its date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  "malayalam-wedding-invitation": {
+    title: "Kerala Wedding Invitation — Malayalam Kalyanam Invitation Card Online with RSVP",
+    description:
+      "A Kerala Hindu wedding invitation online in kasavu ivory and gold: the nilavilakku, a kasavu border and the Malabar coast, then every function from the Vivaha Nischayam and Ayaniyoonu to the Thalikettu, the Kalyana Sadya and the Grihapravesham, with maps and dress codes, English and Malayalam, 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🪷",
+
+    keywords: ["kerala wedding invitation", "malayalam wedding invitation", "malayalam wedding invitation online", "kerala hindu wedding invitation", "malayalam kalyanam invitation", "thalikettu invitation", "guruvayur wedding invitation", "malayalam marriage invitation", "kerala wedding e invite", "whatsapp malayalam wedding invitation", "kerala wedding card online free", "kerala wedding website with rsvp"],
+
+    faqs: [
+      {
+        question: "What is a Kerala Kalyanam invitation?",
+        answer:
+          "It is the invitation to a Kerala Hindu wedding. The ceremony is short and in the morning, often at Guruvayur: the Thalikettu, when the groom ties the thali before the lit nilavilakku, then the pudava, the garlands and the walk around the lamp, followed by the Kalyana Sadya on banana leaves.",
+      },
+      {
+        question: "Which functions can I add to a Malayalam wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Vivaha Nischayam, the Mehendi (Mylanchi), the Haldi, the Ayaniyoonu, the Dakshina and Varavelpu, the Thalikettu, the Kalyana Sadya, the Grihapravesham and the reception. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can the invitation be in Malayalam?",
+        answer:
+          "Yes. The invitation text can be written in Malayalam script and shown beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Malayalam.",
+      },
+      {
+        question: "How do I make a Malayalam wedding invitation online?",
+        answer:
+          "Open the Kerala Kalyanam Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, functions and invitation wording. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Malayalam Wedding Invitation Online",
+      description: "Create a Kerala Kalyanam invitation in English and Malayalam, with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Kerala Kalyanam Invitation", text: "Go to the Kerala Kalyanam Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and the invitation wording in English and Malayalam." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, each with its date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
+  "marathi-wedding-invitation": {
+    title: "Marathi Wedding Invitation — Shubh Vivah Lagna Patrika Online in Marathi with RSVP",
+    description:
+      "A Marathi wedding invitation online in Paithani magenta and gold: ॥ श्री गणेशाय नमः ॥, a Paithani border and Raja Ravi Varma, then every function from the Sakhar Puda and Halad to the Seemant Pujan, the Mangalashtak and the Shubh Vivah, with maps and dress codes, English and Marathi, 40 photos, RSVP per function and a blessings wall, on one private link.",
+    category: "Wedding",
+    emoji: "🦚",
+
+    keywords: ["marathi wedding invitation", "marathi wedding invitation online", "marathi lagna patrika", "marathi wedding card", "shubh vivah invitation", "marathi marriage invitation", "marathi wedding invitation in marathi", "lagna patrika online", "marathi wedding e invite", "whatsapp marathi wedding invitation", "marathi wedding card online free", "marathi wedding website with rsvp"],
+
+    faqs: [
+      {
+        question: "What is a Shubh Vivah invitation?",
+        answer:
+          "It is the invitation (the lagna patrika) to a Marathi wedding. Cards open with ॥ श्री गणेशाय नमः ॥ and invite guests to the muhurt: the Mangalashtak is sung while the antarpat is held between the bride and groom, then the cloth drops and everyone showers akshata.",
+      },
+      {
+        question: "Which functions can I add to a Marathi wedding invitation?",
+        answer:
+          "Up to eight, each with its own date, time, venue, map link and dress code: the Sakhar Puda, the Kelvan, the Halad Chadavane, the Mehendi, the Seemant Pujan, the Gaurihar Puja, the Shubh Vivah, the Varat, the Grihapravesh and Laxmi Pujan and the reception. Guests RSVP to each one separately.",
+      },
+      {
+        question: "Can the invitation be in Marathi?",
+        answer:
+          "Yes. The invitation text can be written in Marathi script and shown beside the English, and guests can switch between the two. The AI writes both: describe your wedding in a few lines and it drafts the English and the Marathi.",
+      },
+      {
+        question: "How do I make a Marathi wedding invitation online?",
+        answer:
+          "Open the Shubh Vivah Wedding Invitation on SubhSandesh and press Create. Describe your wedding in a few lines and the AI writes your names, families, functions and invitation wording. Add up to 40 photos, choose a theme, press Save to preview, then Publish and send the link.",
+      },
+      {
+        question: "Does it work on every phone?",
+        answer:
+          "Yes. It opens in WhatsApp's browser on Android and iPhone with no app, looks designed on tablets and laptops, and phones set to reduce motion get a calm version without the big animations.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Make a Marathi Wedding Invitation Online",
+      description: "Create a Shubh Vivah invitation in English and Marathi, with every function, RSVP and a blessings wall, and send it as one link.",
+      totalTime: "PT20M",
+      steps: [
+        { name: "Open the Shubh Vivah Invitation", text: "Go to the Shubh Vivah Wedding Invitation on SubhSandesh and press Create." },
+        { name: "Describe Your Wedding", text: "Write a few lines; the AI drafts your names, families, functions, dress codes and the invitation wording in English and Marathi." },
+        { name: "Set Up Every Function", text: "Keep or add up to eight functions, each with its date, time, venue and map link." },
+        { name: "Add Your Photos", text: "Add up to 40 photos and drag them into order." },
+        { name: "Publish and Send", text: "Choose a theme, preview the invitation, Publish and send the link on WhatsApp." },
+      ],
+    },
+  },
   // Lotus Temple Wedding Invitation 🪷 (wedding tier, Royal's limits). Art: public/wedding-v3.
   "lotus-wedding-invitation": {
     title: "Lotus Temple Wedding Invitation — South Indian E-Invite with Muhurtham & RSVP",

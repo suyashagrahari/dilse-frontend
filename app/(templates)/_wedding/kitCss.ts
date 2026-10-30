@@ -6,11 +6,11 @@
 
 export const WEDDING_KIT_CSS = /* css */ `
 .wk-root, .wk-tp-card, .wk-dash, .wk-ed {
-  --wk-font-display: var(--font-wk-display), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  --wk-font-caps: var(--font-wk-caps), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), "Cinzel", Georgia, serif;
-  --wk-font-script: var(--font-wk-script), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), "Great Vibes", cursive;
-  --wk-font-sans: var(--font-wk-sans), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --wk-font-deva: var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), "Noto Serif Devanagari", serif;
+  --wk-font-display: var(--font-wk-display), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), var(--font-wk-tamil), var(--font-wk-telugu), var(--font-wk-kannada), var(--font-wk-malayalam), "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --wk-font-caps: var(--font-wk-caps), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), var(--font-wk-tamil), var(--font-wk-telugu), var(--font-wk-kannada), var(--font-wk-malayalam), "Cinzel", Georgia, serif;
+  --wk-font-script: var(--font-wk-script), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), var(--font-wk-tamil), var(--font-wk-telugu), var(--font-wk-kannada), var(--font-wk-malayalam), "Great Vibes", cursive;
+  --wk-font-sans: var(--font-wk-sans), var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), var(--font-wk-tamil), var(--font-wk-telugu), var(--font-wk-kannada), var(--font-wk-malayalam), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --wk-font-deva: var(--font-wk-deva), var(--font-wk-guru), var(--font-wk-urdu), var(--font-wk-tamil), var(--font-wk-telugu), var(--font-wk-kannada), var(--font-wk-malayalam), "Noto Serif Devanagari", serif;
   --wk-ease: cubic-bezier(.22, .8, .24, 1);
   --wk-ease-soft: cubic-bezier(.4, 0, .2, 1);
   --wk-radius: 20px;

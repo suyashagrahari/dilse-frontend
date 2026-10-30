@@ -626,7 +626,7 @@ export default function FaithStudio({ mf, updateMf, updateExtra, ai, password, o
 
       {/* ── The invitation ─────────────────────────────────────────────── */}
       <section className="vs-sec" id="vs-sec-letter" aria-label="Your invitation">
-        <Head n={4} icon="✉️" title="Your invitation" sub={local ? `The words your guests read first, in English and ${local.code === "pa" ? "Punjabi" : "Urdu"} side by side.` : "The words your guests read first."} />
+        <Head n={4} icon="✉️" title="Your invitation" sub={local ? `The words your guests read first, in English and ${local.name} side by side.` : "The words your guests read first."} />
         <div className={local ? "vs-row2" : undefined}>
           <Field label="In English" htmlFor="fws-letter" count={`${letter.length}/1500`}>
             <textarea id="fws-letter" className="vs-input vs-area fws-letter" rows={8} value={letter} maxLength={1500} placeholder={faith.day.copy.letterPlaceholder} onChange={(e) => updateMf("letter", e.target.value)} />

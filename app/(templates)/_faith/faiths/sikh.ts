@@ -224,6 +224,7 @@ export const SIKH: FaithProfile = {
   T: { en, pa },
   local: {
     code: "pa",
+    name: "Punjabi",
     short: "ਪੰ",
     locale: "pa-IN",
     dir: "ltr",
@@ -232,6 +233,7 @@ export const SIKH: FaithProfile = {
     openInLabel: "Open the invitation in Punjabi (guests can switch)",
   },
   mainRe: /anand\s*karaj|ਅਨੰਦ|laav|lavan|wedding|marriage/i,
+  verseBoth: true,
   verse: {
     text: "They are not called husband and wife who merely sit together; they alone are husband and wife who have one light in two bodies.",
     ref: "Sri Guru Granth Sahib Ji · Ang 788",

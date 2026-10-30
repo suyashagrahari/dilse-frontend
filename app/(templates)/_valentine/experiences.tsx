@@ -41,6 +41,11 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "sikh-wedding-invitation": dynamic(() => import("../sikh-wedding-invitation/components/SikhWeddingExperience"), { ssr: false, loading: Loading }),
   "muslim-wedding-invitation": dynamic(() => import("../muslim-wedding-invitation/components/MuslimWeddingExperience"), { ssr: false, loading: Loading }),
   "christian-wedding-invitation": dynamic(() => import("../christian-wedding-invitation/components/ChristianWeddingExperience"), { ssr: false, loading: Loading }),
+  "tamil-wedding-invitation": dynamic(() => import("../tamil-wedding-invitation/components/TamilWeddingExperience"), { ssr: false, loading: Loading }),
+  "telugu-wedding-invitation": dynamic(() => import("../telugu-wedding-invitation/components/TeluguWeddingExperience"), { ssr: false, loading: Loading }),
+  "kannada-wedding-invitation": dynamic(() => import("../kannada-wedding-invitation/components/KannadaWeddingExperience"), { ssr: false, loading: Loading }),
+  "malayalam-wedding-invitation": dynamic(() => import("../malayalam-wedding-invitation/components/MalayalamWeddingExperience"), { ssr: false, loading: Loading }),
+  "marathi-wedding-invitation": dynamic(() => import("../marathi-wedding-invitation/components/MarathiWeddingExperience"), { ssr: false, loading: Loading }),
   "sorry-premium": dynamic(() => import("../sorry-premium/components/SorryPremiumExperience"), { ssr: false, loading: Loading }),
   // ✦ Premium twins
   "happy-rose-day-premium": dynamic(() => import("../happy-rose-day-premium/components/RoseDayPremiumExperience"), { ssr: false, loading: Loading }),

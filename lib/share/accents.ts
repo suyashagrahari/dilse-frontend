@@ -57,6 +57,11 @@ const ACCENTS: Record<string, string> = {
   "sikh-wedding-invitation": "#B07A1F",
   "muslim-wedding-invitation": "#4F6B4C",
   "christian-wedding-invitation": "#6F7F69",
+  "tamil-wedding-invitation": "#8A1C33",
+  "telugu-wedding-invitation": "#A3122E",
+  "kannada-wedding-invitation": "#9C1C5C",
+  "malayalam-wedding-invitation": "#2F6B3A",
+  "marathi-wedding-invitation": "#8E1F5C",
   "lotus-wedding-invitation": "#A3405C",
   "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its

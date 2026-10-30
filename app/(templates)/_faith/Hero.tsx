@@ -22,7 +22,17 @@ import { cdn, useWeddingReducedMotion } from "../_wedding";
 import { seeded, useArt, usePic } from "./art";
 import type { FaithId, Lang, Strings } from "./types";
 
-/** The faith's invocation: Ik Onkar · the Bismillah · the cross. */
+/** The invocation image's description, per faith (the art itself is the profile's `invocation`). */
+const INVOCATION_ALT: Partial<Record<FaithId, string>> = {
+  muslim: "Bismillah ir-Rahman ir-Rahim",
+  tamil: "Shri Ganesha",
+  telugu: "Shri Ganesha",
+  kannada: "Shri Ganesha",
+  marathi: "Shri Ganesha",
+  malayalam: "The nilavilakku",
+};
+
+/** The faith's invocation: Ik Onkar · the cross · or the profile's own image (the Bismillah, Shri Ganesha, the lamp). */
 export function Invocation({ faith, className = "" }: { faith: FaithId; className?: string }) {
   const pic = usePic();
   if (faith === "sikh")
@@ -31,10 +41,10 @@ export function Invocation({ faith, className = "" }: { faith: FaithId; classNam
         ੴ
       </span>
     );
-  if (faith === "muslim")
+  if (faith !== "christian")
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img className={`fh-inv is-muslim ${className}`} {...pic("invocation", { high: true })} alt="Bismillah ir-Rahman ir-Rahim" />
+      <img className={`fh-inv is-${faith} is-img ${className}`} {...pic("invocation", { high: true })} alt={INVOCATION_ALT[faith] ?? ""} />
     );
   return (
     <span className={`fh-inv is-christian ${className}`} aria-hidden>
@@ -89,7 +99,7 @@ export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time,
         <img className="fh-card-bg" {...pic("heroBg", { high, lazy, sizes: "(min-width: 1024px) 560px, 94vw" })} />
       )}
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      {faith === "christian" && <img className="fh-crown" {...pic("heroCrown", { high, lazy, sizes: "(min-width: 1024px) 620px, 100vw" })} />}
+      {art.heroCrown && <img className="fh-crown" {...pic("heroCrown", { high, lazy, sizes: "(min-width: 1024px) 620px, 100vw" })} />}
       <span className="fh-glow is-l" aria-hidden />
       <span className="fh-glow is-r" aria-hidden />
       <div className="fh-copy">
@@ -130,7 +140,7 @@ export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time,
         )}
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-      {faith === "muslim" && <img className="fh-figure" {...pic("heroFigure", { high, lazy, sizes: "(min-width: 1024px) 420px, 70vw" })} />}
+      {art.heroFigure && <img className="fh-figure" {...pic("heroFigure", { high, lazy, sizes: "(min-width: 1024px) 420px, 70vw" })} />}
       <i className="fh-sheen" aria-hidden />
     </div>
   );
@@ -217,7 +227,7 @@ export default function Hero(p: HeroProps) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
   const motes = useMemo(() => {
-    const r = seeded(faith === "sikh" ? 41 : faith === "muslim" ? 53 : 67);
+    const r = seeded([...faith].reduce((n, ch) => n + ch.charCodeAt(0), 0));
     return Array.from({ length: 14 }, () => ({ left: 3 + r() * 94, delay: -r() * 16, dur: 12 + r() * 9, dx: (r() - 0.5) * 70, size: 2.5 + r() * 3.5 }));
   }, [faith]);
 

@@ -35,6 +35,12 @@ export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner", "happy-diwa
   "sikh-wedding-invitation",
   "muslim-wedding-invitation",
   "christian-wedding-invitation",
+  // South Indian and Marathi weddings on the same engine: Tamil, Telugu, Kannada, Kerala, Marathi.
+  "tamil-wedding-invitation",
+  "telugu-wedding-invitation",
+  "kannada-wedding-invitation",
+  "malayalam-wedding-invitation",
+  "marathi-wedding-invitation",
 ] as const;
 
 /**
@@ -140,6 +146,11 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
   "sikh-wedding-invitation": { name: "Anand Karaj Wedding", emoji: "🌼", date: 0, month: "" },
   "muslim-wedding-invitation": { name: "Nikah Wedding", emoji: "🌙", date: 0, month: "" },
   "christian-wedding-invitation": { name: "Holy Matrimony Wedding", emoji: "🕊️", date: 0, month: "" },
+  "tamil-wedding-invitation": { name: "Tamil Kalyanam Wedding", emoji: "🪔", date: 0, month: "" },
+  "telugu-wedding-invitation": { name: "Telugu Pelli Wedding", emoji: "🌺", date: 0, month: "" },
+  "kannada-wedding-invitation": { name: "Kannada Maduve Wedding", emoji: "🌸", date: 0, month: "" },
+  "malayalam-wedding-invitation": { name: "Kerala Kalyanam Wedding", emoji: "🪷", date: 0, month: "" },
+  "marathi-wedding-invitation": { name: "Shubh Vivah Wedding", emoji: "🦚", date: 0, month: "" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

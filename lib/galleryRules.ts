@@ -33,7 +33,7 @@ export const GALLERY_LIST: TemplateListItem[] = (() => {
  * ranking: Dandiya, the bouquet, the three wedding tiers, then the ✦ premium evergreens. Only the order moves;
  * rank badges still come from what people actually made (see rankRooms).
  */
-export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "digital-bouquet", "wedding-invitation", "wedding-invitation-premium", "royal-wedding-invitation", "palace-door-wedding-invitation", "garden-wedding-invitation", "floral-wedding-invitation", "sikh-wedding-invitation", "muslim-wedding-invitation", "christian-wedding-invitation", "lotus-wedding-invitation", "anniversary-premium", "happy-anniversary", "proposal-premium", "birthday-premium", "sorry-premium", "miss-you-premium", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
+export const PINNED_FIRST: readonly string[] = ["dandiya-partner", "digital-bouquet", "wedding-invitation", "wedding-invitation-premium", "royal-wedding-invitation", "palace-door-wedding-invitation", "garden-wedding-invitation", "floral-wedding-invitation", "sikh-wedding-invitation", "muslim-wedding-invitation", "christian-wedding-invitation", "tamil-wedding-invitation", "telugu-wedding-invitation", "kannada-wedding-invitation", "malayalam-wedding-invitation", "marathi-wedding-invitation", "lotus-wedding-invitation", "anniversary-premium", "happy-anniversary", "proposal-premium", "birthday-premium", "sorry-premium", "miss-you-premium", "sorry", "will-you-be-mine", "happy-birthday", "miss-you"];
 
 /**
  * Launch day per template (IST, yyyy-mm-dd). For NEW_LAUNCH_DAYS after it the
@@ -62,6 +62,11 @@ export const LAUNCHES: Readonly<Record<string, string>> = {
   "sikh-wedding-invitation": "2026-10-28",
   "muslim-wedding-invitation": "2026-10-28",
   "christian-wedding-invitation": "2026-10-28",
+  "tamil-wedding-invitation": "2026-10-30",
+  "telugu-wedding-invitation": "2026-10-30",
+  "kannada-wedding-invitation": "2026-10-30",
+  "malayalam-wedding-invitation": "2026-10-30",
+  "marathi-wedding-invitation": "2026-10-30",
   "lotus-wedding-invitation": "2026-10-23",
 };
 export const NEW_LAUNCH_DAYS = 10;

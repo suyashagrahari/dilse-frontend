@@ -264,6 +264,7 @@ export const MUSLIM: FaithProfile = {
   T: { en, ur },
   local: {
     code: "ur",
+    name: "Urdu",
     short: "اُردو",
     locale: "ur-IN",
     dir: "rtl",

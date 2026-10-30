@@ -20,6 +20,11 @@ export const FAITH_CSS = `
 .fw-root > header, .fw-root > section, .fw-root > .wk-section { position: relative; z-index: 1; }
 .fw-root img { -webkit-user-drag: none; user-select: none; }
 .fw-root [lang="pa"] { font-family: var(--font-wk-guru), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; }
+.fw-root [lang="ta"] { font-family: var(--font-wk-tamil), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; line-height: 1.6; }
+.fw-root [lang="te"] { font-family: var(--font-wk-telugu), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; line-height: 1.7; }
+.fw-root [lang="kn"] { font-family: var(--font-wk-kannada), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; line-height: 1.7; }
+.fw-root [lang="ml"] { font-family: var(--font-wk-malayalam), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; line-height: 1.7; }
+.fw-root [lang="mr"] { font-family: var(--font-wk-marathi), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; }
 .fw-root [lang="ur"] { font-family: var(--font-wk-urdu), var(--wk-font-display), serif; letter-spacing: 0; text-transform: none; line-height: 2.1; direction: rtl; unicode-bidi: isolate; }
 .fw-root [lang="ur"] * { font-family: inherit; letter-spacing: 0; }
 
@@ -716,6 +721,10 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-sheet-inv .fh-inv.is-sikh { font-size: 50px; }
 .fh-sheet-inv .fh-inv.is-muslim { width: 128px; }
 .fh-sheet-inv .fh-inv.is-christian { width: 48px; height: 48px; }
+.fh-sheet-inv .fh-inv.is-img { width: 76px; height: auto; } .fh-sheet-inv .fh-inv.is-malayalam.is-img { width: auto; height: 92px; }
+/* the South Indian and Marathi scripts run taller than Latin: the hero's lines in them sit a size smaller */
+.fh-copy :is(.fh-eyebrow, .fh-greet):is([lang="ta"], [lang="te"], [lang="kn"], [lang="ml"], [lang="mr"]) { font-size: 2.85cqw; letter-spacing: 0; line-height: 1.55; }
+.fh-copy .fh-sub:is([lang="ta"], [lang="te"], [lang="kn"], [lang="ml"], [lang="mr"]) { font-size: 4.1cqw; font-style: normal; line-height: 1.55; }
 .fh-sheet-inv .fh-greet { font-size: 11px; margin-top: 6px; }
 .fh-sheet-inv .fh-greet[lang="pa"] { font-size: 15px; letter-spacing: 0; }
 .fh-sheet-inv .fh-greet[lang="ur"] { font-size: 15px; }

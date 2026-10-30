@@ -72,15 +72,22 @@ const GALLERY_COLUMNS = [
   { min: 960, columns: 4 },
 ] as const;
 
-/** Punjabi month and weekday names: some browsers ship no Gurmukhi calendar data (they print "M02"). */
-const PA_MONTHS = ["ਜਨਵਰੀ", "ਫ਼ਰਵਰੀ", "ਮਾਰਚ", "ਅਪ੍ਰੈਲ", "ਮਈ", "ਜੂਨ", "ਜੁਲਾਈ", "ਅਗਸਤ", "ਸਤੰਬਰ", "ਅਕਤੂਬਰ", "ਨਵੰਬਰ", "ਦਸੰਬਰ"];
-const PA_DAYS = ["ਐਤਵਾਰ", "ਸੋਮਵਾਰ", "ਮੰਗਲਵਾਰ", "ਬੁੱਧਵਾਰ", "ਵੀਰਵਾਰ", "ਸ਼ੁੱਕਰਵਾਰ", "ਸ਼ਨਿੱਚਰਵਾਰ"];
+/** Month and weekday names per script: some browsers ship no calendar data for these locales (they print "M02"). */
+const CALENDARS: Record<string, { months: string[]; days: string[] }> = {
+  pa: { months: ["ਜਨਵਰੀ", "ਫ਼ਰਵਰੀ", "ਮਾਰਚ", "ਅਪ੍ਰੈਲ", "ਮਈ", "ਜੂਨ", "ਜੁਲਾਈ", "ਅਗਸਤ", "ਸਤੰਬਰ", "ਅਕਤੂਬਰ", "ਨਵੰਬਰ", "ਦਸੰਬਰ"], days: ["ਐਤਵਾਰ", "ਸੋਮਵਾਰ", "ਮੰਗਲਵਾਰ", "ਬੁੱਧਵਾਰ", "ਵੀਰਵਾਰ", "ਸ਼ੁੱਕਰਵਾਰ", "ਸ਼ਨਿੱਚਰਵਾਰ"] },
+  ta: { months: ["ஜனவரி", "பிப்ரவரி", "மார்ச்", "ஏப்ரல்", "மே", "ஜூன்", "ஜூலை", "ஆகஸ்ட்", "செப்டம்பர்", "அக்டோபர்", "நவம்பர்", "டிசம்பர்"], days: ["ஞாயிறு", "திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி"] },
+  te: { months: ["జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", "జూలై", "ఆగస్టు", "సెప్టెంబర్", "అక్టోబర్", "నవంబర్", "డిసెంబర్"], days: ["ఆదివారం", "సోమవారం", "మంగళవారం", "బుధవారం", "గురువారం", "శుక్రవారం", "శనివారం"] },
+  kn: { months: ["ಜನವರಿ", "ಫೆಬ್ರವರಿ", "ಮಾರ್ಚ್", "ಏಪ್ರಿಲ್", "ಮೇ", "ಜೂನ್", "ಜುಲೈ", "ಆಗಸ್ಟ್", "ಸೆಪ್ಟೆಂಬರ್", "ಅಕ್ಟೋಬರ್", "ನವೆಂಬರ್", "ಡಿಸೆಂಬರ್"], days: ["ಭಾನುವಾರ", "ಸೋಮವಾರ", "ಮಂಗಳವಾರ", "ಬುಧವಾರ", "ಗುರುವಾರ", "ಶುಕ್ರವಾರ", "ಶನಿವಾರ"] },
+  ml: { months: ["ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ", "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"], days: ["ഞായറാഴ്ച", "തിങ്കളാഴ്ച", "ചൊവ്വാഴ്ച", "ബുധനാഴ്ച", "വ്യാഴാഴ്ച", "വെള്ളിയാഴ്ച", "ശനിയാഴ്ച"] },
+  mr: { months: ["जानेवारी", "फेब्रुवारी", "मार्च", "एप्रिल", "मे", "जून", "जुलै", "ऑगस्ट", "सप्टेंबर", "ऑक्टोबर", "नोव्हेंबर", "डिसेंबर"], days: ["रविवार", "सोमवार", "मंगळवार", "बुधवार", "गुरुवार", "शुक्रवार", "शनिवार"] },
+};
 
 /** "20", "February", "2027", "Saturday" in the page's language. */
 function dateParts(date: string, locale: string) {
   const [y, mo, d] = date.split("-").map(Number);
   const dt = new Date(Date.UTC(y, mo - 1, d, 12));
-  if (locale.startsWith("pa")) return { day: String(d), month: PA_MONTHS[mo - 1], year: String(y), weekday: PA_DAYS[dt.getUTCDay()] };
+  const cal = CALENDARS[locale.slice(0, 2)];
+  if (cal) return { day: String(d), month: cal.months[mo - 1], year: String(y), weekday: cal.days[dt.getUTCDay()] };
   const f = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { timeZone: "UTC", ...o }).format(dt);
   return { day: f({ day: "numeric" }), month: f({ month: "long" }), year: f({ year: "numeric" }), weekday: f({ weekday: "long" }) };
 }
@@ -282,11 +289,11 @@ export default function FaithWeddingExperience({ data, mode, react, faith }: Exp
               {(verse.text || verse.local) && (
                 <figure className="fh-verse">
                   {verse.local && (
-                    <blockquote className="fh-verse-local" lang={faith.id === "sikh" ? "pa" : localLang} dir={faith.id === "muslim" ? "rtl" : undefined}>
+                    <blockquote className="fh-verse-local" lang={faith.local?.code ?? localLang} dir={faith.local?.dir === "rtl" ? "rtl" : undefined}>
                       {verse.local}
                     </blockquote>
                   )}
-                  {(lang === "en" || !verse.local || faith.id === "sikh") && verse.text && <blockquote className="fh-verse-text">“{verse.text}”</blockquote>}
+                  {(lang === "en" || !verse.local || faith.verseBoth) && verse.text && <blockquote className="fh-verse-text">“{verse.text}”</blockquote>}
                   {verse.ref && <figcaption>{verse.ref}</figcaption>}
                 </figure>
               )}
@@ -352,7 +359,7 @@ export default function FaithWeddingExperience({ data, mode, react, faith }: Exp
               {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
               <img className="fw-datecard-bloom" {...pic("bloom", { lazy: true, sizes: "140px" })} aria-hidden />
               <span className="fw-datecard-wax" aria-hidden>
-                <b lang={faith.id === "sikh" ? "pa" : faith.id === "muslim" ? "ur" : "en"}>{faith.T.en.seal}</b>
+                <b lang={faith.local?.code ?? "en"}>{faith.T.en.seal}</b>
               </span>
               <p className="fw-datecard-wd" lang={lang}>
                 {parts.weekday}
@@ -455,7 +462,7 @@ export default function FaithWeddingExperience({ data, mode, react, faith }: Exp
         )}
 
         <div ref={endRef} />
-        <Finale faith={faith.id} s={s} sealWord={faith.T.en.seal} seal={faith.T.en.shubh} endLine={data.endLine} first={m.first} second={m.second} hashtag={m.hashtag} lang={lang} invocation={m.invocation} />
+        <Finale faith={faith.id} sealLang={faith.local?.code ?? "en"} s={s} sealWord={faith.T.en.seal} seal={faith.T.en.shubh} endLine={data.endLine} first={m.first} second={m.second} hashtag={m.hashtag} lang={lang} invocation={m.invocation} />
       </WeddingRoot>
     </FaithArtProvider>
   );

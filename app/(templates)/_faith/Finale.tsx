@@ -16,6 +16,8 @@ import type { FaithId, Lang, Strings } from "./types";
 
 export interface FinaleProps {
   faith: FaithId;
+  /** the seal word's script ("en" when the faith has no second language) */
+  sealLang: string;
   s: Strings;
   /** The seal's word in the faith's own script, and its English line. */
   sealWord: string;
@@ -28,7 +30,7 @@ export interface FinaleProps {
   invocation: boolean;
 }
 
-export default function Finale({ faith, s, sealWord, seal, endLine, first, second, hashtag, lang, invocation }: FinaleProps) {
+export default function Finale({ faith, sealLang, s, sealWord, seal, endLine, first, second, hashtag, lang, invocation }: FinaleProps) {
   const closing = s.closing;
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
@@ -101,7 +103,7 @@ export default function Finale({ faith, s, sealWord, seal, endLine, first, secon
           <p className="fw-wax" role="img" aria-label={`${sealWord} · ${seal}`}>
             <span className="fw-wax-ring" aria-hidden />
             <span className="fw-wax-disc" aria-hidden />
-            <b lang={faith === "sikh" ? "pa" : faith === "muslim" ? "ur" : "en"} aria-hidden>
+            <b lang={sealLang} aria-hidden>
               {sealWord}
             </b>
             <small aria-hidden>{seal}</small>

@@ -37,6 +37,11 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   "sikh-wedding-invitation": { emoji: "🌼", gradient: ["#FBF3E2", "#C9962E"], label: "An Anand Karaj wedding invitation" },
   "muslim-wedding-invitation": { emoji: "🌙", gradient: ["#F4F1E6", "#6E8B6A"], label: "A Nikah wedding invitation" },
   "christian-wedding-invitation": { emoji: "🕊️", gradient: ["#F7F5F0", "#9DAA97"], label: "A Holy Matrimony wedding invitation" },
+  "tamil-wedding-invitation": { emoji: "🪔", gradient: ["#FBEFE4", "#8A1C33"], label: "A Tamil wedding invitation" },
+  "telugu-wedding-invitation": { emoji: "🌺", gradient: ["#FBF1DE", "#C98A14"], label: "A Telugu wedding invitation" },
+  "kannada-wedding-invitation": { emoji: "🌸", gradient: ["#FAF0EA", "#9C1C5C"], label: "A Kannada wedding invitation" },
+  "malayalam-wedding-invitation": { emoji: "🪷", gradient: ["#FBF7EC", "#B8862F"], label: "A Kerala wedding invitation" },
+  "marathi-wedding-invitation": { emoji: "🦚", gradient: ["#FAEFF1", "#8E1F5C"], label: "A Marathi wedding invitation" },
   "lotus-wedding-invitation": { emoji: "🪷", gradient: ["#FBF3E4", "#C2577A"], label: "A lotus temple wedding invitation" },
   // Happy Diwali: navy night → diya gold, the teaser wording (lib/seo.ts TEASER_PREVIEW).
   "happy-diwali": { emoji: "🪔", gradient: ["#4A0A0D", "#F6A821"], label: "A diya at your door" },

@@ -49,11 +49,13 @@ function faithDemoPhotos(gallery: readonly DemoPick[]): { photos: LovePhoto[]; p
   return { photos, portrait: n + 1, ch3: n + 2, ch4: n + 3 };
 }
 
+import type { LocalCode } from "./types";
+
 export interface FaithDayInput {
   slug: DaySlug;
   title: string;
   /** null = English only (Holy Matrimony). */
-  local: { code: "pa" | "ur"; label: string } | null;
+  local: { code: LocalCode; label: string } | null;
   theme: DayTheme;
   songs: readonly SongSuggestion[];
   songsNote: string;

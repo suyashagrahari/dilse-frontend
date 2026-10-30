@@ -83,6 +83,11 @@ import { config as floralWeddingCfg } from "@/app/(templates)/floral-wedding-inv
 import { config as sikhWeddingCfg } from "@/app/(templates)/sikh-wedding-invitation/config";
 import { config as muslimWeddingCfg } from "@/app/(templates)/muslim-wedding-invitation/config";
 import { config as christianWeddingInvCfg } from "@/app/(templates)/christian-wedding-invitation/config";
+import { config as tamilWeddingCfg } from "@/app/(templates)/tamil-wedding-invitation/config";
+import { config as teluguWeddingCfg } from "@/app/(templates)/telugu-wedding-invitation/config";
+import { config as kannadaWeddingCfg } from "@/app/(templates)/kannada-wedding-invitation/config";
+import { config as malayalamWeddingCfg } from "@/app/(templates)/malayalam-wedding-invitation/config";
+import { config as marathiWeddingCfg } from "@/app/(templates)/marathi-wedding-invitation/config";
 import { config as lotusWeddingCfg } from "@/app/(templates)/lotus-wedding-invitation/config";
 import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
@@ -182,6 +187,11 @@ const allConfigs = [
   sikhWeddingCfg,
   muslimWeddingCfg,
   christianWeddingInvCfg,
+  tamilWeddingCfg,
+  teluguWeddingCfg,
+  kannadaWeddingCfg,
+  malayalamWeddingCfg,
+  marathiWeddingCfg,
   lotusWeddingCfg,
 
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
@@ -325,6 +335,11 @@ export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
   "sikh-wedding-invitation",
   "muslim-wedding-invitation",
   "christian-wedding-invitation",
+  "tamil-wedding-invitation",
+  "telugu-wedding-invitation",
+  "kannada-wedding-invitation",
+  "malayalam-wedding-invitation",
+  "marathi-wedding-invitation",
   "lotus-wedding-invitation",
 ]);
 

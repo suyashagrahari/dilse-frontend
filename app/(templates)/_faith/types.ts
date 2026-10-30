@@ -9,9 +9,12 @@
 import type { DayConfig } from "../_valentine/types";
 import type { WeddingAsset } from "./assets";
 
-export type FaithId = "sikh" | "muslim" | "christian";
-/** en is always there; pa (Punjabi, Gurmukhi) for Anand Karaj, ur (Urdu, right-to-left) for Nikah. */
-export type Lang = "en" | "pa" | "ur";
+export type FaithId = "sikh" | "muslim" | "christian" | "tamil" | "telugu" | "kannada" | "malayalam" | "marathi";
+/** The second language: pa (Punjabi, Gurmukhi) for Anand Karaj, ur (Urdu, right-to-left) for Nikah, and the
+ *  South Indian and Marathi weddings' own scripts: ta, te, kn, ml, mr (Marathi Devanagari). */
+export type LocalCode = "pa" | "ur" | "ta" | "te" | "kn" | "ml" | "mr";
+/** en is always there. */
+export type Lang = "en" | LocalCode;
 
 /** Art every faith supplies. */
 export type CoreRole =
@@ -48,7 +51,9 @@ export type Keys =
 export type Strings = { [K in Keys]: string } & { units: { d: string; h: string; m: string; s: string } };
 
 export interface LocalLang {
-  code: "pa" | "ur";
+  code: LocalCode;
+  /** the language's English name, for the studio ("Punjabi") */
+  name: string;
   /** the toggle's label */
   short: string;
   /** Intl locale for dates and times */
@@ -78,12 +83,14 @@ export interface FaithProfile {
   /** "Anand Karaj" — the template's name in the studio and the page's <title>-ish places */
   name: string;
   art: FaithArt;
-  T: { en: Strings } & Partial<Record<"pa" | "ur", Strings>>;
+  T: { en: Strings } & Partial<Record<LocalCode, Strings>>;
   local: LocalLang | null;
   /** The main function (the wedding itself) among the events. */
   mainRe: RegExp;
   /** Scripture on the invitation card when the couple leaves `verse` empty. */
   verse: { text: string; ref: string; local?: string };
+  /** Show the verse's English rendering under the local text in every language (a sloka or Gurbani line). */
+  verseBoth?: boolean;
   /** The invocation above the invitation (studio label for the switch, e.g. "Ik Onkar on the invitation"). */
   invocationLabel: string;
   /** Per-function icons on the celebration cards (first match wins; the last entry should match anything). */

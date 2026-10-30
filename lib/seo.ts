@@ -143,6 +143,11 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "sikh-wedding-invitation": { emoji: "🌼", label: "Anand Karaj wedding invitation" },
   "muslim-wedding-invitation": { emoji: "🌙", label: "Nikah wedding invitation" },
   "christian-wedding-invitation": { emoji: "🕊️", label: "Holy Matrimony wedding invitation" },
+  "tamil-wedding-invitation": { emoji: "🪔", label: "Tamil Kalyanam wedding invitation" },
+  "telugu-wedding-invitation": { emoji: "🌺", label: "Telugu Pelli wedding invitation" },
+  "kannada-wedding-invitation": { emoji: "🌸", label: "Kannada Maduve wedding invitation" },
+  "malayalam-wedding-invitation": { emoji: "🪷", label: "Kerala Kalyanam wedding invitation" },
+  "marathi-wedding-invitation": { emoji: "🦚", label: "Shubh Vivah wedding invitation" },
   "lotus-wedding-invitation": { emoji: "🪷", label: "Lotus wedding invitation" },
   "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
@@ -256,6 +261,26 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "christian-wedding-invitation": (r, s) => ({
     title: `🕊️ ${r} & ${s} request the honour of your presence`,
     description: `Their Holy Matrimony, the reception and every detail inside. Open it 🤍`,
+  }),
+  "tamil-wedding-invitation": (r, s) => ({
+    title: `🪔 ${r} & ${s}'s Tamil Kalyanam: you're invited`,
+    description: `English and Tamil, every function with maps and RSVP. Open it 🤍`,
+  }),
+  "telugu-wedding-invitation": (r, s) => ({
+    title: `🌺 ${r} & ${s}'s Telugu Pelli: you're invited`,
+    description: `English and Telugu, every function with maps and RSVP. Open it 🤍`,
+  }),
+  "kannada-wedding-invitation": (r, s) => ({
+    title: `🌸 ${r} & ${s}'s Kannada Maduve: you're invited`,
+    description: `English and Kannada, every function with maps and RSVP. Open it 🤍`,
+  }),
+  "malayalam-wedding-invitation": (r, s) => ({
+    title: `🪷 ${r} & ${s}'s Kerala Kalyanam: you're invited`,
+    description: `English and Malayalam, every function with maps and RSVP. Open it 🤍`,
+  }),
+  "marathi-wedding-invitation": (r, s) => ({
+    title: `🦚 ${r} & ${s}'s Shubh Vivah: you're invited`,
+    description: `English and Marathi, every function with maps and RSVP. Open it 🤍`,
   }),
   "lotus-wedding-invitation": (r, s) => ({
     title: `🪷 The lamps are lit: ${r} & ${s}'s wedding`,
