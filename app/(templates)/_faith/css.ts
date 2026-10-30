@@ -197,7 +197,7 @@ export const FAITH_CSS = `
 .fw-frame::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(184,140,72,.3); border-radius: inherit; }
 .fw-frame::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 9px; height: 9px; translate: -50% 0; rotate: 45deg; background: linear-gradient(135deg, #f3dca4, #b98a3e); box-shadow: 0 0 0 3px rgba(255,250,243,.9); }
 .fw-env .fw-frame { z-index: 3; }
-.fw-hero-amp, .fw-fin-names span, .fw-sheet-names span { background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+.fw-hero-amp, .fw-fin-names span, .fw-sheet-names span { background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; padding: .08em .14em; margin: 0 -.04em; } /* the foil is clipped to the box: room for the swashes */
 
 /* ── hero ──────────────────────────────────────────────────────────────── */
 .fw-hero { position: relative; min-height: 100svh; display: flex; align-items: center; padding: clamp(70px, 10vh, 100px) 16px clamp(96px, 16vh, 170px); overflow: hidden; }
@@ -348,7 +348,7 @@ export const FAITH_CSS = `
 .fw-fam { --fw-posy: clamp(80px, 11vw, 104px); position: relative; padding: 78px clamp(34px, 7%, 54px) 50px; text-align: center; border-radius: 999px 999px 22px 22px; background: radial-gradient(90% 60% at 50% 0%, rgba(246,226,214,.55), transparent 70%), linear-gradient(180deg, #fffcf6, #fbf3e7); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 34px 60px -40px rgba(80,50,30,.45); }
 .fw-fam::before { content: ""; position: absolute; inset: 9px; border-radius: 999px 999px 15px 15px; border: 1px solid rgba(184,140,72,.32); pointer-events: none; }
 .fw-fam-crest { position: absolute; left: 50%; top: 0; width: 64px; height: 64px; translate: -50% -42%; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #fff8ec, #f3e3c8 70%); box-shadow: 0 0 0 1px rgba(184,140,72,.7), 0 0 0 4px #fffaf3, 0 0 0 5px rgba(184,140,72,.4), 0 10px 20px -10px rgba(80,50,30,.45); }
-.fw-fam-crest b { font: 400 34px/1 var(--wk-font-script); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 .1em; }
+.fw-fam-crest b { font: 400 34px/1.2 var(--wk-font-script); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding: .12em .34em .06em; margin: 0 -.2em; /* room for the script swashes: the foil is clipped to the box */ }
 /* The posy sits on the card's top corner, clear of the eyebrow: the card's top padding grows with it. */
 .fw-fam-flower { position: absolute; z-index: 2; top: auto; bottom: -34px; width: var(--fw-posy); }
 .fw-fam-flower img { display: block; width: 100%; height: auto; }
@@ -363,11 +363,11 @@ export const FAITH_CSS = `
 /* ── save the date ─────────────────────────────────────────────────────── */
 /* A letterpress save-the-date: deep ivory stock, a double gold rim, the day pressed in gold foil, a dusty-rose wax
    seal on the top edge and a pink peony bunch at the foot. */
-.fw-datecard { position: relative; max-width: 540px; margin: 28px auto 0; padding: clamp(46px, 8vw, 60px) 22px clamp(34px, 6vw, 46px); text-align: center; overflow: visible; border-radius: 18px; background: linear-gradient(180deg, #fffcf6, #f9f0e2); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 7px #fffaf3, 0 0 0 8px rgba(184,140,72,.35), 0 40px 70px -44px rgba(80,50,30,.55); }
+.fw-datecard { position: relative; max-width: 540px; margin: 62px auto 0; /* the seal rides on its top edge, clear of the heading */ padding: clamp(46px, 8vw, 60px) 22px clamp(34px, 6vw, 46px); text-align: center; overflow: visible; border-radius: 18px; background: linear-gradient(180deg, #fffcf6, #f9f0e2); box-shadow: 0 0 0 1px rgba(184,140,72,.55), 0 0 0 7px #fffaf3, 0 0 0 8px rgba(184,140,72,.35), 0 40px 70px -44px rgba(80,50,30,.55); }
 .fw-root[data-wk-theme="powder"] .fw-datecard { background: #fdfcfa; }
 .fw-datecard::after { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(184,146,74,.45); border-radius: calc(var(--fw-r) - 7px); pointer-events: none; }
 .fw-datecard-tile { position: absolute; inset: 0; border-radius: inherit; background: ${LATTICE} center / 44px auto repeat; opacity: .22; }
-.fw-datecard-bloom { position: absolute !important; z-index: 2; right: clamp(-74px, -6vw, -30px); bottom: -64px; width: clamp(84px, 20vw, 120px); height: auto; rotate: -10deg; scale: -1 1; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(80,50,30,.2)); }
+.fw-datecard-bloom { position: absolute !important; z-index: 2; right: clamp(-40px, -4vw, -18px); bottom: -30px; width: clamp(72px, 17vw, 108px); height: auto; rotate: -10deg; scale: -1 1; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(80,50,30,.2)); }
 .fw-datecard-wax { position: absolute !important; z-index: 3; left: 50%; top: 0; width: 64px; height: 64px; translate: -50% -50%; display: grid; place-items: center; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%; background: radial-gradient(circle at 36% 30%, #e2a6ab, var(--fw-wax1) 44%, var(--fw-wax2)); box-shadow: inset 0 -5px 9px rgba(60,10,20,.28), inset 0 4px 7px rgba(255,255,255,.3), 0 10px 18px -8px rgba(80,20,30,.55); }
 .fw-datecard-wax::after { content: ""; position: absolute; inset: 12%; border-radius: 50%; border: 1.5px solid rgba(255,235,230,.3); }
 .fw-datecard-wax b { font: 400 17px/1 var(--wk-font-deva); color: rgba(255,244,240,.95); text-shadow: 0 -1px 0 rgba(60,10,20,.3); }
@@ -378,7 +378,7 @@ export const FAITH_CSS = `
 .fw-datecard-d { padding: 0 .06em; font: 500 clamp(84px, 24vw, 132px)/.95 var(--wk-font-display); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(255,255,255,.8)) drop-shadow(0 -1px 0 rgba(120,80,30,.18)); }
 .fw-datecard-t { margin: 8px 0 0; font: italic 500 clamp(17px, 4.4vw, 20px)/1.4 var(--wk-font-display); color: var(--wk-ink); }
 .fw-datecard-v { margin: 8px 0 0; font: 500 12px/1.4 var(--wk-font-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--wk-muted); }
-.fw-count { margin-top: clamp(30px, 6vw, 44px); text-align: center; }
+.fw-count { margin-top: clamp(52px, 10vw, 64px); text-align: center; } /* clear of the date card's corner flowers */
 .fw-count .wk-flip-half { background: linear-gradient(180deg, #fffcf6, #f7eddd); border-color: rgba(184,140,72,.45); }
 .fw-count .wk-flip-up { border-radius: 999px 999px 0 0; }
 .fw-count .wk-flip-down { border-radius: 0 0 12px 12px; box-shadow: 0 18px 30px -22px rgba(80,50,30,.5); }
@@ -393,7 +393,7 @@ export const FAITH_CSS = `
   /* Desktop: the date card and the countdown side by side, not a phone column. */
   .fw-sec-date { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "head head" "card count" "card cta"; column-gap: clamp(28px, 4vw, 72px); align-items: center; }
   .fw-sec-date > .wk-section-head { grid-area: head; }
-  .fw-sec-date > .fw-datecard { grid-area: card; width: 100%; max-width: none; margin: 0; }
+  .fw-sec-date > .fw-datecard { grid-area: card; width: 100%; max-width: none; margin: 48px 0 0; }
   .fw-sec-date > .fw-count { grid-area: count; align-self: end; margin-top: 0; }
   .fw-sec-date > .fw-center { grid-area: cta; align-self: start; }
   /* a small laptop: the 3-digit days card shrinks so all four units fit their column */
@@ -415,7 +415,7 @@ export const FAITH_CSS = `
 .fw-ch-text::before { content: ""; position: absolute; inset: 10px; border: 1px solid rgba(184,140,72,.25); border-radius: calc(var(--fw-r) - 6px); pointer-events: none; }
 /* A chapter without a photo: its year in large gold-foil numerals on the empty side (desktop). */
 .fw-ch-deco { display: none; }
-.fw-ch-year { display: block; font: 500 clamp(80px, 9vw, 132px)/1 var(--wk-font-display); letter-spacing: .02em; background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: .9; }
+.fw-ch-year { display: block; padding: .04em .08em; font: 500 clamp(80px, 9vw, 132px)/1.08 var(--wk-font-display); letter-spacing: .02em; background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: .9; }
 .fw-ch-year::after { content: ""; display: block; width: 120px; height: 9px; margin: 12px 0 0 auto; background: radial-gradient(circle, #c49a52 0 2.2px, transparent 2.6px) center / 9px 9px no-repeat, linear-gradient(90deg, transparent, rgba(196,154,82,.85) 30%, rgba(196,154,82,.85) 44%, transparent 47%, transparent 53%, rgba(196,154,82,.85) 56%, rgba(196,154,82,.85) 70%, transparent) center / 100% 1px no-repeat; }
 @media (min-width: 860px) { .fw-ch-deco { display: block; justify-self: end; text-align: right; } .fw-ch.is-alt .fw-ch-deco { order: 2; justify-self: start; text-align: left; } .fw-ch.is-alt .fw-ch-year::after { margin-left: 0; } }
 .fw-ch-when { margin: 0; font: 500 12px/1 var(--wk-font-caps); letter-spacing: .28em; color: var(--wk-gold-ink); }
@@ -680,7 +680,7 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
 .fh-eyebrow { margin: 2.6cqw 0 0; font: 500 2.75cqw/1.45 var(--wk-font-caps); letter-spacing: .24em; text-transform: uppercase; color: var(--wk-gold-ink); }
 .fh-names { margin: 1.4cqw 0 0; max-width: 100%; display: flex; flex-direction: column; align-items: center; font: 400 var(--fh-names, 12.6cqw)/1.04 var(--wk-font-script); color: var(--fw-script); }
 .fh-n { display: block; max-width: 100%; overflow-wrap: anywhere; padding: 0 .1em; }
-.fh-amp { display: block; margin: -.05em 0 -.02em; font: italic 500 5.6cqw/1.1 var(--wk-font-display); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fh-amp { display: block; margin: -.05em 0 -.02em; padding: .05em .12em; font: italic 500 5.6cqw/1.1 var(--wk-font-display); background: linear-gradient(100deg, #8a5a1e 0%, #d9b064 30%, #a5752f 52%, #e8c77e 74%, #8a5a1e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .fh-sub { margin: 1.4cqw 0 0; font: italic 500 4.3cqw/1.3 var(--wk-font-display); color: var(--wk-muted); }
 .fh-date { display: flex; flex-direction: column; align-items: center; gap: .5cqw; margin: 3cqw 0 0; padding: 1.7cqw 2.4cqw; border-top: 1px solid rgba(184,146,74,.6); border-bottom: 1px solid rgba(184,146,74,.6); font: 500 2.85cqw/1.3 var(--wk-font-caps); letter-spacing: .15em; text-transform: uppercase; color: var(--wk-ink); }
 .fh-date small { font: inherit; color: var(--wk-gold-ink); }
