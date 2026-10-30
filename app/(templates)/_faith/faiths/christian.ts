@@ -166,9 +166,9 @@ export const CHRISTIAN: FaithProfile = {
   eventArt: [
     { re: /holy|matrimony|nuptial|mass|church|ceremony|wedding/i, icon: ICONS.church, art: A["ch-couple-vows"] },
     { re: /rehearsal/i, icon: ICONS.candles, art: A["ch-couple-rehearsal"] },
-    { re: /reception|dinner|toast|banquet|party/i, icon: ICONS.glasses, art: A["ch-couple-reception"] },
+    { re: /reception|dinner|toast|banquet|party/i, icon: ICONS.glasses, art: A["ch-couple-dance"] },
     { re: /engagement|betrothal|ring|proposal/i, icon: ICONS.ring, art: A["ch-couple-ring"] },
-    { re: /shower|tea|brunch|hen|bachelorette/i, icon: ICONS.cake, art: A["ch-bloom"], fit: "scene" },
+    { re: /shower|tea|brunch|hen|bachelorette/i, icon: ICONS.cake, art: A["ch-couple-shower"] },
     { re: /roce|haldi|sangeet|mehndi|music/i, icon: ICONS.dove },
     { re: /./, icon: ICONS.dove },
   ],
