@@ -1,6 +1,6 @@
 // ─── Tamil Kalyanam: the Tamil wedding's profile ───────────────────────────
-// On the shared faith-wedding engine. The hero is William Hodges's aquatint of the Great Pagoda at Tanjore (1787, public domain), full screen;
-// the invitation is an ivory card under an arch, edged with a Tamil textile border, with the
+// On the shared faith-wedding engine. The hero is illustrated: the couple in wedding silks
+// under a faint arch, a marigold toran and brass lamps above; the finale is an ivory card edged with a textile border, with the
 // invocation at its head. English + Tamil (தமிழ்). Functions, wording and verse researched
 // for Tamil weddings (scratchpad/south/tamil.json in the build session).
 
@@ -140,11 +140,8 @@ const ta: Strings = {
 
 const css = `
 .fh-root.is-tamil { --fw-script: #7a1a2c; --fw-wax1: #b8862f; --fw-wax2: #7a1a2c; --fw-env: #f3e3cc; --fw-env-2: #e6cca4; --fw-liner: #fbf1de; }
-/* Full screen: William Hodges's aquatint of the Great Pagoda at Tanjore (1787, public domain), slowly settling as the invitation opens; the ivory card with its border stands
-   to the left on wide screens and rises from the foot on phones, under the painting. */
-.fh-hero.is-tamil { --fh-top: 0px; --fh-wall-bg: #e9dcc0; --fh-wall: linear-gradient(90deg, rgba(30,16,6,.34), rgba(30,16,6,.08) 42%, transparent 62%), linear-gradient(180deg, rgba(30,18,8,.22), transparent 24%, transparent 76%, rgba(30,18,8,.26)), url("${cdn(A["ta-hero"].src)}") 64% 40% / cover no-repeat, #e9dcc0; }
-.fh-hero.is-tamil .fh-wall { transform: scale(1.08); transform-origin: 60% 40%; transition: opacity 1.4s ease, transform 12s cubic-bezier(.2,.6,.2,1); }
-.fh-hero.is-tamil.is-open .fh-wall { transform: none; }
+/* The illustrated hero: an ivory room, a marigold toran and brass lamps along the top, banana plants at the edges; the couple under a faint gopuram on the left, the words on the right (the engine's split hero). The finale keeps the bordered card. */
+.fh-hero.is-tamil { --fh-top: 0px; --fh-wall-bg: #fbf3e3; --fh-halo-o: .26; --fh-wall: radial-gradient(ellipse 52% 62% at 27% 58%, rgba(232,160,70,.16), transparent 72%), radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,250,236,.85), transparent 70%), linear-gradient(180deg, rgba(251,244,230,.55), rgba(251,244,230,.2)), url("${cdn(S.paperSoft.src)}") 50% 50% / cover no-repeat, #fbf3e3; }
 .fh-hero.is-tamil .fh-floor, .fh-hero.is-tamil .fh-top, .fh-hero.is-tamil .fh-base, .fh-hero.is-tamil .fh-corner, .fh-hero.is-tamil .fh-flank { display: none; }
 /* the card: Ganesha (or the lamp), the blessing and the names in its ivory field, inside the woven border */
 .fh-hero.is-tamil .fh-card { --fh-ar: 1000 / 1400; --fh-arn: .714; --fh-in-t: 16%; --fh-in-b: 9.5%; --fh-in-x: 13.5%; --fh-reserve: 0px; --fh-mask: url("/wedding-v3/faith-south/ta-panel-600.webp"); }
@@ -168,16 +165,14 @@ const css = `
 .fh-root.is-tamil .fw-sheet-roses { width: clamp(84px, 20vw, 150px); }
 .fh-root.is-tamil .fw-datecard-wax b, .fh-root.is-tamil .fw-wax b { font: 400 26px/1.3 var(--font-wk-tamil), serif; }
 .fh-root.is-tamil .fw-lang button[lang="ta"] { font-family: var(--font-wk-tamil), serif; }
-/* Wide screens: the card stands in the left of the room, clear of the painting's subject. */
+/* Wide screens: the finale's card, sized to the room. */
 @media (min-width: 1024px) {
   .fh-hero.is-tamil { --fh-w: min(44vw, calc(90svh * .714)); }
-  .fh-hero.is-tamil .fh-stage { justify-content: flex-start; align-items: center; padding-left: max(4.5vw, calc(26vw - var(--fh-w) / 2)); }
 }
-/* Phones: the painting fills the upper screen; the card rises from the foot. */
+/* Phones: the finale's card rises from the foot. */
 @media (max-width: 1023px) {
-  .fh-root .fh-hero.is-tamil { --fh-w: min(92vw, calc(64svh * .714)); --fh-wall: linear-gradient(180deg, rgba(30,18,8,.3), transparent 16%), linear-gradient(180deg, transparent calc(100vw * 1.111 - 34vw), #c9b48a calc(100vw * 1.111)), url("${cdn(A["ta-hero-tall"].src)}") 50% 0 / 100% auto no-repeat, linear-gradient(180deg, #c9b48a, #b59c6b); }
-  .fh-root .fh-hero.is-tamil .fh-wall { transform-origin: 50% 20%; }
-  .fh-root .fh-hero.is-tamil .fh-stage { align-items: flex-end; padding-bottom: max(14px, 2.5svh); }
+  .fh-root .fh-hero.is-tamil { --fh-w: min(92vw, calc(64svh * .714)); }
+  .fh-root .fh-hero.is-tamil .fh-stage { align-items: center; }
   .fh-root .fh-hero.is-tamil .fh-card { --fh-in-t: 15.5%; --fh-in-b: 9%; --fh-in-x: 12.5%; }
   .fh-root .fh-fin.is-tamil .fh-card { --fh-in-t: 18%; --fh-in-b: 33%; }
   .fh-root .fh-fin.is-tamil { --fh-seal-b: 6%; }
@@ -204,6 +199,12 @@ export const TAMIL: FaithProfile = {
     rsvpFigure: A["so-gopuram-gold"],
     heroBg: A["ta-panel"],
     heroBgSm: A["ta-panel-600"],
+    heroTop: A["so-toran"],
+    heroHang: A["so-lamp-hanging"],
+    heroSide: A["so-banana-plant"],
+    heroHalo: A["so-gopuram-gold"],
+    heroFoot: A["so-lotus"],
+    heroCouple: A["so-couple-veshti"],
     invocation: A["so-ganesha"],
     envTop: A["so-toran"],
     envBank: A["so-gopuram"],

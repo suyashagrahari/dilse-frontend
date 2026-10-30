@@ -1,6 +1,6 @@
 // ─── Shubh Vivah: the Marathi wedding's profile ───────────────────────────
-// On the shared faith-wedding engine. The hero is Raja Ravi Varma's Maharashtrian lady (public domain) on a Paithani-magenta ground, full screen;
-// the invitation is an ivory card under an arch, edged with a Marathi textile border, with the
+// On the shared faith-wedding engine. The hero is illustrated: the couple in wedding silks
+// under a faint arch, a marigold toran and brass lamps above; the finale is an ivory card edged with a textile border, with the
 // invocation at its head. English + Marathi (मराठी). Functions, wording and verse researched
 // for Marathi weddings (scratchpad/south/marathi.json in the build session).
 
@@ -140,11 +140,8 @@ const mr: Strings = {
 
 const css = `
 .fh-root.is-marathi { --fw-script: #7a1747; --fw-wax1: #b8862f; --fw-wax2: #7a1747; --fw-env: #f4e1e6; --fw-env-2: #e6c4cf; --fw-liner: #fcf1f4; }
-/* Full screen: Raja Ravi Varma's Maharashtrian lady (public domain) on a Paithani-magenta ground, slowly settling as the invitation opens; the ivory card with its border stands
-   to the left on wide screens and rises from the foot on phones, under the painting. */
-.fh-hero.is-marathi { --fh-top: 0px; --fh-wall-bg: #6e1745; --fh-wall: linear-gradient(90deg, rgba(30,16,6,.34), rgba(30,16,6,.08) 42%, transparent 62%), linear-gradient(180deg, rgba(30,18,8,.22), transparent 24%, transparent 76%, rgba(30,18,8,.26)), url("${cdn(A["mr-hero"].src)}") right center / cover no-repeat, #6e1745; }
-.fh-hero.is-marathi .fh-wall { transform: scale(1.08); transform-origin: 60% 40%; transition: opacity 1.4s ease, transform 12s cubic-bezier(.2,.6,.2,1); }
-.fh-hero.is-marathi.is-open .fh-wall { transform: none; }
+/* The illustrated hero: an ivory room, a marigold toran and brass lamps along the top, banana plants at the edges; the couple under a faint arch-green on the left, the words on the right (the engine's split hero). The finale keeps the bordered card. */
+.fh-hero.is-marathi { --fh-top: 0px; --fh-wall-bg: #fcf2ea; --fh-halo-o: .2; --fh-foot-w: 28%; --fh-wall: radial-gradient(ellipse 52% 62% at 27% 58%, rgba(150,30,90,.10), transparent 72%), radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,250,236,.85), transparent 70%), linear-gradient(180deg, rgba(251,244,230,.55), rgba(251,244,230,.2)), url("${cdn(S.paperSoft.src)}") 50% 50% / cover no-repeat, #fcf2ea; }
 .fh-hero.is-marathi .fh-floor, .fh-hero.is-marathi .fh-top, .fh-hero.is-marathi .fh-base, .fh-hero.is-marathi .fh-corner, .fh-hero.is-marathi .fh-flank { display: none; }
 /* the card: Ganesha (or the lamp), the blessing and the names in its ivory field, inside the woven border */
 .fh-hero.is-marathi .fh-card { --fh-ar: 1000 / 1400; --fh-arn: .714; --fh-in-t: 16%; --fh-in-b: 9.5%; --fh-in-x: 13.5%; --fh-reserve: 0px; --fh-mask: url("/wedding-v3/faith-south/mr-panel-600.webp"); }
@@ -168,16 +165,14 @@ const css = `
 .fh-root.is-marathi .fw-sheet-roses { width: clamp(84px, 20vw, 150px); }
 .fh-root.is-marathi .fw-datecard-wax b, .fh-root.is-marathi .fw-wax b { font: 400 26px/1.3 var(--font-wk-marathi), serif; }
 .fh-root.is-marathi .fw-lang button[lang="mr"] { font-family: var(--font-wk-marathi), serif; }
-/* Wide screens: the card stands in the left of the room, clear of the painting's subject. */
+/* Wide screens: the finale's card, sized to the room. */
 @media (min-width: 1024px) {
   .fh-hero.is-marathi { --fh-w: min(44vw, calc(90svh * .714)); }
-  .fh-hero.is-marathi .fh-stage { justify-content: flex-start; align-items: center; padding-left: max(4.5vw, calc(26vw - var(--fh-w) / 2)); }
 }
-/* Phones: the painting fills the upper screen; the card rises from the foot. */
+/* Phones: the finale's card rises from the foot. */
 @media (max-width: 1023px) {
-  .fh-root .fh-hero.is-marathi { --fh-w: min(92vw, calc(64svh * .714)); --fh-wall: linear-gradient(180deg, rgba(30,18,8,.3), transparent 16%), linear-gradient(180deg, transparent calc(100vw * 1.111 - 34vw), #7a1747 calc(100vw * 1.111)), url("${cdn(A["mr-hero-tall"].src)}") 50% 0 / 100% auto no-repeat, linear-gradient(180deg, #7a1747, #5a1034); }
-  .fh-root .fh-hero.is-marathi .fh-wall { transform-origin: 50% 20%; }
-  .fh-root .fh-hero.is-marathi .fh-stage { align-items: flex-end; padding-bottom: max(14px, 2.5svh); }
+  .fh-root .fh-hero.is-marathi { --fh-w: min(92vw, calc(64svh * .714)); }
+  .fh-root .fh-hero.is-marathi .fh-stage { align-items: center; }
   .fh-root .fh-hero.is-marathi .fh-card { --fh-in-t: 15.5%; --fh-in-b: 9%; --fh-in-x: 12.5%; }
   .fh-root .fh-fin.is-marathi .fh-card { --fh-in-t: 18%; --fh-in-b: 33%; }
   .fh-root .fh-fin.is-marathi { --fh-seal-b: 6%; }
@@ -204,6 +199,12 @@ export const MARATHI: FaithProfile = {
     rsvpFigure: A["so-peacock-gold"],
     heroBg: A["mr-panel"],
     heroBgSm: A["mr-panel-600"],
+    heroTop: A["so-toran"],
+    heroHang: A["so-lamp-hanging"],
+    heroSide: A["so-banana-plant"],
+    heroHalo: A["so-arch-green"],
+    heroFoot: A["so-peacock-gold"],
+    heroCouple: A["so-couple-veshti"],
     invocation: A["so-ganesha"],
     envTop: A["so-toran"],
     envBank: A["so-peacock"],

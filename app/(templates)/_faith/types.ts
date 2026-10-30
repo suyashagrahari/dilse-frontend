@@ -31,7 +31,10 @@ export type CoreRole =
   /** the hero: a full arched card the copy sits inside */
   | "heroBg" | "heroBgSm";
 /** Art only some faiths have. */
-export type OptRole = "heroFigure" | "heroFigureSm" | "heroTop" | "heroSide" | "heroBank" | "invocation" | "envTop" | "envBank" | "heroCrown" | "heroFlank" | "heroBgTall" | "medallion";
+export type OptRole = "heroFigure" | "heroFigureSm" | "heroTop" | "heroSide" | "heroBank" | "invocation" | "envTop" | "envBank" | "heroCrown" | "heroFlank" | "heroBgTall" | "medallion"
+  /** The illustrated hero (South weddings): the couple, the faint arch or gopuram behind them, the florals at their feet,
+   *  the brass lamps hanging from the top. A faith with `heroCouple` gets the split hero instead of the arched card. */
+  | "heroCouple" | "heroHalo" | "heroFoot" | "heroHang";
 export type ArtRole = CoreRole | OptRole;
 export type FaithArt = Record<CoreRole, WeddingAsset> & Partial<Record<OptRole, WeddingAsset>>;
 

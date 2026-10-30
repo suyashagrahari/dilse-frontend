@@ -79,11 +79,55 @@ export interface HeroSceneProps {
   copy?: ReactNode;
 }
 
+/** The invitation's words: the invocation, the greeting, the names, the date and the venue. */
+function HeroCopy({ faith, s, lang, first, second, guest, dateLine, time, venue, invocation, as = "h1", copy }: Omit<HeroSceneProps, "lazy">) {
+  const Names = as;
+  return (
+    <>
+      {invocation && <Invocation faith={faith} className="fw-hi-1" />}
+      {copy ?? (
+
+        <>
+          {s.greeting && (
+            <p className="fh-greet fw-hi-1" lang={lang}>
+              {s.greeting}
+            </p>
+          )}
+          {guest && (
+            <p className="fh-dear fw-hi-2" lang={lang}>
+              {s.dear} {guest},
+            </p>
+          )}
+          <p className="fh-eyebrow fw-hi-2" lang={lang}>
+            {s.togetherWith}
+          </p>
+          <Names className="fh-names">
+            <span className="fh-n fw-hi-3">{first}</span>
+            <span className="fh-amp fw-hi-4" aria-label={s.and}>
+              &amp;
+            </span>
+            <span className="fh-n fw-hi-5">{second}</span>
+          </Names>
+          <p className="fh-sub fw-hi-6" lang={lang}>
+            {s.gettingMarried}
+          </p>
+          {dateLine && (
+            <p className="fh-date fw-hi-7">
+              <span>{dateLine}</span>
+              {time && <small>{time}</small>}
+            </p>
+          )}
+          {venue && <p className="fh-venue fw-hi-8">{venue}</p>}
+        </>
+      )}
+    </>
+  );
+}
+
 /** The arched card with its copy (the hero; the finale wears a quieter copy of it). */
 export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time, venue, invocation, lazy, as = "h1", copy }: HeroSceneProps) {
   const pic = usePic();
   const art = useArt();
-  const Names = as;
   const high = !lazy;
   return (
     <div className="fh-card">
@@ -103,41 +147,7 @@ export function HeroCard({ faith, s, lang, first, second, guest, dateLine, time,
       <span className="fh-glow is-l" aria-hidden />
       <span className="fh-glow is-r" aria-hidden />
       <div className="fh-copy">
-        {invocation && <Invocation faith={faith} className="fw-hi-1" />}
-        {copy ?? (
-          <>
-            {s.greeting && (
-              <p className="fh-greet fw-hi-1" lang={lang}>
-                {s.greeting}
-              </p>
-            )}
-            {guest && (
-              <p className="fh-dear fw-hi-2" lang={lang}>
-                {s.dear} {guest},
-              </p>
-            )}
-            <p className="fh-eyebrow fw-hi-2" lang={lang}>
-              {s.togetherWith}
-            </p>
-            <Names className="fh-names">
-              <span className="fh-n fw-hi-3">{first}</span>
-              <span className="fh-amp fw-hi-4" aria-label={s.and}>
-                &amp;
-              </span>
-              <span className="fh-n fw-hi-5">{second}</span>
-            </Names>
-            <p className="fh-sub fw-hi-6" lang={lang}>
-              {s.gettingMarried}
-            </p>
-            {dateLine && (
-              <p className="fh-date fw-hi-7">
-                <span>{dateLine}</span>
-                {time && <small>{time}</small>}
-              </p>
-            )}
-            {venue && <p className="fh-venue fw-hi-8">{venue}</p>}
-          </>
-        )}
+        <HeroCopy {...{ faith, s, lang, first, second, guest, dateLine, time, venue, invocation, as, copy }} />
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
       {art.heroFigure && <img className="fh-figure" {...pic("heroFigure", { high, lazy, sizes: "(min-width: 1024px) 420px, 70vw" })} />}
@@ -162,8 +172,14 @@ export function Scene({ lazy }: { lazy?: boolean }) {
         {art.heroFlank && <img className="fh-flank is-l" {...pic("heroFlank", { ...L, sizes: "40vw" })} />}
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         {art.heroFlank && <img className="fh-flank is-r" {...pic("heroFlank", { ...L, sizes: "40vw" })} />}
+        {/* The illustrated hero's toran repeats across the full width of the top; the others hang one image. */}
+        {art.heroTop && art.heroCouple && <span className="fh-toran" style={{ ["--fh-toran" as string]: `url("${cdn(art.heroTop.src)}")` }} />}
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        {art.heroTop && <img className="fh-top" {...pic("heroTop", { ...(lazy ? L : { high: true }), sizes: "100vw" })} />}
+        {art.heroTop && !art.heroCouple && <img className="fh-top" {...pic("heroTop", { ...(lazy ? L : { high: true }), sizes: "100vw" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroHang && <img className="fh-hang is-l" {...pic("heroHang", { ...L, sizes: "64px" })} />}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        {art.heroHang && <img className="fh-hang is-r" {...pic("heroHang", { ...L, sizes: "64px" })} />}
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
         {art.heroSide && <img className="fh-side is-l" {...pic("heroSide", { ...L, sizes: "22vw" })} />}
         {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -224,6 +240,8 @@ export interface HeroProps extends Omit<HeroSceneProps, "lazy" | "as"> {
 
 export default function Hero(p: HeroProps) {
   const { open, faith, s } = p;
+  const art = useArt();
+  const pic = usePic();
   const ref = useRef<HTMLElement>(null);
   const reduce = useWeddingReducedMotion();
   const motes = useMemo(() => {
@@ -258,15 +276,36 @@ export default function Hero(p: HeroProps) {
   }, [reduce]);
 
   return (
-    <header ref={ref} className={`fw-hero fh-hero is-${faith}${open ? " is-open" : ""}`}>
+    <header ref={ref} className={`fw-hero fh-hero is-${faith}${art.heroCouple ? " is-split" : ""}${open ? " is-open" : ""}`}>
       <Scene />
       {p.sides && <FamilyNiches sides={p.sides} lang={p.lang} />}
 
-      <div className="fh-stage">
-        <div className="fh-par">
-          <HeroCard {...p} />
+      {art.heroCouple ? (
+        // The illustrated hero (South weddings): the couple on the left under a faint arch, the words on the right; stacked on phones.
+        <div className="fh-split">
+          <div className="fh-cpl fh-par">
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            {art.heroHalo && <img className="fh-halo" {...pic("heroHalo", { high: true, sizes: "(min-width: 1024px) 560px, 80vw" })} />}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="fh-cpl-img" {...pic("heroCouple", { high: true, sizes: "(min-width: 1024px) 520px, 70vw" })} alt={`${p.first} & ${p.second}`} />
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            {art.heroFoot && <img className="fh-foot is-l" {...pic("heroFoot", { sizes: "(min-width: 1024px) 200px, 30vw" })} />}
+            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+            {art.heroFoot && <img className="fh-foot is-r" {...pic("heroFoot", { sizes: "(min-width: 1024px) 200px, 30vw" })} />}
+          </div>
+          <div className="fh-scopy">
+            <div className="fh-copy">
+              <HeroCopy {...p} />
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="fh-stage">
+          <div className="fh-par">
+            <HeroCard {...p} />
+          </div>
+        </div>
+      )}
 
       <div className="fh-motes" aria-hidden>
         {motes.map((m, i) => (

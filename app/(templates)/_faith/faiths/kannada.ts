@@ -1,6 +1,6 @@
 // ─── Kannada Maduve: the Kannada wedding's profile ───────────────────────────
-// On the shared faith-wedding engine. The hero is the Colebrooke views of Seringapatam across the Kaveri (1805, public domain), full screen;
-// the invitation is an ivory card under an arch, edged with a Kannada textile border, with the
+// On the shared faith-wedding engine. The hero is illustrated: the couple in wedding silks
+// under a faint arch, a marigold toran and brass lamps above; the finale is an ivory card edged with a textile border, with the
 // invocation at its head. English + Kannada (ಕನ್ನಡ). Functions, wording and verse researched
 // for Kannada weddings (scratchpad/south/kannada.json in the build session).
 
@@ -140,11 +140,8 @@ const kn: Strings = {
 
 const css = `
 .fh-root.is-kannada { --fw-script: #7d1650; --fw-wax1: #b8862f; --fw-wax2: #7d1650; --fw-env: #f1e2d6; --fw-env-2: #e2c6b0; --fw-liner: #fbf0e8; }
-/* Full screen: the Colebrooke views of Seringapatam across the Kaveri (1805, public domain), slowly settling as the invitation opens; the ivory card with its border stands
-   to the left on wide screens and rises from the foot on phones, under the painting. */
-.fh-hero.is-kannada { --fh-top: 0px; --fh-wall-bg: #eadcc4; --fh-wall: linear-gradient(90deg, rgba(30,16,6,.34), rgba(30,16,6,.08) 42%, transparent 62%), linear-gradient(180deg, rgba(30,18,8,.22), transparent 24%, transparent 76%, rgba(30,18,8,.26)), url("${cdn(A["kn-hero"].src)}") 50% 62% / cover no-repeat, #eadcc4; }
-.fh-hero.is-kannada .fh-wall { transform: scale(1.08); transform-origin: 60% 40%; transition: opacity 1.4s ease, transform 12s cubic-bezier(.2,.6,.2,1); }
-.fh-hero.is-kannada.is-open .fh-wall { transform: none; }
+/* The illustrated hero: an ivory room, a marigold toran and brass lamps along the top, banana plants at the edges; the couple under a faint mysore-palace on the left, the words on the right (the engine's split hero). The finale keeps the bordered card. */
+.fh-hero.is-kannada { --fh-top: 0px; --fh-wall-bg: #fbf2e6; --fh-halo-o: .5; --fh-halo-h: 34%; --fh-halo-b: 3%; --fh-foot-w: 26%; --fh-wall: radial-gradient(ellipse 52% 62% at 27% 58%, rgba(190,40,110,.09), transparent 72%), radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,250,236,.85), transparent 70%), linear-gradient(180deg, rgba(251,244,230,.55), rgba(251,244,230,.2)), url("${cdn(S.paperSoft.src)}") 50% 50% / cover no-repeat, #fbf2e6; }
 .fh-hero.is-kannada .fh-floor, .fh-hero.is-kannada .fh-top, .fh-hero.is-kannada .fh-base, .fh-hero.is-kannada .fh-corner, .fh-hero.is-kannada .fh-flank { display: none; }
 /* the card: Ganesha (or the lamp), the blessing and the names in its ivory field, inside the woven border */
 .fh-hero.is-kannada .fh-card { --fh-ar: 1000 / 1400; --fh-arn: .714; --fh-in-t: 16%; --fh-in-b: 9.5%; --fh-in-x: 13.5%; --fh-reserve: 0px; --fh-mask: url("/wedding-v3/faith-south/kn-panel-600.webp"); }
@@ -168,16 +165,14 @@ const css = `
 .fh-root.is-kannada .fw-sheet-roses { width: clamp(84px, 20vw, 150px); }
 .fh-root.is-kannada .fw-datecard-wax b, .fh-root.is-kannada .fw-wax b { font: 400 26px/1.3 var(--font-wk-kannada), serif; }
 .fh-root.is-kannada .fw-lang button[lang="kn"] { font-family: var(--font-wk-kannada), serif; }
-/* Wide screens: the card stands in the left of the room, clear of the painting's subject. */
+/* Wide screens: the finale's card, sized to the room. */
 @media (min-width: 1024px) {
   .fh-hero.is-kannada { --fh-w: min(44vw, calc(90svh * .714)); }
-  .fh-hero.is-kannada .fh-stage { justify-content: flex-start; align-items: center; padding-left: max(4.5vw, calc(26vw - var(--fh-w) / 2)); }
 }
-/* Phones: the painting fills the upper screen; the card rises from the foot. */
+/* Phones: the finale's card rises from the foot. */
 @media (max-width: 1023px) {
-  .fh-root .fh-hero.is-kannada { --fh-w: min(92vw, calc(64svh * .714)); --fh-wall: linear-gradient(180deg, rgba(30,18,8,.3), transparent 16%), linear-gradient(180deg, transparent calc(100vw * 1.111 - 34vw), #c8b48c calc(100vw * 1.111)), url("${cdn(A["kn-hero-tall"].src)}") 50% 0 / 100% auto no-repeat, linear-gradient(180deg, #c8b48c, #a99466); }
-  .fh-root .fh-hero.is-kannada .fh-wall { transform-origin: 50% 20%; }
-  .fh-root .fh-hero.is-kannada .fh-stage { align-items: flex-end; padding-bottom: max(14px, 2.5svh); }
+  .fh-root .fh-hero.is-kannada { --fh-w: min(92vw, calc(64svh * .714)); }
+  .fh-root .fh-hero.is-kannada .fh-stage { align-items: center; }
   .fh-root .fh-hero.is-kannada .fh-card { --fh-in-t: 15.5%; --fh-in-b: 9%; --fh-in-x: 12.5%; }
   .fh-root .fh-fin.is-kannada .fh-card { --fh-in-t: 18%; --fh-in-b: 33%; }
   .fh-root .fh-fin.is-kannada { --fh-seal-b: 6%; }
@@ -204,6 +199,12 @@ export const KANNADA: FaithProfile = {
     rsvpFigure: A["so-mysore-palace"],
     heroBg: A["kn-panel"],
     heroBgSm: A["kn-panel-600"],
+    heroTop: A["so-toran"],
+    heroHang: A["so-lamp-hanging"],
+    heroSide: A["so-banana-plant"],
+    heroHalo: A["so-mysore-palace"],
+    heroFoot: A["so-diya-rangoli"],
+    heroCouple: A["so-couple-veshti"],
     invocation: A["so-ganesha"],
     envTop: A["so-toran"],
     envBank: A["so-mysore-palace"],

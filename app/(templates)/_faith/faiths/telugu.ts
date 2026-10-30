@@ -1,6 +1,6 @@
 // ─── Telugu Pelli: the Telugu wedding's profile ───────────────────────────
-// On the shared faith-wedding engine. The hero is a Golconda Kalamkari (c. 1640, the Metropolitan Museum of Art, CC0), full screen;
-// the invitation is an ivory card under an arch, edged with a Telugu textile border, with the
+// On the shared faith-wedding engine. The hero is illustrated: the couple in wedding silks
+// under a faint arch, a marigold toran and brass lamps above; the finale is an ivory card edged with a textile border, with the
 // invocation at its head. English + Telugu (తెలుగు). Functions, wording and verse researched
 // for Telugu weddings (scratchpad/south/telugu.json in the build session).
 
@@ -140,11 +140,8 @@ const te: Strings = {
 
 const css = `
 .fh-root.is-telugu { --fw-script: #8e1530; --fw-wax1: #c98a14; --fw-wax2: #8e1530; --fw-env: #f6e4c4; --fw-env-2: #ebcc96; --fw-liner: #fdf3df; }
-/* Full screen: a Golconda Kalamkari (c. 1640, the Metropolitan Museum of Art, CC0), slowly settling as the invitation opens; the ivory card with its border stands
-   to the left on wide screens and rises from the foot on phones, under the painting. */
-.fh-hero.is-telugu { --fh-top: 0px; --fh-wall-bg: #c98a5a; --fh-wall: linear-gradient(90deg, rgba(30,16,6,.34), rgba(30,16,6,.08) 42%, transparent 62%), linear-gradient(180deg, rgba(30,18,8,.22), transparent 24%, transparent 76%, rgba(30,18,8,.26)), url("${cdn(A["te-hero"].src)}") 50% 50% / cover no-repeat, #c98a5a; }
-.fh-hero.is-telugu .fh-wall { transform: scale(1.08); transform-origin: 60% 40%; transition: opacity 1.4s ease, transform 12s cubic-bezier(.2,.6,.2,1); }
-.fh-hero.is-telugu.is-open .fh-wall { transform: none; }
+/* The illustrated hero: an ivory room, a marigold toran and brass lamps along the top, banana plants at the edges; the couple under a faint arch-pink on the left, the words on the right (the engine's split hero). The finale keeps the bordered card. */
+.fh-hero.is-telugu { --fh-top: 0px; --fh-wall-bg: #fcf1e4; --fh-halo-o: .42; --fh-foot-w: 22%; --fh-wall: radial-gradient(ellipse 52% 62% at 27% 58%, rgba(214,60,70,.10), transparent 72%), radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,250,236,.85), transparent 70%), linear-gradient(180deg, rgba(251,244,230,.55), rgba(251,244,230,.2)), url("${cdn(S.paperSoft.src)}") 50% 50% / cover no-repeat, #fcf1e4; }
 .fh-hero.is-telugu .fh-floor, .fh-hero.is-telugu .fh-top, .fh-hero.is-telugu .fh-base, .fh-hero.is-telugu .fh-corner, .fh-hero.is-telugu .fh-flank { display: none; }
 /* the card: Ganesha (or the lamp), the blessing and the names in its ivory field, inside the woven border */
 .fh-hero.is-telugu .fh-card { --fh-ar: 1000 / 1400; --fh-arn: .714; --fh-in-t: 16%; --fh-in-b: 9.5%; --fh-in-x: 13.5%; --fh-reserve: 0px; --fh-mask: url("/wedding-v3/faith-south/te-panel-600.webp"); }
@@ -168,16 +165,14 @@ const css = `
 .fh-root.is-telugu .fw-sheet-roses { width: clamp(84px, 20vw, 150px); }
 .fh-root.is-telugu .fw-datecard-wax b, .fh-root.is-telugu .fw-wax b { font: 400 26px/1.3 var(--font-wk-telugu), serif; }
 .fh-root.is-telugu .fw-lang button[lang="te"] { font-family: var(--font-wk-telugu), serif; }
-/* Wide screens: the card stands in the left of the room, clear of the painting's subject. */
+/* Wide screens: the finale's card, sized to the room. */
 @media (min-width: 1024px) {
   .fh-hero.is-telugu { --fh-w: min(44vw, calc(90svh * .714)); }
-  .fh-hero.is-telugu .fh-stage { justify-content: flex-start; align-items: center; padding-left: max(4.5vw, calc(26vw - var(--fh-w) / 2)); }
 }
-/* Phones: the painting fills the upper screen; the card rises from the foot. */
+/* Phones: the finale's card rises from the foot. */
 @media (max-width: 1023px) {
-  .fh-root .fh-hero.is-telugu { --fh-w: min(92vw, calc(64svh * .714)); --fh-wall: linear-gradient(180deg, rgba(30,18,8,.3), transparent 16%), linear-gradient(180deg, transparent calc(100vw * 1.111 - 34vw), #b8794a calc(100vw * 1.111)), url("${cdn(A["te-hero-tall"].src)}") 50% 0 / 100% auto no-repeat, linear-gradient(180deg, #b8794a, #9c6238); }
-  .fh-root .fh-hero.is-telugu .fh-wall { transform-origin: 50% 20%; }
-  .fh-root .fh-hero.is-telugu .fh-stage { align-items: flex-end; padding-bottom: max(14px, 2.5svh); }
+  .fh-root .fh-hero.is-telugu { --fh-w: min(92vw, calc(64svh * .714)); }
+  .fh-root .fh-hero.is-telugu .fh-stage { align-items: center; }
   .fh-root .fh-hero.is-telugu .fh-card { --fh-in-t: 15.5%; --fh-in-b: 9%; --fh-in-x: 12.5%; }
   .fh-root .fh-fin.is-telugu .fh-card { --fh-in-t: 18%; --fh-in-b: 33%; }
   .fh-root .fh-fin.is-telugu { --fh-seal-b: 6%; }
@@ -204,6 +199,12 @@ export const TELUGU: FaithProfile = {
     rsvpFigure: A["so-arch-gold"],
     heroBg: A["te-panel"],
     heroBgSm: A["te-panel-600"],
+    heroTop: A["so-toran"],
+    heroHang: A["so-lamp-hanging"],
+    heroSide: A["so-banana-plant"],
+    heroHalo: A["so-arch-pink"],
+    heroFoot: A["so-jasmine"],
+    heroCouple: A["so-couple-veshti"],
     invocation: A["so-ganesha"],
     envTop: A["so-toran"],
     envBank: A["so-gopuram-gold"],

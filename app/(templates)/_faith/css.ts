@@ -716,6 +716,58 @@ body:has(.fw-root[data-wk-theme="powder"]) .vm-icon-eq i { background: #49597d; 
   .fh-hero.is-open .fh-side { opacity: 1; }
   .fh-corner { width: clamp(190px, 17vw, 290px); }
 }
+/* ── The illustrated hero (South weddings): an ivory room hung with a marigold toran and brass lamps; the couple
+   stands on the left under a faint gopuram or arch with florals at their feet, the words sit on the right.
+   Phones stack them: the couple first, then the words. Only light and the lamps move. */
+.fh-toran { position: absolute; z-index: 4; left: 0; right: 0; top: 0; height: var(--fh-toran-h, clamp(52px, 6.4vw, 92px)); background: var(--fh-toran) repeat-x 50% 0 / auto 100%; filter: drop-shadow(0 6px 8px rgba(80,40,0,.18)); opacity: 0; transform: translate3d(0, -14px, 0); transition: opacity 1.2s ease .1s, transform 1.4s var(--fw-ease) .1s; pointer-events: none; }
+.fh-hero.is-open .fh-toran, .fh-fin .fh-toran { opacity: 1; transform: none; }
+.fh-hang { position: absolute; z-index: 3; top: 0; width: var(--fh-hang-w, clamp(34px, 3.6vw, 58px)); height: auto; transform-origin: 50% 0; opacity: 0; transition: opacity 1.4s ease .5s; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(80,40,0,.2)); }
+.fh-hang.is-l { left: var(--fh-hang-x, 4.5%); } .fh-hang.is-r { right: var(--fh-hang-x, 4.5%); }
+.fh-hero.is-open .fh-hang, .fh-fin .fh-hang { opacity: 1; animation: fh-sway 7s ease-in-out infinite alternate; }
+.fh-hang.is-r { animation-delay: -3.5s !important; }
+@keyframes fh-sway { from { rotate: -1.6deg; } to { rotate: 1.6deg; } }
+.fh-hero.is-split { justify-content: center; }
+.fh-split { position: relative; z-index: 3; width: min(1200px, 100%); min-height: 100svh; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(16px, 3vw, 56px); padding: calc(var(--fh-toran-h, clamp(52px, 6.4vw, 92px)) + 2svh) clamp(20px, 4vw, 56px) clamp(28px, 5svh, 56px); }
+.fh-cpl { position: relative; height: min(76svh, 700px); display: flex; justify-content: center; align-items: flex-end; }
+.fh-halo { position: absolute; z-index: 0; left: 50%; bottom: var(--fh-halo-b, 4%); height: var(--fh-halo-h, 96%); width: auto; max-width: 118%; object-fit: contain; translate: -50% 0; opacity: 0; transition: opacity 2s ease .3s; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 98%); mask-image: linear-gradient(180deg, #000 55%, transparent 98%); }
+.fh-hero.is-open .fh-halo { opacity: var(--fh-halo-o, .32); }
+.fh-cpl-img { position: relative; z-index: 1; height: var(--fh-cpl-h, 90%); width: auto; max-width: 100%; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 18px 22px rgba(70,35,5,.18)); opacity: 0; transform: translate3d(0, 22px, 0) scale(.985); transition: opacity 1.3s ease .2s, transform 1.6s var(--fw-ease) .2s; }
+.fh-hero.is-open .fh-cpl-img { opacity: 1; transform: none; }
+.fh-cpl::after { content: ""; position: absolute; z-index: 0; left: 18%; right: 18%; bottom: 1.5%; height: 5%; border-radius: 50%; background: radial-gradient(closest-side, rgba(90,50,10,.22), transparent); }
+.fh-foot { position: absolute; z-index: 2; bottom: var(--fh-foot-b, -2%); width: var(--fh-foot-w, 30%); height: auto; opacity: 0; transition: opacity 1.4s ease .7s, transform 1.6s var(--fw-ease) .7s; }
+.fh-foot.is-l { left: var(--fh-foot-x, -4%); transform: translate3d(-10px, 10px, 0); }
+.fh-foot.is-r { right: var(--fh-foot-x, -4%); transform: translate3d(10px, 10px, 0) scaleX(-1); }
+.fh-hero.is-open .fh-foot.is-l { opacity: 1; transform: none; }
+.fh-hero.is-open .fh-foot.is-r { opacity: 1; transform: scaleX(-1); }
+.fh-scopy { position: relative; container-type: inline-size; width: min(100%, 520px); justify-self: center; }
+.fh-scopy .fh-copy { position: relative; inset: auto; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3cqw 0; }
+.fh-scopy .fh-inv.is-img { width: 13cqw; height: auto; }
+.fh-scopy .fh-names { --fh-names: 15cqw; }
+.fh-scopy .fh-amp { font-size: 8cqw; }
+.fh-scopy .fh-greet { font-size: 2.9cqw; }
+.fh-scopy .fh-eyebrow { font-size: 2.9cqw; margin-top: 3cqw; }
+.fh-scopy .fh-sub { font-size: 4.6cqw; }
+.fh-scopy .fh-date { font-size: 3.3cqw; letter-spacing: .12em; white-space: nowrap; margin-top: 4cqw; padding: 2.6cqw 4cqw; border: 1px solid rgba(184,146,74,.55); border-radius: 14px; background: rgba(255,251,240,.72); box-shadow: 0 10px 26px rgba(90,50,10,.08); }
+.fh-scopy .fh-venue { font-size: 3.9cqw; margin-top: 3cqw; }
+.fh-scopy .fh-copy :is(.fh-eyebrow, .fh-greet):is([lang="ta"], [lang="te"], [lang="kn"], [lang="ml"], [lang="mr"]) { font-size: 3cqw; }
+.fh-scopy .fh-copy .fh-sub:is([lang="ta"], [lang="te"], [lang="kn"], [lang="ml"], [lang="mr"]) { font-size: 4.2cqw; }
+@media (min-width: 1024px) {
+  .fh-hero.is-split { padding-top: 0; }
+  .fh-hero.is-split .fh-side { width: clamp(150px, 12vw, 220px); }
+  .fh-hero.is-split .fh-side.is-l { left: -1.5%; } .fh-hero.is-split .fh-side.is-r { right: -1.5%; }
+}
+@media (max-width: 1023px) {
+  .fh-split { grid-template-columns: minmax(0, 1fr); gap: 0; align-content: start; padding: calc(var(--fh-toran-h, clamp(52px, 6.4vw, 92px)) + 34px) 16px 34px; }
+  .fh-cpl { height: min(46svh, 118vw); max-width: 520px; width: 100%; justify-self: center; }
+  .fh-scopy { width: min(100%, 440px); margin-top: 6px; }
+  .fh-scopy .fh-names { --fh-names: 16cqw; }
+  .fh-scopy .fh-inv.is-img { width: 14cqw; }
+  .fh-hang { --fh-hang-x: 3%; top: 0; width: clamp(26px, 7vw, 40px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fh-hang { animation: none !important; }
+  .fh-toran, .fh-halo, .fh-cpl-img, .fh-foot { transition: none !important; }
+}
 /* the invitation card's invocation and the scripture under the letter */
 .fh-sheet-inv { margin: 0 auto 16px; display: flex; flex-direction: column; align-items: center; container-type: inline-size; width: min(100%, 330px); }
 .fh-sheet-inv .fh-inv.is-sikh { font-size: 50px; }
